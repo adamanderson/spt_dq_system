@@ -1,0 +1,31 @@
+{
+  "name": "spt_dq_system",
+  "version": "0.1.0",
+  "description": "data quality system for SPT3G",
+  "main": "test_server.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamanderson/spt_dq_system.git"
+  },
+  "keywords": [
+    "spt",
+    "data",
+    "quality"
+  ],
+  "author": "Adam Anderson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adamanderson/spt_dq_system/issues"
+  },
+  "homepage": "https://github.com/adamanderson/spt_dq_system#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "sqlite3": "^3.1.8"
+  }
+}
