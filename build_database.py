@@ -1,22 +1,27 @@
-from pymongo import MongoClient
+import sqlite3
 import os
+import glob
 
-data_dir = 
+data_dir = '/spt/data/bolodata/downsampled/'
+source_types = ['calibrator', 'CenA', 'elnod', 'RCW38', 'saturn']
+dbname = 'obsfiles'
+dbfile = '{}.db'.format(dbname)
 
-client = MongoClient('localhost', 27017)
-db = client.file_db
+# delete existing database file
+if os.path.isfile(dbfile):
+    os.remove(dbfile)
 
-
-files = os.listdir(os.getcwd())
-print files
-
-conn = sqlite3.connect('filelist.db')
+# create database and table
+conn = sqlite3.connect(dbfile)
 c = conn.cursor()
-c.execute('create table filetable(id integer primary key, one varchar(100), two info);')
+c.execute('CREATE TABLE {} (path text, type text, id int)'.format(dbname))
 
-for fname in files:
-    c.execute('insert into filetable values(null, \'{}\', 10);'.format(fname))
-# c.execute()
+# fill the database
+for source in source_types:
+    files = glob.glob('{}/{}/*'.format(data_dir, source))
+    for fname in files:
+        c.execute("INSERT INTO {} VALUES ('{}', '{}', {})" \
+                  .format(dbname, os.path.abspath(fname), source, int(os.path.basename(fname))))
 conn.commit()
-c.execute('select * from filetable;')
-print c.fetchall()
+conn.close()
+
