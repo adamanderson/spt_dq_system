@@ -1,0 +1,11 @@
+#Mac OSX
+*.DS_Store
+
+#Python build
+*.pyc
+
+#database files
+*.db
+
+#local node.js installations
+/node_modules
