@@ -25,6 +25,17 @@ app.get('/all', function(req, res) {
     });
 });
 
+app.post('/search', function(req, res) {
+    // do a search
+    console.log(req.body.type)
+    db.all('SELECT * FROM obsfiles WHERE type = \'' + req.body.type + '\'',
+	   function(err, rows) {
+	       assert.equal(null, err);
+	       console.log('Getting rows satisfying: type = '+req.body.type);
+	       res.send(rows);
+	   });
+});
+
 app.listen(3000, function() {
   console.log('Listening on port 3000');
 });

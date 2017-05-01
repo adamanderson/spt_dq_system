@@ -11,18 +11,32 @@
 
 
 <body>
+  Observation type:
+  <select type="text" id="obstype-search">
+    <option value="any">any</option>
+    <option value="calibrator">calibrator</option>
+    <option value="elnod">elnod</option>
+    <option value="CenA">CenA</option>
+    <option value="RCW38">RCW38</option>
+    <option value="saturn">saturn</option>
+  </select>
+  <br>
+  
+  <button onclick="search()">Search</button>
+  
+  <div id="example-table"></div>
 
-<div id="example-table"></div>
 <script>
+
   //create Tabulator on DOM element with id "example-table"
   $("#example-table").tabulator({
     index:"_id",
     height:"320px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
     columns:[ //Define Table Columns
-      {title:"path", field:"path"},
-      {title:"type", field:"type"},
-      {title:"id", field:"id"}
+      {title:"Observation ID", field:"id", width:150},
+      {title:"Type", field:"type", width:150},
+      {title:"Path on scott", field:"path"},
     ],
     rowClick:function(e, id, data, row){ //trigger an alert message when the row is clicked
         alert("Row " + id + " Clicked!!!!");
@@ -33,6 +47,14 @@
     $("#example-table").tabulator("setData", data);
   });
 
+  function search() {
+    // package up the search fields into a json to send to server
+    querydata = {type: $("#obstype-search").val()}
+    console.log(querydata)
+    $.post("http://127.0.0.1:3000/search", querydata, function(data, status) {
+      $("#example-table").tabulator("setData", data);
+  });
+  }
 
 </script>
 
