@@ -9,3 +9,6 @@
 
 #local node.js installations
 /node_modules
+
+#emacs backup files
+*~
