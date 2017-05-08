@@ -38,8 +38,13 @@
       {title:"Type", field:"type", width:150},
       {title:"Path on scott", field:"path"},
     ],
-    rowClick:function(e, id, data, row){ //trigger an alert message when the row is clicked
-        window.open("http://127.0.0.1:3000/series.html")
+    rowClick:function(e, id, obsdata, row){ //trigger an alert message when the row is clicked
+      console.log(obsdata)
+      $.post("series", obsdata, function(data, status) {
+        var w = window.open('about:blank', 'windowname');
+        w.document.write(data);
+        w.document.close();
+      });
     },
   });
 

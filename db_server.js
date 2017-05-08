@@ -21,7 +21,7 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('obsfiles.db');
 
-app.get('/series.html', function (req, res) {
+app.post('/series', function (req, res) {
   res.render('series')
 })
 
