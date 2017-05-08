@@ -2,9 +2,46 @@
 <html>
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/2.11.0/tabulator.min.css" rel="stylesheet">
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/2.11.0/tabulator.min.js"></script>
+
+<script>
+$( function() {
+  var dateFormat = "mm/dd/yy",
+    from = $( "#date-from" )
+      .datepicker({
+        defaultDate: "+1w",
+        changeMonth: true,
+        numberOfMonths: 1
+      })
+      .on( "change", function() {
+        to.datepicker( "option", "minDate", getDate( this ) );
+      }),
+    to = $( "#date-to" ).datepicker({
+      defaultDate: "+1w",
+      changeMonth: true,
+      numberOfMonths: 1
+    })
+    .on( "change", function() {
+      from.datepicker( "option", "maxDate", getDate( this ) );
+    });
+
+  function getDate( element ) {
+    var date;
+    try {
+      date = $.datepicker.parseDate( dateFormat, element.value );
+    } catch( error ) {
+      date = null;
+    }
+
+    return date;
+  }
+} );
+</script>
 
 </head>
 
@@ -13,17 +50,32 @@
 <body>
   Observation type:
   <select type="text" id="obstype-search">
-    <option value="any">any</option>
+    <option value="">any</option>
     <option value="calibrator">calibrator</option>
     <option value="elnod">elnod</option>
     <option value="CenA">CenA</option>
     <option value="RCW38">RCW38</option>
     <option value="saturn">saturn</option>
   </select>
+
   <br>
-  
+
+  <label for="date-from">Start date:</label>
+  <input type="text" id="date-from" name="date-from">
+  <label for="date-to">End date:</label>
+  <input type="text" id="date-to" name="date-to">
+
+  <br>
+
+  <label for="obsid-from">Obs ID range: from</label>
+  <input type="number" id="obsid-from" name="obsid-from">
+  <label for="obsid-to">to</label>
+  <input type="number" id="obsid-to" name="obsid-to">
+
+  <br>
+
   <button onclick="search()">Search</button>
-  
+
   <div id="example-table"></div>
 
 <script>
@@ -54,7 +106,11 @@
 
   function search() {
     // package up the search fields into a json to send to server
-    querydata = {type: $("#obstype-search").val()}
+    querydata = {type: $("#obstype-search").val(),
+                 date:  {min: $("#date-from").val(),
+                         max: $("#date-to").val()},
+                 id:    {min: $("#obsid-from").val(),
+                         max: $("#obsid-to").val()}}
     console.log(querydata)
     $.post("http://127.0.0.1:3000/search", querydata, function(data, status) {
       $("#example-table").tabulator("setData", data);
