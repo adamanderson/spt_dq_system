@@ -20,7 +20,7 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 // open the database
-db = new sqlite3.Database('obsfiles.db');
+db = new sqlite3.Database('master_database.db');
 
 app.post('/series', function (req, res) {
   res.render('series')
@@ -28,7 +28,7 @@ app.post('/series', function (req, res) {
 
 app.get('/all', function(req, res) {
     // get all data from the database
-    db.all('SELECT * FROM obsfiles;', function(err, rows) {
+    db.all('SELECT * FROM master_database;', function(err, rows) {
 	assert.equal(null, err);
 	console.log('querying all rows from observation file table...')
 	res.send(rows);
@@ -38,12 +38,12 @@ app.get('/all', function(req, res) {
 app.post('/search', function(req, res) {
     // build the query
     query = squel.select()
-                .from('obsfiles')
+                .from('master_database')
     for(var condition in req.body) {
-      if(req.body[condition] && condition == 'type') {
-        query.where('type == \'' + req.body[condition] + '\'')
+      if(req.body[condition] && condition == 'source') {
+        query.where('source == \'' + req.body[condition] + '\'')
       }
-      if(condition == 'id' || condition == 'date') {
+      if(condition == 'observation' || condition == 'date') {
         if(req.body[condition]['min'] && req.body[condition]['min']) {
           query.where(condition + ' > ' + req.body[condition]['min'])
               .where(condition + ' < ' + req.body[condition]['max'])
@@ -52,6 +52,7 @@ app.post('/search', function(req, res) {
     }
 
     // do the query
+    console.log(query.toString())
     db.all(query.toString(), function(err, rows) {
 	       assert.equal(null, err);
 	       res.send(rows);
