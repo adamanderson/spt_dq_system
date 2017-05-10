@@ -25,17 +25,36 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('master_database.db');
 
+// store the number of rows as a global variable
+var num_rows;
+db.all('SELECT COUNT(*) FROM master_database;', function(err, rows) {
+  num_rows = rows[0]['COUNT(*)'];
+})
+
 app.post('/series', function (req, res) {
   res.render('series')
 })
 
+// get all data from the database
 app.get('/all', function(req, res) {
-    // get all data from the database
     db.all('SELECT * FROM master_database;', function(err, rows) {
 	assert.equal(null, err);
-	console.log('querying all rows from observation file table...')
 	res.send(rows);
     });
+});
+
+app.get('/page', function(req, res) {
+  // get all data from the database
+  query = squel.select()
+                .from('master_database')
+                .offset(req.query['page']*req.query['size'])
+                .limit(req.query['size'])
+  console.log(query.toString())
+  db.all(query.toString(), function(err, rows) {
+    assert.equal(null, err);
+    var data = {'last_page': Math.ceil(num_rows / req.query['size']), 'data': rows}
+	  res.send(data);
+  });
 });
 
 app.post('/search', function(req, res) {

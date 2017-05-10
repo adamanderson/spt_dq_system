@@ -82,6 +82,10 @@ $( function() {
 
   //create Tabulator on DOM element with id "example-table"
   $("#example-table").tabulator({
+    // pagination:"remote",  // use this for normal pagination
+    progressiveRender:"remote",  // progressive rendering with AJAX requests; cool!!
+    ajaxURL:"/page", //set the ajax URL
+    paginationSize:20,
     index:"_id",
     height:"320px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
@@ -104,9 +108,13 @@ $( function() {
     },
   });
 
-  $.get("/all", "stuff", function(data, status) {
-    $("#example-table").tabulator("setData", data);
-  });
+  $("#example-table").tabulator("setPage",1);
+
+
+  // $.get("http://127.0.0.1:3000/all", "stuff", function(data, status) {
+  //   $("#example-table").tabulator("setData", data);
+  // });
+
 
   function search() {
     // package up the search fields into a json to send to server
