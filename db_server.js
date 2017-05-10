@@ -14,6 +14,9 @@ app.use(express.static('public'));
 app.get('/index.html', function (req, res) {
    res.sendFile( __dirname + "/" + "index.html" );
 })
+app.get('/', function (req, res) {
+   res.sendFile( __dirname + "/" + "index.html" );
+})
 
 // handlebars for templating
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
@@ -59,9 +62,9 @@ app.post('/search', function(req, res) {
 	   });
 });
 
-app.all('/', function(req, res) {
-  res.redirect("http://127.0.0.1:3000/index.html");
-});
+// app.all('/', function(req, res) {
+//   res.redirect("/index.html");
+// });
 
 app.listen(3000, function() {
   console.log('Listening on port 3000');

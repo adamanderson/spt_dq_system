@@ -104,7 +104,7 @@ $( function() {
     },
   });
 
-  $.get("http://127.0.0.1:3000/all", "stuff", function(data, status) {
+  $.get("/all", "stuff", function(data, status) {
     $("#example-table").tabulator("setData", data);
   });
 
@@ -116,7 +116,7 @@ $( function() {
                  observation:    {min: $("#obsid-from").val(),
                          max: $("#obsid-to").val()}}
     console.log(querydata)
-    $.post("http://127.0.0.1:3000/search", querydata, function(data, status) {
+    $.post("/search", querydata, function(data, status) {
       $("#example-table").tabulator("setData", data);
   });
   }
