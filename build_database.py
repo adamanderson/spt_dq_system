@@ -30,7 +30,7 @@ df_transfer = pd.read_csv(transfer_file, sep='\t',
 df_transfer.fillna('NULL', inplace=True)
 def generate_path(row):
     path = '/spt/data/bolodata/downsampled/{}/{}/' \
-            .format(df_transfer['source'], df_transfer['observation'])
+            .format(row['source'], row['observation'])
     if os.path.isdir(path):
         return path
     else:
