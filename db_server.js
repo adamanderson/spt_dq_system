@@ -37,10 +37,12 @@ app.post('/series', function (req, res) {
 
 // get all data from the database
 app.get('/all', function(req, res) {
-    db.all('SELECT * FROM master_database;', function(err, rows) {
-	assert.equal(null, err);
-	res.send(rows);
-    });
+  query = squel.select()
+  console.log(query.toString())
+  db.all(query.toString(), function(err, rows) {
+  	assert.equal(null, err);
+  	res.send(rows);
+  });
 });
 
 app.get('/page', function(req, res) {
@@ -49,6 +51,7 @@ app.get('/page', function(req, res) {
                 .from('master_database')
                 .offset(req.query['page']*req.query['size'])
                 .limit(req.query['size'])
+                .order('observation', false)
   console.log(query.toString())
   db.all(query.toString(), function(err, rows) {
     assert.equal(null, err);

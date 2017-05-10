@@ -95,8 +95,8 @@ $( function() {
       {title:"Path on scott", field:"path"},
       {title:"Fullrate status", field:"status_fullrate"},
       {title:"Downsampled status", field:"status_downsampled"},
-      {title:"Fullrate transfer", field:"transfer_fullrate"},
-      {title:"Downsampled transfer", field:"transfer_downsampled"}
+      {title:"Fullrate transfer", field:"transfer_fullrate", formatter:"tickCross"},
+      {title:"Downsampled transfer", field:"transfer_downsampled", formatter:"tickCross"}
     ],
     rowClick:function(e, id, obsdata, row){ //trigger an alert message when the row is clicked
       console.log(obsdata)
@@ -109,11 +109,6 @@ $( function() {
   });
 
   $("#example-table").tabulator("setPage",1);
-
-
-  // $.get("http://127.0.0.1:3000/all", "stuff", function(data, status) {
-  //   $("#example-table").tabulator("setData", data);
-  // });
 
 
   function search() {
