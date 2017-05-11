@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from spt3g import core
 import argparse as ap
+import datetime
 
 P0 = ap.ArgumentParser(description='Tool for building SPT3G data quality and '
                        'transfer databases.', formatter_class=ap.RawTextHelpFormatter)
@@ -17,7 +18,8 @@ dbname = 'master_database'
 dbfile = '{}.db'.format(dbname)
 
 names = ['source', 'observation', 'status_fullrate', 'status_downsampled',
-         'transfer_fullrate', 'transfer_downsampled', 'path', 'start_time']
+         'transfer_fullrate', 'transfer_downsampled', 'path', 'start_time',
+         'date', 'time']
 typestr = {'source': 'text',
            'observation': 'int',
            'status_fullrate': 'text',
@@ -25,7 +27,9 @@ typestr = {'source': 'text',
            'transfer_fullrate': 'int',
            'transfer_downsampled': 'int',
            'path': 'text',
-           'start_time': 'float'}
+           'start_time': 'float',
+           'date': 'text',
+           'time': 'text'}
 
 # transfer database files
 transfer_path = '/spt/data/transfer_database/'
@@ -68,13 +72,16 @@ for index, row in df_transfer.iterrows():
             f = core.G3File(first_file)
             print('Processing {}'.format(first_file))
             frame = f.next()
-            time = frame['ObservationStart'].time
+            start_time = frame['ObservationStart'].time
+            date = datetime.datetime.fromtimestamp(int(start_time/core.G3Units.second)).strftime('%d/%m/%Y')
+            time = datetime.datetime.fromtimestamp(int(start_time/core.G3Units.second)).strftime('%H:%M')
+            
         except:
+            start_time = np.nan
+            date = np.nan
             time = np.nan
 
-        newrow = [row[key] for key in row.keys()] + [path, time]
-        print("INSERT INTO {} VALUES ({})" \
-                      .format(dbname, ', '.join(['\'{}\''.format(var) for var in newrow])))
+        newrow = [row[key] for key in row.keys()] + [path, start_time, date, time]
         c.execute("INSERT INTO {} VALUES ({})" \
                       .format(dbname, ', '.join(['\'{}\''.format(var) for var in newrow])))
 
