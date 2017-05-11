@@ -82,9 +82,15 @@ $( function() {
 
   //create Tabulator on DOM element with id "example-table"
   $("#example-table").tabulator({
-    // pagination:"remote",  // use this for normal pagination
-    progressiveRender:"remote",  // progressive rendering with AJAX requests; cool!!
+    pagination:"remote",  // use this for normal pagination
+    // progressiveRender:"remote",  // progressive rendering with AJAX requests; cool!!
     ajaxURL:"/page", //set the ajax URL
+    ajaxParams: {source: $("#obstype-search").val(),
+                 date:  {min: $("#date-from").val(),
+                         max: $("#date-to").val()},
+                 observation:    {min: $("#obsid-from").val(),
+                         max: $("#obsid-to").val()}},
+    ajaxConfig:'GET',
     paginationSize:20,
     index:"_id",
     height:"320px", // set height of table (optional)
@@ -108,20 +114,20 @@ $( function() {
     },
   });
 
-  $("#example-table").tabulator("setPage",1);
+
 
 
   function search() {
     // package up the search fields into a json to send to server
-    querydata = {source: $("#obstype-search").val(),
+    querydata = {page:1,
+                 size:20,
+                 source: $("#obstype-search").val(),
                  date:  {min: $("#date-from").val(),
                          max: $("#date-to").val()},
                  observation:    {min: $("#obsid-from").val(),
                          max: $("#obsid-to").val()}}
-    console.log(querydata)
-    $.post("/search", querydata, function(data, status) {
-      $("#example-table").tabulator("setData", data);
-  });
+
+    $("#example-table").tabulator("setData", "/page", querydata);
   }
 
 </script>

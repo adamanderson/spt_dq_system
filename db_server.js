@@ -25,12 +25,6 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('master_database.db');
 
-// store the number of rows as a global variable
-var num_rows;
-db.all('SELECT COUNT(*) FROM master_database;', function(err, rows) {
-  num_rows = rows[0]['COUNT(*)'];
-})
-
 app.post('/series', function (req, res) {
   res.render('series')
 })
@@ -49,44 +43,33 @@ app.get('/page', function(req, res) {
   // get all data from the database
   query = squel.select()
                 .from('master_database')
-                .offset(req.query['page']*req.query['size'])
-                .limit(req.query['size'])
-                .order('observation', false)
+  parseSearch(query, req.query);
+  var max_pages;
+  db.all(query.toString(), function(err, rows) {
+    max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+  });
+
+  query = query.offset((req.query['page']-1)*req.query['size'])
+              .limit(req.query['size'])
+              .order('observation', false);
   console.log(query.toString())
   db.all(query.toString(), function(err, rows) {
     assert.equal(null, err);
-    var data = {'last_page': Math.ceil(num_rows / req.query['size']), 'data': rows}
+    var data = {'last_page': max_pages, 'data': rows}
 	  res.send(data);
   });
 });
 
-app.post('/search', function(req, res) {
-    // build the query
-    query = squel.select()
-                .from('master_database')
-    for(var condition in req.body) {
-      if(req.body[condition] && condition == 'source') {
-        query.where('source == \'' + req.body[condition] + '\'')
-      }
-      if(condition == 'observation' || condition == 'date') {
-        if(req.body[condition]['min'] && req.body[condition]['min']) {
-          query.where(condition + ' > ' + req.body[condition]['min'])
-              .where(condition + ' < ' + req.body[condition]['max'])
-        }
-      }
-    }
-
-    // do the query
-    console.log(query.toString())
-    db.all(query.toString(), function(err, rows) {
-	       assert.equal(null, err);
-	       res.send(rows);
-	   });
-});
-
-// app.all('/', function(req, res) {
-//   res.redirect("/index.html");
-// });
+function parseSearch(query, searchJSON) {
+  if(searchJSON['source']) {
+    query.where('source == \'' + searchJSON['source'] + '\'')
+  }
+  if(searchJSON['observation']['min'] && searchJSON['observation']['min']) {
+    query.where('observation > ' + searchJSON['observation']['min'])
+        .where('observation < ' + searchJSON['observation']['max'])
+  }
+  return query
+}
 
 app.listen(3000, function() {
   console.log('Listening on port 3000');
