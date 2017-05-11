@@ -15,7 +15,7 @@ args = P0.parse_args()
 
 
 dbname = 'master_database'
-dbfile = '{}.db'.format(dbname)
+dbfile = '/scratch/arahlin/public_html/spt_dq_system/{}.db'.format(dbname)
 
 names = ['source', 'observation', 'status_fullrate', 'status_downsampled',
          'transfer_fullrate', 'transfer_downsampled', 'path', 'start_time',
