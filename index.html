@@ -11,12 +11,13 @@
 
 <script>
 $( function() {
-  var dateFormat = "mm/dd/yy",
+  var dFormat = "dd/mm/yy",
     from = $( "#date-from" )
       .datepicker({
         defaultDate: "+1w",
         changeMonth: true,
-        numberOfMonths: 1
+        numberOfMonths: 1,
+        dateFormat: dFormat
       })
       .on( "change", function() {
         to.datepicker( "option", "minDate", getDate( this ) );
@@ -24,7 +25,8 @@ $( function() {
     to = $( "#date-to" ).datepicker({
       defaultDate: "+1w",
       changeMonth: true,
-      numberOfMonths: 1
+      numberOfMonths: 1,
+      dateFormat: dFormat
     })
     .on( "change", function() {
       from.datepicker( "option", "maxDate", getDate( this ) );
@@ -33,7 +35,7 @@ $( function() {
   function getDate( element ) {
     var date;
     try {
-      date = $.datepicker.parseDate( dateFormat, element.value );
+      date = $.datepicker.parseDate( dFormat, element.value );
     } catch( error ) {
       date = null;
     }
@@ -79,7 +81,6 @@ $( function() {
   <div id="example-table"></div>
 
 <script>
-
   //create Tabulator on DOM element with id "example-table"
   $("#example-table").tabulator({
     pagination:"remote",  // use this for normal pagination
@@ -116,9 +117,6 @@ $( function() {
     },
   });
 
-
-
-
   function search() {
     // package up the search fields into a json to send to server
     querydata = {page:1,
@@ -128,7 +126,6 @@ $( function() {
                          max: $("#date-to").val()},
                  observation:    {min: $("#obsid-from").val(),
                          max: $("#obsid-to").val()}}
-
     $("#example-table").tabulator("setData", "/page", querydata);
   }
 

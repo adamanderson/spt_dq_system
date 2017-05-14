@@ -4,6 +4,7 @@ var assert = require('assert');
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var squel = require("squel");
+var moment = require("moment");
 
 // start the server
 var app = express()
@@ -64,9 +65,13 @@ function parseSearch(query, searchJSON) {
   if(searchJSON['source']) {
     query.where('source == \'' + searchJSON['source'] + '\'')
   }
-  if(searchJSON['observation']['min'] && searchJSON['observation']['min']) {
+  if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
     query.where('observation > ' + searchJSON['observation']['min'])
         .where('observation < ' + searchJSON['observation']['max'])
+  }
+  if(searchJSON['date']['min'] && searchJSON['date']['max']) {
+    query.where('start_time > ' + moment(searchJSON['date']['min'], 'DD/MM/YYYY').unix()*1e8)
+        .where('start_time < ' + moment(searchJSON['date']['max'], 'DD/MM/YYYY').unix()*1e8)
   }
   return query
 }
