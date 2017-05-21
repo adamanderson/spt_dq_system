@@ -6,7 +6,6 @@ import numpy as np
 from spt3g import core, cluster
 import argparse as ap
 import datetime
-import condor_tools
 
 P0 = ap.ArgumentParser(description='Tool for building SPT3G data quality and '
                        'transfer databases.', formatter_class=ap.RawTextHelpFormatter)
@@ -14,6 +13,8 @@ P0.add_argument('mode', choices=['rebuild', 'update'], action='store',
                 default=None, help='Action to perform on file database.')
 P0.add_argument('plotdir', default=None, help='Directory where plots should be '
                 'stored and updated.')
+P0.add_argument('logdir', default=None, help='Directory where log files should '
+                'be stored and updated.')
 P0.add_argument('proxycert', default=None, help='Proxy certificate for plot '
                 'generation on the grid.')
 P0.add_argument('--dbroot', default='/scratch/arahlin/public_html/spt_dq_system',
@@ -78,7 +79,6 @@ if args.mode == 'rebuild':
     conn.commit()
     conn.close()
 
-#plot_queue = condor_tools.PlotterQueue(20)
 n_files_per_worker = 20
 
 conn = sqlite3.connect(dbfile)
@@ -156,13 +156,7 @@ for index, row in df_transfer.iterrows():
     result = c.execute('SELECT * FROM {} WHERE observation == {}'.format(
                        dbname, row['observation'])).fetchone()
 
-
-
-
-
 # handle plot generation
-# condor settings
-
 # collect files that need to be processed
 result = c.execute('SELECT * FROM {} WHERE plots_complete == 0'.format(dbname)).fetchall()
 plot_queue = [] # list of observations to process
@@ -176,20 +170,30 @@ conn.commit()
 conn.close()
 
 jbatch = 0
+timestamp = '{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now())
 while jbatch*n_files_per_worker < len(plot_queue):
+    # write the pathlist file
+    n_to_submit = np.min([n_files_per_worker, len(plot_queue)])
+    pathlist_file = '{}_{}.txt'.format(timestamp, jbatch)
+    output_file = '{}_{}.tar.gz'.format(timestamp, jbatch)
+    with open(pathlist_file, 'w') as f:
+        for p in plot_queue[:n_to_submit]:
+            f.write(p+'\n')
+
     condor_configs = {
         'script': 'plotter.py',
-        'args': '{}'.format(pathlist),
-        'logroot': logdir,
+        'args': ['{}'.format(pathlist_file)],
+        'log_root': args.logdir,
         'request_cpus': 1,
         'request_memory': 2*core.G3Units.GB,
         'request_disk': 10*core.G3Units.GB,
         'requirements': '(OpSysAndVer == "CentOS6" || OpSysAndVer == "RedHat6" || OpSysAndVer == "SL6")',
-        'grid_proxy': '{}'.format(proxycert),
+        'grid_proxy': '{}'.format(args.proxycert),
         'when_to_transfer_output': 'ON_EXIT',
-        'aux_input_files': '{}'.format(pathlist),
+        'aux_input_files': ['{}'.format(pathlist_file)],
         'input_files': plot_queue[(jbatch*n_files_per_worker):
                                   (jbatch*np.max([n_files_per_worker, len(plot_queue)]))],
-        'output_files': args.plotdir,
+        'output_root': args.plotdir,
+        'output_files': [output_file]
     }
     cluster.condor_submit(**condor_configs)

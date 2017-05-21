@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse as ap
 import os
-
+import tarfile
 
 def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     bands = np.unique([bolo_props[bname].band for bname in bolo_props.keys()])
@@ -24,6 +24,7 @@ def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     plt.legend()
     plt.xlabel(varname)
     plt.savefig('{}/{}_{}_band.png'.format(plot_dir, obsid, varname))
+    plt.close(f_band)
 
     # plot data by wafer
     f_wafer = plt.figure()
@@ -38,7 +39,7 @@ def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     plt.legend()
     plt.xlabel(varname)
     plt.savefig('{}/{}_{}_wafer.png'.format(plot_dir, obsid, varname))
-
+    plt.close(f_wafer)
     
 def d2_plots(xdata, ydata):
     return
@@ -53,23 +54,23 @@ def process_RCW38(data_fname, props_fname, plot_dir):
     for var in data_frame.keys():
         d1_plots(os.path.basename(data_fname).rstrip('.g3'), data_frame, var, bolo_props, plot_dir)
 
-def process_calibrator(fname):
+def process_calibrator(data_fname, props_fname, plot_dir):
     return
 
 
-def process_elnod(fname):
+def process_elnod(data_fname, props_fname, plot_dir):
     return
 
 
-def process_CenA(fname):
+def process_CenA(data_fname, props_fname, plot_dir):
     return
 
 
-def process_saturn(fname):
+def process_saturn(data_fname, props_fname, plot_dir):
     return
 
 
-def process_maps(fname):
+def process_maps(data_fname, props_fname, plot_dir):
     return
 
 
@@ -111,4 +112,10 @@ if __name__ == '__main__':
 
     pathlist = np.loadtxt(args.processinglist, dtype=str, ndmin=2)
     for obstype, data_fname, props_fname in pathlist:
-        processing_funcs[obstype](data_fname, props_fname, args.plotdir)
+        print('Processing {}'.format(data_fname))
+        processing_funcs[obstype]('{}/{}'.format(os.getcwd(),data_fname),
+                                  '{}/{}'.format(os.getcwd(),props_fname),
+                                  args.plotdir)
+
+    with tarfile.open('{}.tar.gz'.format(args.plotdir), "w:gz") as tar:
+        tar.add(args.plotdir, arcname=os.path.basename(args.plotdir))
