@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from spt3g import core
 import argparse as ap
-import datetime
 
 P0 = ap.ArgumentParser(description='Tool for building SPT3G data quality and '
                        'transfer databases.', formatter_class=ap.RawTextHelpFormatter)
@@ -71,10 +70,20 @@ c = conn.cursor()
 for index, row in df_transfer.iterrows():
     result = c.execute('SELECT * FROM {} WHERE observation == {}'.format(
             dbname, row['observation'])).fetchall()
-    if not result:
-        start_time = np.nan
-        date = 'nan'
-        time = 'nan'
+
+    path = 'none'
+    start_time = np.nan
+    date = 'nan'
+    time = 'nan'
+
+    if result:
+        rdict = dict(zip(names, result[0]))
+        path = rdict['path']
+    else:
+        print('Processing observation {}/{}'.format(
+                row['source'], row['observation']))
+
+    if path == 'none' and row['status_downsampled'] == 'verified':
 
         # get the path of the observation
         path = '/spt/data/bolodata/downsampled/{}/{}/' \
@@ -87,16 +96,17 @@ for index, row in df_transfer.iterrows():
             first_file = path + '0000.g3'
             try:
                 f = core.G3File(first_file)
-                print('Processing {}'.format(first_file))
                 frame = f.next()
                 start_time = frame['ObservationStart'].time
-                dt = datetime.datetime.fromtimestamp(
-                    int(start_time/core.G3Units.second))
-                date = dt.strftime('%d/%m/%Y')
-                time = dt.strftime('%H:%M')
+                dt = pd.Timestamp(
+                    int(start_time/core.G3Units.second), unit='s', tz='utc')
+                date = dt.strftime('%Y-%m-%d')
+                time = dt.strftime('%H:%M %Z')
             except Exception as e:
                 print('ERROR processing {}: {}'.format(first_file, e))
                 path = 'none'
+
+    if not result:
 
         newrow = [row[key] for key in row.keys()] + [path, start_time, date, time]
         c.execute("INSERT INTO {} VALUES ({})".format(
@@ -104,19 +114,40 @@ for index, row in df_transfer.iterrows():
 
     else:
 
-        rdict = dict(zip(names, result[0]))
         for name in names:
-            if name not in row:
-                rdict.pop(name)
+            if name == 'path':
+                if rdict['path'] == path:
+                    rdict.pop('path')
+                    rdict.pop('start_time')
+                    rdict.pop('time')
+                    rdict.pop('date')
+                else:
+                    if path != 'none' and os.path.exists(path):
+                        rdict['path'] = path
+                        rdict['start_time'] = start_time
+                        rdict['time'] = time
+                        rdict['date'] = date
+            elif name not in row:
+                pass
             elif row[name] == rdict[name]:
                 rdict.pop(name)
-            elif np.isnan(row[name]) and rdict[name] == 'nan':
-                rdict.pop(name)
+            elif rdict[name] == 'nan':
+                try:
+                    isnan = np.isnan(row[name])
+                except TypeError:
+                    pass
+                else:
+                    if isnan:
+                        rdict.pop(name)
+                    else:
+                        rdict[name] = row[name]
+            else:
+                rdict[name] = row[name]
 
         if rdict:
             print('Updating observation {}/{}'.format(
                     row['source'], row['observation']))
-            arglist = ', '.join(['{} = {}'.format(k, v) for k, v in rdict.items()])
+            arglist = ', '.join(['{} = \'{}\''.format(k, v) for k, v in rdict.items()])
             c.execute('UPDATE {} SET {} WHERE observation == {}'.format(
                     dbname, arglist, row['observation']))
 
