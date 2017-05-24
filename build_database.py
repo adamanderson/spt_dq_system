@@ -100,7 +100,7 @@ for index, row in df_transfer.iterrows():
                 start_time = frame['ObservationStart'].time
                 dt = pd.Timestamp(
                     int(start_time/core.G3Units.second), unit='s', tz='utc')
-                date = dt.strftime('%Y-%m-%d')
+                date = dt.strftime('%d/%m/%Y')
                 time = dt.strftime('%H:%M %Z')
             except Exception as e:
                 print('ERROR processing {}: {}'.format(first_file, e))
