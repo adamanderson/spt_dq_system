@@ -89,11 +89,14 @@ for index, row in df_transfer.iterrows():
     result = c.execute('SELECT * FROM {} WHERE observation == {}'.format(
             dbname, row['observation'])).fetchall()
 
-    # add entry to the sqlite DB if it doesn't exist already
-    if not result:
-        start_time = np.nan
-        date = 'nan'
-        time = 'nan'
+    path = 'none'
+    start_time = np.nan
+    date = 'nan'
+    time = 'nan'
+
+    if not result: #path == 'none' and row['status_downsampled'] == 'verified':
+        print('Processing observation {}/{}'.format(
+                row['source'], row['observation']))
 
         # get the path of the observation
         path = '/spt/data/bolodata/downsampled/{}/{}/' \
@@ -110,15 +113,12 @@ for index, row in df_transfer.iterrows():
             first_file = path + '0000.g3'
             try:
                 # f = core.G3File(first_file)
-                print('Processing {}'.format(first_file))
                 # frame = f.next()
                 # start_time = frame['ObservationStart'].time
-                # dt = datetime.datetime.fromtimestamp(
-                #     int(start_time/core.G3Units.second))
-                # date = dt.strftime('%d/%m/%Y')
-                # time = dt.strftime('%H:%M')
-                date = 0
-                time = 0
+                # dt = pd.Timestamp(
+                #     int(start_time/core.G3Units.second), unit='s', tz='utc')
+                date = 0 #dt.strftime('%d/%m/%Y')
+                time = 0 #dt.strftime('%H:%M %Z')
             except Exception as e:
                 print('ERROR processing {}: {}'.format(first_file, e))
                 path = 'none'
@@ -140,25 +140,45 @@ for index, row in df_transfer.iterrows():
     # if the entry already exists, update any modified rows
     else:
         rdict = dict(zip(names, result[0]))
+        path = rdict['path']
         for name in names:
-            if name not in row:
-                rdict.pop(name)
+            if name == 'path':
+                if rdict['path'] == path:
+                    rdict.pop('path')
+                    rdict.pop('start_time')
+                    rdict.pop('time')
+                    rdict.pop('date')
+                else:
+                    if path != 'none' and os.path.exists(path):
+                        rdict['path'] = path
+                        rdict['start_time'] = start_time
+                        rdict['time'] = time
+                        rdict['date'] = date
+            elif name not in row:
+                pass
             elif row[name] == rdict[name]:
                 rdict.pop(name)
-            elif np.isnan(row[name]) and rdict[name] == 'nan':
-                rdict.pop(name)
+            elif rdict[name] == 'nan':
+                try:
+                    isnan = np.isnan(row[name])
+                except TypeError:
+                    pass
+                else:
+                    if isnan:
+                        rdict.pop(name)
+                    else:
+                        rdict[name] = row[name]
+            else:
+                rdict[name] = row[name]
 
         if rdict:
             print('Updating observation {}/{}'.format(
                     row['source'], row['observation']))
-            arglist = ', '.join(['{} = {}'.format(k, v) for k, v in rdict.items()])
+            arglist = ', '.join(['{} = \'{}\''.format(k, v) for k, v in rdict.items()])
             c.execute('UPDATE {} SET {} WHERE observation == {}'.format(
                     dbname, arglist, row['observation']))
 
-    # get the newly added row for further processing
-    result = c.execute('SELECT * FROM {} WHERE observation == {}'.format(
-                       dbname, row['observation'])).fetchone()
-
+    
 # handle plot generation
 # collect files that need to be processed
 result = c.execute('SELECT * FROM {} WHERE plots_complete == 0'.format(dbname)).fetchall()
@@ -190,6 +210,7 @@ while jbatch*n_files_per_worker < len(plot_queue):
     tar_input = tarfile.open(tar_input_fname, 'w')
     tar_cal = tarfile.open(tar_cal_fname, 'w')
     for p in plot_queue[startfile:stopfile]:
+        print('Adding file {}'.format(p[1]))
         tar_input.add(p[1])
         tar_cal.add(p[2])
     tar_input.close()

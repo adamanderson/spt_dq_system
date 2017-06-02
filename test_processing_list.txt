@@ -1,0 +1,1 @@
+RCW38	/spt/user/production/calibration/RCW38/4161292.g3	/spt/data/bolodata/downsampled/RCW38/4161292/nominal_online_cal.g3
