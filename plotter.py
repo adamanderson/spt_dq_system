@@ -1,9 +1,12 @@
 from spt3g import core, dfmux, calibration
+import matplotlib
+matplotlib.use('Agg') # don't use X backend on grid 
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse as ap
 import os
 import tarfile
+
 
 def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     bands = np.unique([bolo_props[bname].band for bname in bolo_props.keys()])
@@ -17,10 +20,15 @@ def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     bdata = np.array([bolo_props[bname].band for bname in data.keys()])
     bdata = bdata[np.isfinite(d)]
     for band in bands:
+        if varname in plot_ranges.keys():
+            histbins = np.linspace(plot_ranges[varname][0], plot_ranges[varname][1], 101)
+        else:
+            histbins = np.linspace(np.min(d[(bdata==band)]), np.max(d[(bdata==band)]))
         plt.hist(d[(bdata==band)],
-                 bins=np.linspace(plot_ranges[varname][0], plot_ranges[varname][1], 101), alpha=0.7,
+                 bins=histbins, alpha=0.7,
                  histtype='stepfilled', label=str(band/core.G3Units.GHz))
-    plt.xlim(plot_ranges[varname])
+    if varname in plot_ranges.keys():
+        plt.xlim(plot_ranges[varname])
     plt.legend()
     plt.xlabel(varname)
     plt.savefig('{}/{}_{}_band.png'.format(plot_dir, obsid, varname))
@@ -33,9 +41,14 @@ def d1_plots(obsid, data_frame, varname, bolo_props, plot_dir):
     for wafer in wafers:
         wafer_data = np.array([data[bname] for bname in data.keys()
                               if bolo_props[bname].wafer_id == wafer])
-        plt.hist(wafer_data[np.isfinite(wafer_data)], bins=np.linspace(plot_ranges[varname][0], plot_ranges[varname][1], 101), 
+        if varname in plot_ranges.keys():
+            histbins = np.linspace(plot_ranges[varname][0], plot_ranges[varname][1], 101)
+        else:
+            histbins = np.linspace(np.min(d[(bdata==band)]), np.max(d[(bdata==band)]))
+        plt.hist(wafer_data[np.isfinite(wafer_data)], bins=histbins, 
                  histtype='step', label=wafer)
-    plt.xlim(plot_ranges[varname])
+    if varname in plot_ranges.keys():
+        plt.xlim(plot_ranges[varname])
     plt.legend()
     plt.xlabel(varname)
     plt.savefig('{}/{}_{}_wafer.png'.format(plot_dir, obsid, varname))
@@ -82,6 +95,7 @@ def check_plots():
 
 # mapping of observation type to processing function
 processing_funcs = {'RCW38': process_RCW38,
+                    'RCW38-pixelraster': process_RCW38,
                     'calibrator': process_calibrator,
                     'elnod': process_elnod,
                     'CenA': process_CenA,
@@ -90,8 +104,7 @@ processing_funcs = {'RCW38': process_RCW38,
 
 plot_ranges = {'RCW38FluxCalibration':(-2e2, 2e2),
                'PointingOffsetX':(-3e-2, 3e-2),
-               'PointingOffsetY':(-3e-2, 3e-2)
-               }
+               'PointingOffsetY':(-3e-2, 3e-2)}
 
 
 if __name__ == '__main__':
@@ -113,9 +126,11 @@ if __name__ == '__main__':
     pathlist = np.loadtxt(args.processinglist, dtype=str, ndmin=2)
     for obstype, data_fname, props_fname in pathlist:
         print('Processing {}'.format(data_fname))
-        processing_funcs[obstype]('{}/{}'.format(os.getcwd(),data_fname),
-                                  '{}/{}'.format(os.getcwd(),props_fname),
-                                  args.plotdir)
+        if obstype in processing_funcs.keys():
+            processing_funcs[obstype]('{}/{}'.format(os.getcwd(),data_fname),
+                                      '{}/{}'.format(os.getcwd(),props_fname),
+                                      args.plotdir)
 
     with tarfile.open('{}.tar.gz'.format(args.plotdir), "w:gz") as tar:
         tar.add(args.plotdir, arcname=os.path.basename(args.plotdir))
+    print(os.listdir(os.getcwd()))
