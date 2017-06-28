@@ -5,6 +5,9 @@ var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var squel = require("squel");
 var moment = require("moment");
+var spawnSync = require('child_process').spawnSync
+var exec = require('child_process').exec
+var fs = require('fs')
 
 // start the server
 var app = express()
@@ -34,10 +37,12 @@ app.post('/series', function (req, res) {
 app.get('/all', function(req, res) {
   query = squel.select()
   console.log(query.toString())
+  /*
   db.all(query.toString(), function(err, rows) {
   	assert.equal(null, err);
   	res.send(rows);
   });
+  */
 });
 
 app.get('/page', function(req, res) {
@@ -46,20 +51,44 @@ app.get('/page', function(req, res) {
                 .from('master_database')
   parseSearch(query, req.query);
   var max_pages;
+  /*
   db.all(query.toString(), function(err, rows) {
     max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
   });
+  */
 
   query = query.offset((req.query['page']-1)*req.query['size'])
               .limit(req.query['size'])
               .order('observation', false);
-  console.log(query.toString())
+  console.log(query.toString());
+  /*
   db.all(query.toString(), function(err, rows) {
     assert.equal(null, err);
     var data = {'last_page': max_pages, 'data': rows}
 	  res.send(data);
   });
+  */
 });
+
+// request data, request contains observation to make a plot of
+// the python script saves a plot and this gets read and sent
+// back
+app.get('/data_req', function (req, res) {
+    console.log('Request for date: ' + req._parsedUrl.query);
+    options = {'timeout':10000};
+    //TODO sanitize input
+    input = req._parsedUrl.query
+    exec('python test.py ' + input , options, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        res.json('error');
+        return;
+      }
+      var img = fs.readFileSync('./' + stdout).toString('base64');
+      res.writeHead(200, {'Content-Type': 'image/png' });
+      res.end(img, 'binary');
+    });
+})
 
 function parseSearch(query, searchJSON) {
   if(searchJSON['source']) {

@@ -35,8 +35,7 @@ app.get('/', function (req, res) {
 // the python script saves a plot and this gets read and sent
 // back
 app.get('/data_req', function (req, res) {
-    console.log("hello request");
-    console.log(req._parsedUrl.query);
+    console.log('Request for date: ' + req._parsedUrl.query);
     // make plot
     var plot = run_py(req._parsedUrl.query);
     // read image file made by plot and convert to base64

@@ -15,6 +15,7 @@ def make_plot(date):
         x = [item.x_offset for key, item in data[0]['NominalBolometerProperties'].items()]
         y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
 
+
         plt.scatter(x, y)
         plt.xlabel('x Offset')
         plt.ylabel('y Offset')
@@ -31,10 +32,10 @@ def read_in():
 
 def main():
     #get our data as an array from read_in()
-    lines = read_in()
+    #lines = read_in()
 
     #make plot and print plot name without any newline
-    make_plot(lines)
+    make_plot(sys.argv[1])
     sys.stdout.write('plot.png')
 
 #start process
