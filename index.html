@@ -45,6 +45,8 @@ $( function() {
 } );
 </script>
 
+<title>SPT Data Quality</title>
+
 </head>
 
 
@@ -77,8 +79,32 @@ $( function() {
   <br>
 
   <button onclick="search()">Search</button>
+  <input id="data_butt" type="button" value="Request Data" />
 
   <div id="example-table"></div>
+
+<script>
+  // when clicked, requests image from the server and replaces current image
+  $("#data_butt").click(function() {
+    // uncomment when we have a selection to choose data from
+    //dat = $('#date_select').val();
+    dat = "10755858";
+    $.get( "data_req", dat, function( b64_image ) {
+        if (b64_image == "error") {
+            alert("Plot generation took too long");
+            return;
+        }
+        var old_img = document.getElementById("plot");
+        if (old_img != null) {
+          old_img.parentNode.removeChild(old_img);
+        }
+        var output_img = document.createElement("img");
+        output_img.src = "data:image/png;base64,"+ b64_image;
+        output_img.setAttribute("id", "plot");
+        document.body.appendChild(output_img);
+      });
+  });
+</script>
 
 <script>
   //create Tabulator on DOM element with id "example-table"
