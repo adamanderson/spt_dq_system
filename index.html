@@ -80,15 +80,33 @@ $( function() {
 
   <button onclick="search()">Search</button>
   <input id="data_butt" type="button" value="Request Data" />
+  <div id="date_list">Select Date</div>
 
   <div id="example-table"></div>
 
 <script>
+  // populates the drop down menu of dates
+  // this runs when the page is loaded
+  var date_div = document.getElementById("date_list");
+  var date_select = document.createElement('select');
+  date_select.setAttribute("id", "date_select");
+  date_div.appendChild(date_select);
+
+  // note: do not have to decode "dates" which comes in json
+  $.get("date_list", function( dates ) {
+      for (var i = 0; i < dates.length; i++) {
+          var option = document.createElement("option");
+          option.setAttribute("value", dates[i]);
+          option.text = dates[i];
+          date_select.appendChild(option);
+      }
+  });
+</script>
+
+<script>
   // when clicked, requests image from the server and replaces current image
   $("#data_butt").click(function() {
-    // uncomment when we have a selection to choose data from
-    //dat = $('#date_select').val();
-    dat = "10755858";
+    dat = $('#date_select').val();
     $.get( "data_req", dat, function( b64_image ) {
         if (b64_image == "error") {
             alert("Plot generation took too long");

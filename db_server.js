@@ -70,24 +70,41 @@ app.get('/page', function(req, res) {
   */
 });
 
+// used to populate list of available observations
+// only gets offline calibration dates currently
+app.get('/date_list', function (req, res) {
+    console.log("date list request");
+    var path = "/spt/data/bolodata/downsampled/RCW38-pixelraster/";
+    fs.readdir(path, function(err, items) {
+        res.json(items);
+    });
+})
+
 // request data, request contains observation to make a plot of
 // the python script saves a plot and this gets read and sent
 // back
 app.get('/data_req', function (req, res) {
     console.log('Request for date: ' + req._parsedUrl.query);
     options = {'timeout':10000};
-    //TODO sanitize input
-    input = req._parsedUrl.query
-    exec('python test.py ' + input , options, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        res.json('error');
+    //TODO sanitize input (sanitized for now but will have to be better
+    // once we get input for more files)
+    input = req._parsedUrl.query;
+    if (fs.existsSync('/spt/data/bolodata/downsampled/RCW38-pixelraster/'
+                + input + '/nominal_online_cal.g3')) { 
+        exec('python test.py ' + input , options, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`exec error: ${error}`);
+            res.json('error');
+            return;
+          }
+          var img = fs.readFileSync('./' + stdout).toString('base64');
+          res.writeHead(200, {'Content-Type': 'image/png' });
+          res.end(img, 'binary');
+        });
         return;
-      }
-      var img = fs.readFileSync('./' + stdout).toString('base64');
-      res.writeHead(200, {'Content-Type': 'image/png' });
-      res.end(img, 'binary');
-    });
+    }
+    console.error('File does not exist');
+    res.json('error');
 })
 
 function parseSearch(query, searchJSON) {
