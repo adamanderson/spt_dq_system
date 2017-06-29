@@ -7,6 +7,7 @@ var squel = require("squel");
 var moment = require("moment");
 var exec = require('child_process').exec
 var fs = require('fs')
+var readline = require('readline');
 
 // start the server
 var app = express()
@@ -83,9 +84,10 @@ app.get('/data_req', function (req, res) {
     path = req.query['path'];
     obs = req.query['observation'];
     source = req.query['source'];
+    plot_type = req.query['plot_type'];
     console.log('Request for ' + source + ' ' + obs);
     if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
-        exec('python test.py ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
+        exec('python test.py ' + plot_type + ' ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             res.json('error');
@@ -99,6 +101,19 @@ app.get('/data_req', function (req, res) {
     }
     console.error('File does not exist');
     res.json('error');
+})
+
+app.get('/plot_list', function(req, res) {
+  var plot_list = [];
+  var rl = readline.createInterface({
+      input: fs.createReadStream('plot.config')
+  });
+  rl.on('line', (line) => {
+    plot_list.push(line);
+  });
+  rl.on('close', function () {
+    res.json(plot_list);
+  });
 })
 
 function parseSearch(query, searchJSON) {

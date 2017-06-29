@@ -62,6 +62,8 @@ $( function() {
     <option value="saturn">saturn</option>
   </select>
 
+  <div id="plot-type">Plot type:</div>
+
   <br>
 
   <label for="date-from">Start date:</label>
@@ -110,10 +112,12 @@ $( function() {
       {title:"Time", field:"time", sorter:"time", width:80}
     ],
     rowClick:function(e, id, obsdata, row){ //trigger an alert message when the row is clicked
+      // get plot type
+      obsdata['plot_type'] = $('#plot_select').val();
       // request the plot
       $.get("data_req", obsdata, function(b64_image, status) {
         if (b64_image == "error") {
-            alert("Plot generation took too long. Please try again.");
+            alert("Error generating plot. Please try again.");
             return;
         }
         // display plot in new window. _blank forces new window every time
@@ -147,4 +151,23 @@ $( function() {
 </script>
 
 </body>
+
+<script>
+  // populates the drop down menu of dates                              
+  // this runs when the page is loaded                                  
+  var plot_div = document.getElementById("plot-type");
+  var plot_select = document.createElement('select');
+  plot_select.setAttribute("id", "plot_select");
+  plot_div.appendChild(plot_select);
+
+  // note: do not have to decode "plots" which comes in json            
+  $.get("plot_list", function( plots ) {
+    for (var i = 0; i < plots.length; i++) {
+      var option = document.createElement("option");
+      option.setAttribute("value", plots[i]);
+      option.text = plots[i];
+      plot_select.appendChild(option);
+    }
+  });
+</script>
 </html>
