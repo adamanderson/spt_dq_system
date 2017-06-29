@@ -6,23 +6,19 @@ from os import listdir
 from spt3g import core, calibration
 
 # makes a plot of the nominal offset given the date
-def make_plot(date):
-    target = 'RCW38-pixelraster/'
-    path = '/spt/data/bolodata/downsampled/' + target
-    for direc in listdir(path):
-        data = [frame for frame in core.G3File(path + str(date) + '/nominal_online_cal.g3')]
+def make_plot(path, target, obs):
+    data = [frame for frame in core.G3File(path + 'nominal_online_cal.g3')]
 
-        x = [item.x_offset for key, item in data[0]['NominalBolometerProperties'].items()]
-        y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
+    x = [item.x_offset for key, item in data[0]['NominalBolometerProperties'].items()]
+    y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
 
 
-        plt.scatter(x, y)
-        plt.xlabel('x Offset')
-        plt.ylabel('y Offset')
-        plt.title('Nominal Bolometer Positions of ' + target[:-1] + ' at time ' + str(date))
-        plt.savefig('plot.png')
-        plt.close()
-        break
+    plt.scatter(x, y)
+    plt.xlabel('x Offset')
+    plt.ylabel('y Offset')
+    plt.title('Nominal Bolometer Positions of ' + target[:-1] + ' at time ' + obs)
+    plt.savefig('plot.png')
+    plt.close()
 
 #Read data from stdin
 def read_in():
@@ -35,7 +31,7 @@ def main():
     #lines = read_in()
 
     #make plot and print plot name without any newline
-    make_plot(sys.argv[1])
+    make_plot(sys.argv[1], sys.argv[2], sys.argv[3])
     sys.stdout.write('plot.png')
 
 #start process

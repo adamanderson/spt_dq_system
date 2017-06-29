@@ -5,7 +5,6 @@ var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var squel = require("squel");
 var moment = require("moment");
-var spawnSync = require('child_process').spawnSync
 var exec = require('child_process').exec
 var fs = require('fs')
 
@@ -29,20 +28,21 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('master_database.db');
 
+/*
 app.post('/series', function (req, res) {
   res.render('series')
 })
+*/
 
+// TODO does this ever run?
 // get all data from the database
 app.get('/all', function(req, res) {
   query = squel.select()
   console.log(query.toString())
-  /*
   db.all(query.toString(), function(err, rows) {
   	assert.equal(null, err);
   	res.send(rows);
   });
-  */
 });
 
 app.get('/page', function(req, res) {
@@ -51,47 +51,41 @@ app.get('/page', function(req, res) {
                 .from('master_database')
   parseSearch(query, req.query);
   var max_pages;
-  /*
   db.all(query.toString(), function(err, rows) {
     max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
   });
-  */
 
   query = query.offset((req.query['page']-1)*req.query['size'])
               .limit(req.query['size'])
               .order('observation', false);
   console.log(query.toString());
-  /*
   db.all(query.toString(), function(err, rows) {
     assert.equal(null, err);
-    var data = {'last_page': max_pages, 'data': rows}
+    var data = {'last_page': max_pages, 'data': rows};
 	  res.send(data);
   });
-  */
 });
 
-// used to populate list of available observations
-// only gets offline calibration dates currently
-app.get('/date_list', function (req, res) {
-    console.log("date list request");
-    var path = "/spt/data/bolodata/downsampled/RCW38-pixelraster/";
-    fs.readdir(path, function(err, items) {
-        res.json(items);
-    });
+// page for displaying plots/data
+app.get('/display.html', function(req, res) {
+  res.sendFile( __dirname + "/" + "display.html" );
 })
+
 
 // request data, request contains observation to make a plot of
 // the python script saves a plot and this gets read and sent
 // back
 app.get('/data_req', function (req, res) {
-    console.log('Request for date: ' + req._parsedUrl.query);
     options = {'timeout':10000};
-    //TODO sanitize input (sanitized for now but will have to be better
+    //TODO sanitize input (sanitized for now by checking if a file
+    // exists but will have to be better
     // once we get input for more files)
-    input = req._parsedUrl.query;
-    if (fs.existsSync('/spt/data/bolodata/downsampled/RCW38-pixelraster/'
-                + input + '/nominal_online_cal.g3')) { 
-        exec('python test.py ' + input , options, (error, stdout, stderr) => {
+    path = req.query['path'];
+    obs = req.query['observation'];
+    source = req.query['source'];
+    console.log('Request for ' + source + ' ' + obs);
+    if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
+        exec('python test.py ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             res.json('error');

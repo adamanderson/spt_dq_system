@@ -79,50 +79,8 @@ $( function() {
   <br>
 
   <button onclick="search()">Search</button>
-  <input id="data_butt" type="button" value="Request Data" />
-  <div id="date_list">Select Date</div>
 
   <div id="example-table"></div>
-
-<script>
-  // populates the drop down menu of dates
-  // this runs when the page is loaded
-  var date_div = document.getElementById("date_list");
-  var date_select = document.createElement('select');
-  date_select.setAttribute("id", "date_select");
-  date_div.appendChild(date_select);
-
-  // note: do not have to decode "dates" which comes in json
-  $.get("date_list", function( dates ) {
-      for (var i = 0; i < dates.length; i++) {
-          var option = document.createElement("option");
-          option.setAttribute("value", dates[i]);
-          option.text = dates[i];
-          date_select.appendChild(option);
-      }
-  });
-</script>
-
-<script>
-  // when clicked, requests image from the server and replaces current image
-  $("#data_butt").click(function() {
-    dat = $('#date_select').val();
-    $.get( "data_req", dat, function( b64_image ) {
-        if (b64_image == "error") {
-            alert("Plot generation took too long");
-            return;
-        }
-        var old_img = document.getElementById("plot");
-        if (old_img != null) {
-          old_img.parentNode.removeChild(old_img);
-        }
-        var output_img = document.createElement("img");
-        output_img.src = "data:image/png;base64,"+ b64_image;
-        output_img.setAttribute("id", "plot");
-        document.body.appendChild(output_img);
-      });
-  });
-</script>
 
 <script>
   //create Tabulator on DOM element with id "example-table"
@@ -152,14 +110,27 @@ $( function() {
       {title:"Time", field:"time", sorter:"time", width:80}
     ],
     rowClick:function(e, id, obsdata, row){ //trigger an alert message when the row is clicked
-      console.log(obsdata)
-      $.post("series", obsdata, function(data, status) {
-        var w = window.open('about:blank', 'windowname');
-        w.document.write(data);
-        w.document.close();
+      // request the plot
+      $.get("data_req", obsdata, function(b64_image, status) {
+        if (b64_image == "error") {
+            alert("Plot generation took too long. Please try again.");
+            return;
+        }
+        // display plot in new window. _blank forces new window every time
+        var w = window.open('display.html', '_blank');
+        var output_img = w.document.createElement("img");
+        output_img.src = "data:image/png;base64,"+ b64_image;
+        output_img.setAttribute("id", "plot");
+        // need onload otherwise page gets cleared when fully loaded
+        w.onload = function() {
+          w.document.title = obsdata['source'] + " " + obsdata['observation'];
+          w.document.body.appendChild(output_img);
+          w.document.close();
+        }
       });
     },
   });
+
 
   function search() {
     // package up the search fields into a json to send to server
