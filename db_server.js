@@ -87,7 +87,7 @@ app.get('/data_req', function (req, res) {
     plot_type = req.query['plot_type'];
     console.log('Request for ' + source + ' ' + obs);
     if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
-        exec('python test.py ' + plot_type + ' ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
+        exec('python -B ./plot/test.py ' + plot_type + ' ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
           if (error) {
             console.error(`exec error: ${error}`);
             res.json('error');
@@ -103,16 +103,15 @@ app.get('/data_req', function (req, res) {
     res.json('error');
 })
 
+// get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
-  var plot_list = [];
-  var rl = readline.createInterface({
-      input: fs.createReadStream('plot.config')
-  });
-  rl.on('line', (line) => {
-    plot_list.push(line);
-  });
-  rl.on('close', function () {
-    res.json(plot_list);
+  fs.readdir('./plot/', function(err, items) {
+    index = items.indexOf('plot.py');
+    items.splice(index, 1);
+    for (var i = 0; i < items.length; i++) {
+      items[i] = items[i].slice(0, -3);
+    }
+    res.json(items);
   });
 })
 
