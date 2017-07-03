@@ -29,22 +29,19 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('master_database.db');
 
-/*
-app.post('/series', function (req, res) {
-  res.render('series')
-})
-*/
+// needed to load chosen
+app.use('/js',express.static(__dirname + '/js'));
+app.use('/css',express.static(__dirname + '/css'));
 
-// TODO does this ever run?
-// get all data from the database
-app.get('/all', function(req, res) {
-  query = squel.select()
-  console.log(query.toString())
-  db.all(query.toString(), function(err, rows) {
-  	assert.equal(null, err);
-  	res.send(rows);
-  });
-});
+// create directory in /tmp to store plots
+// TODO: be nice and clean up /tmp every now
+// and then so it doesn't fill up
+var plot_dir = '/tmp/spt_dq/';
+if (!fs.existsSync(plot_dir)){
+      fs.mkdirSync(plot_dir);
+}
+
+app.use('/img', express.static(plot_dir));
 
 app.get('/page', function(req, res) {
   // get all data from the database
@@ -78,26 +75,34 @@ app.get('/display.html', function(req, res) {
 // back
 app.get('/data_req', function (req, res) {
     options = {'timeout':10000};
-    //TODO sanitize input (sanitized for now by checking if a file
-    // exists but will have to be better
-    // once we get input for more files)
+    //TODO sanitize input
     path = req.query['path'];
     obs = req.query['observation'];
     source = req.query['source'];
     plot_type = req.query['plot_type'];
     console.log('Request for ' + source + ' ' + obs);
     if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
-        exec('python -B ./plot/test.py ' + plot_type + ' ' + path + ' ' + source + ' ' + obs , options, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`exec error: ${error}`);
-            res.json('error');
-            return;
-          }
-          var img = fs.readFileSync('./' + stdout).toString('base64');
-          res.writeHead(200, {'Content-Type': 'image/png' });
-          res.end(img, 'binary');
-        });
-        return;
+      console.log(req.query);
+      console.log('python -B ./plot/plot.py ' + ' ' + path + ' ' + source + ' ' + obs + ' ' + plot_type);
+      exec('python -B ./plot/plot.py ' + path + ' ' + source + ' ' + obs + ' ' + plot_type, options, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          res.json('error');
+          return;
+        }
+        /*
+        var img;
+        if (plot_type.includes(' ')) {
+          img = fs.readFileSync(plot_dir + source + obs + plot_type.substr(0, plot_type.indexOf(" ")) + '.png').toString('base64');
+        } else {
+          img = fs.readFileSync(plot_dir + source + obs + plot_type + '.png').toString('base64');
+        }
+        res.writeHead(200, {'Content-Type': 'image/png' });
+        res.end(img, 'binary');
+        */
+        res.send('');
+      });
+      return;
     }
     console.error('File does not exist');
     res.json('error');
