@@ -10,11 +10,9 @@ def nominal_plot(request):
     y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
 
 
+    fig = plt.figure()
     plt.scatter(x, y)
     plt.xlabel('x Offset')
     plt.ylabel('y Offset')
     plt.title('Nominal Bolometer Positions of ' + request['source'] + ' at time ' + request['observation'])
-    plt.savefig('plot.png')
-    plt.close()
-
-
+    return fig

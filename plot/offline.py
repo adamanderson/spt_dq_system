@@ -16,11 +16,10 @@ def offline_plot(request):
             y.append(y_off)
 
 
+    fig = plt.figure()
     plt.scatter(x, y)
     plt.xlabel('x Offset')
     plt.ylabel('y Offset')
     plt.title('Offline Bolometer Positions of ' + request['source'] + ' at time ' + request['observation'])
-    plt.savefig('plot.png')
-    plt.close()
-
+    return fig
 
