@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-from os import listdir
+from os import listdir, path
 from importlib import import_module
 
 def main():
@@ -9,6 +9,10 @@ def main():
 
   for plot_type in sys.argv[4:]:
     request['type'] = plot_type
+    plot_file = '/tmp/spt_dq/' + request['source'] + request['observation'] + plot_type + '.png'
+    # check if plot already exists
+    if (path.isfile(plot_file)):
+        continue
     # load python file and function
     # only import from plot package so that the user passed plot_type
     # cannot import arbitrary modules
@@ -28,7 +32,7 @@ def main():
         sys.stdout.write(plot_type)
         sys.stdout.flush()
 
-    plot.savefig('/tmp/spt_dq/' + request['source'] + request['observation'] + plot_type + '.png')
+    plot.savefig(plot_file)
 
 #start process
 if __name__ == '__main__':
