@@ -164,28 +164,16 @@ $( function() {
           alert(err.msg)
           return;
         }
-        for (var type of selected_values) {
-          var w  = window.open('img/' + obsdata['source'] + obsdata['observation'] + type + '.png', '_blank');
-        }
-
-      /*
-      $.get("data_req", obsdata, function(b64_image, status) {
-        if (b64_image == "error") {
-            alert("Error generating plot. Please try again.");
-            return;
-        }
-        // display plot in new window. _blank forces new window every time
+        // open display window and load images
         var w = window.open('display.html', '_blank');
-        var output_img = w.document.createElement("img");
-        output_img.src = "data:image/png;base64,"+ b64_image;
-        output_img.setAttribute("id", "plot");
-        // need onload otherwise page gets cleared when fully loaded
+        // need to add images after page has loaded
         w.onload = function() {
-          w.document.title = obsdata['source'] + " " + obsdata['observation'];
-          w.document.body.appendChild(output_img);
-          w.document.close();
+            for (var type of selected_values) {
+              var img = w.document.createElement('img');
+              img.src = 'img/' + obsdata['source'] + obsdata['observation'] + type + '.png'
+              w.document.body.appendChild(img);
+            }
         }
-        */
       });
     },
   });
