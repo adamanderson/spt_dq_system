@@ -34,7 +34,7 @@ This will start a server at 127.0.0.1 on port 3000. Then point your browser at h
 # Adding More Plots
 To add new plot types to the webserver, simply create a new python script in the plot directory subject to the following constraints:
 * The name of the plot type is the title of the file (minus the '.py')
-* The script contains a function with the same name as the file (minus the '.py') + '\_plot'
+* The script contains a function with the same name as the file (minus the '.py')
 * That function returns a matplotlib figure
 * That function takes one argument that is a dictionary containing the source, observation id, path, and plot type
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from spt3g import core, calibration
 
 # makes a plot of the offline offset given the date
-def RCW38FluxCalibration_plot(request):
+def RCW38FluxCalibration(request):
     data = [frame for frame in core.G3File('/spt/user/production/calibration/' + request['source'] + '/' + request['observation'] + '.g3')]
     x = []
     for key, item in data[0]['RCW38FluxCalibration'].items():

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from spt3g import core, calibration
 
 # makes a plot of the offline offset given the date
-def offline_plot(request):
+def offline(request):
     data = [frame for frame in core.G3File('/spt/user/production/calibration/' + request['source'] + '/' + request['observation'] + '.g3')]
 
     x = []

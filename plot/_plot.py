@@ -17,7 +17,7 @@ def main():
     # only import from plot package so that the user passed plot_type
     # cannot import arbitrary modules
     module = import_module('plot.' + plot_type)
-    func = getattr(module, request['type'] + '_plot')
+    func = getattr(module, request['type'])
     # call plotting function and handle errors
     try:
         plot = func(request)
