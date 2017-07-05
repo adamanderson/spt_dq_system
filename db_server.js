@@ -116,7 +116,9 @@ app.get('/data_req', function (req, res) {
 // get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
   fs.readdir('./plot/', function(err, items) {
-    index = items.indexOf('plot.py');
+    index = items.indexOf('_plot.py');
+    items.splice(index, 1);
+    index = items.indexOf('__init__.py');
     items.splice(index, 1);
     for (var i = 0; i < items.length; i++) {
       items[i] = items[i].slice(0, -3);
