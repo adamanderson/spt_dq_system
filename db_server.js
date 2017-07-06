@@ -8,6 +8,7 @@ var moment = require("moment");
 var execFile = require('child_process').execFile
 var fs = require('fs')
 var readline = require('readline');
+var util = require('util')
 
 // start the server
 var app = express()
@@ -35,10 +36,22 @@ app.use('/css',express.static(__dirname + '/css'));
 
 // create directory in /tmp to store plots
 // TODO: be nice and clean up /tmp every now
-// and then so it doesn't fill up
+// and then so it doesn't fill up?
 var plot_dir = '/tmp/spt_dq/';
 if (!fs.existsSync(plot_dir)){
       fs.mkdirSync(plot_dir);
+}
+
+// logs messages along with a timestamp. keeps writesteam open
+var ws = fs.createWriteStream('./db.log', {'flags': 'a'});
+ws.on('error', function (err) {
+  console.error('Error logging message:');
+  console.error(msg);
+  console.error(err);
+});
+function log(msg) {
+    var d = new Date();
+    ws.write(d.toLocaleString() + '\t' + msg + '\n');
 }
 
 app.use('/img', express.static(plot_dir));
@@ -56,7 +69,7 @@ app.get('/page', function(req, res) {
   query = query.offset((req.query['page']-1)*req.query['size'])
               .limit(req.query['size'])
               .order('observation', false);
-  console.log(query.toString());
+  log(query.toString());
   db.all(query.toString(), function(err, rows) {
     assert.equal(null, err);
     var data = {'last_page': max_pages, 'data': rows};
@@ -79,38 +92,26 @@ app.get('/data_req', function (req, res) {
     obs = req.query['observation'];
     source = req.query['source'];
     plot_type = req.query['plot_type'];
-    console.log('Request for ' + source + ' ' + obs);
-
-    // setup return value
-    var err = {num:null, msg:null};
 
     if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
-      console.log(req.query);
-      console.log('python -B ./plot/_plot.py ' + ' ' + path + ' ' + source + ' ' + obs + ' ' + plot_type);
+      log(util.inspect(req.query));
       // execute python plotting script. Safe because user input
       // is passed as arguments to the python script and the python
       // script handles the arguments safely.
       var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
-      var args = ['-B', './plot/_plot.py', path, source, obs].concat(plot_type.split(' '))
+      var args = ['-B', './plot/_plot.py', path, source, obs].concat(plot_type.split(' '));
+      var err = null;
       execFile(python, args, options, (error, stdout, stderr) => {
         if (error) {
-          err = {num:error.code, msg:stderr, type:stdout};
-          if (err.num == 3) {
-            err.msg = 'Error making plot ' + err.type + '. Data does not exist in file.';
-          }
-          if (err.num == 4) {
-            err.msg = 'Error. Could not find observation file.';
-          }
-          console.error(`exec error: ${error}`);
+          err = stdout;
+          log('exec python error: ' + error.toString());
         }
         res.json(err);
       });
       return;
     }
-    console.error('File does not exist');
-    err.num = 1;
-    err.msg = 'Error. Data file not found.';
-    res.json(err);
+    log('Error. Data file does not exist');
+    res.json('Error. Data file not found.');
 })
 
 // get all available plot types, removing the driver file and .py
@@ -143,5 +144,5 @@ function parseSearch(query, searchJSON) {
 }
 
 app.listen(3000, function() {
-  console.log('Listening on port 3000');
+  log('Listening on port 3000');
 });
