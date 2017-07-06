@@ -160,8 +160,8 @@ $( function() {
       obsdata['plot_type'] = selected_values.join(' ');
       // request the plot
       $.get("data_req", obsdata, function(err, status) {
-        if (err.msg != null) {
-          alert(err.msg)
+        if (err != null) {
+          alert(err)
           return;
         }
         // open display window and load images
