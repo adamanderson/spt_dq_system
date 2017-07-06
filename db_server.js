@@ -5,22 +5,53 @@ var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var squel = require("squel");
 var moment = require("moment");
-var execFile = require('child_process').execFile
-var fs = require('fs')
+var execFile = require('child_process').execFile;
+var fs = require('fs');
+var path = require('path');
 var readline = require('readline');
-var util = require('util')
+var util = require('util');
+var auth = require('express-basic-auth');
+var bcrypt = require('bcrypt');
 
 // start the server
-var app = express()
+var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
+function authorizer(username, password, cb) {
+  if (username != 'spt')
+    return cb(null, true);
+  // get hash
+  filePath = path.join(__dirname, '/hash')
+  fs.readFile(filePath, {encoding: 'utf-8'}, function(err, hash){
+    if (!err) {
+      // check password vs hash
+      bcrypt.compare(password, hash.trim(), function(err, res) {
+        return cb(null, res);
+      });
+    } else {
+      log(err);
+    }
+  });
+}
+
+function getUnauthorizedResponse(req) {
+  return 'Credentials rejected';
+}
+
+app.use(auth({
+  authorizer: authorizer,
+  authorizeAsync: true,
+  challenge: true,
+  unauthorizedResponse: getUnauthorizedResponse,
+}))
+
 app.use(express.static('public'));
 app.get('/index.html', function (req, res) {
-   res.sendFile( __dirname + "/" + "index.html" );
+  res.sendFile( __dirname + "/" + "index.html" );
 })
 app.get('/', function (req, res) {
-   res.sendFile( __dirname + "/" + "index.html" );
+  res.sendFile( __dirname + "/" + "index.html" );
 })
 
 // handlebars for templating
@@ -35,8 +66,8 @@ app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
 
 // create directory in /tmp to store plots
-// TODO: be nice and clean up /tmp every now
-// and then so it doesn't fill up?
+// TODO: don't cache every plot. Remove old plots from time to time
+// NOTE: not a high priority because right now ~1.2TB free in /tmp
 var plot_dir = '/tmp/spt_dq/';
 if (!fs.existsSync(plot_dir)){
       fs.mkdirSync(plot_dir);
@@ -56,6 +87,7 @@ function log(msg) {
 
 app.use('/img', express.static(plot_dir));
 
+// TODO error handling here
 app.get('/page', function(req, res) {
   // get all data from the database
   query = squel.select()

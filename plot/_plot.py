@@ -1,6 +1,6 @@
 import sys
 import matplotlib.pyplot as plt
-from os import listdir, path
+from os import path, stat
 from importlib import import_module
 
 # send message to user through stdout and send error to server
@@ -26,9 +26,12 @@ def main():
           request['observation'], plot_type)
 
       # check if plot already exists
-      # TODO: remove cached plots if plotting file changes
+      # remove cached plots if plotting file has changed
       if (path.isfile(plot_file)):
-          continue
+          plot_time = stat(plot_file).st_mtime
+          file_time = stat('./plot/' + plot_type + '.py').st_mtime
+          if (plot_time > file_time):
+              continue
       # load python file and function
       # only import from plot package so that the user passed plot_type
       # cannot import arbitrary modules
