@@ -61,7 +61,9 @@ $( function() {
     <option value="elnod">elnod</option>
     <option value="CenA">CenA</option>
     <option value="RCW38">RCW38</option>
+    <option value="RCW38-pixelraster">RCW38-pixelraster</option>
     <option value="saturn">saturn</option>
+    <option value="debug-forced-scanify">debug-forced-scanify</option>
   </select>
 
   <div id="plot-type">Plot type:</div>
@@ -91,7 +93,7 @@ $( function() {
   // this runs when the page is loaded                                  
 
   // make obs select chosen
-  $(".chosen-select").chosen();
+  $(".chosen-select").chosen({disable_search: true});
 
   // populate the drop down menu of dates                              
   var plot_div = document.getElementById("plot-type");

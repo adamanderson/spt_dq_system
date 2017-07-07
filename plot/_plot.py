@@ -16,9 +16,9 @@ def err_handler(err, plot_type, msg=None):
 
 def main():
   # load arguments into a dict to be passed to plotting functions
-  request = {'source': sys.argv[2], 'observation': sys.argv[3]}
+  request = {'source': sys.argv[1], 'observation': sys.argv[2]}
 
-  for plot_type in sys.argv[4:]:
+  for plot_type in sys.argv[3:]:
     try:
       request['type'] = plot_type
       plot_file = '/tmp/spt_dq/{}{}{}.png'.format(request['source'],
