@@ -170,9 +170,9 @@ $( function() {
         var w = window.open('display.html', '_blank');
         // need to add images after page has loaded
         w.onload = function() {
-            for (var type of selected_values) {
+            for (var i = 0; i < selected_values.length; i++) {
               var img = w.document.createElement('img');
-              img.src = 'img/' + obsdata['source'] + obsdata['observation'] + type + '.png'
+              img.src = 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[i] + '.png'
               w.document.body.appendChild(img);
             }
         }
