@@ -13,6 +13,9 @@
 #hash file
 hash
 
+#ssl files
+*.pem
+
 #local node.js installations
 /node_modules
 

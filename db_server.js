@@ -11,7 +11,8 @@ var path = require('path');
 var readline = require('readline');
 var util = require('util');
 var auth = require('express-basic-auth');
-var bcrypt = require('bcrypt');
+var bcrypt = require('bcryptjs');
+var https = require('https');
 
 // start the server
 var app = express();
@@ -175,6 +176,15 @@ function parseSearch(query, searchJSON) {
   return query
 }
 
+var options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
+log('Listening on port 3000');
+https.createServer(options, app).listen(3000);
+/*
 app.listen(3000, function() {
   log('Listening on port 3000');
 });
+*/
