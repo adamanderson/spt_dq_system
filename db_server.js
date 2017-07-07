@@ -7,7 +7,6 @@ var squel = require("squel");
 var moment = require("moment");
 var execFile = require('child_process').execFile;
 var fs = require('fs');
-var path = require('path');
 var readline = require('readline');
 var util = require('util');
 var auth = require('express-basic-auth');
@@ -23,7 +22,7 @@ function authorizer(username, password, cb) {
   if (username != 'spt')
     return cb(null, true);
   // get hash
-  filePath = path.join(__dirname, '/hash')
+  filePath = __dirname + '/hash';
   fs.readFile(filePath, {encoding: 'utf-8'}, function(err, hash){
     if (!err) {
       // check password vs hash
@@ -121,30 +120,30 @@ app.get('/display.html', function(req, res) {
 // back
 app.get('/data_req', function (req, res) {
     options = {'timeout':10000};
-    path = req.query['path'];
+    //path = req.query['path'];
     obs = req.query['observation'];
     source = req.query['source'];
     plot_type = req.query['plot_type'];
 
-    if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
-      log(util.inspect(req.query));
-      // execute python plotting script. Safe because user input
-      // is passed as arguments to the python script and the python
-      // script handles the arguments safely.
-      var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
-      var args = ['-B', './plot/_plot.py', path, source, obs].concat(plot_type.split(' '));
-      var err = null;
-      execFile(python, args, options, (error, stdout, stderr) => {
-        if (error) {
-          err = stdout;
-          log('exec python error: ' + error.toString());
-        }
-        res.json(err);
-      });
-      return;
-    }
-    log('Error. Data file does not exist');
-    res.json('Error. Data file not found.');
+    //if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
+    log(util.inspect(req.query));
+    // execute python plotting script. Safe because user input
+    // is passed as arguments to the python script and the python
+    // script handles the arguments safely.
+    var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
+    var args = ['-B', './plot/_plot.py', source, obs].concat(plot_type.split(' '));
+    var err = null;
+    execFile(python, args, options, (error, stdout, stderr) => {
+      if (error) {
+        err = stdout;
+        log('exec python error: ' + error.toString());
+      }
+      res.json(err);
+    });
+    return;
+    //}
+    //log('Error. Data file does not exist');
+    //res.json('Error. Data file not found.');
 })
 
 // get all available plot types, removing the driver file and .py
