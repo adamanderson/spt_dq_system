@@ -129,20 +129,20 @@ $( function() {
                  observation:    {min: $("#obsid-from").val(),
                          max: $("#obsid-to").val()}},
     ajaxConfig:'GET',
-    paginationSize:20,
+    paginationSize:13,
     index:"_id",
-    height:"320px", // set height of table (optional)
+    height:"400px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
     columns:[ //Define Table Columns
-      {title:"Observation ID", field:"observation", width:140, sorter:"number"},
-      {title:"Source", field:"source", width:150},
-      {title:"Path on scott", field:"path"},
-      {title:"Fullrate status", field:"status_fullrate", width:150},
-      {title:"Downsampled status", field:"status_downsampled", width:150},
-      {title:"Fullrate transfer", field:"transfer_fullrate", formatter:"tickCross", width:150},
-      {title:"Downsampled transfer", field:"transfer_downsampled", formatter:"tickCross", width:150},
-      {title:"Date", field:"date", sorter:"date", width:80},
-      {title:"Time", field:"time", sorter:"time", width:80}
+      {title:"Observation ID", field:"observation", sorter:"number"},
+      {title:"Source", field:"source"},
+      //{title:"Path on scott", field:"path"},
+      {title:"Fullrate status", field:"status_fullrate"},
+      {title:"Downsampled status", field:"status_downsampled"},
+      {title:"Fullrate transfer", field:"transfer_fullrate", formatter:"tickCross"},
+      {title:"Downsampled transfer", field:"transfer_downsampled", formatter:"tickCross"},
+      {title:"Date", field:"date", sorter:"date"},
+      {title:"Time", field:"time", sorter:"time"}
     ],
     //trigger an alert message when the row is clicked
     //rowClick:function(e, id, obsdata, row){

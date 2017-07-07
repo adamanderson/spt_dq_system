@@ -16,8 +16,7 @@ def err_handler(err, plot_type, msg=None):
 
 def main():
   # load arguments into a dict to be passed to plotting functions
-  request = {'path': sys.argv[1], 'source': sys.argv[2],
-      'observation': sys.argv[3]}
+  request = {'source': sys.argv[2], 'observation': sys.argv[3]}
 
   for plot_type in sys.argv[4:]:
     try:

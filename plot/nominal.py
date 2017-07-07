@@ -4,7 +4,9 @@ from spt3g import core, calibration
 
 # makes a plot of the nominal offset given the date
 def nominal(request):
-    data = [frame for frame in core.G3File(request['path'] + 'nominal_online_cal.g3')]
+    data = [frame for frame in core.G3File('/spt/data/bolodata/downsampled/'
+        + request['source'] + '/' + request['observation']
+        + '/nominal_online_cal.g3')]
 
     x = [item.x_offset for key, item in data[0]['NominalBolometerProperties'].items()]
     y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
