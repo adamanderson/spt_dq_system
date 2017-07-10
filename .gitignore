@@ -4,9 +4,6 @@
 #Python build
 *.pyc
 
-#database files
-*.db
-
 #log files
 *.log
 
