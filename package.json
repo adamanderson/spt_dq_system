@@ -30,6 +30,9 @@
     "express-handlebars": "^3.0.0",
     "moment": "^2.18.1",
     "sqlite3": "^3.1.8",
-    "squel": "^5.9.1"
+    "squel": "^5.9.1",
+    "bcryptjs": "^2.4.3",
+    "chosen-js": "^1.7.0",
+    "express-basic-auth": "^1.1.1",
   }
 }
