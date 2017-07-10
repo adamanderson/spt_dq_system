@@ -38,4 +38,6 @@ To add new plot types to the webserver, simply create a new python script in the
 * That function returns a matplotlib figure or a string to display an error message
 * That function takes one argument that is a dictionary containing the source, observation id, path, and plot type
 
+Also update the plot_config.json file by adding the name of the plot next to the sources you want the plot to be available for.
+
 Look in the plot directory for examples of the format.
