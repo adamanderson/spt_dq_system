@@ -96,6 +96,8 @@ app.get('/page', function(req, res) {
   parseSearch(query, req.query);
   db.all(query.toString(), function(err, rows) {
     var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+    if (max_pages == 0)
+      max_pages = 1;
 
     query = query.offset((req.query['page']-1)*req.query['size'])
                 .limit(req.query['size'])
@@ -104,6 +106,7 @@ app.get('/page', function(req, res) {
     db.all(query.toString(), function(err, rows) {
       assert.equal(null, err);
       var data = {'last_page': max_pages, 'data': rows};
+      console.log(data);
       res.send(data);
     });
   });
