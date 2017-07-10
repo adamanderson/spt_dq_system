@@ -1,4 +1,5 @@
 var express = require('express');
+// TODO disable verbose for production
 var sqlite3 = require('sqlite3').verbose();
 var assert = require('assert');
 var bodyParser = require('body-parser');
@@ -20,7 +21,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 function authorizer(username, password, cb) {
   if (username != 'spt')
-    return cb(null, true);
+    return cb(null, false);
   // get hash
   filePath = __dirname + '/hash';
   fs.readFile(filePath, {encoding: 'utf-8'}, function(err, hash){
@@ -59,7 +60,7 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 // open the database
-db = new sqlite3.Database('master_database.db');
+db = new sqlite3.Database('/spt/data/transfer_database/transfer.db');
 
 // needed to load chosen
 app.use('/js',express.static(__dirname + '/js'));
@@ -91,22 +92,23 @@ app.use('/img', express.static(plot_dir));
 app.get('/page', function(req, res) {
   // get all data from the database
   query = squel.select()
-                .from('master_database')
+                .from('transfer');
   parseSearch(query, req.query);
-  var max_pages;
+  console.log(query.toString());
   db.all(query.toString(), function(err, rows) {
-    max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+    var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+
+    query = query.offset((req.query['page']-1)*req.query['size'])
+                .limit(req.query['size'])
+                .order('observation', false);
+    log(query.toString());
+    db.all(query.toString(), function(err, rows) {
+      assert.equal(null, err);
+      var data = {'last_page': max_pages, 'data': rows};
+      res.send(data);
+    });
   });
 
-  query = query.offset((req.query['page']-1)*req.query['size'])
-              .limit(req.query['size'])
-              .order('observation', false);
-  log(query.toString());
-  db.all(query.toString(), function(err, rows) {
-    assert.equal(null, err);
-    var data = {'last_page': max_pages, 'data': rows};
-	  res.send(data);
-  });
 });
 
 // page for displaying plots/data
@@ -148,6 +150,13 @@ app.get('/data_req', function (req, res) {
 
 // get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
+  console.log(req.query['type']);
+  if (req.query['type'] == '')
+    req.query['type'] = 'any';
+  var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
+  console.log(json[req.query['type']]);
+  res.json(json[req.query['type']]);
+  /*
   fs.readdir('./plot/', function(err, items) {
     index = items.indexOf('_plot.py');
     items.splice(index, 1);
@@ -158,6 +167,7 @@ app.get('/plot_list', function(req, res) {
     }
     res.json(items);
   });
+  */
 })
 
 function parseSearch(query, searchJSON) {
