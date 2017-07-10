@@ -55,6 +55,11 @@ def main():
     except Exception as e:
       err_handler(e, plot_type)
 
+    # check if an error occurred and the user provided a string
+    if (isinstance(plot, str)):
+      err_handler(Exception(plot), plot_type,
+          'Error making plot ' + plot_type + '. ' + plot);
+
     # handle if plot is not a figure
     if (isinstance(plot, plt.Figure)):
       plot.savefig(plot_file)
