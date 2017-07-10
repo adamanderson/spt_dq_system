@@ -70,8 +70,13 @@ $( function() {
     <option value="noise">noise</option>
   </select>
 
-  <div id="plot-type">Plot type:</div>
-  <div id="temp-plot-type"></div>
+  <style>
+    .wrapper{position:relative;}
+    .right,.left{width:40%; position:absolute;}
+    .right{right:0;}
+    .left{left:0;}
+  </style>
+  <div id="plot-type" class="right">Plot type:</div>
 
   <br>
 
@@ -90,6 +95,8 @@ $( function() {
   <br>
 
   <button onclick="search()">Search</button>
+
+  <br><br>
 
   <div id="example-table"></div>
 
