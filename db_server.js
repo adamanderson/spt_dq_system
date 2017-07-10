@@ -5,7 +5,6 @@ var assert = require('assert');
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
 var squel = require("squel");
-var moment = require("moment");
 var execFile = require('child_process').execFile;
 var fs = require('fs');
 var readline = require('readline');
@@ -178,9 +177,12 @@ function parseSearch(query, searchJSON) {
     query.where('observation > ' + searchJSON['observation']['min'])
         .where('observation < ' + searchJSON['observation']['max'])
   }
-  if(searchJSON['date']['min'] && searchJSON['date']['max']) {
-    query.where('start_time > ' + moment(searchJSON['date']['min'], 'DD/MM/YYYY').unix()*1e8)
-        .where('start_time < ' + moment(searchJSON['date']['max'], 'DD/MM/YYYY').unix()*1e8)
+
+  min_time = searchJSON['date']['min'];
+  max_time = searchJSON['date']['max'];
+  if(min_time && max_time) {
+    query.where("date(date) BETWEEN date('" + min_time +
+        "') AND date('" + max_time + "')");
   }
   return query
 }
