@@ -46,13 +46,18 @@ $("#example-table").tabulator({
       // open display window and load images
       var w = window.open('display.html', '_blank');
       // need to add images after page has loaded
+      var items = [
+        {src: 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[0] + '.png',}
+                ];
       w.onload = function() {
-          for (var i = 0; i < selected_values.length; i++) {
-            var img = w.document.createElement('img');
-            img.src = 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[i] + '.png'
-            w.document.body.appendChild(img);
-          }
-      }
+        var items = [];
+        for (var i = 0; i < selected_values.length; i++) {
+          var img = new Image();
+          img.src = 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[i] + '.png';
+          items.push({src: img.src, w: img.width, h: img.height});
+        }
+        w.start_image(items);
+      };
     });
   },
 });
