@@ -12,6 +12,7 @@ var util = require('util');
 var auth = require('express-basic-auth');
 var bcrypt = require('bcryptjs');
 var https = require('https');
+var moment = require('moment');
 
 // start the server
 var app = express();
@@ -93,9 +94,10 @@ app.get('/page', function(req, res) {
   query = squel.select()
                 .from('transfer');
   parseSearch(query, req.query);
-  console.log(query.toString());
   db.all(query.toString(), function(err, rows) {
     var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+    if (max_pages == 0)
+      max_pages = 1;
 
     query = query.offset((req.query['page']-1)*req.query['size'])
                 .limit(req.query['size'])
@@ -149,11 +151,9 @@ app.get('/data_req', function (req, res) {
 
 // get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
-  console.log(req.query['type']);
   if (req.query['type'] == '')
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
-  console.log(json[req.query['type']]);
   res.json(json[req.query['type']]);
   /*
   fs.readdir('./plot/', function(err, items) {
@@ -171,20 +171,40 @@ app.get('/plot_list', function(req, res) {
 
 function parseSearch(query, searchJSON) {
   if(searchJSON['source']) {
-    query.where('source == \'' + searchJSON['source'] + '\'')
-  }
-  if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
-    query.where('observation > ' + searchJSON['observation']['min'])
-        .where('observation < ' + searchJSON['observation']['max'])
+    query.where('source == \'' + searchJSON['source'] + '\'');
   }
 
-  min_time = searchJSON['date']['min'];
-  max_time = searchJSON['date']['max'];
+  if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
+    query.where('observation >= ' + searchJSON['observation']['min'])
+        .where('observation <= ' + searchJSON['observation']['max']);
+  }
+  else if (searchJSON['observation']['min']) {
+    query.where('observation >= ' + searchJSON['observation']['min']);
+  }
+  else if (searchJSON['observation']['max']) {
+    query.where('observation <= ' + searchJSON['observation']['max']);
+  }
+
+  var min_time = searchJSON['date']['min'];
+  var max_time = searchJSON['date']['max'];
   if(min_time && max_time) {
     query.where("date(date) BETWEEN date('" + min_time +
         "') AND date('" + max_time + "')");
   }
-  return query
+  else if (min_time) {
+    // set max time to current date
+    max_time = moment().format('YYYY-MM-DD'); 
+    query.where("date(date) BETWEEN date('" + min_time +
+        "') AND date('" + max_time + "')");
+  }
+  else if (max_time) {
+    // set min time before any observations
+    min_time = "2000-01-01";
+    query.where("date(date) BETWEEN date('" + min_time +
+        "') AND date('" + max_time + "')");
+  }
+
+  return query;
 }
 
 var options = {
