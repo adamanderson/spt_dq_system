@@ -11,8 +11,14 @@ def nominal(request):
   except RuntimeError:
     return "Could not find data file."
 
-  x = [item.x_offset for key, item in data[0]['NominalBolometerProperties'].items()]
-  y = [item.y_offset for key, item in data[0]['NominalBolometerProperties'].items()]
+  x = []
+  y = []
+  for key, item in data[0]['NominalBolometerProperties'].items():
+    x_off = item.x_offset
+    y_off = item.y_offset
+    if (x_off < 0.02 and x_off > -0.02 and y_off > -0.02 and y_off < 0.02):
+      x.append(x_off)
+      y.append(y_off)
 
 
   fig = plt.figure()

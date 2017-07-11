@@ -106,7 +106,6 @@ app.get('/page', function(req, res) {
     db.all(query.toString(), function(err, rows) {
       assert.equal(null, err);
       var data = {'last_page': max_pages, 'data': rows};
-      console.log(data);
       res.send(data);
     });
   });
@@ -116,6 +115,11 @@ app.get('/page', function(req, res) {
 // page for displaying plots/data
 app.get('/display.html', function(req, res) {
   res.sendFile( __dirname + "/" + "display.html" );
+});
+
+// page for displaying plots/data
+app.get('/ps.html', function(req, res) {
+  res.sendFile( __dirname + "/" + "ps.html" );
 })
 
 
