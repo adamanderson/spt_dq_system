@@ -127,13 +127,12 @@ app.get('/ps.html', function(req, res) {
 // the python script saves a plot and this gets read and sent
 // back
 app.get('/data_req', function (req, res) {
-    options = {'timeout':10000};
+    options = {'timeout':20000};
     //path = req.query['path'];
     obs = req.query['observation'];
     source = req.query['source'];
     plot_type = req.query['plot_type'];
 
-    //if (fs.existsSync(path + 'nominal_online_cal.g3')) { 
     log(util.inspect(req.query));
     // execute python plotting script. Safe because user input
     // is passed as arguments to the python script and the python
@@ -149,9 +148,6 @@ app.get('/data_req', function (req, res) {
       res.json(err);
     });
     return;
-    //}
-    //log('Error. Data file does not exist');
-    //res.json('Error. Data file not found.');
 })
 
 // get all available plot types, removing the driver file and .py
@@ -160,18 +156,6 @@ app.get('/plot_list', function(req, res) {
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
   res.json(json[req.query['type']]);
-  /*
-  fs.readdir('./plot/', function(err, items) {
-    index = items.indexOf('_plot.py');
-    items.splice(index, 1);
-    index = items.indexOf('__init__.py');
-    items.splice(index, 1);
-    for (var i = 0; i < items.length; i++) {
-      items[i] = items[i].slice(0, -3);
-    }
-    res.json(items);
-  });
-  */
 })
 
 function parseSearch(query, searchJSON) {
@@ -219,8 +203,3 @@ var options = {
 
 log('Listening on port 3001');
 https.createServer(options, app).listen(3001);
-/*
-app.listen(3000, function() {
-  log('Listening on port 3000');
-});
-*/

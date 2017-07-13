@@ -4,10 +4,10 @@ from os import path, stat
 from importlib import import_module
 
 # send message to user through stdout and send error to server
-def err_handler(err, plot_type, msg=None):
+def err_handler(err, request, msg=None):
   # check if error in plotting file
   if (msg == None):
-    msg = 'Error making plot {}. Check the log for details.'.format(plot_type)
+    msg = 'Error making plot {} {} {}. Check the log for details.'.format(request['source'], request['observation'], request['type'])
 
   sys.stdout.write(msg)
   sys.stdout.flush()
@@ -36,11 +36,11 @@ def main():
       # cannot import arbitrary modules
       module = import_module('plot.' + plot_type)
     except Exception as e:
-      err_handler(e, plot_type)
+      err_handler(e, request)
     try:
       func = getattr(module, plot_type)
     except AttributeError as e:
-      err_handler(e, plot_type, 'Error. Plotting file for ' + plot_type
+      err_handler(e, request, 'Error. Plotting file for ' + plot_type
           + ''' formatted incorrectly. There needs to be a
           function with the same name as the file.''')
     # call plotting function
@@ -49,23 +49,25 @@ def main():
     except KeyError as e:
       # special case for key error because it likely means a key
       # doesn't exist in a data file.
-      err_handler(e, plot_type, 'Error making plot ' + plot_type
+      err_handler(e, request, 'Error making plot ' + request['source'] +
+          ' ' + requset['observation'] + ' ' + plot_type
           + '''. Likely that requested data doesn't exist in the data file.
           Check the log for more details.''')
     except Exception as e:
-      err_handler(e, plot_type)
+      err_handler(e, request)
 
     # check if an error occurred and the user provided a string
     if (isinstance(plot, str)):
-      err_handler(Exception(plot), plot_type,
-          'Error making plot ' + plot_type + '. ' + plot);
+      err_handler(Exception(plot), request,
+          'Error making plot ' + request['source'] + ' ' +
+          request['observation'] + ' ' + plot_type + '. ' + plot);
 
     # handle if plot is not a figure
     if (isinstance(plot, plt.Figure)):
       plot.savefig(plot_file)
     else:
       err_handler(TypeError('Return object from plot function ' + plot_type
-          + ' is not a matplotlib figure.'), plot_type, 'Error making plot '
+          + ' is not a matplotlib figure.'), request, 'Error making plot '
           + plot_type
           + '. Plot file formatted incorrectly. Check the log for details.')
 
