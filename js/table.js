@@ -78,7 +78,7 @@ function plot() {
     // request the plot
     deferred.push($.get("data_req", obsdata, function(err, status) {
       if (err != null) {
-        alert(err)
+        alert(err);
         return;
       }
       for (var i = 0; i < selected_values.length; i++) {
@@ -89,12 +89,15 @@ function plot() {
   });
   // after all plots have finished
   $.when.apply(null, deferred).then( function() {
+    // do nothing if all images generated errors
+    if (items.length == 0)
+      return;
     // open display window and load images
     var w = window.open('display.html', '_blank');
     // need to add images after page has loaded
     w.onload = function() {
       // sort by observation
-      items.sort(compare)
+      items.sort(compare);
       w.start_image(items);
     }
   });
