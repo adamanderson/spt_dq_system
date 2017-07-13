@@ -1,7 +1,7 @@
 import sys
-import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.use('Agg')
+import matplotlib.pyplot as plt
 from os import path, stat
 from importlib import import_module
 
