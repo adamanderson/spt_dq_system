@@ -18,60 +18,80 @@
 
 <title>SPT Data Quality</title>
 
+<style>
+table {
+        border-collapse: collapse;
+            width: 100%;
+}
+
+th, td {
+        text-align: left;
+            padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+        background-color: #00CED1;
+            color: white;
+}
+</style>
 
 </head>
 
 
 <body>
-<script type="text/javascript" src="js/date_form.js"></script>
+  <script type="text/javascript" src="js/date_form.js"></script>
 
-  Observation type:
-  <select type="text" id="obstype-search" class="chosen-select">
-    <!-- WARNING: do not change value from "". If you do, the sql query
-        breaks and will give a tabulator remote pagination error.
-    -->
-    <option value="">any</option>
-    <option value="calibrator">calibrator</option>
-    <option value="CenA">CenA</option>
-    <option value="elnod">elnod</option>
-    <option value="RCW38">RCW38</option>
-    <option value="RCW38-pixelraster">RCW38-pixelraster</option>
-    <option value="saturn">saturn</option>
-    <option value="debug-forced-scanify">debug-forced-scanify</option>
-    <option value="noise">noise</option>
-  </select>
-
-  <style>
-    .wrapper{position:relative;}
-    .right,.left{width:40%; position:absolute;}
-    .right{right:0;}
-    .left{left:0;}
-  </style>
-  <div id="plot-type" class="right">Plot type:</div>
-
-  <br>
-  
-
-  <label for="date-from">Start date:</label>
-  <input type="text" id="date-from" name="date-from">
-  <label for="date-to">End date:</label>
-  <input type="text" id="date-to" name="date-to">
-
-  <br>
-
-
-  <label for="obsid-from">Obs ID range: from</label>
-  <input type="number" id="obsid-from" name="obsid-from">
-  <label for="obsid-to">to</label>
-  <input type="number" id="obsid-to" name="obsid-to">
+  <table>
+    <tr>
+      <th>Field</th>
+      <th>Start</th>
+      <th>End</th>
+    </tr>
+    <tr>
+      <td>Date</td>
+      <td><input type="text" id="date-from" name="date-from"></td>
+      <td><input type="text" id="date-to" name="date-to"></td>
+    </tr>
+    <tr>
+      <td>Obs ID</td>
+      <td><input type="number" id="obsid-from" name="obsid-from"></td>
+      <td><input type="number" id="obsid-to" name="obsid-to"></td>
+    </tr>
+    <tr>
+      <td>Source</td>
+      <td>
+        <select type="text" id="obstype-search" class="chosen-select">
+        <!-- WARNING: do not change value from "". If you do, the sql query
+            breaks and will give a tabulator remote pagination error.
+        -->
+        <option value="">any</option>
+        <option value="calibrator">calibrator</option>
+        <option value="CenA">CenA</option>
+        <option value="elnod">elnod</option>
+        <option value="RCW38">RCW38</option>
+        <option value="RCW38-pixelraster">RCW38-pixelraster</option>
+        <option value="saturn">saturn</option>
+        <option value="debug-forced-scanify">debug-forced-scanify</option>
+        <option value="noise">noise</option>
+        </select>
+      </td>
+      <td></td>
+    </tr>
+  </table>
 
   <br>
-
-  <input type="button" value="Help" style="position: absolute; right: 36%;" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality','_blank');">
 
   <button onclick="search()">Search</button>
 
+  <input type="button" value="Help" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality','_blank');">
+
   <br><br>
+
+  <div id="plot-type">Plot type:</div>
+
+  <br>
 
   <div id="example-table"></div>
 
