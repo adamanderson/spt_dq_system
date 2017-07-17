@@ -127,27 +127,30 @@ app.get('/ps.html', function(req, res) {
 // the python script saves a plot and this gets read and sent
 // back
 app.get('/data_req', function (req, res) {
-    options = {'timeout':20000};
-    //path = req.query['path'];
-    obs = req.query['observation'];
-    source = req.query['source'];
-    plot_type = req.query['plot_type'];
+  options = {'timeout':20000};
+  obs = req.query['observation'];
+  source = req.query['source'];
+  plot_type = req.query['plot_type'];
+  func_val = req.query['func'];
 
-    log(util.inspect(req.query));
-    // execute python plotting script. Safe because user input
-    // is passed as arguments to the python script and the python
-    // script handles the arguments safely.
-    var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
-    var args = ['-B', './plot/_plot.py', source, obs].concat(plot_type.split(' '));
-    var err = null;
-    execFile(python, args, options, (error, stdout, stderr) => {
-      if (error) {
-        err = stdout;
-        log('exec python error: ' + error.toString());
-      }
-      res.json(err);
-    });
-    return;
+  log(util.inspect(req.query));
+  // execute python plotting script. Safe because user input
+  // is passed as arguments to the python script and the python
+  // script handles the arguments safely.
+  var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
+  if (func_val == 'individual')
+    var args = ['-B', './plot/_plot.py', func_val, source, obs].concat(plot_type.split(' '));
+  else if (func_val == 'timeseries')
+    var args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(obs.split(' '));
+  var err = null;
+  execFile(python, args, options, (error, stdout, stderr) => {
+    if (error) {
+      err = stdout;
+      log('exec python error: ' + error.toString());
+    }
+    res.json(err);
+  });
+  return;
 })
 
 // get all available plot types, removing the driver file and .py
@@ -155,7 +158,7 @@ app.get('/plot_list', function(req, res) {
   if (req.query['type'] == '')
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
-  res.json(json[req.query['type']]);
+  res.json(json[req.query['func']][req.query['type']]);
 })
 
 function parseSearch(query, searchJSON) {
@@ -201,5 +204,5 @@ var options = {
   cert: fs.readFileSync('cert.pem')
 };
 
-log('Listening on port 3000');
-https.createServer(options, app).listen(3000);
+log('Listening on port 3002');
+https.createServer(options, app).listen(3002);

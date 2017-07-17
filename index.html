@@ -22,6 +22,7 @@
 table {
         border-collapse: collapse;
             width: 100%;
+        border: 1px solid black;
 }
 
 th, td {
@@ -42,6 +43,19 @@ th {
 
 <body>
   <script type="text/javascript" src="js/date_form.js"></script>
+  <script>
+    function swtch(val) {
+      if (val == "timeseries") {
+        $("#example-table").tabulator("destroy");
+        make_table(true);
+      }
+      else if (val == "individual") {
+        $("#example-table").tabulator("destroy");
+        make_table(4);
+      }
+      plot_list();
+    }
+  </script>
 
   <table>
     <tr>
@@ -79,15 +93,27 @@ th {
       </td>
       <td></td>
     </tr>
+    <tr>
+      <td>Mode</td>
+      <td>
+        <input type="radio" value="individual" name="func" onclick="swtch('individual');" checked="checked"/>Individual</input>
+      <input type="radio" value="timeseries" name="func" onclick="swtch('timeseries');"/>Timeseries</input>
+      </td>
+      <td></td>
+    </tr>
   </table>
 
   <br>
 
   <button onclick="search()">Search</button>
 
+  <button onclick='$("#example-table").tabulator("deselectRow");'>Deselect All</button>
+
   <input type="button" value="Help" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality','_blank');">
 
   <button onclick="plot()">Plot</button>
+
+
 
   <br><br>
 
