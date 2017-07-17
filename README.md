@@ -13,19 +13,34 @@ The following software is required on the server side:
   brew install node
   ```
 
-To install node.js module dependencies, run on the server:
-```bash
-cd spt_dq_system
-npm install
-```
+* To install node.js module dependencies, run on the server:
+  ```bash
+  cd spt_dq_system
+  npm install
+  ```
+* openssl
+  * Create an openssl security key in order to use https functionality.
+  ```bash
+  openssl genrsa -des3 -passout pass:x -out server.pass.key 2048
+  openssl rsa -passin pass:x -in server.pass.key -out server.key
+  rm server.pass.key
+  openssl req -new -key server.key -out server.csr
+  openssl x509 -req -sha256 -days 365 -in server.csr -signkey server.key -out server.crt
+  ```
+
+* bcrypt hash
+  * A file containing a bcrypt hash of the website password is needed. Generate the hash by placing the following code in db_server.js
+  ```javascript
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync("B4c0/\/", salt);
+  console.log(hash);
+  exit();
+  ```
+  * Then copy the hash from the terminal into a file called "hash" and place in the server's directory.
 
 # Running
-First build the database on scott.uchicago.edu:
-```bash
-python build_database.py
-```
 
-This will create a database file `obsfiles.db`. Copy this to wherever you want to run the webserver (currently this must be your local machine). To launch the server on your local machine:
+To launch the server on Scott or Amundsen:
 ```bash
 node db_server.js
 ```
