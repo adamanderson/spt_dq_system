@@ -9,7 +9,7 @@ from importlib import import_module
 def err_handler(err, request, msg=None):
   # check if error in plotting file
   if (msg == None):
-    msg = 'Error making plot {} {} {}. Check the log for details.'.format(request['source'], request['observation'], request['type'])
+    msg = 'Error making plot {} {} {}. Check the log for details.'.format(request['source'], request['observation'], request['plot_type'])
 
   sys.stdout.write(msg)
   sys.stdout.flush()
