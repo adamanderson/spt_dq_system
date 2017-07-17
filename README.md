@@ -32,7 +32,7 @@ The following software is required on the server side:
   * A file containing a bcrypt hash of the website password is needed. Generate the hash by placing the following code in db_server.js
   ```javascript
   var salt = bcrypt.genSaltSync(10);
-  var hash = bcrypt.hashSync("B4c0/\/", salt);
+  var hash = bcrypt.hashSync("your_password", salt);
   console.log(hash);
   exit();
   ```
