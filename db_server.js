@@ -1,6 +1,5 @@
 var express = require('express');
-// TODO disable verbose for production
-var sqlite3 = require('sqlite3').verbose();
+var sqlite3 = require('sqlite3');
 var assert = require('assert');
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
@@ -14,11 +13,14 @@ var bcrypt = require('bcryptjs');
 var https = require('https');
 var moment = require('moment');
 
-// start the server
+// TODO error handling
+
+// setup express
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
+// determines if username and password are correct
 function authorizer(username, password, cb) {
   if (username != 'spt')
     return cb(null, false);
@@ -36,10 +38,12 @@ function authorizer(username, password, cb) {
   });
 }
 
+// response if wrong credentials
 function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
 }
 
+// password protect the website
 app.use(auth({
   authorizer: authorizer,
   authorizeAsync: true,
@@ -47,6 +51,7 @@ app.use(auth({
   unauthorizedResponse: getUnauthorizedResponse,
 }))
 
+// setup home page
 app.use(express.static('public'));
 app.get('/index.html', function (req, res) {
   res.sendFile( __dirname + "/" + "index.html" );
@@ -62,7 +67,7 @@ app.set('view engine', 'handlebars');
 // open the database
 db = new sqlite3.Database('/spt/data/transfer_database/transfer.db');
 
-// needed to load chosen
+// needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
 
@@ -73,12 +78,12 @@ var plot_dir = '/tmp/spt_dq/';
 if (!fs.existsSync(plot_dir)){
       fs.mkdirSync(plot_dir);
 }
+app.use('/img', express.static(plot_dir));
 
 // logs messages along with a timestamp. keeps writesteam open
 var ws = fs.createWriteStream('./db.log', {'flags': 'a'});
 ws.on('error', function (err) {
-  console.error('Error logging message:');
-  console.error(msg);
+  console.error('Error logging message');
   console.error(err);
 });
 function log(msg) {
@@ -86,9 +91,8 @@ function log(msg) {
     ws.write(d.toLocaleString() + '\t' + msg + '\n');
 }
 
-app.use('/img', express.static(plot_dir));
 
-// TODO error handling here
+// for database requests
 app.get('/page', function(req, res) {
   // get all data from the database
   query = squel.select()
@@ -117,15 +121,10 @@ app.get('/display.html', function(req, res) {
   res.sendFile( __dirname + "/" + "display.html" );
 });
 
-// page for displaying plots/data
-app.get('/ps.html', function(req, res) {
-  res.sendFile( __dirname + "/" + "ps.html" );
-})
-
-
-// request data, request contains observation to make a plot of
-// the python script saves a plot and this gets read and sent
-// back
+// used to make plotting requests. User requests a specific plot(s) and
+// the server executes a plotting script that saves the plot in the img
+// directory. The request times out after 20s in case of a bad script or
+// the server is being slow.
 app.get('/data_req', function (req, res) {
   options = {'timeout':20000};
   obs = req.query['observation'];
@@ -139,9 +138,11 @@ app.get('/data_req', function (req, res) {
   // script handles the arguments safely.
   var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
   if (func_val == 'individual')
-    var args = ['-B', './plot/_plot.py', func_val, source, obs].concat(plot_type.split(' '));
+    var args = ['-B', './plot/_plot.py', func_val, source, obs].concat(
+        plot_type.split(' '));
   else if (func_val == 'timeseries')
-    var args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(obs.split(' '));
+    var args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(
+        obs.split(' '));
   var err = null;
   execFile(python, args, options, (error, stdout, stderr) => {
     if (error) {
@@ -161,11 +162,13 @@ app.get('/plot_list', function(req, res) {
   res.json(json[req.query['func']][req.query['type']]);
 })
 
+// turns search into a sql query
 function parseSearch(query, searchJSON) {
   if(searchJSON['source']) {
     query.where('source == \'' + searchJSON['source'] + '\'');
   }
 
+  // user could specify min obs, max obs or both
   if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
     query.where('observation >= ' + searchJSON['observation']['min'])
         .where('observation <= ' + searchJSON['observation']['max']);
@@ -177,6 +180,7 @@ function parseSearch(query, searchJSON) {
     query.where('observation <= ' + searchJSON['observation']['max']);
   }
 
+  // user could specify min date, max data, or both
   var min_time = searchJSON['date']['min'];
   var max_time = searchJSON['date']['max'];
   if(min_time && max_time) {
@@ -199,10 +203,12 @@ function parseSearch(query, searchJSON) {
   return query;
 }
 
+// https files
 var options = {
   key: fs.readFileSync('key.pem'),
   cert: fs.readFileSync('cert.pem')
 };
 
-log('Listening on port 3002');
-https.createServer(options, app).listen(3002);
+// run server
+log('Listening on port 3001');
+https.createServer(options, app).listen(3001);

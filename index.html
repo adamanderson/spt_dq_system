@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- main home page -->
 <html>
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
@@ -6,6 +7,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://momentjs.com/downloads/moment.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.1.1/css/tabulator.min.css" rel="stylesheet">
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.1.1/js/tabulator.min.js"></script>
 <link href="css/chosen.min.css" rel="stylesheet" />
@@ -18,6 +20,7 @@
 
 <title>SPT Data Quality</title>
 
+<!-- setup table style -->
 <style>
 table {
         border-collapse: collapse;
@@ -44,6 +47,8 @@ th {
 <body>
   <script type="text/javascript" src="js/date_form.js"></script>
   <script>
+    // handles switching between plotting modes. Need to rebuild the table
+    // to change # of selectable obs and load new plot types.
     function swtch(val) {
       if (val == "timeseries") {
         $("#example-table").tabulator("destroy");
@@ -96,8 +101,10 @@ th {
     <tr>
       <td>Mode</td>
       <td>
-        <input type="radio" value="individual" name="func" onclick="swtch('individual');" checked="checked"/>Individual</input>
-      <input type="radio" value="timeseries" name="func" onclick="swtch('timeseries');"/>Timeseries</input>
+        <input type="radio" value="individual" name="func"
+          onclick="swtch('individual');" checked="checked"/>Individual</input>
+        <input type="radio" value="timeseries" name="func"
+          onclick="swtch('timeseries');"/>Timeseries</input>
       </td>
       <td></td>
     </tr>
@@ -107,9 +114,11 @@ th {
 
   <button onclick="search()">Search</button>
 
-  <button onclick='$("#example-table").tabulator("deselectRow");'>Deselect All</button>
+  <button onclick='$("#example-table").tabulator("deselectRow");'>Deselect All
+  </button>
 
-  <input type="button" value="Help" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality','_blank');">
+  <input type="button" value="Help" onclick="window.open(" +
+    "'https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">
 
   <button onclick="plot()">Plot</button>
 

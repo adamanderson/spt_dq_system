@@ -1,4 +1,3 @@
-
 function make_table(select) {
   //create Tabulator on DOM element with id "example-table"
   $("#example-table").tabulator({
@@ -20,19 +19,24 @@ function make_table(select) {
       {title:"Source", field:"source"},
       {title:"Fullrate status", field:"status_fullrate"},
       {title:"Downsampled status", field:"status_downsampled"},
-      {title:"Fullrate transfer", field:"transfer_fullrate", formatter:"tickCross"},
-      {title:"Downsampled transfer", field:"transfer_downsampled", formatter:"tickCross"},
-      {title:"Date", field:"date", sorter:"date"}
+      {title:"Fullrate transfer", field:"transfer_fullrate",
+          formatter:"tickCross"},
+      {title:"Downsampled transfer", field:"transfer_downsampled",
+          formatter:"tickCross"},
+      {title:"Date", field:"date", sorter:"date",
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
     ]
   });
 }
 
+// get plotting mode and build the table
 var func_val = $('input[name="func"]:checked').val();
 if (func_val == "timeseries")
   make_table(true);
 else if (func_val == "individual")
   make_table(4);
 
+// sends search request and rebuilds table and plot types
 function search() {
   // clear selections in table
   $("#example-table").tabulator("deselectRow");
@@ -48,6 +52,7 @@ function search() {
   plot_list();
 };
 
+// sends plot request to server and opens images in new window
 function plot() {
   // get selected observations
   var rows = $("#example-table").tabulator("getSelectedData");
@@ -55,6 +60,7 @@ function plot() {
     alert("Please select at least one observation.");
     return;
   }
+
   // get plot type
   var selected_values = [];    
   $("#plot_select :selected").each(function(){
@@ -65,11 +71,12 @@ function plot() {
     return;
   }
 
+  // get plotting mode
   var func_val = $('input[name="func"]:checked').val();
 
   // items holds the image info needed for photoswipe
   var items = [];
-  // deferred holds the jquery requests so we know when they are done
+  // deferred holds the jquery requests so we can know when they are return
   var deferred = [];
   
   if (func_val == "individual") {
@@ -85,33 +92,39 @@ function plot() {
           alert(err);
           return;
         }
+        // put the image info in the list
         for (var i = 0; i < selected_values.length; i++) {
-          src = 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[i] + '.png';
+          src = 'img/' + obsdata['source'] + obsdata['observation'] +
+              selected_values[i] + '.png';
           items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
         }
       }));
     });
   } else if (func_val == "timeseries") {
+    // don't allow "any" source. Only one source allowed for timeseries mode
     if ($("#obstype-search").val() == '') {
       alert('Please search for a specific source in timeseries mode.');
       return;
     }
-    // loop over each plot
+    // loop over each plot type
     $.each(selected_values, function(i, type) {
       // combine requested observations into a string
       var obs = [];
       for (var j = 0; j < rows.length; j++)
         obs.push(rows[j]['observation']);
 
-      var obsdata = {plot_type: type, observation: obs.join(' '), source: rows[0]['source'], func: func_val};
+      var obsdata = {plot_type: type, observation: obs.join(' '),
+          source: rows[0]['source'], func: func_val};
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
         if (err != null) {
           alert(err);
           return;
         }
+        // put the image info in the list
         for (var i = 0; i < selected_values.length; i++) {
-          src = 'img/' + obsdata['source'] + obsdata['observation'] + selected_values[i] + '.png';
+          src = 'img/' + obsdata['source'] + obsdata['observation'] +
+              selected_values[i] + '.png';
           items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
         }
       }));
@@ -124,7 +137,7 @@ function plot() {
       return;
     // open display window and load images
     var w = window.open('display.html', '_blank');
-    // need to add images after page has loaded
+    // need to open image viewer after page has loaded
     w.onload = function() {
       // sort by observation
       items.sort(compare);
