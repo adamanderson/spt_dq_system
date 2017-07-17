@@ -31,13 +31,5 @@ node db_server.js
 ```
 This will start a server at 127.0.0.1 on port 3000. Then point your browser at http://127.0.0.1:3000/index.html.
 
-# Adding More Plots
-To add new plot types to the webserver, simply create a new python script in the plot directory subject to the following constraints:
-* The name of the plot type is the title of the file (minus the '.py')
-* The script contains a function with the same name as the file (minus the '.py')
-* That function returns a matplotlib figure or a string to display an error message
-* That function takes one argument that is a dictionary containing the source, observation id, path, and plot type
-
-Also update the plot_config.json file by adding the name of the plot next to the sources you want the plot to be available for.
-
-Look in the plot directory for examples of the format.
+# More Information
+For a more thorough description of how to use and extend the website, please visit the wiki page at https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality
