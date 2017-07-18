@@ -1,7 +1,7 @@
 ''' This script is run by the server and it in turn calls the corresponding
 python scripts for plotting. This script can be used for testing of plotting
-functions. Simply run the script using python and pass it the arguments
-described below.
+functions. Simply run the script from the main directory (not the plot
+directory) using python and pass it the arguments described below.
 
 Arguments: 
   plotting mode: currently individual or timeseries
@@ -15,17 +15,39 @@ Arguments:
 '''
 
 import sys
+import argparse
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from os import path, stat
 from importlib import import_module
 
+parser = argparse.ArgumentParser(
+    description='Calls plotting functions in other files for a webserver.')
+parser.add_argument('mode', type=str,
+    help='The plotting mode. Currently individual or timeseries.')
+parser.add_argument('source', type=str,
+    help='The source of the observation')
+parser.add_argument('single', type=str,
+    help='''If individual, then the observation id. 
+    If timeseries, then the name of the plot.''')
+parser.add_argument('multi', type=str, nargs=argparse.REMAINDER,
+    help='''If individual, then the name(s) of the plots to be created. 
+    If timeseries, then the observations to be used in the plot.''')
+
+args = parser.parse_args()
+if (len(args.multi) == 0):
+  sys.stdout.write('_plot.py: error: ' +
+      'the following arguments are required: mode, source, single, multi\n')
+  sys.stdout.flush()
+  exit(1)
+
 # send message to user through stdout and send error to server
 def err_handler(err, request, msg=None):
   # check if error in plotting file
   if (msg == None):
-    msg = 'Error making plot {} {} {}. Check the log for details.'.format(request['source'], request['observation'], request['plot_type'])
+    msg = 'Error making plot {} {} {}. Check the log for details.'.format(
+        request['source'], request['observation'], request['plot_type'])
 
   sys.stdout.write(msg)
   sys.stdout.flush()
@@ -79,27 +101,29 @@ def plot(request):
   if (isinstance(plot, plt.Figure)):
     plot.savefig(plot_file, dpi=200)
   else:
-    err_handler(TypeError('Return object from plot function ' + request['plot_type']
+    err_handler(TypeError('Return object from plot function '
+        + request['plot_type']
         + ' is not a matplotlib figure.'), request, 'Error making plot '
         + request['plot_type']
         + '. Plot file formatted incorrectly. Check the log for details.')
 
 def individual():
   # load arguments into a dict to be passed to plotting functions
-  request = {'source': sys.argv[2], 'observation': sys.argv[3]}
+  request = {'source': args.source, 'observation': args.single}
 
-  for plot_type in sys.argv[4:]:
+  for plot_type in args.multi:
       request['plot_type'] = plot_type
       plot(request);
 
 def timeseries():
   # load arguments into a dict to be passed to plotting functions
-  request = {'source': sys.argv[2], 'plot_type': sys.argv[3], 'observation': ' '.join(sys.argv[4:])}
+  request = {'source': args.source, 'plot_type': args.single,
+      'observation': ' '.join(args.multi)}
   plot(request);
 
 #start process
 if __name__ == '__main__':
-  if (sys.argv[1] == 'individual'):
+  if (args.mode == 'individual'):
     individual()
-  elif (sys.argv[1] == 'timeseries'):
+  elif (args.mode == 'timeseries'):
     timeseries()
