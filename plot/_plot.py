@@ -1,3 +1,19 @@
+''' This script is run by the server and it in turn calls the corresponding
+python scripts for plotting. This script can be used for testing of plotting
+functions. Simply run the script using python and pass it the arguments
+described below.
+
+Arguments: 
+  plotting mode: currently individual or timeseries
+  source: The source of the observation
+  For individual:
+    observation: the observation to be plotted
+    plot_type: All the plot types to be made separated by a space
+  For timeseries:
+    plot_type: The type of timeseries plot to make
+    observation: The list of observations included in the timeseries plot
+'''
+
 import sys
 import matplotlib as mpl
 mpl.use('Agg')
