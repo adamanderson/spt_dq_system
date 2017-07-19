@@ -41,6 +41,35 @@ th {
 }
 </style>
 
+<!-- setup button style to mimic chosen -->
+<style>
+.btn {
+  background-color: #fff;
+  background: linear-gradient(#fff 20%, #f6f6f6 50%, #eee 52%, #f4f4f4 100%);
+  -webkit-border-radius: 8;
+  -moz-border-radius: 8;
+  border-radius: 8px;
+  box-shadow: 0 0 3px #fff inset, 0 1px 1px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
+  color: #444;
+  font-size: 13px;
+  padding: 4px 18px 4px 20px;
+  border: solid #aaa 1px;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: #2ea3e6;
+  background-image: -webkit-linear-gradient(top, #2ea3e6, #7195c4);
+  background-image: -moz-linear-gradient(top, #2ea3e6, #7195c4);
+  background-image: -ms-linear-gradient(top, #2ea3e6, #7195c4);
+  background-image: -o-linear-gradient(top, #2ea3e6, #7195c4);
+  background-image: linear-gradient(to bottom, #2ea3e6, #7195c4);
+  text-decoration: none;
+  cursor: pointer;
+}
+</style>
+
 </head>
 
 
@@ -112,14 +141,14 @@ th {
 
   <br>
 
-  <button onclick="search()">Search</button>
+  <button class="btn" onclick="search()">Search</button>
 
-  <button onclick='$("#example-table").tabulator("deselectRow");'>Deselect All
+  <button class="btn" onclick='$("#example-table").tabulator("deselectRow");'>Deselect All
   </button>
 
-  <button onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">Help</button>
+  <button class="btn" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">Help</button>
 
-  <button onclick="plot()">Plot</button>
+  <button class="btn" onclick="plot()">Plot</button>
 
 
 
