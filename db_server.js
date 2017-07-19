@@ -210,5 +210,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3001');
-https.createServer(options, app).listen(3001);
+log('Listening on port 3000');
+https.createServer(options, app).listen(3000);

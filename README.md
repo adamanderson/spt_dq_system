@@ -44,7 +44,7 @@ To launch the server on Scott or Amundsen:
 ```bash
 node db_server.js
 ```
-This will start a server at 127.0.0.1 on port 3000. Then point your browser at http://127.0.0.1:3000/index.html.
+This will start a server at https://127.0.0.1:3000 if on Scott or https://scott.grid.uchicago.edu:3000 if on a remote machine.
 
 # More Information
 For a more thorough description of how to use and extend the website, please visit the wiki page at https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality
