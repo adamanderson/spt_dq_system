@@ -70,6 +70,58 @@ th {
 }
 </style>
 
+<style>
+ /* Style the tab */
+div.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+div.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+div.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+div.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  border: 1px solid #ccc;
+  border-top: none;
+} 
+
+// add fade in when selecting tab
+.tabcontent {
+  -webkit-animation: fadeEffect 1s;
+  animation: fadeEffect 1s;
+}
+
+@-webkit-keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+</style>
+
 </head>
 
 
@@ -80,14 +132,39 @@ th {
     // to change # of selectable obs and load new plot types.
     function swtch(val) {
       if (val == "timeseries") {
-        $("#example-table").tabulator("destroy");
-        make_table(true);
+        $("#transfer_table").tabulator("destroy");
+        make_t_table(true);
       }
       else if (val == "individual") {
-        $("#example-table").tabulator("destroy");
-        make_table(4);
+        $("#transfer_table").tabulator("destroy");
+        make_t_table(4);
       }
       plot_list();
+      // only redraw if remaking table and on aux tab
+      if (document.getElementsByClassName("tablinks active")[0].id == 'aux') {
+        redraw = true;
+      }
+    }
+  </script>
+
+  <script>
+    var redraw = false;
+    function open_tab(evt, tab) {
+      var tabcontent = document.getElementsByClassName("tabcontent");
+      for (var i = 0; i < tabcontent.length; i++)
+        tabcontent[i].style.display = "none";
+
+      var tablinks = document.getElementsByClassName("tablinks");
+      for (var i = 0; i < tablinks.length; i++)
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+
+      document.getElementById(tab).style.display = "block";
+      evt.currentTarget.className += " active";
+
+      if (redraw) {
+        $("#" + tab).tabulator("redraw", true);
+        redraw = false;
+      }
     }
   </script>
 
@@ -131,9 +208,9 @@ th {
       <td>Mode</td>
       <td>
         <input type="radio" value="individual" name="func"
-          onclick="swtch('individual');" checked="checked"/>Individual</input>
+          onchange="swtch('individual');" checked="checked"/>Individual</input>
         <input type="radio" value="timeseries" name="func"
-          onclick="swtch('timeseries');"/>Timeseries</input>
+          onchange="swtch('timeseries');"/>Timeseries</input>
       </td>
       <td></td>
     </tr>
@@ -143,7 +220,7 @@ th {
 
   <button class="btn" onclick="search()">Search</button>
 
-  <button class="btn" onclick='$("#example-table").tabulator("deselectRow");'>Deselect All
+  <button class="btn" onclick='$("#transfer_table").tabulator("deselectRow");'>Deselect All
   </button>
 
   <button class="btn" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">Help</button>
@@ -158,10 +235,22 @@ th {
 
   <br>
 
-  <div id="example-table"></div>
+  <div class="tab">
+    <button class="tablinks" onclick="open_tab(event, 'transfer_table')" id="transfer">Transfer</button>
+    <button class="tablinks" onclick="open_tab(event, 'aux_table')" id="aux">Aux</button>
+  </div>
+  <div id="transfer_table" class="tabcontent"></div>
+  <div id="aux_table" class="tabcontent"></div>
 
   <script type="text/javascript" src="js/plot_list.js"></script>
   <script type="text/javascript" src="js/table.js"></script>
+
+  <script>
+    // open default tab
+    document.getElementById("transfer").click();
+  </script>
+
+
 
 </body>
 </html>

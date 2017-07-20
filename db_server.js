@@ -65,7 +65,8 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 // open the database
-db = new sqlite3.Database('/spt/data/transfer_database/transfer.db');
+t_db = new sqlite3.Database('/spt/data/transfer_database/transfer.db');
+a_db = new sqlite3.Database('/spt/data/transfer_database/aux_transfer.db');
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
@@ -93,12 +94,12 @@ function log(msg) {
 
 
 // for database requests
-app.get('/page', function(req, res) {
+app.get('/tpage', function(req, res) {
   // get all data from the database
   query = squel.select()
                 .from('transfer');
-  parseSearch(query, req.query);
-  db.all(query.toString(), function(err, rows) {
+  parseSearch(query, req.query, 'transfer');
+  t_db.all(query.toString(), function(err, rows) {
     var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
     if (max_pages == 0)
       max_pages = 1;
@@ -106,14 +107,38 @@ app.get('/page', function(req, res) {
     query = query.offset((req.query['page']-1)*req.query['size'])
                 .limit(req.query['size'])
                 .order('observation', false);
+
     log(query.toString());
-    db.all(query.toString(), function(err, rows) {
+    t_db.all(query.toString(), function(err, rows) {
       assert.equal(null, err);
       var data = {'last_page': max_pages, 'data': rows};
       res.send(data);
     });
   });
 
+});
+
+app.get('/apage', function(req, res) {
+  // get all data from the database
+  query = squel.select()
+                .from('aux_transfer');
+  parseSearch(query, req.query, 'aux');
+  a_db.all(query.toString(), function(err, rows) {
+    var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
+    if (max_pages == 0)
+      max_pages = 1;
+
+    query = query.offset((req.query['page']-1)*req.query['size'])
+                .limit(req.query['size'])
+                .order('date', false);
+
+    log(query.toString());
+    a_db.all(query.toString(), function(err, rows) {
+      assert.equal(null, err);
+      var data = {'last_page': max_pages, 'data': rows};
+      res.send(data);
+    });
+  });
 });
 
 // page for displaying plots/data
@@ -163,21 +188,23 @@ app.get('/plot_list', function(req, res) {
 })
 
 // turns search into a sql query
-function parseSearch(query, searchJSON) {
-  if(searchJSON['source']) {
-    query.where('source == \'' + searchJSON['source'] + '\'');
-  }
+function parseSearch(query, searchJSON, tab) {
+  if (tab == 'transfer') {
+    if(searchJSON['source']) {
+      query.where('source == \'' + searchJSON['source'] + '\'');
+    }
 
-  // user could specify min obs, max obs or both
-  if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
-    query.where('observation >= ' + searchJSON['observation']['min'])
-        .where('observation <= ' + searchJSON['observation']['max']);
-  }
-  else if (searchJSON['observation']['min']) {
-    query.where('observation >= ' + searchJSON['observation']['min']);
-  }
-  else if (searchJSON['observation']['max']) {
-    query.where('observation <= ' + searchJSON['observation']['max']);
+    // user could specify min obs, max obs or both
+    if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
+      query.where('observation >= ' + searchJSON['observation']['min'])
+          .where('observation <= ' + searchJSON['observation']['max']);
+    }
+    else if (searchJSON['observation']['min']) {
+      query.where('observation >= ' + searchJSON['observation']['min']);
+    }
+    else if (searchJSON['observation']['max']) {
+      query.where('observation <= ' + searchJSON['observation']['max']);
+    }
   }
 
   // user could specify min date, max data, or both
@@ -210,5 +237,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3000');
-https.createServer(options, app).listen(3000);
+log('Listening on port 3002');
+https.createServer(options, app).listen(3002);

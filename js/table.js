@@ -1,8 +1,8 @@
-function make_table(select) {
-  //create Tabulator on DOM element with id "example-table"
-  $("#example-table").tabulator({
+function make_t_table(select) {
+  //create Tabulator on DOM element with id "transfer_table"
+  $("#transfer_table").tabulator({
     pagination:"remote",  // use this for normal pagination
-    ajaxURL:"/page", //set the ajax URL
+    ajaxURL:"/tpage", //set the ajax URL
     ajaxParams: {source: $("#obstype-search").val(),
                  date:  {min: $("#date-from").val(),
                          max: $("#date-to").val()},
@@ -29,33 +29,84 @@ function make_table(select) {
   });
 }
 
+function make_aux_table() {
+// create Tabulator on DOM element with id "example-table"
+  $("#aux_table").tabulator({
+    pagination:"remote",  // use this for normal pagination
+    ajaxURL:"/apage", //set the ajax URL
+    ajaxParams: {date:  {min: $("#date-from").val(),
+                         max: $("#date-to").val()}},
+    ajaxConfig:'GET',
+    paginationSize:40,
+    index:"_id",
+    height:"400px", // set height of table (optional)
+    fitColumns:true, //fit columns to width of table (optional)
+    columns:[ //Define Table Columns
+      {title:"Filename", field:"filename"},
+      {title:"Type", field:"type"},
+      {title:"Size", field:"size", sorter:"number"},
+      {title:"Status", field:"status"},
+      {title:"Modified", field:"modified", sorter:"date",
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+      {title:"Date", field:"date", sorter:"date",
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+    ]
+  });
+}
+
 // get plotting mode and build the table
 var func_val = $('input[name="func"]:checked').val();
 if (func_val == "timeseries")
-  make_table(true);
+  make_t_table(true);
 else if (func_val == "individual")
-  make_table(4);
+  make_t_table(4);
+
+make_aux_table();
+
+// wrapper for two search functions
+function search() {
+  var tab = document.getElementsByClassName("tablinks active")[0].id;
+  if (tab == 'aux')
+    asearch();
+  else if (tab == 'transfer')
+    tsearch();
+}
 
 // sends search request and rebuilds table and plot types
-function search() {
+function tsearch() {
   // clear selections in table
-  $("#example-table").tabulator("deselectRow");
+  $("#transfer_table").tabulator("deselectRow");
   // package up the search fields into a json to send to server
   querydata = {page:1,
-               size:20,
+               size:40,
                source: $("#obstype-search").val(),
                date:  {min: $("#date-from").val(),
                        max: $("#date-to").val()},
                observation:    {min: $("#obsid-from").val(),
                        max: $("#obsid-to").val()}}
-  $("#example-table").tabulator("setData", "/page", querydata);
+  $("#transfer_table").tabulator("setData", "/tpage", querydata);
   plot_list();
+};
+
+function asearch() {
+  // package up the search fields into a json to send to server
+  querydata = {page:1,
+               size:40,
+               date:  {min: $("#date-from").val(),
+                       max: $("#date-to").val()}}
+  $("#aux_table").tabulator("setData", "/apage", querydata);
 };
 
 // sends plot request to server and opens images in new window
 function plot() {
+  // check if transfer or aux
+  var tab = document.getElementsByClassName("tablinks active")[0];
+  if (tab.id == "aux") {
+    alert("There are no plotting capabilities for the aux database.");
+    return;
+  }
   // get selected observations
-  var rows = $("#example-table").tabulator("getSelectedData");
+  var rows = $("#transfer_table").tabulator("getSelectedData");
   if (rows.length == 0) {
     alert("Please select at least one observation.");
     return;
