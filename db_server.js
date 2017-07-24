@@ -64,9 +64,15 @@ app.get('/', function (req, res) {
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-// open the database
-t_db = new sqlite3.Database('/spt/data/transfer_database/transfer.db');
-a_db = new sqlite3.Database('/spt/data/transfer_database/aux_transfer.db');
+// open the database (use amundsen path if it exists, otherwise use this dir)
+var t_db_path = '/spt/data/transfer_database/transfer.db';
+var a_db_path = '/spt/data/transfer_database/aux_transfer.db';
+if (!fs.existsSync(t_db_path))
+  t_db_path = './transfer.db';
+t_db = new sqlite3.Database(t_db_path);
+if (!fs.existsSync(a_db_path))
+  a_db_path = './aux_transfer.db';
+a_db = new sqlite3.Database(a_db_path);
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
