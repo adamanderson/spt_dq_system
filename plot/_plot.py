@@ -19,7 +19,7 @@ import argparse
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from os import path, stat
+from os import path, stat, mkdir
 from importlib import import_module
 
 parser = argparse.ArgumentParser(
@@ -99,6 +99,9 @@ def plot(request):
 
   # handle if plot is not a figure
   if (isinstance(plot, plt.Figure)):
+    # check if /tmp/spt_dq directory exists and make it if not
+    if (not path.isdir('/tmp/spt_dq/')):
+      mkdir('/tmp/spt_dq/')
     plot.savefig(plot_file, dpi=200)
   else:
     err_handler(TypeError('Return object from plot function '
