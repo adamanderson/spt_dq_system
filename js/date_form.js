@@ -32,10 +32,13 @@ $( function() {
   }
 });
 
+/* set the select menu for the date picker month to use chosen
+ * and to be chosen when it is changed as well. */
 function date_chosen() {
   var tag = document.getElementsByClassName('ui-datepicker-month');
   for (var i = 0; i < tag.length; i++) {
     tag[i].classList.add("chosen-select");
     $(".chosen-select").chosen({disable_search: true});
+    tag[i].setAttribute("onchange", "date_chosen();");
   }
 }
