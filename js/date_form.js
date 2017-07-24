@@ -31,3 +31,11 @@ $( function() {
     return date;
   }
 });
+
+function date_chosen() {
+  var tag = document.getElementsByClassName('ui-datepicker-month');
+  for (var i = 0; i < tag.length; i++) {
+    tag[i].classList.add("chosen-select");
+    $(".chosen-select").chosen({disable_search: true});
+  }
+}

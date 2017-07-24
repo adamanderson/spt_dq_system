@@ -1,0 +1,264 @@
+/* color variables */
+:root {
+  --light-black: #212a34;
+  --light-blue: #6184d8;
+  --light-gray: #40464b;
+  --dark-gray: #3c3e40;
+  --light-purple: #71677c;
+  --dark-purple: #604c59;
+}
+
+/* default test, color, and background */
+body {
+  background: var(--light-gray);
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+/* search table style */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #212a34;
+  box-shadow: 0 0 2px black;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even){background-color: var(--dark-gray)}
+
+th {
+  background-color: var(--dark-purple);
+}
+
+/* style the date picker */
+.ui-datepicker {
+  background-color: var(--light-gray);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, .5);
+}
+
+.ui-datepicker table {
+  width: 100%;
+}
+
+.ui-datepicker-header {
+  color: white;
+  background-color: var(--light-gray);
+  background-image: none;
+  border: 1px solid var(--light-black);
+}
+
+.ui-datepicker th {
+  background-color: var(--dark-gray);
+  color: white;
+}
+
+.ui-datepicker-prev:hover, .ui-datepicker-next:hover {
+  background-color: var(--light-purple);
+  background-image: none;
+  border: none;
+}
+
+.ui-datepicker tbody tr {
+  background-color: var(--light-gray);
+}
+
+.ui-datepicker-calendar .ui-state-default {
+  color: white;
+  background-color: var(--dark-gray);
+  background-image: none;
+  border: none;
+  box-shadow: 0 0 3px black;
+}
+
+.ui-datepicker-calendar .ui-state-hover {
+  background-color: var(--light-purple);
+}
+
+.ui-datepicker-calendar .ui-state-active {
+  background-color: var(--light-blue);
+  box-shadow: 0 0 3px black inset;
+}
+
+.ui-datepicker-calendar .ui-state-active:hover {
+  background-color: var(--dark-purple);
+}
+
+/* button style to mimic chosen */
+.btn {
+  background-color: var(--dark-gray);
+  -webkit-border-radius: 8;
+  -moz-border-radius: 8;
+  border-radius: 8px;
+  box-shadow: 0 0 3px black inset;
+  color: white;
+  font-size: 13px;
+  padding: 4px 18px 4px 20px;
+  border: none;
+  text-decoration: none;
+  -webkit-transition-duration: 0.4s;
+  -moz-transition-duration: 0.4s;
+  transition-duration: 0.4s;
+}
+
+.btn:hover {
+  background: var(--light-purple);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Style the transfer tabs and tab container */
+div.tab {
+  overflow: hidden;
+  border: 1px solid #212a34;
+  background-color: var(--light-gray);
+  -webkit-border-top-right-radius: 8;
+  -webkit-border-top-left-radius: 8;
+  -moz-border-top-right-radius: 8;
+  -moz-border-top-left-radius: 8;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+  box-shadow: 0 0 2px black;
+}
+
+div.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  color: white;
+  box-shadow: 0 0 2px black;
+}
+
+div.tab button:hover {
+  background-color: var(--light-purple);
+}
+
+div.tab button.active {
+  background-color: var(--light-blue);
+  box-shadow: 0 0 2px black inset;
+}
+
+.tabcontent {
+  border: 1px solid #ccc;
+  border-top: none;
+  -webkit-animation: fadeEffect 1s;
+  -moz-animation: fadeEffect 1s;
+  animation: fadeEffect 1s;
+} 
+
+.tabcontent {
+  -webkit-animation: fadeEffect 1s;
+  -moz-animation: fadeEffect 1s;
+  animation: fadeEffect 1s;
+}
+
+@-webkit-keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+/* style radio buttons */
+.radio {
+  margin: 0.5rem;
+  float: left;
+}
+.radio input[type="radio"] {
+  position: absolute; opacity: 0;
+}
+.radio input[type="radio"] + .radio-label:before {
+  content: '';
+  background: var(--dark-gray);
+  border-radius: 100%;
+  border: 1px solid var(--light-black);
+  box-shadow: 0px 0px 5px black inset;
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  position: relative;
+  top: -0.2em;
+  margin-right: 0.4em;
+  vertical-align: top;
+  cursor: pointer;
+  text-align: center;
+  transition: all 250ms ease;
+}
+.radio input[type="radio"]:checked + .radio-label:before {
+  background-color: var(--light-blue);
+  border: 1px solid var(--light-black);
+  box-shadow: 0px 0px 3px black inset, inset 0 0 0 4px var(--dark-gray);
+} 
+
+/* change tabulator style */
+.tabulator .tabulator-tableHolder .tabulator-table {
+  color: white;
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row {
+  background-color: var(--light-gray);
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row.tabulator-row-even {
+  background-color: var(--dark-gray);
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row.tabulator-selectable:hover {
+  background-color: var(--light-purple);
+  cursor: pointer;
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row.tabulator-selected {
+  background-color: var(--light-blue);
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row.tabulator-selected:hover {
+  background-color: var(--dark-purple);
+  cursor: pointer;
+}
+
+.tabulator {
+  border: 1px solid var(--light-black);
+  background-color: #222222;
+  box-shadow: 0 0 2px black;
+}
+
+.tabulator .tabulator-header {
+  background-color: var(--dark-purple);
+  color: white;
+  border-bottom: 1px solid var(--light-black);
+}
+
+.tabulator .tabulator-header .tabulator-col {
+  border-right: 1px solid var(--light-black);
+}
+
+.tabulator .tabulator-tableHolder .tabulator-table .tabulator-row .tabulator-cell {
+  border-right: 1px solid var(--light-black);
+}
+
+/* input box style */
+input {
+  border-radius: 5px;
+  padding: 7px;
+  border: solid 1px #212a34;
+  box-shadow: inset 0px 0px 5px black;
+  transition: box-shadow 0.3s;
+  background-color: var(--dark-gray);
+  color: white;
+}
+
+input:focus {
+  box-shadow: inset 0px 0px 4px var(--light-purple);
+  border: solid 1px var(--light-purple);
+}

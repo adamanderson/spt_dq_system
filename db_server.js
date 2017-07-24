@@ -100,20 +100,7 @@ app.get('/tpage', function(req, res) {
                 .from('transfer');
   parseSearch(query, req.query, 'transfer');
   t_db.all(query.toString(), function(err, rows) {
-    var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
-    if (max_pages == 0)
-      max_pages = 1;
-
-    query = query.offset((req.query['page']-1)*req.query['size'])
-                .limit(req.query['size'])
-                .order('observation', false);
-
-    log(query.toString());
-    t_db.all(query.toString(), function(err, rows) {
-      assert.equal(null, err);
-      var data = {'last_page': max_pages, 'data': rows};
-      res.send(data);
-    });
+    res.send(rows);
   });
 
 });
@@ -124,20 +111,7 @@ app.get('/apage', function(req, res) {
                 .from('aux_transfer');
   parseSearch(query, req.query, 'aux');
   a_db.all(query.toString(), function(err, rows) {
-    var max_pages = Math.ceil(Object.keys(rows).length / req.query['size']);
-    if (max_pages == 0)
-      max_pages = 1;
-
-    query = query.offset((req.query['page']-1)*req.query['size'])
-                .limit(req.query['size'])
-                .order('date', false);
-
-    log(query.toString());
-    a_db.all(query.toString(), function(err, rows) {
-      assert.equal(null, err);
-      var data = {'last_page': max_pages, 'data': rows};
-      res.send(data);
-    });
+    res.send(rows);
   });
 });
 
@@ -227,6 +201,17 @@ function parseSearch(query, searchJSON, tab) {
         "') AND date('" + max_time + "')");
   }
 
+  var sort = searchJSON['sort'];
+  var sort_dir = searchJSON['sort_dir'];
+  if (sort) {
+    if (sort_dir == 'desc')
+      query.order(sort, false);
+    else
+      query.order(sort, true);
+  }
+  else
+    query.order('date', false);
+
   return query;
 }
 
@@ -237,5 +222,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3002');
-https.createServer(options, app).listen(3002);
+log('Listening on port 3000');
+https.createServer(options, app).listen(3000);

@@ -1,7 +1,34 @@
+// redraw determines if the selected tabulator table needs to be redrawn
+var redraw = false;
+// switch tabs
+function open_tab(evt, tab) {
+  // remove tabs from display
+  var tabcontent = document.getElementsByClassName("tabcontent");
+  for (var i = 0; i < tabcontent.length; i++)
+    tabcontent[i].style.display = "none";
+
+  // remove active from tablinks
+  var tablinks = document.getElementsByClassName("tablinks");
+  for (var i = 0; i < tablinks.length; i++)
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+
+  // add new tab to display and active
+  document.getElementById(tab).style.display = "block";
+  evt.currentTarget.className += " active";
+
+  if (redraw) {
+    // redraw tabulator because it needs to have a display window when
+    // created
+    $("#" + tab).tabulator("redraw", true);
+    redraw = false;
+  }
+}
+
+
 function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#transfer_table").tabulator({
-    pagination:"remote",  // use this for normal pagination
+    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/tpage", //set the ajax URL
     ajaxParams: {source: $("#obstype-search").val(),
                  date:  {min: $("#date-from").val(),
@@ -9,7 +36,8 @@ function make_t_table(select) {
                  observation:    {min: $("#obsid-from").val(),
                          max: $("#obsid-to").val()}},
     ajaxConfig:'GET',
-    paginationSize:40,
+    ajaxSorting: true,
+    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
@@ -32,12 +60,13 @@ function make_t_table(select) {
 function make_aux_table() {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
-    pagination:"remote",  // use this for normal pagination
+    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/apage", //set the ajax URL
     ajaxParams: {date:  {min: $("#date-from").val(),
                          max: $("#date-to").val()}},
     ajaxConfig:'GET',
-    paginationSize:40,
+    ajaxSorting: true,
+    //paginationSize:40,
     index:"_id",
     height:"400px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
@@ -77,9 +106,7 @@ function tsearch() {
   // clear selections in table
   $("#transfer_table").tabulator("deselectRow");
   // package up the search fields into a json to send to server
-  querydata = {page:1,
-               size:40,
-               source: $("#obstype-search").val(),
+  querydata = {source: $("#obstype-search").val(),
                date:  {min: $("#date-from").val(),
                        max: $("#date-to").val()},
                observation:    {min: $("#obsid-from").val(),
@@ -90,9 +117,7 @@ function tsearch() {
 
 function asearch() {
   // package up the search fields into a json to send to server
-  querydata = {page:1,
-               size:40,
-               date:  {min: $("#date-from").val(),
+  querydata = {date:  {min: $("#date-from").val(),
                        max: $("#date-to").val()}}
   $("#aux_table").tabulator("setData", "/apage", querydata);
 };
