@@ -1,20 +1,3 @@
-// make obs select chosen
-$(".chosen-select").chosen({disable_search: true});
-
-// create the drop down menu of plot types
-var plot_div = document.getElementById("plot-type");
-var plot_select = document.createElement('select');
-plot_select.setAttribute("id", "plot_select");
-plot_select.setAttribute("class", "chosen-multiselect");
-plot_select.setAttribute("multiple", "");
-plot_div.appendChild(plot_select);
-
-// set multiselect options
-$(".chosen-multiselect").chosen({
-  width: "90%",
-  placeholder_text_multiple: "Select Plot Type",
-});
-
 // function to populate/update plot_list
 function plot_list() {
   $("#plot_select").empty();
@@ -34,5 +17,25 @@ function plot_list() {
   });
 }
 
-//create initial plot list
-plot_list();
+// need to delay creating until page is loaded so display is active
+function make_plot_list() {
+  // make obs select chosen
+  $(".chosen-select").chosen({disable_search: true});
+
+  // create the drop down menu of plot types
+  var plot_div = document.getElementById("plot-type");
+  var plot_select = document.createElement('select');
+  plot_select.setAttribute("id", "plot_select");
+  plot_select.setAttribute("class", "chosen-multiselect");
+  plot_select.setAttribute("multiple", "");
+  plot_div.appendChild(plot_select);
+
+  // set multiselect options
+  $(".chosen-multiselect").chosen({
+    width: "90%",
+    placeholder_text_multiple: "Select Plot Type",
+  });
+
+  //create initial plot list
+  plot_list();
+}

@@ -44,6 +44,9 @@
     }
   </script>
 
+  <!-- Display blank page until content is loaded -->
+  <div id='loader'></div>
+  <div id='pagecontent' style='display:none'>
   <table>
     <tr>
       <th>Field</th>
@@ -98,13 +101,6 @@
     </tr>
   </table>
 
-  <script>
-    // set initial date to be 1 month ago so the entire database doesn't load
-    time = moment().subtract(4, "weeks");
-    document.getElementById("date-from").value = time.format("YYYY-MM-DD");
-  </script>
-
-
   <br>
 
   <button class="btn" onclick="search()">Search</button>
@@ -130,6 +126,13 @@
   </div>
   <div id="transfer_table" class="tabcontent"></div>
   <div id="aux_table" class="tabcontent"></div>
+  </div>
+
+  <script>
+    // set initial date to be 1 month ago so the entire database doesn't load
+    time = moment().subtract(4, "weeks");
+    document.getElementById("date-from").value = time.format("YYYY-MM-DD");
+  </script>
 
   <script type="text/javascript" src="js/plot_list.js"></script>
   <script type="text/javascript" src="js/table.js"></script>
@@ -141,5 +144,18 @@
     redraw = true;
   </script>
 
+  <script>
+    // display page content
+    $(document).ready(function() {
+      $(window).load(function() {
+        $('#loader').hide();
+        $('#pagecontent').show();
+        // plot list needs to be made after diplay is active
+        make_plot_list();
+        // redraw tabulator header after display is active
+        $("#transfer_table").tabulator("redraw");
+      });
+    });
+  </script>
 </body>
 </html>
