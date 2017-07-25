@@ -31,10 +31,12 @@
       if (val == "timeseries") {
         $("#transfer_table").tabulator("destroy");
         make_t_table(true);
+        document.getElementById("select").style = "display:inline";
       }
       else if (val == "individual") {
         $("#transfer_table").tabulator("destroy");
         make_t_table(4);
+        document.getElementById("select").style = "display:none";
       }
       plot_list();
       // only redraw if remaking table and on aux tab
@@ -104,6 +106,13 @@
   <br>
 
   <button class="btn" onclick="search()">Search</button>
+
+  <button class="btn" onclick='$("#transfer_table").tabulator("selectRow");' style="display:none" id="select">Select All
+  </button>
+  <script>
+    if ($('input[name="func"]:checked').val() == "timeseries")
+      document.getElementById("select").style = "display:inline";
+  </script>
 
   <button class="btn" onclick='$("#transfer_table").tabulator("deselectRow");'>Deselect All
   </button>
