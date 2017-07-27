@@ -88,7 +88,7 @@ var func_val = $('input[name="func"]:checked').val();
 if (func_val == "timeseries")
   make_t_table(true);
 else if (func_val == "individual")
-  make_t_table(4);
+  make_t_table(10);
 
 make_aux_table();
 
