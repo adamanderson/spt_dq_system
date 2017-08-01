@@ -13,7 +13,7 @@
     },
     "timeseries": {
       "any": [],
-      "calibrator": ["foo"],
+      "calibrator": [],
       "elnod": [],
       "CenA": [],
       "RCW38": [],

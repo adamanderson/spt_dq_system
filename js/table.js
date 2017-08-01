@@ -213,7 +213,7 @@ function plot() {
           obs.push(rows[j]['observation']);
 
         obsdata = {plot_type: type, observation: obs.join(' '),
-            source: rows[0]['source'], func: func_val};
+            source: rows[0]['source'], func: func_val, table: tab.id};
       } else if (tab.id == 'aux') {
         // combine requested observations into a string
         var obs = [];
@@ -221,7 +221,7 @@ function plot() {
           obs.push(rows[j]['filename']);
 
         obsdata = {plot_type: type, filename: obs.join(' '),
-            date: rows[0]['date'], func: func_val};
+            date: rows[0]['date'], func: func_val, table: tab.id};
       }
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
@@ -236,7 +236,7 @@ function plot() {
                 selected_values[i] + '.png';
             items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
           } else if (tab.id == 'aux') {
-            src = 'img/' + 'aux' + obsdata['filename'] +
+            src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
                 selected_values[i] + '.png';
             items.push({src: src, w: 0, h: 0});
           }
