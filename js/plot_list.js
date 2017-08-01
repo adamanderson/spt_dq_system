@@ -22,7 +22,7 @@ function plot_list() {
 // need to delay creating until page is loaded so display is active
 function make_plot_list() {
   // make obs select chosen
-  $(".chosen-select").chosen({disable_search: true});
+  $(".chosen-select").chosen({width: '150px', disable_search: true});
 
   // create the drop down menu of plot types
   var plot_div = document.getElementById("plot-type");

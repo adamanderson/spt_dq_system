@@ -185,7 +185,7 @@ app.get('/plot_list', function(req, res) {
 function parseSearch(query, searchJSON, tab) {
   if (tab == 'transfer') {
     if(searchJSON['source']) {
-      query.where('source == \'' + searchJSON['source'] + '\'');
+      query.where("source == '" + searchJSON['source'] + "'");
     }
 
     // user could specify min obs, max obs or both
@@ -198,6 +198,14 @@ function parseSearch(query, searchJSON, tab) {
     }
     else if (searchJSON['observation']['max']) {
       query.where('observation <= ' + searchJSON['observation']['max']);
+    }
+  }
+  else if (tab == 'aux') {
+    if (searchJSON['filename']) {
+      query.where("filename LIKE '%" + searchJSON['filename'] + "%'");
+    }
+    if (searchJSON['type']) {
+      query.where("type == '" + searchJSON['type'] + "'");
     }
   }
 

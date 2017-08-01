@@ -26,6 +26,20 @@ function open_tab(evt, tab) {
   }
   // remake plot_list
   plot_list();
+
+  // hide/show obs id,source and type,filename search fields
+  if (tab == 'transfer_table') {
+    document.getElementById("obsid-row").style.display = "table-row";
+    document.getElementById("source-row").style.display = "table-row";
+    document.getElementById("type-row").style.display = "none";
+    document.getElementById("file-row").style.display = "none";
+  }
+  else if (tab == 'aux_table') {
+    document.getElementById("obsid-row").style.display = "none";
+    document.getElementById("source-row").style.display = "none";
+    document.getElementById("type-row").style.display = "table-row";
+    document.getElementById("file-row").style.display = "table-row";
+  }
 }
 
 
@@ -67,7 +81,9 @@ function make_aux_table(select) {
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/apage", //set the ajax URL
     ajaxParams: {date:  {min: $("#date-from").val(),
-                         max: $("#date-to").val()}},
+                         max: $("#date-to").val()},
+                 filename: $("#file-search").val(),
+                 type: $("#auxtype-search").val()},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -126,7 +142,9 @@ function tsearch() {
 function asearch() {
   // package up the search fields into a json to send to server
   querydata = {date:  {min: $("#date-from").val(),
-                       max: $("#date-to").val()}}
+                       max: $("#date-to").val()},
+               filename: $("#file-search").val(),
+               type: $("#auxtype-search").val()};
   $("#aux_table").tabulator("setData", "/apage", querydata);
 };
 
