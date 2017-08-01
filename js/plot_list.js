@@ -4,6 +4,8 @@ function plot_list() {
   var type = {"type": $("#obstype-search").val(),
       'func': $('input[name="func"]:checked').val(),
       'tab': document.getElementsByClassName("tablinks active")[0].id};
+  if (document.getElementsByClassName("tablinks active")[0].id == 'aux')
+    type['type'] = $("#auxtype-search").val();
   // load available plot types and add to multiselect
   $.get("plot_list", type, function( plots ) {
     // empty options

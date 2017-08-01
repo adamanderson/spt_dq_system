@@ -175,7 +175,7 @@ app.get('/data_req', function (req, res) {
 
 // get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
-  if (req.query['type'] == '' || req.query['tab'] == 'aux')
+  if (req.query['type'] == '')
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
   res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
@@ -250,5 +250,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3000');
-https.createServer(options, app).listen(3000);
+log('Listening on port 3001');
+https.createServer(options, app).listen(3001);

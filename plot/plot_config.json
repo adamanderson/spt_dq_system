@@ -25,10 +25,22 @@
   },
   "aux": {
     "individual": {
-      "any": []
+      "any": [],
+      "arc": [],
+      "eht": [],
+      "pydfmux": [],
+      "pydfmuxlog": [],
+      "rsync": [],
+      "tar": []
     },
     "timeseries": {
-      "any": []
+      "any": [],
+      "arc": [],
+      "eht": [],
+      "pydfmux": [],
+      "pydfmuxlog": [],
+      "rsync": [],
+      "tar": []
     }
   }
 }

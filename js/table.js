@@ -146,6 +146,7 @@ function asearch() {
                filename: $("#file-search").val(),
                type: $("#auxtype-search").val()};
   $("#aux_table").tabulator("setData", "/apage", querydata);
+  plot_list();
 };
 
 // sends plot request to server and opens images in new window
