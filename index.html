@@ -31,18 +31,20 @@
       if (val == "timeseries") {
         $("#transfer_table").tabulator("destroy");
         make_t_table(true);
+        $("#aux_table").tabulator("destroy");
+        make_aux_table(true);
         document.getElementById("select").style = "display:inline";
       }
       else if (val == "individual") {
         $("#transfer_table").tabulator("destroy");
-        make_t_table(4);
+        make_t_table(10);
+        $("#aux_table").tabulator("destroy");
+        make_aux_table(10);
         document.getElementById("select").style = "display:none";
       }
       plot_list();
-      // only redraw if remaking table and on aux tab
-      if (document.getElementsByClassName("tablinks active")[0].id == 'aux') {
-        redraw = true;
-      }
+      // redraw since we are remaking the table
+      redraw = true;
     }
   </script>
 
@@ -107,14 +109,14 @@
 
   <button class="btn" onclick="search()">Search</button>
 
-  <button class="btn" onclick='$("#transfer_table").tabulator("selectRow");' style="display:none" id="select">Select All
+  <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("selectRow");' style="display:none" id="select">Select All
   </button>
   <script>
     if ($('input[name="func"]:checked').val() == "timeseries")
       document.getElementById("select").style = "display:inline";
   </script>
 
-  <button class="btn" onclick='$("#transfer_table").tabulator("deselectRow");'>Deselect All
+  <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("deselectRow");' id="deselect">Deselect All
   </button>
 
   <button class="btn" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">Help</button>

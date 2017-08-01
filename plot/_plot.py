@@ -56,8 +56,9 @@ def err_handler(err, request, msg=None):
 
 def plot(request):
   try:
+    # aux filenames (aka observation) may contain / so replace them
     plot_file = '/tmp/spt_dq/{}{}{}.png'.format(request['source'],
-        request['observation'], request['plot_type'])
+        request['observation'].replace('/', '_'), request['plot_type'])
 
     # check if plot already exists
     # remove cached plots if plotting file has changed
@@ -95,7 +96,7 @@ def plot(request):
   if (isinstance(plot, str)):
     err_handler(Exception(plot), request,
         'Error making plot ' + request['source'] + ' ' +
-        request['observation'] + ' ' + request['plot_type'] + '. ' + plot);
+        request['observation'] + ' ' + request['plot_type'] + '. ' + plot)
 
   # handle if plot is not a figure
   if (isinstance(plot, plt.Figure)):
