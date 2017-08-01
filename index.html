@@ -31,18 +31,20 @@
       if (val == "timeseries") {
         $("#transfer_table").tabulator("destroy");
         make_t_table(true);
+        $("#aux_table").tabulator("destroy");
+        make_aux_table(true);
         document.getElementById("select").style = "display:inline";
       }
       else if (val == "individual") {
         $("#transfer_table").tabulator("destroy");
-        make_t_table(4);
+        make_t_table(10);
+        $("#aux_table").tabulator("destroy");
+        make_aux_table(10);
         document.getElementById("select").style = "display:none";
       }
       plot_list();
-      // only redraw if remaking table and on aux tab
-      if (document.getElementsByClassName("tablinks active")[0].id == 'aux') {
-        redraw = true;
-      }
+      // redraw since we are remaking the table
+      redraw = true;
     }
   </script>
 
@@ -60,12 +62,12 @@
       <td><input type="text" id="date-from" name="date-from" onclick="date_chosen();"></td>
       <td><input type="text" id="date-to" name="date-to" onclick="date_chosen();"></td>
     </tr>
-    <tr>
+    <tr id="obsid-row">
       <td>Obs ID</td>
       <td><input type="number" id="obsid-from" name="obsid-from"></td>
       <td><input type="number" id="obsid-to" name="obsid-to"></td>
     </tr>
-    <tr>
+    <tr id="source-row">
       <td>Source</td>
       <td>
         <select type="text" id="obstype-search" class="chosen-select">
@@ -81,6 +83,26 @@
         <option value="saturn">saturn</option>
         <option value="debug-forced-scanify">debug-forced-scanify</option>
         <option value="noise">noise</option>
+        </select>
+      </td>
+      <td></td>
+    </tr>
+    <tr id="file-row">
+      <td>Filename</td>
+      <td><input type="text" id="file-search"</td>
+      <td></td>
+    </tr>
+    <tr id="type-row">
+      <td>Type</td>
+      <td>
+        <select type="text" id="auxtype-search" class="chosen-select">
+        <option value="">any</option>
+        <option value="arc">arc</option>
+        <option value="eht">eht</option>
+        <option value="pydfmux">pydfmux</option>
+        <option value="pydfmuxlog">pydfmuxlog</option>
+        <option value="rsync">rsync</option>
+        <option value="tar">tar</option>
         </select>
       </td>
       <td></td>
@@ -107,14 +129,14 @@
 
   <button class="btn" onclick="search()">Search</button>
 
-  <button class="btn" onclick='$("#transfer_table").tabulator("selectRow");' style="display:none" id="select">Select All
+  <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("selectRow");' style="display:none" id="select">Select All
   </button>
   <script>
     if ($('input[name="func"]:checked').val() == "timeseries")
       document.getElementById("select").style = "display:inline";
   </script>
 
-  <button class="btn" onclick='$("#transfer_table").tabulator("deselectRow");'>Deselect All
+  <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("deselectRow");' id="deselect">Deselect All
   </button>
 
   <button class="btn" onclick="window.open('https://pole.uchicago.edu/spt3g/index.php/SPT_Data_Quality', '_blank');">Help</button>

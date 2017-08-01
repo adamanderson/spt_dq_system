@@ -1,11 +1,13 @@
 // function to populate/update plot_list
 function plot_list() {
-  $("#plot_select").empty();
   // type holds obs source and plotting mode
   var type = {"type": $("#obstype-search").val(),
-      'func': $('input[name="func"]:checked').val()};
+      'func': $('input[name="func"]:checked').val(),
+      'tab': document.getElementsByClassName("tablinks active")[0].id};
   // load available plot types and add to multiselect
   $.get("plot_list", type, function( plots ) {
+    // empty options
+    $("#plot_select").empty();
     for (var i = 0; i < plots.length; i++) {
       var option = document.createElement("option");
       option.setAttribute("value", plots[i]);
@@ -20,7 +22,7 @@ function plot_list() {
 // need to delay creating until page is loaded so display is active
 function make_plot_list() {
   // make obs select chosen
-  $(".chosen-select").chosen({disable_search: true});
+  $(".chosen-select").chosen({width: '150px', disable_search: true});
 
   // create the drop down menu of plot types
   var plot_div = document.getElementById("plot-type");

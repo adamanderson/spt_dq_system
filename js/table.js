@@ -2,6 +2,8 @@
 var redraw = false;
 // switch tabs
 function open_tab(evt, tab) {
+  // deselect all from current tab
+  $("#" + tab).tabulator("deselectRow");
   // remove tabs from display
   var tabcontent = document.getElementsByClassName("tabcontent");
   for (var i = 0; i < tabcontent.length; i++)
@@ -21,6 +23,22 @@ function open_tab(evt, tab) {
     // created
     $("#" + tab).tabulator("redraw", true);
     redraw = false;
+  }
+  // remake plot_list
+  plot_list();
+
+  // hide/show obs id,source and type,filename search fields
+  if (tab == 'transfer_table') {
+    document.getElementById("obsid-row").style.display = "table-row";
+    document.getElementById("source-row").style.display = "table-row";
+    document.getElementById("type-row").style.display = "none";
+    document.getElementById("file-row").style.display = "none";
+  }
+  else if (tab == 'aux_table') {
+    document.getElementById("obsid-row").style.display = "none";
+    document.getElementById("source-row").style.display = "none";
+    document.getElementById("type-row").style.display = "table-row";
+    document.getElementById("file-row").style.display = "table-row";
   }
 }
 
@@ -57,16 +75,19 @@ function make_t_table(select) {
   });
 }
 
-function make_aux_table() {
+function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/apage", //set the ajax URL
     ajaxParams: {date:  {min: $("#date-from").val(),
-                         max: $("#date-to").val()}},
+                         max: $("#date-to").val()},
+                 filename: $("#file-search").val(),
+                 type: $("#auxtype-search").val()},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
+    selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
@@ -85,12 +106,15 @@ function make_aux_table() {
 
 // get plotting mode and build the table
 var func_val = $('input[name="func"]:checked').val();
-if (func_val == "timeseries")
+if (func_val == "timeseries") {
   make_t_table(true);
-else if (func_val == "individual")
+  make_aux_table(true);
+}
+else if (func_val == "individual") {
   make_t_table(10);
+  make_aux_table(10);
+}
 
-make_aux_table();
 
 // wrapper for two search functions
 function search() {
@@ -118,20 +142,25 @@ function tsearch() {
 function asearch() {
   // package up the search fields into a json to send to server
   querydata = {date:  {min: $("#date-from").val(),
-                       max: $("#date-to").val()}}
+                       max: $("#date-to").val()},
+               filename: $("#file-search").val(),
+               type: $("#auxtype-search").val()};
   $("#aux_table").tabulator("setData", "/apage", querydata);
 };
 
 // sends plot request to server and opens images in new window
 function plot() {
+  // holds selected observations
+  var rows;
   // check if transfer or aux
   var tab = document.getElementsByClassName("tablinks active")[0];
   if (tab.id == "aux") {
-    alert("There are no plotting capabilities for the aux database.");
-    return;
+    rows = $("#aux_table").tabulator("getSelectedData");
   }
-  // get selected observations
-  var rows = $("#transfer_table").tabulator("getSelectedData");
+  else if (tab.id == "transfer") {
+    rows = $("#transfer_table").tabulator("getSelectedData");
+  }
+
   if (rows.length == 0) {
     alert("Please select at least one observation.");
     return;
@@ -161,6 +190,8 @@ function plot() {
       // combine all requested plot types into a string
       obsdata['plot_type'] = selected_values.join(' ');
 
+      obsdata['table'] = tab.id;
+
       obsdata['func'] = func_val;
       // request the plot
       deferred.push($.get("data_req", obsdata, function(err, status) {
@@ -170,27 +201,46 @@ function plot() {
         }
         // put the image info in the list
         for (var i = 0; i < selected_values.length; i++) {
-          src = 'img/' + obsdata['source'] + obsdata['observation'] +
-              selected_values[i] + '.png';
-          items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
+          if (tab.id == 'transfer') {
+            src = 'img/' + obsdata['source'] + obsdata['observation'] +
+                selected_values[i] + '.png';
+            items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
+          } else if (tab.id == 'aux') {
+            src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
+                selected_values[i] + '.png';
+            items.push({src: src, w: 0, h: 0});
+          }
         }
       }));
     });
   } else if (func_val == "timeseries") {
     // don't allow "any" source. Only one source allowed for timeseries mode
-    if ($("#obstype-search").val() == '') {
-      alert('Please search for a specific source in timeseries mode.');
-      return;
+    if (tab.id == 'transfer') {
+      if ($("#obstype-search").val() == '') {
+        alert('Please search for a specific source in timeseries mode.');
+        return;
+      }
     }
     // loop over each plot type
     $.each(selected_values, function(i, type) {
-      // combine requested observations into a string
-      var obs = [];
-      for (var j = 0; j < rows.length; j++)
-        obs.push(rows[j]['observation']);
+      var obsdata;
+      if (tab.id == 'transfer') {
+        // combine requested observations into a string
+        var obs = [];
+        for (var j = 0; j < rows.length; j++)
+          obs.push(rows[j]['observation']);
 
-      var obsdata = {plot_type: type, observation: obs.join(' '),
-          source: rows[0]['source'], func: func_val};
+        obsdata = {plot_type: type, observation: obs.join(' '),
+            source: rows[0]['source'], func: func_val, table: tab.id};
+      } else if (tab.id == 'aux') {
+        // combine requested observations into a string
+        var obs = [];
+        for (var j = 0; j < rows.length; j++)
+          obs.push(rows[j]['filename']);
+
+        obsdata = {plot_type: type, filename: obs.join(' '),
+            date: rows[0]['date'], func: func_val, table: tab.id};
+      }
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
         if (err != null) {
@@ -199,9 +249,15 @@ function plot() {
         }
         // put the image info in the list
         for (var i = 0; i < selected_values.length; i++) {
-          src = 'img/' + obsdata['source'] + obsdata['observation'] +
-              selected_values[i] + '.png';
-          items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
+          if (tab.id == 'transfer') {
+            src = 'img/' + obsdata['source'] + obsdata['observation'] +
+                selected_values[i] + '.png';
+            items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
+          } else if (tab.id == 'aux') {
+            src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
+                selected_values[i] + '.png';
+            items.push({src: src, w: 0, h: 0});
+          }
         }
       }));
     });
@@ -215,8 +271,10 @@ function plot() {
     var w = window.open('display.html', '_blank');
     // need to open image viewer after page has loaded
     w.onload = function() {
-      // sort by observation
-      items.sort(compare);
+      if (tab.id == 'transfer') { 
+        // sort by observation
+        items.sort(compare);
+      }
       w.start_image(items);
     }
   });

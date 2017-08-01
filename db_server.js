@@ -132,8 +132,13 @@ app.get('/display.html', function(req, res) {
 // the server is being slow.
 app.get('/data_req', function (req, res) {
   options = {'timeout':20000};
-  obs = req.query['observation'];
-  source = req.query['source'];
+  tab = req.query['table'];
+  if (tab == 'transfer') {
+    obs = req.query['observation'];
+    source = req.query['source'];
+  } else if (tab == 'aux') {
+    filename = req.query['filename'];
+  }
   plot_type = req.query['plot_type'];
   func_val = req.query['func'];
 
@@ -142,12 +147,19 @@ app.get('/data_req', function (req, res) {
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
   var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
-  if (func_val == 'individual')
-    var args = ['-B', './plot/_plot.py', func_val, source, obs].concat(
+  var args;
+  if (func_val == 'individual' && tab == 'transfer')
+    args = ['-B', './plot/_plot.py', func_val, source, obs].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries')
-    var args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(
+  else if (func_val == 'timeseries' && tab == 'transfer')
+    args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(
         obs.split(' '));
+  else if (func_val == 'individual' && tab == 'aux')
+    args = ['-B', './plot/_plot.py', func_val, 'aux', filename].concat(
+        plot_type.split(' '));
+  else if (func_val == 'timeseries' && tab == 'aux')
+    args = ['-B', './plot/_plot.py', func_val, 'aux', plot_type].concat(
+        filename.split(' '));
   var err = null;
   execFile(python, args, options, (error, stdout, stderr) => {
     if (error) {
@@ -163,17 +175,17 @@ app.get('/data_req', function (req, res) {
 
 // get all available plot types, removing the driver file and .py
 app.get('/plot_list', function(req, res) {
-  if (req.query['type'] == '')
+  if (req.query['type'] == '' || req.query['tab'] == 'aux')
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
-  res.json(json[req.query['func']][req.query['type']]);
+  res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
 })
 
 // turns search into a sql query
 function parseSearch(query, searchJSON, tab) {
   if (tab == 'transfer') {
     if(searchJSON['source']) {
-      query.where('source == \'' + searchJSON['source'] + '\'');
+      query.where("source == '" + searchJSON['source'] + "'");
     }
 
     // user could specify min obs, max obs or both
@@ -186,6 +198,14 @@ function parseSearch(query, searchJSON, tab) {
     }
     else if (searchJSON['observation']['max']) {
       query.where('observation <= ' + searchJSON['observation']['max']);
+    }
+  }
+  else if (tab == 'aux') {
+    if (searchJSON['filename']) {
+      query.where("filename LIKE '%" + searchJSON['filename'] + "%'");
+    }
+    if (searchJSON['type']) {
+      query.where("type == '" + searchJSON['type'] + "'");
     }
   }
 
