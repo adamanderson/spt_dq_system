@@ -2,7 +2,7 @@
   "transfer": {
     "individual": {
       "any": ["nominal", "offline"],
-      "calibrator": ["nominal", "offline"],
+      "calibrator": ["nominal", "offline", "CalSNHistogram"],
       "elnod": ["nominal", "offline"],
       "CenA": ["nominal", "offline"],
       "RCW38": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
