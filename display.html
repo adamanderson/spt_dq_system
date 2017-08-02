@@ -4,8 +4,45 @@
 <link rel="stylesheet" href="css/default-skin/default-skin.css">
 <script src="js/photoswipe.min.js"></script>
 <script src="js/photoswipe-ui-default.min.js"></script>
+
+<script>
+// open images and image viewer
+function start_image(items) {
+  var pswpElement = document.querySelectorAll('.pswp')[0];
+  var options = {
+    index: 0,
+    closeOnScroll: false,
+    closeOnVerticalDrag: false,
+    escKey: false,
+    closeEl: false,
+    zoomEl: true,
+    clickToCloseNonZoomable: false,
+    shareButtons: [
+      {id:'download', label:'Download image', url:'{{raw_image_url}}', download:true}
+     ],
+    closeElClasses: [],
+  };
+  // Initializes and opens PhotoSwipe
+  var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+  gallery.listen('gettingData', function(index, item) {
+    if (item.w < 1 || item.h < 1) { // unknown size
+      var img = new Image(); 
+      img.onload = function() { // will get size after load
+        item.w = this.width; // set image width
+        item.h = this.height; // set image height
+        gallery.invalidateCurrItems(); // reinit Items
+        gallery.updateSize(true); // reinit Items
+      }
+      img.src = item.src; // download image
+    }
+  });
+  gallery.init();
+}
+</script>
+
 </head>
 <body>
+Temporary Loading Screen...
 
 <!-- Root element of PhotoSwipe. Must have class pswp. -->
 <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
@@ -74,41 +111,6 @@
     </div>
 
 </div>
-
-<script>
-// open images and image viewer
-function start_image(items) {
-  var pswpElement = document.querySelectorAll('.pswp')[0];
-  var options = {
-    index: 0,
-    closeOnScroll: false,
-    closeOnVerticalDrag: false,
-    escKey: false,
-    closeEl: false,
-    zoomEl: true,
-    clickToCloseNonZoomable: false,
-    shareButtons: [
-      {id:'download', label:'Download image', url:'{{raw_image_url}}', download:true}
-     ],
-    closeElClasses: [],
-  };
-  // Initializes and opens PhotoSwipe
-  var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
-  gallery.listen('gettingData', function(index, item) {
-    if (item.w < 1 || item.h < 1) { // unknown size
-      var img = new Image(); 
-      img.onload = function() { // will get size after load
-        item.w = this.width; // set image width
-        item.h = this.height; // set image height
-        gallery.invalidateCurrItems(); // reinit Items
-        gallery.updateSize(true); // reinit Items
-      }
-      img.src = item.src; // download image
-    }
-  });
-  gallery.init();
-}
-</script>
 
 </body>
 </html>

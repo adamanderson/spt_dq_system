@@ -102,10 +102,10 @@ function log(msg) {
 // for database requests
 app.get('/tpage', function(req, res) {
   // get all data from the database
-  query = squel.select()
-                .from('transfer');
+  query = squel.select().from('transfer');
   parseSearch(query, req.query, 'transfer');
-  t_db.all(query.toString(), function(err, rows) {
+  t_db.all(query.toParam()['text'], query.toParam()['values'],
+          function(err, rows) {
     res.send(rows);
   });
 
@@ -113,10 +113,10 @@ app.get('/tpage', function(req, res) {
 
 app.get('/apage', function(req, res) {
   // get all data from the database
-  query = squel.select()
-                .from('aux_transfer');
+  query = squel.select().from('aux_transfer');
   parseSearch(query, req.query, 'aux');
-  a_db.all(query.toString(), function(err, rows) {
+  a_db.all(query.toParam()['text'], query.toParam()['values'],
+          function(err, rows) {
     res.send(rows);
   });
 });
@@ -185,48 +185,45 @@ app.get('/plot_list', function(req, res) {
 function parseSearch(query, searchJSON, tab) {
   if (tab == 'transfer') {
     if(searchJSON['source']) {
-      query.where("source == '" + searchJSON['source'] + "'");
+      query.where("source == ?", searchJSON['source']);
     }
 
     // user could specify min obs, max obs or both
     if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
-      query.where('observation >= ' + searchJSON['observation']['min'])
-          .where('observation <= ' + searchJSON['observation']['max']);
+      query.where('observation >= ?', searchJSON['observation']['min'])
+          .where('observation <= ?', searchJSON['observation']['max']);
     }
     else if (searchJSON['observation']['min']) {
-      query.where('observation >= ' + searchJSON['observation']['min']);
+      query.where('observation >= ?', searchJSON['observation']['min']);
     }
     else if (searchJSON['observation']['max']) {
-      query.where('observation <= ' + searchJSON['observation']['max']);
+      query.where('observation <= ?', searchJSON['observation']['max']);
     }
   }
   else if (tab == 'aux') {
     if (searchJSON['filename']) {
-      query.where("filename LIKE '%" + searchJSON['filename'] + "%'");
+      query.where("filename LIKE ?", '%' + searchJSON['filename'] + '%');
     }
     if (searchJSON['type']) {
-      query.where("type == '" + searchJSON['type'] + "'");
+      query.where("type == ?", searchJSON['type']);
     }
   }
 
-  // user could specify min date, max data, or both
+  // user could specify min date, max date, or both
   var min_time = searchJSON['date']['min'];
   var max_time = searchJSON['date']['max'];
   if(min_time && max_time) {
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
   else if (min_time) {
     // set max time to current date
     max_time = moment().format('YYYY-MM-DD'); 
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
   else if (max_time) {
     // set min time before any observations
     min_time = "2000-01-01";
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
 
   var sort = searchJSON['sort'];
@@ -250,5 +247,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3001');
-https.createServer(options, app).listen(3001);
+log('Listening on port 3000');
+https.createServer(options, app).listen(3000);

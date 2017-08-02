@@ -177,6 +177,16 @@ function plot() {
     return;
   }
 
+  // open new window immediately so it isn't considered a pop-up
+  var main = window;
+  var display_win = window.open('display.html', '_blank');
+  display_win.blur();
+  main.focus();
+
+  // create loaded variable to be set to true when window is loaded
+  var loaded = false;
+  display_win.onload = function () {loaded = true;};
+
   // get plotting mode
   var func_val = $('input[name="func"]:checked').val();
 
@@ -197,7 +207,8 @@ function plot() {
       // request the plot
       deferred.push($.get("data_req", obsdata, function(err, status) {
         if (err != null) {
-          alert(err);
+          // send an error alert to the display window
+          display_win.alert(err);
           return;
         }
         // put the image info in the list
@@ -245,7 +256,8 @@ function plot() {
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
         if (err != null) {
-          alert(err);
+          // send an error alert to the display window
+          display_win.alert(err);
           return;
         }
         // put the image info in the list
@@ -266,18 +278,30 @@ function plot() {
   // after all plots have finished
   $.when.apply(null, deferred).then( function() {
     // do nothing if all images generated errors
-    if (items.length == 0)
+    if (items.length == 0) {
+      display_win.close();
       return;
-    // open display window and load images
-    var w = window.open('display.html', '_blank');
-    // need to open image viewer after page has loaded
-    w.onload = function() {
-      if (tab.id == 'transfer') { 
-        // sort by observation
-        items.sort(compare);
-      }
-      w.start_image(items);
     }
+
+    if (tab.id == 'transfer') { 
+      // sort by observation
+      items.sort(compare);
+    }
+
+    // need to open image viewer after page has loaded
+    // create function to continually check if loaded
+    // onload may or may not have fired at this point so just using
+    // onload here will not work
+    function is_loaded () {
+      if (loaded) {
+        // open display window and load images
+        display_win.start_image(items);
+      }
+      else{
+        window.setTimeout(is_loaded, 50);
+      }
+    }
+    is_loaded();
   });
 }
 
