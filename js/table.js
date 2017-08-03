@@ -178,17 +178,22 @@ function plot() {
   }
 
   // open new window immediately so it isn't considered a pop-up
-  var main = window;
   var display_win = window.open('display.html', '_blank');
-  display_win.blur();
-  main.focus();
 
-  // create loaded variable to be set to true when window is loaded
-  var loaded = false;
-  display_win.onload = function () {loaded = true;};
+  // make the plots and everything else once display window has opened
+  // so that we can track plotting progress and send images to the new window.
+  display_win.onload = function () {
 
   // get plotting mode
   var func_val = $('input[name="func"]:checked').val();
+
+  // set the number of images and variables to keep track of creation
+  if (func_val == "individual")
+    display_win.images_to_load = selected_values.length * rows.length;
+  else if (func_val == "timeseries")
+    display_win.images_to_load = selected_values.length;
+  display_win.loaded_count = 0;
+  display_win.loading_progress = 0;
 
   // items holds the image info needed for photoswipe
   var items = [];
@@ -206,6 +211,9 @@ function plot() {
       obsdata['func'] = func_val;
       // request the plot
       deferred.push($.get("data_req", obsdata, function(err, status) {
+        // each time through we make a few plots so update the loader
+        for (var i = 0; i < selected_values.length; i++)
+          display_win.load_progress();
         if (err != null) {
           // send an error alert to the display window
           display_win.alert(err);
@@ -255,6 +263,8 @@ function plot() {
       }
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
+        // each time through we make one plot, so update the loader
+        display_win.load_progress();
         if (err != null) {
           // send an error alert to the display window
           display_win.alert(err);
@@ -284,25 +294,14 @@ function plot() {
     }
 
     if (tab.id == 'transfer') { 
-      // sort by observation
+      // sort images by observation
       items.sort(compare);
     }
 
-    // need to open image viewer after page has loaded
-    // create function to continually check if loaded
-    // onload may or may not have fired at this point so just using
-    // onload here will not work
-    function is_loaded () {
-      if (loaded) {
-        // open display window and load images
-        display_win.start_image(items);
-      }
-      else{
-        window.setTimeout(is_loaded, 50);
-      }
-    }
-    is_loaded();
+    // open image viewer
+    display_win.start_image(items);
   });
+  }
 }
 
 // used to sort image items
