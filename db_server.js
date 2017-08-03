@@ -108,7 +108,6 @@ app.get('/tpage', function(req, res) {
           function(err, rows) {
     res.send(rows);
   });
-
 });
 
 app.get('/apage', function(req, res) {
