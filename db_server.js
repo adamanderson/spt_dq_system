@@ -64,6 +64,15 @@ app.get('/', function (req, res) {
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
+function check_db() {
+  var cur_t_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  var cur_a_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  if (cur_t_ts != t_db_ts)
+    t_db = new sqlite3.Database(t_db_path);
+  if (cur_a_ts != a_db_ts)
+    a_db = new sqlite3.Database(a_db_path);
+}
+
 // open the database (use amundsen path if it exists, otherwise use this dir)
 var t_db_path = '/spt/data/transfer_database/transfer.db';
 var a_db_path = '/spt/data/transfer_database/aux_transfer.db';
@@ -73,6 +82,9 @@ t_db = new sqlite3.Database(t_db_path);
 if (!fs.existsSync(a_db_path))
   a_db_path = './aux_transfer.db';
 a_db = new sqlite3.Database(a_db_path);
+// get timestamps of when the databases were loaded
+var t_db_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+var a_db_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
@@ -101,6 +113,7 @@ function log(msg) {
 
 // for database requests
 app.get('/tpage', function(req, res) {
+  check_db();
   // get all data from the database
   query = squel.select().from('transfer');
   parseSearch(query, req.query, 'transfer');
@@ -111,6 +124,7 @@ app.get('/tpage', function(req, res) {
 });
 
 app.get('/apage', function(req, res) {
+  check_db();
   // get all data from the database
   query = squel.select().from('aux_transfer');
   parseSearch(query, req.query, 'aux');
