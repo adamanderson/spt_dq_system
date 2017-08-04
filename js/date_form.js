@@ -41,4 +41,8 @@ function date_chosen() {
     $(".chosen-select").chosen({disable_search: true});
     tag[i].setAttribute("onchange", "date_chosen();");
   }
+  var arrows = document.querySelectorAll('.ui-datepicker-next, .ui-datepicker-prev');
+  for (var i = 0; i < arrows.length; i++) {
+    arrows[i].setAttribute("onclick", "date_chosen();");
+  }
 }

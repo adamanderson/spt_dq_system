@@ -177,8 +177,23 @@ function plot() {
     return;
   }
 
+  // open new window immediately so it isn't considered a pop-up
+  var display_win = window.open('display.html', '_blank');
+
+  // make the plots and everything else once display window has opened
+  // so that we can track plotting progress and send images to the new window.
+  display_win.onload = function () {
+
   // get plotting mode
   var func_val = $('input[name="func"]:checked').val();
+
+  // set the number of images and variables to keep track of creation
+  if (func_val == "individual")
+    display_win.images_to_load = selected_values.length * rows.length;
+  else if (func_val == "timeseries")
+    display_win.images_to_load = selected_values.length;
+  display_win.loaded_count = 0;
+  display_win.loading_progress = 0;
 
   // items holds the image info needed for photoswipe
   var items = [];
@@ -196,8 +211,12 @@ function plot() {
       obsdata['func'] = func_val;
       // request the plot
       deferred.push($.get("data_req", obsdata, function(err, status) {
+        // each time through we make a few plots so update the loader
+        for (var i = 0; i < selected_values.length; i++)
+          display_win.load_progress();
         if (err != null) {
-          alert(err);
+          // send an error alert to the display window
+          display_win.alert(err);
           return;
         }
         // put the image info in the list
@@ -244,8 +263,11 @@ function plot() {
       }
       // request plots
       deferred.push($.get("data_req", obsdata, function(err, status) {
+        // each time through we make one plot, so update the loader
+        display_win.load_progress();
         if (err != null) {
-          alert(err);
+          // send an error alert to the display window
+          display_win.alert(err);
           return;
         }
         // put the image info in the list
@@ -266,19 +288,20 @@ function plot() {
   // after all plots have finished
   $.when.apply(null, deferred).then( function() {
     // do nothing if all images generated errors
-    if (items.length == 0)
+    if (items.length == 0) {
+      display_win.close();
       return;
-    // open display window and load images
-    var w = window.open('display.html', '_blank');
-    // need to open image viewer after page has loaded
-    w.onload = function() {
-      if (tab.id == 'transfer') { 
-        // sort by observation
-        items.sort(compare);
-      }
-      w.start_image(items);
     }
+
+    if (tab.id == 'transfer') { 
+      // sort images by observation
+      items.sort(compare);
+    }
+
+    // open image viewer
+    display_win.start_image(items);
   });
+  }
 }
 
 // used to sort image items

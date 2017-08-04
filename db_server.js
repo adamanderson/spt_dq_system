@@ -64,6 +64,15 @@ app.get('/', function (req, res) {
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
+function check_db() {
+  var cur_t_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  var cur_a_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  if (cur_t_ts != t_db_ts)
+    t_db = new sqlite3.Database(t_db_path);
+  if (cur_a_ts != a_db_ts)
+    a_db = new sqlite3.Database(a_db_path);
+}
+
 // open the database (use amundsen path if it exists, otherwise use this dir)
 var t_db_path = '/spt/data/transfer_database/transfer.db';
 var a_db_path = '/spt/data/transfer_database/aux_transfer.db';
@@ -73,6 +82,9 @@ t_db = new sqlite3.Database(t_db_path);
 if (!fs.existsSync(a_db_path))
   a_db_path = './aux_transfer.db';
 a_db = new sqlite3.Database(a_db_path);
+// get timestamps of when the databases were loaded
+var t_db_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+var a_db_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
@@ -101,22 +113,23 @@ function log(msg) {
 
 // for database requests
 app.get('/tpage', function(req, res) {
+  check_db();
   // get all data from the database
-  query = squel.select()
-                .from('transfer');
+  query = squel.select().from('transfer');
   parseSearch(query, req.query, 'transfer');
-  t_db.all(query.toString(), function(err, rows) {
+  t_db.all(query.toParam()['text'], query.toParam()['values'],
+          function(err, rows) {
     res.send(rows);
   });
-
 });
 
 app.get('/apage', function(req, res) {
+  check_db();
   // get all data from the database
-  query = squel.select()
-                .from('aux_transfer');
+  query = squel.select().from('aux_transfer');
   parseSearch(query, req.query, 'aux');
-  a_db.all(query.toString(), function(err, rows) {
+  a_db.all(query.toParam()['text'], query.toParam()['values'],
+          function(err, rows) {
     res.send(rows);
   });
 });
@@ -185,48 +198,45 @@ app.get('/plot_list', function(req, res) {
 function parseSearch(query, searchJSON, tab) {
   if (tab == 'transfer') {
     if(searchJSON['source']) {
-      query.where("source == '" + searchJSON['source'] + "'");
+      query.where("source == ?", searchJSON['source']);
     }
 
     // user could specify min obs, max obs or both
     if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
-      query.where('observation >= ' + searchJSON['observation']['min'])
-          .where('observation <= ' + searchJSON['observation']['max']);
+      query.where('observation >= ?', searchJSON['observation']['min'])
+          .where('observation <= ?', searchJSON['observation']['max']);
     }
     else if (searchJSON['observation']['min']) {
-      query.where('observation >= ' + searchJSON['observation']['min']);
+      query.where('observation >= ?', searchJSON['observation']['min']);
     }
     else if (searchJSON['observation']['max']) {
-      query.where('observation <= ' + searchJSON['observation']['max']);
+      query.where('observation <= ?', searchJSON['observation']['max']);
     }
   }
   else if (tab == 'aux') {
     if (searchJSON['filename']) {
-      query.where("filename LIKE '%" + searchJSON['filename'] + "%'");
+      query.where("filename LIKE ?", '%' + searchJSON['filename'] + '%');
     }
     if (searchJSON['type']) {
-      query.where("type == '" + searchJSON['type'] + "'");
+      query.where("type == ?", searchJSON['type']);
     }
   }
 
-  // user could specify min date, max data, or both
+  // user could specify min date, max date, or both
   var min_time = searchJSON['date']['min'];
   var max_time = searchJSON['date']['max'];
   if(min_time && max_time) {
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
   else if (min_time) {
     // set max time to current date
     max_time = moment().format('YYYY-MM-DD'); 
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
   else if (max_time) {
     // set min time before any observations
     min_time = "2000-01-01";
-    query.where("date(date) BETWEEN date('" + min_time +
-        "') AND date('" + max_time + "')");
+    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
   }
 
   var sort = searchJSON['sort'];
@@ -250,5 +260,5 @@ var options = {
 };
 
 // run server
-log('Listening on port 3001');
-https.createServer(options, app).listen(3001);
+log('Listening on port 3000');
+https.createServer(options, app).listen(3000);
