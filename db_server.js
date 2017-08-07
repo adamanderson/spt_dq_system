@@ -67,10 +67,14 @@ app.set('view engine', 'handlebars');
 function check_db() {
   var cur_t_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   var cur_a_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  if (cur_t_ts != t_db_ts)
+  if (cur_t_ts != t_db_ts) {
     t_db = new sqlite3.Database(t_db_path);
-  if (cur_a_ts != a_db_ts)
+    t_db_ts = cur_t_ts;
+  }
+  if (cur_a_ts != a_db_ts) {
     a_db = new sqlite3.Database(a_db_path);
+    a_db_ts = cur_a_ts;
+  }
 }
 
 // open the database (use amundsen path if it exists, otherwise use this dir)
