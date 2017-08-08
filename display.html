@@ -15,10 +15,12 @@
 body {
   background: #3c3e40;
   color: white;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 /* header */
 #content {
+  position: relative;
+  z-index: 13;
   color: white;
   text-align: center;
 }
@@ -29,14 +31,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1000;
+  z-index: 11;
 }
 /* outside */
 #loader {
   display: block;
   position: relative;
-  left: 49.8%;
-  top: 50%;
+  left: 47px;
+  top: -35px;
   width: 150px;
   height: 150px;
   margin: -75px 0 0 -75px;
@@ -102,9 +104,11 @@ body {
 /* loading bar */
 #preloader {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  z-index: 101;
+  z-index: 10;
   background-color: #212121;
   color: #ffffff;
 }
@@ -139,19 +143,37 @@ body {
   height: 100%;
   background-color: rgba(255, 255, 255, 0.8);
 }
+
+/* image container */
+#img_div {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  text-align: center;
+  display: none;
+}
+
+/* image style */
+img {
+  width: 400;
+  height: 300;
+  position: relative;
+  z-index: 12;
+  cursor: pointer;
+  padding: 5px;
+}
 </style>
 
-<!-- Loading elements -->
+<!-- loading elements -->
 <div id="content">
-  <h2>Making plots...</h2>
+  <h2 id="header">Making plots...</h2>
 </div>
 <div id="preloader">
   <div class="txt">
   <p class="txt-perc">0%</p>
   <div class="progress"><span></span></div>
-</div>
-<div id="loader-wrapper">
   <div id="loader"></div>
+  </div>
 </div>
 
 <script>
@@ -183,6 +205,9 @@ function progress_update() {
   $(".txt-perc").text(loading_progress + '%');
 }
 </script>
+
+<!-- image container -->
+<div id=img_div></div>
 
 <!-- The rest of this page is devoted to the image viewer -->
 <!-- Root element of PhotoSwipe. Must have class pswp. -->
@@ -254,15 +279,39 @@ function progress_update() {
 </div>
 
 <script>
-// open images and image viewer
-function start_image(items) {
+// items is a list of many images' characteristics passed by the main page
+// for use by photoswipe and to get the image source
+var items;
+// num_loaded keeps track of how many images have loaded
+var num_loaded = 0;
+
+// load images into the webpage and disable the loading screen when done
+function start_image(images) {
+  items = images;
+  for (var i = 0; i < items.length; i++) {
+    var img = new Image();
+    img.addEventListener('click', function(){open_viewer(this.index);});
+    img.onload = function() {
+      num_loaded++;
+      if (num_loaded == items.length) {
+        $('#preloader').css('display', 'none');
+        $('#header').text('Plot Display');
+        $('#img_div').css('display', 'inline');
+      }
+    }
+    img.src = items[i].src;
+    img.index = i;
+    $('#img_div').append(img);
+  }
+}
+
+/* open photoswipe image viewer at given index */
+function open_viewer(index) {
   var pswpElement = document.querySelectorAll('.pswp')[0];
   var options = {
-    index: 0,
+    index: index,
     closeOnScroll: false,
     closeOnVerticalDrag: false,
-    escKey: false,
-    closeEl: false,
     zoomEl: true,
     clickToCloseNonZoomable: false,
     shareButtons: [
