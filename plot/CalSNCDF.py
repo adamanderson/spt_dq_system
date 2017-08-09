@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core, calibration
 
-# makes a plot of the offline offset given the date                                                                                 
-def CalSNHistogram(request):
+# makes a plot of the offline offset given the date
+def CalSNCDF(request):
     try:
         data = [fr for fr in core.G3File('/spt/user/production/calibration/{}/{}.g3' \
                                              .format(request['source'], request['observation']))]
@@ -18,21 +18,25 @@ def CalSNHistogram(request):
         cal_dict = {}
         for band in bands:
             cal_dict[band] = [data[0]['CalibratorResponseSN'][bolo] \
-                                  for bolo in data[0]['CalibratorResponseSN'].keys() \
-                                  if boloprops[bolo].band / core.G3Units.GHz == band]
+                        for bolo in data[0]['CalibratorResponseSN'].keys() \
+                        if boloprops[bolo].band / core.G3Units.GHz == band]
     except KeyError:
         return "CalibratorResponseSN does not exist for this observation."
 
     fig = plt.figure()
     for band in bands:
-        plt.hist(cal_dict[band],
-                 bins=np.linspace(0,400,50),
-                 label='{} GHz'.format(band),
-                 histtype='step')
+        histvals, edges = np.histogram(cal_dict[band],
+                                       bins=np.linspace(0,400,50))
+        ecdf_unnormed = np.cumsum(histvals)
+        ecdf_unnormed = np.hstack([0, ecdf_unnormed])
+        inv_ecdf_unnormed = np.max(ecdf_unnormed) - ecdf_unnormed
+        plt.step(edges, inv_ecdf_unnormed, label='{} GHz'.format(band))
+    #plt.yscale('log')
     plt.legend()
 
     plt.xlabel('calibrator S/N')
-    plt.title('Calibrator S/N for observation {}\n'
+    plt.title('cumulative bolometers above a given calibrator S/N\n'
+              'for observation {}\n'
               'chop freq. = {:.1f} Hz'.format(request['observation'],
                                               data[0]["CalibratorResponseFrequency"] / core.G3Units.Hz))
     plt.tight_layout()

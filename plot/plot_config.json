@@ -1,48 +1,24 @@
 {
-  "transfer": {
-    "individual": {
-      "any": ["nominal", "offline"],
-      "calibrator": ["nominal", "offline", "CalSNHistogram"],
-      "elnod": ["nominal", "offline"],
-      "CenA": ["nominal", "offline"],
-      "CenA-pixelraster": ["nominal", "offline"],
-      "RCW38": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
-      "RCW38-pixelraster": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
-      "saturn": ["nominal", "offline"],
-      "debug-forced-scanify": ["nominal"],
-      "noise": ["nominal"]
-    },
-    "timeseries": {
-      "any": [],
-      "calibrator": [],
-      "elnod": [],
-      "CenA": [],
-      "CenA-pixelraster": [],
-      "RCW38": [],
-      "RCW38-pixelraster": [],
-      "saturn": [],
-      "debug-forced-scanify": [],
-      "noise": []
-    }
+  "individual": {
+    "any": ["nominal", "offline"],
+    "calibrator": ["nominal", "offline", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
+    "elnod": ["nominal", "offline"],
+    "CenA": ["nominal", "offline"],
+    "RCW38": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
+    "RCW38-pixelraster": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
+    "saturn": ["nominal", "offline"],
+    "debug-forced-scanify": ["nominal"],
+    "noise": ["nominal"]
   },
-  "aux": {
-    "individual": {
-      "any": [],
-      "arc": [],
-      "eht": [],
-      "pydfmux": [],
-      "pydfmuxlog": [],
-      "rsync": [],
-      "tar": []
-    },
-    "timeseries": {
-      "any": [],
-      "arc": [],
-      "eht": [],
-      "pydfmux": [],
-      "pydfmuxlog": [],
-      "rsync": [],
-      "tar": []
-    }
+  "timeseries": {
+    "any": [],
+    "calibrator": [],
+    "elnod": [],
+    "CenA": [],
+    "RCW38": [],
+    "RCW38-pixelraster": [],
+    "saturn": [],
+    "debug-forced-scanify": [],
+    "noise": []
   }
 }
