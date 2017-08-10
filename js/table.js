@@ -262,27 +262,25 @@ function plot() {
             date: rows[0]['date'], func: func_val, table: tab.id};
       }
       // request plots
-      deferred.push($.get("data_req", obsdata, function(err, status) {
+      deferred.push($.get("data_req", obsdata, function(data, status) {
         // each time through we make one plot, so update the loader
         display_win.load_progress();
-        if (err != null) {
+	if (data.includes('.png') == false) {
           // send an error alert to the display window
-          display_win.alert(err);
+          display_win.alert(data);
           return;
         }
+
         // put the image info in the list
-        for (var i = 0; i < selected_values.length; i++) {
-          if (tab.id == 'transfer') {
-            src = 'img/' + obsdata['source'] + obsdata['observation'] +
-                selected_values[i] + '.png';
-            items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
-          } else if (tab.id == 'aux') {
+	if (tab.id == 'transfer') {
+	    items.push({src: 'img/'+data, w: 0, h: 0, obs: obsdata['observation']});
+        }
+	else if (tab.id == 'aux') {
             src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
                 selected_values[i] + '.png';
             items.push({src: src, w: 0, h: 0});
-          }
-        }
-      }));
+	}
+	      }));
     });
   }
   // after all plots have finished

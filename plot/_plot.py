@@ -64,19 +64,24 @@ def plot(request):
     elif type(request['observation']) == str:
       obs_string = request['observation']
     plot_file = '/tmp/spt_dq/{}{}{}.png'.format(request['source'],
-                                                obs_string,
-                                                request['plot_type'])
+                                                  obs_string,
+                                                  request['plot_type'])
+    plot_basename = path.basename(plot_file)
 
-    # check if plot already exists
-    # remove cached plots if plotting file has changed
+      # write plot file name to stdout so that node.js server can send it to client
+    sys.stdout.write(plot_basename)
+    sys.stdout.flush()
+
+      # check if plot already exists
+      # remove cached plots if plotting file has changed
     if (path.isfile(plot_file)):
       plot_time = stat(plot_file).st_mtime
       file_time = stat('./plot/' + request['plot_type'] + '.py').st_mtime
       if (plot_time > file_time):
         return
-    # load python file and function
-    # only import from plot package so that the user passed plot_type
-    # cannot import arbitrary modules
+      # load python file and function
+      # only import from plot package so that the user passed plot_type
+      # cannot import arbitrary modules
     module = import_module('plot.' + request['plot_type'])
   except Exception as e:
     err_handler(e, request)
@@ -93,7 +98,7 @@ def plot(request):
     # special case for key error because it likely means a key
     # doesn't exist in a data file.
     err_handler(e, request, 'Error making plot ' + request['source'] +
-        ' ' + requset['observation'] + ' ' + request['plot_type']
+        ' ' + request['observation'] + ' ' + request['plot_type']
         + '''. Likely that requested data doesn't exist in the data file.
         Check the log for more details.''')
   except Exception as e:
@@ -102,8 +107,10 @@ def plot(request):
   # check if an error occurred and the user provided a string
   if (isinstance(plot, str)):
     err_handler(Exception(plot), request,
-        'Error making plot ' + request['source'] + ' ' +
-        request['observation'] + ' ' + request['plot_type'] + '. ' + plot)
+        'Error making plot {} {} {}. {}'.format(request['source'],
+                                                obs_string,
+                                                request['plot_type'],
+                                                plot))
 
   # handle if plot is not a figure
   if (isinstance(plot, plt.Figure)):

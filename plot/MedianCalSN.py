@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from spt3g import core, calibration
 from spt3g.std_processing import obsid_to_g3time
+import datetime as dt
 
 # plot median calibrator S/N for a list of observations; this is a timeseries plot
 def MedianCalSN(request):
@@ -29,17 +30,21 @@ def MedianCalSN(request):
                 return "CalibratorResponseSN does not exist for this observation."
             median_calSN[band].append(np.median(cal_data))
 
-    obstimes = [obsid_to_g3time(int(obsid)) for obsid in request['observation']]
+    timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
+                        for obsid in request['observation']])
+    dts = [dt.datetime.fromtimestamp(ts) for ts in timestamps]
+    datenums = mdates.date2num(dts)
     fig, ax = plt.subplots(1)
     for band in bands:
-        ax.plot(obstimes, median_calSN[band], label='{} GHz'.format(band))
-    ax.format_xdata = mdates.DateFormatter('%m-%d %h:%m')
+        ax.plot(datenums, median_calSN[band], 'o-', 
+                label='{} GHz'.format(band))
+    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+    ax.xaxis.set_major_formatter(xfmt)
+    plt.xticks(rotation=25)
     plt.legend()
-    plt.tight_layout()
-
     plt.xlabel('observation time')
     plt.ylabel('median calibration S/N')
-    plt.title('Calibrator S/N for observation {}'
-              .format(request['observation']))
+    plt.title('Calibrator S/N')
+    plt.tight_layout()
 
     return fig
