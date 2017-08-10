@@ -21,6 +21,8 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 from os import path, stat, mkdir
 from importlib import import_module
+import numpy as np
+import hashlib
 
 parser = argparse.ArgumentParser(
     description='Calls plotting functions in other files for a webserver.')
@@ -57,8 +59,13 @@ def err_handler(err, request, msg=None):
 def plot(request):
   try:
     # aux filenames (aka observation) may contain / so replace them
+    if type(request['observation']) == list:
+      obs_string = hashlib.sha224(' '.join(request['observation']).encode('utf-8')).hexdigest()
+    elif type(request['observation']) == str:
+      obs_string = request['observation']
     plot_file = '/tmp/spt_dq/{}{}{}.png'.format(request['source'],
-        request['observation'].replace('/', '_'), request['plot_type'])
+                                                obs_string,
+                                                request['plot_type'])
 
     # check if plot already exists
     # remove cached plots if plotting file has changed
@@ -122,7 +129,7 @@ def individual():
 def timeseries():
   # load arguments into a dict to be passed to plotting functions
   request = {'source': args.source, 'plot_type': args.single,
-      'observation': ' '.join(args.multi)}
+      'observation': args.multi}
   plot(request);
 
 #start process
