@@ -43,3 +43,23 @@ function make_plot_list() {
   //create initial plot list
   plot_list();
 }
+
+
+// Constructs the list of sources from all unique sources in the transfer DB
+function make_source_list() {
+    $.get("sourcelist", function(sourceData) {
+	    sourceList = [];
+	    for(jsource = 0; jsource < sourceData.length; jsource++) {
+		sourceList.push(sourceData[jsource].source);
+	    };
+	    sourceList.sort();
+
+	    for(var jsource = 0; jsource < sourceList.length; jsource++) {
+		var el = document.createElement("option");
+		el.setAttribute('value', sourceList[jsource]);
+		el.text = sourceList[jsource];
+		$('#obstype-search').append(el);
+	    };
+	    $('#obstype-search').trigger('chosen:updated');
+	});
+}

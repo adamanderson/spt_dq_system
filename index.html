@@ -75,15 +75,15 @@
             breaks and will give a tabulator remote pagination error.
         -->
         <option value="">any</option>
-        <option value="calibrator">calibrator</option>
-        <option value="CenA">CenA</option>
-        <option value="CenA-pixelraster">CenA-pixelraster</option>
-        <option value="elnod">elnod</option>
-        <option value="RCW38">RCW38</option>
-        <option value="RCW38-pixelraster">RCW38-pixelraster</option>
-        <option value="saturn">saturn</option>
-        <option value="debug-forced-scanify">debug-forced-scanify</option>
-        <option value="noise">noise</option>
+        <!-- <option value="calibrator">calibrator</option> -->
+        <!-- <option value="CenA">CenA</option> -->
+        <!-- <option value="CenA-pixelraster">CenA-pixelraster</option> -->
+        <!-- <option value="elnod">elnod</option> -->
+        <!-- <option value="RCW38">RCW38</option> -->
+        <!-- <option value="RCW38-pixelraster">RCW38-pixelraster</option> -->
+        <!-- <option value="saturn">saturn</option> -->
+        <!-- <option value="debug-forced-scanify">debug-forced-scanify</option> -->
+        <!-- <option value="noise">noise</option> -->
         </select>
       </td>
       <td></td>
@@ -186,8 +186,11 @@
         make_plot_list();
         // redraw tabulator header after display is active
         $("#transfer_table").tabulator("redraw", true);
+        // create entries for the source list dropdown menu
+        make_source_list();
       });
     });
   </script>
+
 </body>
 </html>

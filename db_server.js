@@ -196,7 +196,19 @@ app.get('/plot_list', function(req, res) {
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
   res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
-})
+});
+
+// get list of available sources
+app.get('/sourcelist', function(req, res) {
+	check_db();
+	query = squel.select()
+	    .from('transfer')
+	    .field('source')
+	    .distinct();
+	t_db.all(query.toString(), function(err, rows) {
+		res.send(rows);
+		    });
+    });
 
 // turns search into a sql query
 function parseSearch(query, searchJSON, tab) {
