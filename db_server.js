@@ -195,6 +195,9 @@ app.get('/plot_list', function(req, res) {
   if (req.query['type'] == '')
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
+  // check if plot_config has an entry for this source. Otherwise return 'any'
+  if (json[req.query['tab']][req.query['func']][req.query['type']] == null)
+    req.query['type'] = 'any';
   res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
 });
 
