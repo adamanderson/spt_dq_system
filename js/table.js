@@ -210,13 +210,13 @@ function plot() {
 
       obsdata['func'] = func_val;
       // request the plot
-      deferred.push($.get("data_req", obsdata, function(err, status) {
+      deferred.push($.get("data_req", obsdata, function(data, status) {
         // each time through we make a few plots so update the loader
         for (var i = 0; i < selected_values.length; i++)
           display_win.load_progress();
-        if (err != null) {
+	if (data.includes('.png') == false) {
           // send an error alert to the display window
-          display_win.alert(err);
+          display_win.alert(data);
           return;
         }
         // put the image info in the list

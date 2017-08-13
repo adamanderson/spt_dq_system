@@ -63,7 +63,7 @@ def plot(request):
       obs_string = hashlib.sha224(' '.join(request['observation']).encode('utf-8')).hexdigest()
     elif type(request['observation']) == str:
       obs_string = request['observation']
-    plot_file = '/tmp/spt_dq/{}{}{}.png'.format(request['source'],
+    plot_file = '/tmp/spt_dq_adama/{}{}{}.png'.format(request['source'],
                                                   obs_string,
                                                   request['plot_type'])
     plot_basename = path.basename(plot_file)
@@ -115,8 +115,8 @@ def plot(request):
   # handle if plot is not a figure
   if (isinstance(plot, plt.Figure)):
     # check if /tmp/spt_dq directory exists and make it if not
-    if (not path.isdir('/tmp/spt_dq/')):
-      mkdir('/tmp/spt_dq/')
+    if (not path.isdir('/tmp/spt_dq_adama/')):
+      mkdir('/tmp/spt_dq_adama/')
     plot.savefig(plot_file, dpi=200)
   else:
     err_handler(TypeError('Return object from plot function '
