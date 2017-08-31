@@ -21,7 +21,6 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 from os import path, stat, mkdir
 from importlib import import_module
-import numpy as np
 import hashlib
 
 parser = argparse.ArgumentParser(
@@ -60,7 +59,7 @@ def plot(request):
   try:
     # aux filenames (aka observation) may contain / so replace them
     if type(request['observation']) == list:
-      obs_string = hashlib.sha224(' '.join(request['observation']).encode('utf-8')).hexdigest()
+      obs_string = hashlib.sha512(' '.join(request['observation']).encode('utf-8')).hexdigest()
     elif type(request['observation']) == str:
       obs_string = request['observation']
     plot_file = '/tmp/spt_dq_adama/{}{}{}.png'.format(request['source'],

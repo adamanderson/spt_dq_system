@@ -181,7 +181,6 @@ app.get('/data_req', function (req, res) {
   execFile(python, args, options, (error, stdout, stderr) => {
     if (error) {
       output = stdout;
-      console.log(error)
       if (output == '')
         output = 'Server Error. Ask website admin for assistance if needed.';
       log('exec python error: ' + output.toString());
