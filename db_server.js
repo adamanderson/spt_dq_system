@@ -12,6 +12,8 @@ var auth = require('express-basic-auth');
 var bcrypt = require('bcryptjs');
 var https = require('https');
 var moment = require('moment');
+var SSE = require('express-sse');
+var sse = new SSE();
 
 // TODO error handling
 
@@ -19,6 +21,10 @@ var moment = require('moment');
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
+// server side events for passing messages
+app.get('/sse', sse.init);
+// counter to separate messages by plot request
+var sseid = 0;
 
 // determines if username and password are correct
 function authorizer(username, password, cb) {
@@ -143,11 +149,19 @@ app.get('/display.html', function(req, res) {
   res.sendFile( __dirname + "/" + "display.html" );
 });
 
+// request new sseid
+app.get('/sseid', function(req, res) {
+  res.json(sseid);
+  sseid++;
+});
+
 // used to make plotting requests. User requests a specific plot(s) and
 // the server executes a plotting script that saves the plot in the img
 // directory. The request times out after 20s in case of a bad script or
 // the server is being slow.
 app.get('/data_req', function (req, res) {
+  // save id to send messages to
+  var id = req.query['sseid'];
   options = {'timeout':20000};
   tab = req.query['table'];
   if (tab == 'transfer') {
@@ -178,17 +192,27 @@ app.get('/data_req', function (req, res) {
     args = ['-B', './plot/_plot.py', func_val, 'aux', plot_type].concat(
         filename.split(' '));
   var err = null;
-  execFile(python, args, options, (error, stdout, stderr) => {
-    if (error) {
-      output = stdout;
-      if (output == '')
-        output = 'Server Error. Ask website admin for assistance if needed.';
-      log('exec python error: ' + output.toString());
-    }
-    else
-      output = stdout
-    res.json(output);
+  var child = execFile(python, args, options);
+
+  child.stdout.on('data', function(data) {
+    // sometimes stdout combines messages so split them up and send them
+    // individually
+    var msgs = data.split('\n');
+    // remove empty strings
+    msgs = msgs.filter(entry => entry.trim() != '');
+
+    for (var i = 0; i < msgs.length; i++)
+      sse.send(msgs[i], 'out' + id);
   });
+
+  child.stderr.on('data', function(data) {
+    // log error messages
+    log(data)
+    sse.send(data, 'err' + id);
+  });
+
+  // send a blank response
+  res.send("0");
   return;
 })
 

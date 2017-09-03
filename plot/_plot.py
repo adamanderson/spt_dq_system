@@ -3,6 +3,12 @@ python scripts for plotting. This script can be used for testing of plotting
 functions. Simply run the script from the main directory (not the plot
 directory) using python and pass it the arguments described below.
 
+The plotting scripts communicate with the server using stdout. A three
+character code at the beginning of the message tells the server how to handle
+it. If a plotting script wants a message to be displayed, prefix your
+message with 'msg' followed by the message (no characters inbetween). Every
+message is terminated by the first newline character.
+
 Arguments: 
   plotting mode: currently individual or timeseries
   source: The source of the observation
@@ -38,26 +44,33 @@ parser.add_argument('multi', type=str, nargs=argparse.REMAINDER,
 
 args = parser.parse_args()
 if (len(args.multi) == 0):
-  sys.stdout.write('_plot.py: error: ' +
-      'the following arguments are required: mode, source, single, multi\n')
-  sys.stdout.flush()
+  print('_plot.py: error: ' +
+      'the following arguments are required: mode, source, single, multi',
+      flush=True)
   exit(1)
 
-# send message to user through stdout and send error to server
+# send error message to user through stdout and send error to server
 def err_handler(err, request, msg=None):
   # check if error in plotting file
   if (msg == None):
     msg = 'Error making plot {} {} {}. Check the log for details.'.format(
         request['source'], request['observation'], request['plot_type'])
 
-  sys.stdout.write(msg)
-  sys.stdout.flush()
+  print('msg' + msg, flush=True)
+
+  # about to leave so this plot is done
+  send_plot_done()
   # server handles all logging so just raise the error
   raise err
 
+def send_plot_done():
+  print('plt', flush=True)
+
+def send_filename(filename):
+  print('fln' + filename, flush=True)
+
 def plot(request):
   try:
-    # aux filenames (aka observation) may contain / so replace them
     if type(request['observation']) == list:
       obs_string = hashlib.sha512(' '.join(request['observation']).encode('utf-8')).hexdigest()
     elif type(request['observation']) == str:
@@ -67,20 +80,19 @@ def plot(request):
                                                   request['plot_type'])
     plot_basename = path.basename(plot_file)
 
-      # write plot file name to stdout so that node.js server can send it to client
-    sys.stdout.write(plot_basename)
-    sys.stdout.flush()
 
-      # check if plot already exists
-      # remove cached plots if plotting file has changed
+    # check if plot already exists
+    # remove cached plots if plotting file has changed
     if (path.isfile(plot_file)):
       plot_time = stat(plot_file).st_mtime
       file_time = stat('./plot/' + request['plot_type'] + '.py').st_mtime
       if (plot_time > file_time):
+        send_filename(plot_basename)
+        send_plot_done()
         return
-      # load python file and function
-      # only import from plot package so that the user passed plot_type
-      # cannot import arbitrary modules
+    # load python file and function
+    # only import from plot package so that the user passed plot_type
+    # cannot import arbitrary modules
     module = import_module('plot.' + request['plot_type'])
   except Exception as e:
     err_handler(e, request)
@@ -124,13 +136,26 @@ def plot(request):
         + request['plot_type']
         + '. Plot file formatted incorrectly. Check the log for details.')
 
+  # write plot file name to stdout so that nodejs server can send it to client
+  # we wait until the end to send the filename so that if an error occurs
+  # the website doesn't display a blank image
+  send_filename(plot_basename)
+
+  # signal the loading screen that the plot is done
+  send_plot_done();
+
 def individual():
   # load arguments into a dict to be passed to plotting functions
   request = {'source': args.source, 'observation': args.single}
 
   for plot_type in args.multi:
+    try:
       request['plot_type'] = plot_type
       plot(request);
+    # errors are handled by the plot method so just print their message
+    # to stderr and ignore them
+    except Exception as e:
+      print(e, file=sys.stderr)
 
 def timeseries():
   # load arguments into a dict to be passed to plotting functions

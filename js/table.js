@@ -149,6 +149,9 @@ function asearch() {
   plot_list();
 };
 
+// create sse listener
+var es = new EventSource("/sse");
+
 // sends plot request to server and opens images in new window
 function plot() {
   // holds selected observations
@@ -180,6 +183,45 @@ function plot() {
   // open new window immediately so it isn't considered a pop-up
   var display_win = window.open('display.html', '_blank');
 
+  // items holds the image info needed for photoswipe
+  var items = [];
+
+  // counts the number of images to be created
+  var image_ctr = 0;
+
+  var sseid;
+  $.get("sseid", function(id, status) {
+    sseid = id;
+    // counts the images that have finished being created
+    var plot_ctr = 0;
+
+    es.addEventListener('out' + sseid, function (event) {
+      // events include opening and closing quotations so slice them out
+
+      if (event.data.slice(1, 4) == 'msg')
+        display_win.show(event.data.slice(4, -1));
+
+      else if (event.data.slice(1, 4) == 'fln')
+        items.push({src: 'img/' + event.data.slice(4, -1), w: 0, h: 0});
+
+      else if (event.data.slice(1, 4) == 'plt') {
+        display_win.load_progress();
+        plot_ctr++;
+
+        if (image_ctr == plot_ctr) {
+          // done making plots
+          items.sort(compare);
+          display_win.start_image(items);
+        }
+      }
+
+    });
+
+    es.addEventListener('err' + sseid, function (event) {
+      display_win.show_err(event.data);
+    });
+  });
+
   // make the plots and everything else once display window has opened
   // so that we can track plotting progress and send images to the new window.
   display_win.onload = function () {
@@ -195,11 +237,6 @@ function plot() {
   display_win.loaded_count = 0;
   display_win.loading_progress = 0;
 
-  // items holds the image info needed for photoswipe
-  var items = [];
-  // deferred holds the jquery requests so we can know when they are return
-  var deferred = [];
-  
   if (func_val == "individual") {
     // loop over each observation
     $.each(rows, function(i, obsdata) {
@@ -209,29 +246,13 @@ function plot() {
       obsdata['table'] = tab.id;
 
       obsdata['func'] = func_val;
+
+      obsdata['sseid'] = sseid;
+
       // request the plot
-      deferred.push($.get("data_req", obsdata, function(data, status) {
-        // each time through we make a few plots so update the loader
-        for (var i = 0; i < selected_values.length; i++)
-          display_win.load_progress();
-	if (data.includes('.png') == false) {
-          // send an error alert to the display window
-          display_win.alert(data);
-          return;
-        }
-        // put the image info in the list
-        for (var i = 0; i < selected_values.length; i++) {
-          if (tab.id == 'transfer') {
-            src = 'img/' + obsdata['source'] + obsdata['observation'] +
-                selected_values[i] + '.png';
-            items.push({src: src, w: 0, h: 0, obs: obsdata['observation']});
-          } else if (tab.id == 'aux') {
-            src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
-                selected_values[i] + '.png';
-            items.push({src: src, w: 0, h: 0});
-          }
-        }
-      }));
+      $.get("data_req", obsdata, function(data, status) {
+        image_ctr += selected_values.length;
+      });
     });
   } else if (func_val == "timeseries") {
     // don't allow "any" source. Only one source allowed for timeseries mode
@@ -251,7 +272,8 @@ function plot() {
           obs.push(rows[j]['observation']);
 
         obsdata = {plot_type: type, observation: obs.join(' '),
-            source: rows[0]['source'], func: func_val, table: tab.id};
+            source: rows[0]['source'], func: func_val, table: tab.id,
+            sseid: sseid};
       } else if (tab.id == 'aux') {
         // combine requested observations into a string
         var obs = [];
@@ -259,57 +281,21 @@ function plot() {
           obs.push(rows[j]['filename']);
 
         obsdata = {plot_type: type, filename: obs.join(' '),
-            date: rows[0]['date'], func: func_val, table: tab.id};
+            date: rows[0]['date'], func: func_val, table: tab.id,
+            sseid: sseid};
       }
       // request plots
-      deferred.push($.get("data_req", obsdata, function(data, status) {
-        // each time through we make one plot, so update the loader
-        display_win.load_progress();
-	if (data.includes('.png') == false) {
-          // send an error alert to the display window
-          display_win.alert(data);
-          return;
-        }
-
-        // put the image info in the list
-	if (tab.id == 'transfer') {
-	    items.push({src: 'img/'+data, w: 0, h: 0, obs: obsdata['observation']});
-        }
-	else if (tab.id == 'aux') {
-            src = 'img/' + 'aux' + obsdata['filename'].replace(/\//g, '_') +
-                selected_values[i] + '.png';
-            items.push({src: src, w: 0, h: 0});
-	}
-	      }));
+      $.get("data_req", obsdata, function(data, status) {
+        image_ctr++;
+      });
     });
   }
-  // after all plots have finished
-  $.when.apply(null, deferred).then( function() {
-    // do nothing if all images generated errors
-    if (items.length == 0) {
-      display_win.close();
-      return;
-    }
-
-    if (tab.id == 'transfer') { 
-      // sort images by observation
-      items.sort(compare);
-    }
-
-    // open image viewer
-    display_win.start_image(items);
-  });
   }
 }
 
 // used to sort image items
 function compare(a, b) {
-  if (a.obs > b.obs)
-    return -1;
-  else if (a.obs < b.obs)
-    return 1;
-  else
-    return 0;
+  return a.src.localeCompare(b.src);
 }
 
 

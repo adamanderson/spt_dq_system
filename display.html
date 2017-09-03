@@ -16,6 +16,7 @@ body {
   background: #3c3e40;
   color: white;
   overflow-x: hidden;
+  font-family: Arial, sans-serif;
 }
 /* header */
 #content {
@@ -162,6 +163,13 @@ img {
   cursor: pointer;
   padding: 5px;
 }
+
+th, td {
+  text-align: left;
+}
+td {
+  height: 75px;
+}
 </style>
 
 <!-- loading elements -->
@@ -175,6 +183,33 @@ img {
   <div id="loader"></div>
   </div>
 </div>
+
+<div>
+  <table id="table" style="width:100%; display:none;">
+    <tr>
+      <th>Messages</th>
+      <th>Error Details</th>
+    </tr>
+    <tr>
+      <td><textarea id="dialog" readonly style="width:100%; height:100%; resize:none;"></textarea></td>
+      <td><textarea id="err_dialog" readonly style="width:100%; height:100%; resize:none;"></textarea></td>
+    </tr>
+  </table>
+</div>
+
+<script>
+// functions to append messages to the specified text area
+function show(message) {
+  var textarea = document.getElementById("dialog");
+  textarea.value += message + "\n\n";
+  document.getElementById("table").style["display"] = "table";
+}
+function show_err(message) {
+  var textarea = document.getElementById("err_dialog");
+  textarea.value += message + "\n\n";
+  document.getElementById("table").style["display"] = "table";
+}
+</script>
 
 <script>
 // the progress bar is made using GSAP tween timeline
@@ -282,8 +317,6 @@ function progress_update() {
 // items is a list of many images' characteristics passed by the main page
 // for use by photoswipe and to get the image source
 var items;
-// num_loaded keeps track of how many images have loaded
-var num_loaded = 0;
 
 // load images into the webpage and disable the loading screen when done
 function start_image(images) {
@@ -291,18 +324,13 @@ function start_image(images) {
   for (var i = 0; i < items.length; i++) {
     var img = new Image();
     img.addEventListener('click', function(){open_viewer(this.index);});
-    img.onload = function() {
-      num_loaded++;
-      if (num_loaded == items.length) {
-        $('#preloader').css('display', 'none');
-        $('#header').text('Plot Display');
-        $('#img_div').css('display', 'inline');
-      }
-    }
     img.src = items[i].src;
     img.index = i;
     $('#img_div').append(img);
   }
+  $('#preloader').css('display', 'none');
+  $('#header').text('Plot Display');
+  $('#img_div').css('display', 'inline');
 }
 
 /* open photoswipe image viewer at given index */
