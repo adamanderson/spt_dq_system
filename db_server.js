@@ -53,13 +53,15 @@ function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
 }
 
-// password protect the website
-app.use(auth({
-  authorizer: authorizer,
-  authorizeAsync: true,
-  challenge: true,
-  unauthorizedResponse: getUnauthorizedResponse,
-}))
+// password protect the website if certificate is given in config.yaml
+if(config.key_file && config.cert_file) {
+  app.use(auth({
+    authorizer: authorizer,
+    authorizeAsync: true,
+    challenge: true,
+    unauthorizedResponse: getUnauthorizedResponse,
+  }))
+}
 
 // setup home page
 app.use(express.static('public'));
@@ -297,12 +299,17 @@ function parseSearch(query, searchJSON, tab) {
   return query;
 }
 
-// https files
-var options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-};
+// use https if certificate info is given in config.yaml
+if(config.key_file && config.cert_file) {
+  var options = {
+    key: fs.readFileSync(config.key_file),
+    cert: fs.readFileSync(config.cert_file)
+  };
 
-// run server
-log('Listening on port 3000');
-https.createServer(options, app).listen(3000);
+  // run server
+  log('Listening on port 3000');
+  https.createServer(options, app).listen(3000);
+}
+else {
+  app.listen(3000)
+};
