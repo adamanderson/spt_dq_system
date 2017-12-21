@@ -14,8 +14,12 @@ var https = require('https');
 var moment = require('moment');
 var SSE = require('express-sse');
 var sse = new SSE();
+var yaml = require('yamljs');
 
 // TODO error handling
+
+// load configuration info from yaml file
+config = yaml.load('config.yaml')
 
 // setup express
 var app = express();
@@ -71,8 +75,8 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 function check_db() {
-  var cur_t_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  var cur_a_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  var cur_t_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  var cur_a_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   if (cur_t_ts != t_db_ts) {
     t_db = new sqlite3.Database(t_db_path);
     t_db_ts = cur_t_ts;
@@ -84,17 +88,12 @@ function check_db() {
 }
 
 // open the database (use amundsen path if it exists, otherwise use this dir)
-var t_db_path = '/spt/data/transfer_database/transfer.db';
-var a_db_path = '/spt/data/transfer_database/aux_transfer.db';
-if (!fs.existsSync(t_db_path))
-  t_db_path = './transfer.db';
-t_db = new sqlite3.Database(t_db_path);
-if (!fs.existsSync(a_db_path))
-  a_db_path = './aux_transfer.db';
-a_db = new sqlite3.Database(a_db_path);
+t_db = new sqlite3.Database(config.transfer_db_path);
+a_db = new sqlite3.Database(config.auxtransfer_db_path);
+
 // get timestamps of when the databases were loaded
-var t_db_ts = moment(fs.statSync(t_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-var a_db_ts = moment(fs.statSync(a_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+var t_db_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+var a_db_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
