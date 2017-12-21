@@ -1,0 +1,3 @@
+transfer_db_path: /poleanalysis/sptdaq/db/transfer.db
+auxtransfer_db_path: /poleanalysis/sptdaq/db/aux_transfer.db
+autoproc_db_path: /poleanalysis/sptdaq/db/autoproc.db
