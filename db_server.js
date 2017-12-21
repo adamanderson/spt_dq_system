@@ -181,10 +181,20 @@ app.get('/data_req', function (req, res) {
   var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
   var args;
   if (func_val == 'individual' && tab == 'transfer')
-    args = ['-B', './plot/_plot.py', func_val, source, obs].concat(
+    args = ['-B', './plot/_plot.py',
+	    func_val,
+	    source,
+	    config.calib_data_dir,
+	    config.bolo_data_dir,
+	    obs].concat(
         plot_type.split(' '));
   else if (func_val == 'timeseries' && tab == 'transfer')
-    args = ['-B', './plot/_plot.py', func_val, source, plot_type].concat(
+    args = ['-B', './plot/_plot.py',
+	    func_val,
+	    source,
+	    config.calib_data_dir,
+	    config.bolo_data_dir,
+	    plot_type].concat(
         obs.split(' '));
   else if (func_val == 'individual' && tab == 'aux')
     args = ['-B', './plot/_plot.py', func_val, 'aux', filename].concat(
@@ -194,6 +204,8 @@ app.get('/data_req', function (req, res) {
         filename.split(' '));
   var err = null;
   var child = execFile(python, args, options);
+
+  console.log(args)
 
   child.stdout.on('data', function(data) {
     // sometimes stdout combines messages so split them up and send them

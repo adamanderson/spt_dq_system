@@ -29,12 +29,20 @@ from os import path, stat, mkdir
 from importlib import import_module
 import hashlib
 
+# Argparse structure is kind of messed up.
+# Use subparsers for separate arguments in each mode, and deal with variable
+# argument lists in a standard way rather than splitting across multiple
+# argparse arguments. [AJA]
 parser = argparse.ArgumentParser(
     description='Calls plotting functions in other files for a webserver.')
 parser.add_argument('mode', type=str,
     help='The plotting mode. Currently individual or timeseries.')
 parser.add_argument('source', type=str,
     help='The source of the observation')
+parser.add_argument('caldatapath', type=str,
+    help='Path to autoprocessed calibration data.')
+parser.add_argument('bolodatapath', type=str,
+    help='Path to bolometer data.')
 parser.add_argument('single', type=str,
     help='''If individual, then the observation id. 
     If timeseries, then the name of the plot.''')
@@ -146,7 +154,10 @@ def plot(request):
 
 def individual():
   # load arguments into a dict to be passed to plotting functions
-  request = {'source': args.source, 'observation': args.single}
+  request = {'source': args.source,
+             'observation': args.single,
+             'caldatapath': args.caldatapath,
+             'bolodatapath': args.bolodatapath}
 
   for plot_type in args.multi:
     try:
@@ -159,8 +170,12 @@ def individual():
 
 def timeseries():
   # load arguments into a dict to be passed to plotting functions
-  request = {'source': args.source, 'plot_type': args.single,
-      'observation': args.multi}
+  request = {'source': args.source,
+             'plot_type': args.single,
+             'observation': args.multi,
+             'caldatapath': args.caldatapath, 
+             'bolodatapath': args.bolodatapath}
+  print(request)
   plot(request);
 
 #start process
