@@ -5,10 +5,14 @@ from spt3g import core, calibration
 # makes a plot of the offline offset given the date                                                                                 
 def ElnodSNSlopesHistogram(request):
     try:
-        data = [fr for fr in core.G3File('/spt/user/production/calibration/{}/{}.g3' \
-                                             .format(request['source'], request['observation']))]
-        boloprops = [fr for fr in core.G3File('/spt/data/bolodata/downsampled/{}/{}/nominal_online_cal.g3' \
-                                                  .format(request['source'], request['observation']))] \
+        data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
+                                             .format(request['caldatapath'],
+                                                     request['source'],
+                                                     request['observation']))]
+        boloprops = [fr for fr in core.G3File('{}/downsampled/{}/{}/nominal_online_cal.g3' \
+                                                  .format(request['bolodatapath'],
+                                                          request['source'],
+                                                          request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
     except RuntimeError:
         return "Could not find data file."
