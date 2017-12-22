@@ -104,11 +104,10 @@ app.use('/css',express.static(__dirname + '/css'));
 // create directory in /tmp to store plots
 // TODO: don't cache every plot. Remove old plots from time to time
 // NOTE: not a high priority because right now ~1.2TB free in /tmp
-var plot_dir = config.plot_dir;
-if (!fs.existsSync(plot_dir)){
-      fs.mkdirSync(plot_dir);
+if (!fs.existsSync(config.plot_dir)){
+      fs.mkdirSync(config.plot_dir);
 }
-app.use('/img', express.static(plot_dir));
+app.use('/img', express.static(config.plot_dir));
 
 // logs messages along with a timestamp. keeps writesteam open
 var ws = fs.createWriteStream('./db.log', {'flags': 'a'});
@@ -184,6 +183,7 @@ app.get('/data_req', function (req, res) {
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,
+	    config.plot_dir,
 	    config.calib_data_dir,
 	    config.bolo_data_dir,
 	    obs].concat(
@@ -192,6 +192,7 @@ app.get('/data_req', function (req, res) {
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,
+	    config.plot_dir,
 	    config.calib_data_dir,
 	    config.bolo_data_dir,
 	    plot_type].concat(

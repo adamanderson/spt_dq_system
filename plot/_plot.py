@@ -38,7 +38,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('mode', type=str,
     help='The plotting mode. Currently individual or timeseries.')
 parser.add_argument('source', type=str,
-    help='The source of the observation')
+    help='The source of the observation.')
+parser.add_argument('plotpath', type=str,
+    help='Path to which to save plots.')
 parser.add_argument('caldatapath', type=str,
     help='Path to autoprocessed calibration data.')
 parser.add_argument('bolodatapath', type=str,
@@ -83,9 +85,11 @@ def plot(request):
       obs_string = hashlib.sha512(' '.join(request['observation']).encode('utf-8')).hexdigest()
     elif type(request['observation']) == str:
       obs_string = request['observation']
-    plot_file = '/tmp/spt_dq_adama/{}{}{}.png'.format(request['source'],
-                                                  obs_string,
-                                                  request['plot_type'])
+    plot_file = '{}/{}{}{}.png'.format(request['plotpath'],
+                                       request['source'],
+                                       obs_string,
+                                       request['plot_type'])
+    print('msg {}'.format(plot_file))
     plot_basename = path.basename(plot_file)
 
 
@@ -134,8 +138,8 @@ def plot(request):
   # handle if plot is not a figure
   if (isinstance(plot, plt.Figure)):
     # check if /tmp/spt_dq directory exists and make it if not
-    if (not path.isdir('/tmp/spt_dq_adama/')):
-      mkdir('/tmp/spt_dq_adama/')
+    if (not path.isdir(args.plotpath)):
+      mkdir(args.plotpath)
     plot.savefig(plot_file, dpi=200)
   else:
     err_handler(TypeError('Return object from plot function '
@@ -153,9 +157,11 @@ def plot(request):
   send_plot_done();
 
 def individual():
+  print('plotting!')
   # load arguments into a dict to be passed to plotting functions
   request = {'source': args.source,
              'observation': args.single,
+             'plotpath': args.plotpath,
              'caldatapath': args.caldatapath,
              'bolodatapath': args.bolodatapath}
 
@@ -173,6 +179,7 @@ def timeseries():
   request = {'source': args.source,
              'plot_type': args.single,
              'observation': args.multi,
+             'plotpath': args.plotpath,
              'caldatapath': args.caldatapath, 
              'bolodatapath': args.bolodatapath}
   print(request)
