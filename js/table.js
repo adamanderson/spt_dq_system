@@ -205,7 +205,7 @@ function plot() {
         items.push({src: 'img/' + event.data.slice(4, -1), w: 0, h: 0});
 
       else if (event.data.slice(1, 4) == 'plt') {
-        display_win.load_progress();
+	  //display_win.load_progress();
         plot_ctr++;
 
         if (image_ctr == plot_ctr) {
