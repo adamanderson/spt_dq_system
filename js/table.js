@@ -201,8 +201,10 @@ function plot() {
       if (event.data.slice(1, 4) == 'msg')
         display_win.show(event.data.slice(4, -1));
 
-      else if (event.data.slice(1, 4) == 'fln')
-        items.push({src: 'img/' + event.data.slice(4, -1), w: 0, h: 0});
+      else if (event.data.split('fln').length == 2) {
+	  path =  event.data.split('fln')[1].slice(0,-1);
+	  items.push({src: 'img/' + path, w: 0, h: 0});
+      }
 
       else if (event.data.slice(1, 4) == 'plt') {
 	  //display_win.load_progress();
