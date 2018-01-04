@@ -80,11 +80,11 @@ function check_db() {
   var cur_t_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   var cur_a_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   if (cur_t_ts != t_db_ts) {
-    t_db = new sqlite3.Database(t_db_path);
+    t_db = new sqlite3.Database(config.transfer_db_path);
     t_db_ts = cur_t_ts;
   }
   if (cur_a_ts != a_db_ts) {
-    a_db = new sqlite3.Database(a_db_path);
+    a_db = new sqlite3.Database(config.auxtransfer_db_path);
     a_db_ts = cur_a_ts;
   }
 }
