@@ -79,6 +79,7 @@ app.set('view engine', 'handlebars');
 function check_db() {
   var cur_t_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   var cur_a_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+  var cur_autoproc_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
   if (cur_t_ts != t_db_ts) {
     t_db = new sqlite3.Database(config.transfer_db_path);
     t_db_ts = cur_t_ts;
@@ -87,15 +88,22 @@ function check_db() {
     a_db = new sqlite3.Database(config.auxtransfer_db_path);
     a_db_ts = cur_a_ts;
   }
+  if (cur_autoproc_ts != autoproc_db_ts) {
+    autoproc_db = new sqlite3.Database(config.autoproc_db_path);
+    autoproc_db_ts = cur_autoproc_ts;
+  }
+
 }
 
 // open the database (use amundsen path if it exists, otherwise use this dir)
 t_db = new sqlite3.Database(config.transfer_db_path);
 a_db = new sqlite3.Database(config.auxtransfer_db_path);
+autoproc_db = new sqlite3.Database(config.autoproc_db_path)
 
 // get timestamps of when the databases were loaded
 var t_db_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
 var a_db_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
+var autoproc_db_ts = moment(fs.statSync(config.autoproc_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
@@ -144,6 +152,18 @@ app.get('/apage', function(req, res) {
   });
 });
 
+app.get('/autoprocpage', function(req, res) {
+  check_db();
+  // get all data from the database
+  query = squel.select().from('autoproc');
+  parseSearch(query, req.query, 'autoproc');
+  autoproc_db.all(query.toParam()['text'], query.toParam()['values'],
+          function(err, rows) {
+    res.send(rows);
+  });
+});
+
+
 // page for displaying plots/data
 app.get('/display.html', function(req, res) {
   res.sendFile( __dirname + "/" + "display.html" );
@@ -167,8 +187,12 @@ app.get('/data_req', function (req, res) {
   if (tab == 'transfer') {
     obs = req.query['observation'];
     source = req.query['source'];
-  } else if (tab == 'aux') {
+  }
+  else if (tab == 'aux') {
     filename = req.query['filename'];
+  }
+  else if (tab == 'autoproc') {
+      filename = req.query['filename'];
   }
   plot_type = req.query['plot_type'];
   func_val = req.query['func'];
@@ -205,8 +229,6 @@ app.get('/data_req', function (req, res) {
         filename.split(' '));
   var err = null;
   var child = execFile(python, args, options);
-
-  console.log(args)
 
   child.stdout.on('data', function(data) {
     // sometimes stdout combines messages so split them up and send them
@@ -271,6 +293,23 @@ function parseSearch(query, searchJSON, tab) {
     else if (searchJSON['observation']['max']) {
       query.where('observation <= ?', searchJSON['observation']['max']);
     }
+
+    // user could specify min date, max date, or both
+    var min_time = searchJSON['date']['min'];
+    var max_time = searchJSON['date']['max'];
+    if(min_time && max_time) {
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
   }
   else if (tab == 'aux') {
     if (searchJSON['filename']) {
@@ -279,23 +318,42 @@ function parseSearch(query, searchJSON, tab) {
     if (searchJSON['type']) {
       query.where("type == ?", searchJSON['type']);
     }
-  }
 
-  // user could specify min date, max date, or both
-  var min_time = searchJSON['date']['min'];
-  var max_time = searchJSON['date']['max'];
-  if(min_time && max_time) {
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    // user could specify min date, max date, or both
+    var min_time = searchJSON['date']['min'];
+    var max_time = searchJSON['date']['max'];
+    if(min_time && max_time) {
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
   }
-  else if (min_time) {
-    // set max time to current date
-    max_time = moment().format('YYYY-MM-DD'); 
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-  }
-  else if (max_time) {
-    // set min time before any observations
-    min_time = "2000-01-01";
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+  else if (tab == 'autoproc') {
+      // user could specify min date, max date, or both
+    var min_time = searchJSON['modified']['min'];
+    var max_time = searchJSON['modified']['max'];
+    if(min_time && max_time) {
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+
   }
 
   var sort = searchJSON['sort'];
@@ -306,8 +364,10 @@ function parseSearch(query, searchJSON, tab) {
     else
       query.order(sort, true);
   }
-  else
+  else if (tab == 'transfer' || tab == 'aux')
     query.order('date', false);
+  else if (tab == "autoproc")
+      query.order('modified', false);
 
   return query;
 }

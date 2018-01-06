@@ -44,5 +44,13 @@
       "rsync": [],
       "tar": []
     }
+  },
+  "autoproc": {
+    "individual": {
+      "any": []
+    },
+    "timeseries": {
+      "any": []
+    }
   }
 }

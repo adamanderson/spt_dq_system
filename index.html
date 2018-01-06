@@ -33,6 +33,8 @@
         make_t_table(true);
         $("#aux_table").tabulator("destroy");
         make_aux_table(true);
+        $("#autoproc_table").tabulator("destroy");
+        make_autoproc_table(true);
         document.getElementById("select").style = "display:inline";
       }
       else if (val == "individual") {
@@ -40,6 +42,8 @@
         make_t_table(10);
         $("#aux_table").tabulator("destroy");
         make_aux_table(10);
+        $("#autoproc_table").tabulator("destroy");
+        make_autoproc_table(10);
         document.getElementById("select").style = "display:none";
       }
       plot_list();
@@ -61,6 +65,11 @@
       <td>Date</td>
       <td><input type="text" id="date-from" name="date-from" onclick="date_chosen();"></td>
       <td><input type="text" id="date-to" name="date-to" onclick="date_chosen();"></td>
+    </tr>
+    <tr>
+      <td>Modified</td>
+      <td><input type="text" id="modified-from" name="modified-from" onclick="date_chosen();"></td>
+      <td><input type="text" id="modified-to" name="modified-to" onclick="date_chosen();"></td>
     </tr>
     <tr id="obsid-row">
       <td>Obs ID</td>
@@ -155,9 +164,11 @@
   <div class="tab">
     <button class="tablinks" onclick="open_tab(event, 'transfer_table')" id="transfer">Transfer</button>
     <button class="tablinks" onclick="open_tab(event, 'aux_table')" id="aux">Aux</button>
+    <button class="tablinks" onclick="open_tab(event, 'autoproc_table')" id="autoproc">Autoprocessing</button>
   </div>
   <div id="transfer_table" class="tabcontent"></div>
   <div id="aux_table" class="tabcontent"></div>
+  <div id="autoproc_table" class="tabcontent"></div>
   </div>
 
   <script>

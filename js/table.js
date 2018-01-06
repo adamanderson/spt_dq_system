@@ -33,12 +33,21 @@ function open_tab(evt, tab) {
     document.getElementById("source-row").style.display = "table-row";
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
+    document.getElementById("modified-row").style.display = "none";
   }
   else if (tab == 'aux_table') {
     document.getElementById("obsid-row").style.display = "none";
     document.getElementById("source-row").style.display = "none";
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
+    document.getElementById("modified-row").style.display = "none";
+  }
+  else if (tab == 'autoproc_table') {
+    document.getElementById("obsid-row").style.display = "table-row";
+    document.getElementById("source-row").style.display = "table-row";
+    document.getElementById("type-row").style.display = "none";
+    document.getElementById("file-row").style.display = "none";
+    document.getElementById("modified-row").style.display = "table-row";
   }
 }
 
@@ -104,15 +113,45 @@ function make_aux_table(select) {
   });
 }
 
+function make_autoproc_table(select) {
+// create Tabulator on DOM element with id "example-table"
+  $("#autoproc_table").tabulator({
+    //pagination:"remote",  // use this for normal pagination
+    ajaxURL:"/autoprocpage", //set the ajax URL
+    ajaxParams: {modified:  {min: $("#date-from").val(),
+		      max: $("#date-to").val()},
+                 observation:    {min: $("#obsid-from").val(),
+		      max: $("#obsid-to").val()},
+		  source: $("#obstype-search").val() },
+    ajaxConfig:'GET',
+    ajaxSorting: true,
+    //paginationSize:40,
+    selectable: select,
+    index:"_id",
+    height:"400px", // set height of table (optional)
+    fitColumns:true, //fit columns to width of table (optional)
+    columns:[ //Define Table Columns
+      {title:"Source", field:"source"},
+      {title:"Observation", field:"observation"},
+      {title:"Status", field:"status"},
+      {title:"Modified", field:"modified", sorter:"date",
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+    ]
+  });
+}
+
+
 // get plotting mode and build the table
 var func_val = $('input[name="func"]:checked').val();
 if (func_val == "timeseries") {
   make_t_table(true);
   make_aux_table(true);
+  make_autoproc_table(true);
 }
 else if (func_val == "individual") {
   make_t_table(10);
   make_aux_table(10);
+  make_autoproc_table(10);
 }
 
 
@@ -123,6 +162,8 @@ function search() {
     asearch();
   else if (tab == 'transfer')
     tsearch();
+  else if (tab == 'autoproc')
+      autoprocsearch();
 }
 
 // sends search request and rebuilds table and plot types
@@ -148,6 +189,17 @@ function asearch() {
   $("#aux_table").tabulator("setData", "/apage", querydata);
   plot_list();
 };
+
+function autoprocsearch() {
+  // package up the search fields into a json to send to server
+  querydata = {modified:  {min: $("#date-from").val(),
+                           max: $("#date-to").val()},
+	       observation:    {min: $("#obsid-from").val(),
+				max: $("#obsid-to").val()}};
+  $("#autoproc_table").tabulator("setData", "/autoprocpage", querydata);
+  plot_list();
+};
+
 
 // create sse listener
 var es = new EventSource("/sse");
