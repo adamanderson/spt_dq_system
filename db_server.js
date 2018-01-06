@@ -48,6 +48,11 @@ function authorizer(username, password, cb) {
   });
 }
 
+// database filenames
+db_files = {transfer: config.transfer_db_path,
+	    aux_transfer: config.auxtransfer_db_path,
+	    autoproc: config.autoproc_db_path}
+
 // response if wrong credentials
 function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
@@ -76,27 +81,6 @@ app.get('/', function (req, res) {
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-function check_db() {
-  var cur_t_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  var cur_a_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  if (cur_t_ts != t_db_ts) {
-    t_db = new sqlite3.Database(config.transfer_db_path);
-    t_db_ts = cur_t_ts;
-  }
-  if (cur_a_ts != a_db_ts) {
-    a_db = new sqlite3.Database(config.auxtransfer_db_path);
-    a_db_ts = cur_a_ts;
-  }
-}
-
-// open the database (use amundsen path if it exists, otherwise use this dir)
-t_db = new sqlite3.Database(config.transfer_db_path);
-a_db = new sqlite3.Database(config.auxtransfer_db_path);
-
-// get timestamps of when the databases were loaded
-var t_db_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-var a_db_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
@@ -121,28 +105,25 @@ function log(msg) {
 }
 
 
-// for database requests
-app.get('/tpage', function(req, res) {
-  check_db();
-  // get all data from the database
-  query = squel.select().from('transfer');
-  parseSearch(query, req.query, 'transfer');
-  t_db.all(query.toParam()['text'], query.toParam()['values'],
-          function(err, rows) {
-    res.send(rows);
-  });
-});
+app.get('/dbpage', function(req, res) {
+	// open the database
+	db = new sqlite3.Database(db_files[req.query.dbname]);
 
-app.get('/apage', function(req, res) {
-  check_db();
-  // get all data from the database
-  query = squel.select().from('aux_transfer');
-  parseSearch(query, req.query, 'aux');
-  a_db.all(query.toParam()['text'], query.toParam()['values'],
-          function(err, rows) {
-    res.send(rows);
-  });
-});
+	// get data from the database
+	query = squel.select().from(req.query.dbname);
+	parseSearch(query, req.query, req.query.dbname);
+	db.all(query.toParam()['text'],
+	       query.toParam()['values'],
+	       function(err, rows) {
+		   res.send(rows);
+	       });
+	
+	// close the database
+	db.close();
+    });
+
+
+
 
 // page for displaying plots/data
 app.get('/display.html', function(req, res) {
@@ -167,8 +148,12 @@ app.get('/data_req', function (req, res) {
   if (tab == 'transfer') {
     obs = req.query['observation'];
     source = req.query['source'];
-  } else if (tab == 'aux') {
+  }
+  else if (tab == 'aux') {
     filename = req.query['filename'];
+  }
+  else if (tab == 'autoproc') {
+      filename = req.query['filename'];
   }
   plot_type = req.query['plot_type'];
   func_val = req.query['func'];
@@ -206,8 +191,6 @@ app.get('/data_req', function (req, res) {
   var err = null;
   var child = execFile(python, args, options);
 
-  console.log(args)
-
   child.stdout.on('data', function(data) {
     // sometimes stdout combines messages so split them up and send them
     // individually
@@ -243,12 +226,12 @@ app.get('/plot_list', function(req, res) {
 
 // get list of available sources
 app.get('/sourcelist', function(req, res) {
-	check_db();
+	db = new sqlite3.Database(config.transfer_db_path);
 	query = squel.select()
 	    .from('transfer')
 	    .field('source')
 	    .distinct();
-	t_db.all(query.toString(), function(err, rows) {
+	db.all(query.toString(), function(err, rows) {
 		res.send(rows);
 		    });
     });
@@ -271,6 +254,23 @@ function parseSearch(query, searchJSON, tab) {
     else if (searchJSON['observation']['max']) {
       query.where('observation <= ?', searchJSON['observation']['max']);
     }
+
+    // user could specify min date, max date, or both
+    var min_time = searchJSON['date']['min'];
+    var max_time = searchJSON['date']['max'];
+    if(min_time && max_time) {
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
   }
   else if (tab == 'aux') {
     if (searchJSON['filename']) {
@@ -279,23 +279,42 @@ function parseSearch(query, searchJSON, tab) {
     if (searchJSON['type']) {
       query.where("type == ?", searchJSON['type']);
     }
-  }
 
-  // user could specify min date, max date, or both
-  var min_time = searchJSON['date']['min'];
-  var max_time = searchJSON['date']['max'];
-  if(min_time && max_time) {
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    // user could specify min date, max date, or both
+    var min_time = searchJSON['date']['min'];
+    var max_time = searchJSON['date']['max'];
+    if(min_time && max_time) {
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
   }
-  else if (min_time) {
-    // set max time to current date
-    max_time = moment().format('YYYY-MM-DD'); 
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-  }
-  else if (max_time) {
-    // set min time before any observations
-    min_time = "2000-01-01";
-    query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
+  else if (tab == 'autoproc') {
+      // user could specify min date, max date, or both
+    var min_time = searchJSON['modified']['min'];
+    var max_time = searchJSON['modified']['max'];
+    if(min_time && max_time) {
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (min_time) {
+	// set max time to current date
+	max_time = moment().format('YYYY-MM-DD'); 
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+    else if (max_time) {
+	// set min time before any observations
+	min_time = "2000-01-01";
+	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
+    }
+
   }
 
   var sort = searchJSON['sort'];
@@ -306,8 +325,10 @@ function parseSearch(query, searchJSON, tab) {
     else
       query.order(sort, true);
   }
-  else
+  else if (tab == 'transfer' || tab == 'aux')
     query.order('date', false);
+  else if (tab == "autoproc")
+      query.order('modified', false);
 
   return query;
 }
@@ -320,9 +341,9 @@ if(config.key_file && config.cert_file) {
   };
 
   // run server
-  log('Listening on port 3000');
-  https.createServer(options, app).listen(3000);
+  log('Listening on port ' + config.port);
+  https.createServer(options, app).listen(parseInt(config.port));
 }
 else {
-  app.listen(3000)
+    app.listen(parseInt(config.port))
 };

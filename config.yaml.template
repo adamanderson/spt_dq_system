@@ -9,3 +9,5 @@ plot_dir: /tmp/data_quality/
 
 calib_data_dir: /poleanalysis/sptdaq/calresult/
 bolo_data_dir: /spt_data/bolodata/
+
+port: 3000
