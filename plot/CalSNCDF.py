@@ -5,10 +5,14 @@ from spt3g import core, calibration
 # makes a plot of the offline offset given the date
 def CalSNCDF(request):
     try:
-        data = [fr for fr in core.G3File('/spt/user/production/calibration/{}/{}.g3' \
-                                             .format(request['source'], request['observation']))]
-        boloprops = [fr for fr in core.G3File('/spt/data/bolodata/downsampled/{}/{}/nominal_online_cal.g3' \
-                                                  .format(request['source'], request['observation']))] \
+        data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
+                                             .format(request['caldatapath'],
+                                                     request['source'],
+                                                     request['observation']))]
+        boloprops = [fr for fr in core.G3File('{}/downsampled/{}/{}/nominal_online_cal.g3' \
+                                                  .format(request['bolodatapath'],
+                                                          request['source'],
+                                                          request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
     except RuntimeError:
         return "Could not find data file."
@@ -17,15 +21,15 @@ def CalSNCDF(request):
     try:
         cal_dict = {}
         for band in bands:
-            cal_dict[band] = [data[0]['CalibratorResponseSN'][bolo] \
-                        for bolo in data[0]['CalibratorResponseSN'].keys() \
-                        if boloprops[bolo].band / core.G3Units.GHz == band]
+            cal_dict[band] = np.array([data[0]['CalibratorResponseSN'][bolo] \
+                                           for bolo in data[0]['CalibratorResponseSN'].keys() \
+                                           if boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
         return "CalibratorResponseSN does not exist for this observation."
 
     fig = plt.figure()
     for band in bands:
-        histvals, edges = np.histogram(cal_dict[band],
+        histvals, edges = np.histogram(cal_dict[band][np.isfinite(cal_dict[band])],
                                        bins=np.linspace(0,400,50))
         ecdf_unnormed = np.cumsum(histvals)
         ecdf_unnormed = np.hstack([0, ecdf_unnormed])

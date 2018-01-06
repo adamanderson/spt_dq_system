@@ -21,15 +21,15 @@ def ElnodSNSlopesHistogram(request):
     try:
         cal_dict = {}
         for band in bands:
-            cal_dict[band] = [data[0]['ElnodSNSlopes'][bolo] \
-                                  for bolo in data[0]['ElnodSNSlopes'].keys() \
-                                  if boloprops[bolo].band / core.G3Units.GHz == band]
+            cal_dict[band] = np.array([data[0]['ElnodSNSlopes'][bolo] \
+                                           for bolo in data[0]['ElnodSNSlopes'].keys() \
+                                           if boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
         return "ElnodSNSlopes does not exist for this observation."
 
     fig = plt.figure()
     for band in bands:
-        plt.hist(cal_dict[band],
+        plt.hist(cal_dict[band][np.isfinite(cal_dict[band])],
                  bins=np.linspace(-100,4000,101),
                  label='{} GHz'.format(band),
                  histtype='step')
