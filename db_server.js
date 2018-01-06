@@ -48,6 +48,11 @@ function authorizer(username, password, cb) {
   });
 }
 
+// database filenames
+db_files = {transfer: config.transfer_db_path,
+	    aux_transfer: config.auxtransfer_db_path,
+	    autoproc: config.autoproc_db_path}
+
 // response if wrong credentials
 function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
@@ -76,35 +81,6 @@ app.get('/', function (req, res) {
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-function check_db() {
-  var cur_t_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  var cur_a_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  var cur_autoproc_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-  if (cur_t_ts != t_db_ts) {
-    t_db = new sqlite3.Database(config.transfer_db_path);
-    t_db_ts = cur_t_ts;
-  }
-  if (cur_a_ts != a_db_ts) {
-    a_db = new sqlite3.Database(config.auxtransfer_db_path);
-    a_db_ts = cur_a_ts;
-  }
-  if (cur_autoproc_ts != autoproc_db_ts) {
-    autoproc_db = new sqlite3.Database(config.autoproc_db_path);
-    autoproc_db_ts = cur_autoproc_ts;
-  }
-
-}
-
-// open the database (use amundsen path if it exists, otherwise use this dir)
-t_db = new sqlite3.Database(config.transfer_db_path);
-a_db = new sqlite3.Database(config.auxtransfer_db_path);
-autoproc_db = new sqlite3.Database(config.autoproc_db_path)
-
-// get timestamps of when the databases were loaded
-var t_db_ts = moment(fs.statSync(config.transfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-var a_db_ts = moment(fs.statSync(config.auxtransfer_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-var autoproc_db_ts = moment(fs.statSync(config.autoproc_db_path).mtime, 'YYYY-MM-DDTHH:mm.SSSZ').valueOf();
-
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
@@ -129,39 +105,24 @@ function log(msg) {
 }
 
 
-// for database requests
-app.get('/tpage', function(req, res) {
-  check_db();
-  // get all data from the database
-  query = squel.select().from('transfer');
-  parseSearch(query, req.query, 'transfer');
-  t_db.all(query.toParam()['text'], query.toParam()['values'],
-          function(err, rows) {
-    res.send(rows);
-  });
-});
+app.get('/dbpage', function(req, res) {
+	// open the database
+	db = new sqlite3.Database(db_files[req.query.dbname]);
 
-app.get('/apage', function(req, res) {
-  check_db();
-  // get all data from the database
-  query = squel.select().from('aux_transfer');
-  parseSearch(query, req.query, 'aux');
-  a_db.all(query.toParam()['text'], query.toParam()['values'],
-          function(err, rows) {
-    res.send(rows);
-  });
-});
+	// get data from the database
+	query = squel.select().from(req.query.dbname);
+	parseSearch(query, req.query, req.query.dbname);
+	db.all(query.toParam()['text'],
+	       query.toParam()['values'],
+	       function(err, rows) {
+		   res.send(rows);
+	       });
+	
+	// close the database
+	db.close();
+    });
 
-app.get('/autoprocpage', function(req, res) {
-  check_db();
-  // get all data from the database
-  query = squel.select().from('autoproc');
-  parseSearch(query, req.query, 'autoproc');
-  autoproc_db.all(query.toParam()['text'], query.toParam()['values'],
-          function(err, rows) {
-    res.send(rows);
-  });
-});
+
 
 
 // page for displaying plots/data
@@ -265,12 +226,12 @@ app.get('/plot_list', function(req, res) {
 
 // get list of available sources
 app.get('/sourcelist', function(req, res) {
-	check_db();
+	db = new sqlite3.Database(config.transfer_db_path);
 	query = squel.select()
 	    .from('transfer')
 	    .field('source')
 	    .distinct();
-	t_db.all(query.toString(), function(err, rows) {
+	db.all(query.toString(), function(err, rows) {
 		res.send(rows);
 		    });
     });

@@ -56,12 +56,13 @@ function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#transfer_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
-    ajaxURL:"/tpage", //set the ajax URL
+    ajaxURL:"/dbpage", //set the ajax URL
     ajaxParams: {source: $("#obstype-search").val(),
                  date:  {min: $("#date-from").val(),
                          max: $("#date-to").val()},
                  observation:    {min: $("#obsid-from").val(),
-                         max: $("#obsid-to").val()}},
+		      max: $("#obsid-to").val()},
+		 dbname: "transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -88,11 +89,12 @@ function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
-    ajaxURL:"/apage", //set the ajax URL
+    ajaxURL:"/dbpage", //set the ajax URL
     ajaxParams: {date:  {min: $("#date-from").val(),
                          max: $("#date-to").val()},
                  filename: $("#file-search").val(),
-                 type: $("#auxtype-search").val()},
+		  type: $("#auxtype-search").val(),
+		  dbname: "aux_transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -117,12 +119,13 @@ function make_autoproc_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#autoproc_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
-    ajaxURL:"/autoprocpage", //set the ajax URL
+    ajaxURL:"/dbpage", //set the ajax URL
     ajaxParams: {modified:  {min: $("#date-from").val(),
 		      max: $("#date-to").val()},
                  observation:    {min: $("#obsid-from").val(),
 		      max: $("#obsid-to").val()},
-		  source: $("#obstype-search").val() },
+		  source: $("#obstype-search").val(),
+		  dbname: "autoproc"},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -175,8 +178,9 @@ function tsearch() {
                date:  {min: $("#date-from").val(),
                        max: $("#date-to").val()},
                observation:    {min: $("#obsid-from").val(),
-                       max: $("#obsid-to").val()}}
-  $("#transfer_table").tabulator("setData", "/tpage", querydata);
+				max: $("#obsid-to").val()},
+	       dbname: "transfer"}
+  $("#transfer_table").tabulator("setData", "/dbpage", querydata);
   plot_list();
 };
 
@@ -185,8 +189,9 @@ function asearch() {
   querydata = {date:  {min: $("#date-from").val(),
                        max: $("#date-to").val()},
                filename: $("#file-search").val(),
-               type: $("#auxtype-search").val()};
-  $("#aux_table").tabulator("setData", "/apage", querydata);
+               type: $("#auxtype-search").val(),
+	       dbname: "aux_transfer"};
+  $("#aux_table").tabulator("setData", "/dbpage", querydata);
   plot_list();
 };
 
@@ -195,8 +200,9 @@ function autoprocsearch() {
   querydata = {modified:  {min: $("#date-from").val(),
                            max: $("#date-to").val()},
 	       observation:    {min: $("#obsid-from").val(),
-				max: $("#obsid-to").val()}};
-  $("#autoproc_table").tabulator("setData", "/autoprocpage", querydata);
+				max: $("#obsid-to").val()},
+	       dbname: "autoproc"};
+  $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
   plot_list();
 };
 
