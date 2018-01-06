@@ -52,17 +52,51 @@ function open_tab(evt, tab) {
 }
 
 
+function make_table(type, select) {
+    //create Tabulator on DOM element with id "transfer_table"
+    $("#transfer_table").tabulator({
+	    //pagination:"remote",  // use this for normal pagination
+	    ajaxURL:"/dbpage", 
+		ajaxParams: {search: {source: $("#obstype-search").val(),
+			date:  {min: $("#date-from").val(),
+			    max: $("#date-to").val()},
+			observation:    {min: $("#obsid-from").val(),
+			    max: $("#obsid-to").val()}},
+		    dbname: "transfer"},
+		ajaxConfig:'GET',
+		ajaxSorting: true,
+		//paginationSize:40,
+		selectable: select,
+		index:"_id",
+		height:"400px", // set height of table (optional)
+		fitColumns:true, //fit columns to width of table (optional)
+		columns:[ //Define Table Columns
+			 {title:"Observation ID", field:"observation", sorter:"number"},
+			 {title:"Source", field:"source"},
+			 {title:"Fullrate status", field:"status_fullrate"},
+			 {title:"Downsampled status", field:"status_downsampled"},
+			 {title:"Fullrate transfer", field:"transfer_fullrate",
+				 formatter:"tickCross"},
+			 {title:"Downsampled transfer", field:"transfer_downsampled",
+				 formatter:"tickCross"},
+			 {title:"Date", field:"date", sorter:"date",
+				 sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+			  ]
+		});
+}
+
+
 function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#transfer_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
-    ajaxParams: {source: $("#obstype-search").val(),
-                 date:  {min: $("#date-from").val(),
-                         max: $("#date-to").val()},
-                 observation:    {min: $("#obsid-from").val(),
-		      max: $("#obsid-to").val()},
-		 dbname: "transfer"},
+	      ajaxParams: {search: {source: $("#obstype-search").val(),
+		      date:  {min: $("#date-from").val(),
+			  max: $("#date-to").val()},
+		      observation:    {min: $("#obsid-from").val(),
+			  max: $("#obsid-to").val()}},
+		  dbname: "transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -90,10 +124,10 @@ function make_aux_table(select) {
   $("#aux_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
-    ajaxParams: {date:  {min: $("#date-from").val(),
-                         max: $("#date-to").val()},
-                 filename: $("#file-search").val(),
-		  type: $("#auxtype-search").val(),
+	      ajaxParams: {search: {date:  {min: $("#date-from").val(),
+			  max: $("#date-to").val()},
+		      filename: $("#file-search").val(),
+		      type: $("#auxtype-search").val()},
 		  dbname: "aux_transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
@@ -174,36 +208,36 @@ function tsearch() {
   // clear selections in table
   $("#transfer_table").tabulator("deselectRow");
   // package up the search fields into a json to send to server
-  querydata = {source: $("#obstype-search").val(),
-               date:  {min: $("#date-from").val(),
-                       max: $("#date-to").val()},
-               observation:    {min: $("#obsid-from").val(),
-				max: $("#obsid-to").val()},
+  querydata = {search: {source: $("#obstype-search").val(),
+			date:  {min: $("#date-from").val(),
+				max: $("#date-to").val()},
+			observation:    {min: $("#obsid-from").val(),
+					 max: $("#obsid-to").val()}},
 	       dbname: "transfer"}
   $("#transfer_table").tabulator("setData", "/dbpage", querydata);
   plot_list();
 };
 
 function asearch() {
-  // package up the search fields into a json to send to server
-  querydata = {date:  {min: $("#date-from").val(),
-                       max: $("#date-to").val()},
-               filename: $("#file-search").val(),
-               type: $("#auxtype-search").val(),
-	       dbname: "aux_transfer"};
-  $("#aux_table").tabulator("setData", "/dbpage", querydata);
-  plot_list();
+    // package up the search fields into a json to send to server
+    querydata = {search: {date:  {min: $("#date-from").val(),
+				  max: $("#date-to").val()},
+			  filename: $("#file-search").val(),
+			  type: $("#auxtype-search").val()},
+		 dbname: "aux_transfer"};
+    $("#aux_table").tabulator("setData", "/dbpage", querydata);
+    plot_list();
 };
 
 function autoprocsearch() {
-  // package up the search fields into a json to send to server
-  querydata = {modified:  {min: $("#date-from").val(),
-                           max: $("#date-to").val()},
-	       observation:    {min: $("#obsid-from").val(),
-				max: $("#obsid-to").val()},
-	       dbname: "autoproc"};
-  $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
-  plot_list();
+    // package up the search fields into a json to send to server
+    querydata = {search: {modified:  {min: $("#date-from").val(),
+				      max: $("#date-to").val()},
+			  observation:    {min: $("#obsid-from").val(),
+					   max: $("#obsid-to").val()}},
+			  dbname: "autoproc"};
+		 $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
+		 plot_list();
 };
 
 

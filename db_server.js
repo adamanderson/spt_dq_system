@@ -53,6 +53,8 @@ db_files = {transfer: config.transfer_db_path,
 	    aux_transfer: config.auxtransfer_db_path,
 	    autoproc: config.autoproc_db_path}
 
+// 
+
 // response if wrong credentials
 function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
@@ -236,102 +238,55 @@ app.get('/sourcelist', function(req, res) {
 		    });
     });
 
-// turns search into a sql query
+
 function parseSearch(query, searchJSON, tab) {
-  if (tab == 'transfer') {
-    if(searchJSON['source']) {
-      query.where("source == ?", searchJSON['source']);
+    for(var column in searchJSON.search) {
+	// special handling for ranges of dates
+	if(column == 'date' || column == 'modified') {
+	    var min_time = searchJSON.search[column]['min'];
+	    var max_time = searchJSON.search[column]['max'];
+	    if(!min_time)
+		min_time = "2017-01-01";
+	    if(!max_time)
+		max_time = moment().format('YYYY-MM-DD');
+	    query.where("date("+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	}
+	else {
+	    // handle other columns that span ranges
+	    if(searchJSON.search[column].hasOwnProperty('min') && searchJSON.search[column]['min']!='')
+		query.where(column + ' >= ?', searchJSON.search[column]['min']);
+	    if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
+		query.where(column + ' <= ?', searchJSON.search[column]['min']);
+	    
+	    // special handling for filenames or other things with wildcards
+	    if(column == 'filename' && searchJSON.search['filename'])
+		query.where("filename LIKE ?", '%' + searchJSON.search['filename'] + '%');
+	
+	    // if neither min nor max is present assume we are looking for an exact
+	    // match on this column
+	    if(searchJSON.search[column].hasOwnProperty('min')==false && 
+	       searchJSON.search[column].hasOwnProperty('max')==false &&
+	       searchJSON.search[column]!='')
+		query.where(column + " == ?", searchJSON.search[column]);
+	}
     }
 
-    // user could specify min obs, max obs or both
-    if(searchJSON['observation']['min'] && searchJSON['observation']['max']) {
-      query.where('observation >= ?', searchJSON['observation']['min'])
-          .where('observation <= ?', searchJSON['observation']['max']);
+    var sort = searchJSON['sort'];
+    var sort_dir = searchJSON['sort_dir'];
+    if (sort) {
+	if (sort_dir == 'desc')
+	    query.order(sort, false);
+	else
+	    query.order(sort, true);
     }
-    else if (searchJSON['observation']['min']) {
-      query.where('observation >= ?', searchJSON['observation']['min']);
-    }
-    else if (searchJSON['observation']['max']) {
-      query.where('observation <= ?', searchJSON['observation']['max']);
-    }
+    else if (tab == 'transfer' || tab == 'aux')
+	query.order('date', false);
+    else if (tab == "autoproc")
+	query.order('modified', false);
 
-    // user could specify min date, max date, or both
-    var min_time = searchJSON['date']['min'];
-    var max_time = searchJSON['date']['max'];
-    if(min_time && max_time) {
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (min_time) {
-	// set max time to current date
-	max_time = moment().format('YYYY-MM-DD'); 
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (max_time) {
-	// set min time before any observations
-	min_time = "2000-01-01";
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-  }
-  else if (tab == 'aux') {
-    if (searchJSON['filename']) {
-      query.where("filename LIKE ?", '%' + searchJSON['filename'] + '%');
-    }
-    if (searchJSON['type']) {
-      query.where("type == ?", searchJSON['type']);
-    }
-
-    // user could specify min date, max date, or both
-    var min_time = searchJSON['date']['min'];
-    var max_time = searchJSON['date']['max'];
-    if(min_time && max_time) {
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (min_time) {
-	// set max time to current date
-	max_time = moment().format('YYYY-MM-DD'); 
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (max_time) {
-	// set min time before any observations
-	min_time = "2000-01-01";
-	query.where("date(date) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-  }
-  else if (tab == 'autoproc') {
-      // user could specify min date, max date, or both
-    var min_time = searchJSON['modified']['min'];
-    var max_time = searchJSON['modified']['max'];
-    if(min_time && max_time) {
-	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (min_time) {
-	// set max time to current date
-	max_time = moment().format('YYYY-MM-DD'); 
-	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-    else if (max_time) {
-	// set min time before any observations
-	min_time = "2000-01-01";
-	query.where("date(modified) BETWEEN date(?) AND date(?)", min_time, max_time);
-    }
-
-  }
-
-  var sort = searchJSON['sort'];
-  var sort_dir = searchJSON['sort_dir'];
-  if (sort) {
-    if (sort_dir == 'desc')
-      query.order(sort, false);
-    else
-      query.order(sort, true);
-  }
-  else if (tab == 'transfer' || tab == 'aux')
-    query.order('date', false);
-  else if (tab == "autoproc")
-      query.order('modified', false);
-
-  return query;
+    return query;
 }
+
 
 // use https if certificate info is given in config.yaml
 if(config.key_file && config.cert_file) {
