@@ -380,9 +380,9 @@ if(config.key_file && config.cert_file) {
   };
 
   // run server
-  log('Listening on port 3000');
-  https.createServer(options, app).listen(3000);
+  log('Listening on port ' + config.port);
+  https.createServer(options, app).listen(parseInt(config.port));
 }
 else {
-  app.listen(3000)
+    app.listen(parseInt(config.port))
 };
