@@ -13,22 +13,26 @@ def MedianCalSN(request):
     
     for obsid in request['observation']:
         try:
-            data = [fr for fr in core.G3File('/spt/user/production/calibration/{}/{}.g3' \
-                                                 .format(request['source'], obsid))]
-            boloprops = [fr for fr in core.G3File('/spt/data/bolodata/downsampled/{}/{}/nominal_online_cal.g3' \
-                                                      .format(request['source'], obsid))] \
-                                                      [0]["NominalBolometerProperties"]
+            data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
+                                             .format(request['caldatapath'],
+                                                     request['source'],
+                                                     obsid))]
+            boloprops = [fr for fr in core.G3File('{}/downsampled/{}/{}/nominal_online_cal.g3' \
+                                                  .format(request['bolodatapath'],
+                                                          request['source'],
+                                                          obsid))] \
+                                                  [0]["NominalBolometerProperties"]
         except RuntimeError:
             return "Could not find data files."
 
         for band in bands:
             try:
-                cal_data = [data[0]['CalibratorResponseSN'][bolo] \
+                cal_data = np.array([data[0]['CalibratorResponseSN'][bolo] \
                                 for bolo in data[0]['CalibratorResponseSN'].keys() \
-                                if boloprops[bolo].band / core.G3Units.GHz == band]
+                                if boloprops[bolo].band / core.G3Units.GHz == band])
             except KeyError:
                 return "CalibratorResponseSN does not exist for this observation."
-            median_calSN[band].append(np.median(cal_data))
+            median_calSN[band].append(np.median(cal_data[np.isfinite(cal_data)]))
 
     timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
                         for obsid in request['observation']])
