@@ -14,6 +14,12 @@ def ElnodSNSlopesHistogram(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        bolodatafile = core.G3File('{}/downsampled/{}/{}/0000.g3' \
+                                       .format(request['bolodatapath'],
+                                               request['source'],
+                                               request['observation']))
+        for i in range(3):
+            pointingframe = bolodatafile.next()
     except RuntimeError:
         return "Could not find data file."
 
@@ -27,6 +33,8 @@ def ElnodSNSlopesHistogram(request):
     except KeyError:
         return "ElnodSNSlopes does not exist for this observation."
 
+    el = np.median([pointingframe["OnlineBoresightEl"][i]*180/np.pi for i in range(len(pointingframe["OnlineBoresightEl"]))])
+
     fig = plt.figure()
     for band in bands:
         plt.hist(cal_dict[band][np.isfinite(cal_dict[band])],
@@ -37,6 +45,6 @@ def ElnodSNSlopesHistogram(request):
 
     plt.xlim([-100, 4000])
     plt.xlabel('elnod slopes S/N')
-    plt.title('Elnod slope S/N for observation {}'.format(request['observation']))
+    plt.title('Elnod slope S/N for observation {} at el={:.1f} deg'.format(request['observation'], el))
     plt.tight_layout()
     return fig

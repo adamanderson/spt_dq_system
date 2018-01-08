@@ -14,6 +14,12 @@ def ElnodIQPhaseAngle(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        bolodatafile = core.G3File('{}/downsampled/{}/{}/0000.g3' \
+                                       .format(request['bolodatapath'],
+                                               request['source'],
+                                               request['observation']))
+        for i in range(3):
+            pointingframe = bolodatafile.next()
     except RuntimeError:
         return "Could not find data file."
 
@@ -27,6 +33,8 @@ def ElnodIQPhaseAngle(request):
     except KeyError:
         return "ElnodEigenvalueDominantVectorQ or *I does not exist for this observation."
 
+    el = np.median([pointingframe["OnlineBoresightEl"][i]*180/np.pi for i in range(len(pointingframe["OnlineBoresightEl"]))])
+    
     fig = plt.figure()
     for band in bands:
         plt.hist(plot_dict[band][np.isfinite(plot_dict[band])],
@@ -37,6 +45,6 @@ def ElnodIQPhaseAngle(request):
 
     plt.xlim([-45, 45])
     plt.xlabel('phase angle [deg]')
-    plt.title('Elnod phase angle for observation {}'.format(request['observation']))
+    plt.title('Elnod phase angle for observation {} at el={:.1f} deg'.format(request['observation'], el))
     plt.tight_layout()
     return fig
