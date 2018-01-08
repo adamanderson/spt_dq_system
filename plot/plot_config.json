@@ -15,7 +15,7 @@
     "timeseries": {
       "any": [],
       "calibrator": ["MedianCalSN"],
-      "elnod": [],
+      "elnod": ["MedianElnodIQPhaseAngle"],
       "CenA": [],
       "CenA-pixelraster": [],
       "RCW38": [],
