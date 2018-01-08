@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from spt3g import core, calibration
 
 # makes a plot of the offline offset given the date                                                                                 
-def ElnodSNSlopesHistogram(request):
+def ElnodIQPhaseAngle(request):
     try:
         data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
                                              .format(request['caldatapath'],
@@ -25,26 +25,26 @@ def ElnodSNSlopesHistogram(request):
 
     bands = [90, 150, 220]
     try:
-        cal_dict = {}
+        plot_dict = {}
         for band in bands:
-            cal_dict[band] = np.array([data[0]['ElnodSNSlopes'][bolo] \
-                                           for bolo in data[0]['ElnodSNSlopes'].keys() \
+            plot_dict[band] = np.array([180/np.pi * np.arctan(data[0]['ElnodEigenvalueDominantVectorQ'][bolo] / data[0]['ElnodEigenvalueDominantVectorI'][bolo])
+                                           for bolo in data[0]['ElnodEigenvalueDominantVectorQ'].keys() 
                                            if boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
-        return "ElnodSNSlopes does not exist for this observation."
+        return "ElnodEigenvalueDominantVectorQ or *I does not exist for this observation."
 
     el = np.median([pointingframe["OnlineBoresightEl"][i]*180/np.pi for i in range(len(pointingframe["OnlineBoresightEl"]))])
-
+    
     fig = plt.figure()
     for band in bands:
-        plt.hist(cal_dict[band][np.isfinite(cal_dict[band])],
-                 bins=np.linspace(-100,4000,101),
+        plt.hist(plot_dict[band][np.isfinite(plot_dict[band])],
+                 bins=np.linspace(-45,45,91),
                  label='{} GHz'.format(band),
                  histtype='step')
     plt.legend()
 
-    plt.xlim([-100, 4000])
-    plt.xlabel('elnod slopes S/N')
-    plt.title('Elnod slope S/N for observation {} at el={:.1f} deg'.format(request['observation'], el))
+    plt.xlim([-45, 45])
+    plt.xlabel('phase angle [deg]')
+    plt.title('Elnod phase angle for observation {} at el={:.1f} deg'.format(request['observation'], el))
     plt.tight_layout()
     return fig

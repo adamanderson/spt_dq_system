@@ -3,7 +3,7 @@
     "individual": {
       "any": ["nominal", "offline"],
       "calibrator": ["nominal", "offline", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
-      "elnod": ["nominal", "offline", "ElnodSNSlopesHistogram"],
+      "elnod": ["nominal", "offline", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
       "CenA": ["nominal", "offline"],
       "CenA-pixelraster": ["nominal", "offline"],
       "RCW38": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
@@ -15,7 +15,7 @@
     "timeseries": {
       "any": [],
       "calibrator": ["MedianCalSN"],
-      "elnod": [],
+      "elnod": ["MedianElnodIQPhaseAngle"],
       "CenA": [],
       "CenA-pixelraster": [],
       "RCW38": [],
