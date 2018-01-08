@@ -22,10 +22,10 @@ def ElnodIQPhaseAngle(request):
         plot_dict = {}
         for band in bands:
             plot_dict[band] = np.array([180/np.pi * np.arctan(data[0]['ElnodEigenvalueDominantVectorQ'][bolo] / data[0]['ElnodEigenvalueDominantVectorI'][bolo])
-                                           for bolo in data[0]['ElnodSNSlopes'].keys() 
+                                           for bolo in data[0]['ElnodEigenvalueDominantVectorQ'].keys() 
                                            if boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
-        return "ElnodSNSlopes does not exist for this observation."
+        return "ElnodEigenvalueDominantVectorQ or *I does not exist for this observation."
 
     fig = plt.figure()
     for band in bands:
