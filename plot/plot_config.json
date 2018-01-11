@@ -6,7 +6,7 @@
       "elnod": ["NominalPointingOffsets", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
       "CenA": ["NominalPointingOffsets"],
       "CenA-pixelraster": ["NominalPointingOffsets"],
-      "RCW38": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
+      "RCW38": ["NominalPointingOffsets"],
       "RCW38-pixelraster": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
       "saturn": ["NominalPointingOffsets"],
       "debug-forced-scanify": ["NominalPointingOffsets"],
