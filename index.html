@@ -66,7 +66,7 @@
       <td><input type="text" id="date-from" name="date-from" onclick="date_chosen();"></td>
       <td><input type="text" id="date-to" name="date-to" onclick="date_chosen();"></td>
     </tr>
-    <tr>
+    <tr id="modified-row">
       <td>Modified</td>
       <td><input type="text" id="modified-from" name="modified-from" onclick="date_chosen();"></td>
       <td><input type="text" id="modified-to" name="modified-to" onclick="date_chosen();"></td>
@@ -172,8 +172,8 @@
   </div>
 
   <script>
-    // set initial date to be 1 month ago so the entire database doesn't load
-    time = moment().subtract(4, "weeks");
+    // set initial date to be 3 days ago so the entire database doesn't load
+    time = moment().subtract(3, "days");
     document.getElementById("date-from").value = time.format("YYYY-MM-DD");
   </script>
 

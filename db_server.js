@@ -111,6 +111,18 @@ app.get('/dbpage', function(req, res) {
 	// open the database
 	db = new sqlite3.Database(db_files[req.query.dbname]);
 
+	// If the autoprocessing database was requested, then merge with the
+	// transfer database so that we can get the date of the observations.
+	// Note that we must wrap this in a 'serialize' call because otherwise
+	// subsequent queries will execute before the transfer database is
+	// attached.
+	if(req.query.dbname == "autoproc") {
+	    db2 = new sqlite3.Database(db_files["transfer"]);
+	    db.serialize(function() {
+		    db.run("ATTACH \""+db2.filename+"\" as transfer");
+		});
+	}
+
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
 	parseSearch(query, req.query, req.query.dbname);
@@ -249,14 +261,14 @@ function parseSearch(query, searchJSON, tab) {
 		min_time = "2017-01-01";
 	    if(!max_time)
 		max_time = moment().format('YYYY-MM-DD');
-	    query.where("date("+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	    query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
 	}
 	else {
 	    // handle other columns that span ranges
 	    if(searchJSON.search[column].hasOwnProperty('min') && searchJSON.search[column]['min']!='')
-		query.where(column + ' >= ?', searchJSON.search[column]['min']);
+		query.where(tab+'.'+column + ' >= ?', searchJSON.search[column]['min']);
 	    if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
-		query.where(column + ' <= ?', searchJSON.search[column]['min']);
+		query.where(tab+'.'+column + ' <= ?', searchJSON.search[column]['min']);
 	    
 	    // special handling for filenames or other things with wildcards
 	    if(column == 'filename' && searchJSON.search['filename'])
@@ -267,10 +279,15 @@ function parseSearch(query, searchJSON, tab) {
 	    if(searchJSON.search[column].hasOwnProperty('min')==false && 
 	       searchJSON.search[column].hasOwnProperty('max')==false &&
 	       searchJSON.search[column]!='')
-		query.where(column + " == ?", searchJSON.search[column]);
+		query.where(tab+'.'+column + " == ?", searchJSON.search[column]);
 	}
     }
 
+    // joining commands
+    if(tab == 'autoproc')
+     	query.join('transfer', null, "autoproc.observation == transfer.observation");
+
+    // sorting commands
     var sort = searchJSON['sort'];
     var sort_dir = searchJSON['sort_dir'];
     if (sort) {
@@ -280,9 +297,9 @@ function parseSearch(query, searchJSON, tab) {
 	    query.order(sort, true);
     }
     else if (tab == 'transfer' || tab == 'aux')
-	query.order('date', false);
+	query.order('transfer.date', false);
     else if (tab == "autoproc")
-	query.order('modified', false);
+	query.order('autoproc.modified', false);
 
     return query;
 }
