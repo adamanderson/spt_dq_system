@@ -299,7 +299,7 @@ function plot() {
       }
 
       else if (event.data.slice(1, 4) == 'plt') {
-	  //display_win.load_progress();
+	  display_win.load_progress();
         plot_ctr++;
 
         if (image_ctr == plot_ctr) {
