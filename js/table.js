@@ -173,6 +173,8 @@ function make_autoproc_table(select) {
       {title:"Status", field:"status"},
       {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+      {title:"Observation date (UTC)", field:"date", sorter:"date",
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
     ]
   });
 }
