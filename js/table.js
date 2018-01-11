@@ -79,7 +79,7 @@ function make_table(type, select) {
 				 formatter:"tickCross"},
 			 {title:"Downsampled transfer", field:"transfer_downsampled",
 				 formatter:"tickCross"},
-			 {title:"Date", field:"date", sorter:"date",
+			 {title:"Date (UTC)", field:"date", sorter:"date",
 				 sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
 			  ]
 		});
@@ -113,7 +113,7 @@ function make_t_table(select) {
           formatter:"tickCross"},
       {title:"Downsampled transfer", field:"transfer_downsampled",
           formatter:"tickCross"},
-      {title:"Date", field:"date", sorter:"date",
+      {title:"Date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
     ]
   });
@@ -141,9 +141,9 @@ function make_aux_table(select) {
       {title:"Type", field:"type"},
       {title:"Size", field:"size", sorter:"number"},
       {title:"Status", field:"status"},
-      {title:"Modified", field:"modified", sorter:"date",
+      {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-      {title:"Date", field:"date", sorter:"date",
+      {title:"Date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
     ]
   });
@@ -171,7 +171,7 @@ function make_autoproc_table(select) {
       {title:"Source", field:"source"},
       {title:"Observation", field:"observation"},
       {title:"Status", field:"status"},
-      {title:"Modified", field:"modified", sorter:"date",
+      {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
     ]
   });
