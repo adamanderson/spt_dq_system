@@ -1,16 +1,16 @@
 {
   "transfer": {
     "individual": {
-      "any": ["nominal", "offline"],
-      "calibrator": ["nominal", "offline", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
-      "elnod": ["nominal", "offline", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
-      "CenA": ["nominal", "offline"],
-      "CenA-pixelraster": ["nominal", "offline"],
-      "RCW38": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
-      "RCW38-pixelraster": ["nominal", "offline", "RCW38IntegralFlux", "RCW38FluxCalibration"],
-      "saturn": ["nominal", "offline"],
-      "debug-forced-scanify": ["nominal"],
-      "noise": ["nominal"]
+      "any": ["NominalPointingOffsets"],
+      "calibrator": ["NominalPointingOffsets", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
+      "elnod": ["NominalPointingOffsets", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
+      "CenA": ["NominalPointingOffsets"],
+      "CenA-pixelraster": ["NominalPointingOffsets"],
+      "RCW38": ["NominalPointingOffsets"],
+      "RCW38-pixelraster": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
+      "saturn": ["NominalPointingOffsets"],
+      "debug-forced-scanify": ["NominalPointingOffsets"],
+      "noise": ["NominalPointingOffsets"]
     },
     "timeseries": {
       "any": [],
