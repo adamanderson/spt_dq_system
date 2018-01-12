@@ -137,12 +137,16 @@ app.get('/dbpage', function(req, res) {
     });
 
 
-
-
 // page for displaying plots/data
 app.get('/display.html', function(req, res) {
   res.sendFile( __dirname + "/" + "display.html" );
 });
+
+// summary page
+app.get('/summary.html', function(req, res) {
+  res.sendFile( __dirname + "/" + "summary.html" );
+});
+
 
 // request new sseid
 app.get('/sseid', function(req, res) {
