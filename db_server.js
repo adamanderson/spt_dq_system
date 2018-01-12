@@ -2,7 +2,6 @@ var express = require('express');
 var sqlite3 = require('sqlite3');
 var assert = require('assert');
 var bodyParser = require('body-parser');
-var exphbs = require('express-handlebars');
 var squel = require("squel");
 var execFile = require('child_process').execFile;
 var fs = require('fs');
@@ -53,8 +52,6 @@ db_files = {transfer: config.transfer_db_path,
 	    aux_transfer: config.auxtransfer_db_path,
 	    autoproc: config.autoproc_db_path}
 
-// 
-
 // response if wrong credentials
 function getUnauthorizedResponse(req) {
   return 'Credentials rejected';
@@ -78,10 +75,6 @@ app.get('/index.html', function (req, res) {
 app.get('/', function (req, res) {
   res.sendFile( __dirname + "/" + "index.html" );
 })
-
-// handlebars for templating
-app.engine('handlebars', exphbs({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
 
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
