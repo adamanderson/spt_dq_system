@@ -252,13 +252,19 @@ function parseSearch(query, searchJSON, tab) {
     for(var column in searchJSON.search) {
 	// special handling for ranges of dates
 	if(column == 'date' || column == 'modified') {
-	    var min_time = searchJSON.search[column]['min'];
-	    var max_time = searchJSON.search[column]['max'];
-	    if(!min_time)
-		min_time = "2017-01-01";
-	    if(!max_time)
-		max_time = moment().format('YYYY-MM-DD');
-	    query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	    // special option to just get the single most recent obesrvation
+	    if (searchJSON.search[column] == 'latest')
+		query.where(tab + '.' + column + ' = ?', squel.select().field("MAX(" + tab + '.' + column + ")").from(tab));
+	    // otherwise assume that some date range is specified
+	    else {
+		var min_time = searchJSON.search[column]['min'];
+		var max_time = searchJSON.search[column]['max'];
+		if(!min_time)
+		    min_time = "2017-01-01";
+		if(!max_time)
+		    max_time = moment().format('YYYY-MM-DD');
+		query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	    }
 	}
 	else {
 	    // handle other columns that span ranges

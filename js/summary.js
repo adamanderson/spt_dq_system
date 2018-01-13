@@ -3,14 +3,27 @@ function open_table(table) {
     $('#lastobs').hide();
     $('#'+table).show();
 
-    if(table == "lastobs")
-	load_latestobs();
+    if(table == "lastobs") {
+	load_db_for_latestobs('calibrator');
+	load_latestobs_plots();
+    }
 }
 
 // create sse listener
 var es = new EventSource("/sse");
 
-function load_latestobs() {
+// loads the database information for the latest observation of a given type
+function load_db_for_latestobs(sourcename) {
+    querydata = {search: {date: "latest",
+                          source: sourcename},
+                 dbname: "transfer"};
+    $.get('/dbpage', querydata, function(data, status) {
+	    console.log(data);
+	});
+}
+
+// loads the plots for the latest set of observations of a given type
+function load_latestobs_plots() {
     // toy request for demonstration purposes
     datareq = [{observation: '32537722',
 		source: 'calibrator',
