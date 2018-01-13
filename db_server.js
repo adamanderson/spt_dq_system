@@ -124,7 +124,7 @@ app.get('/dbpage', function(req, res) {
 	       function(err, rows) {
 		   res.send(rows);
 	       });
-	
+
 	// close the database
 	db.close();
     });
@@ -281,8 +281,10 @@ function parseSearch(query, searchJSON, tab) {
     }
 
     // joining commands
-    if(tab == 'autoproc')
-     	query.join('transfer', null, "autoproc.observation == transfer.observation");
+    if(tab == 'autoproc') {
+	query.field('autoproc.*').field('transfer.date');
+     	query.join('transfer', null, squel.expr().and("autoproc.observation == transfer.observation"));
+    }
 
     // sorting commands
     var sort = searchJSON['sort'];
