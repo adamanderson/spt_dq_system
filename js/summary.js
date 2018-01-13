@@ -5,7 +5,6 @@ function open_table(table) {
 
     if(table == "lastobs") {
 	load_db_for_latestobs('calibrator');
-	load_latestobs_plots();
     }
 }
 
@@ -17,20 +16,24 @@ function load_db_for_latestobs(sourcename) {
     querydata = {search: {date: "latest",
                           source: sourcename},
                  dbname: "transfer"};
+    var obsdata;
     $.get('/dbpage', querydata, function(data, status) {
-	    console.log(data);
+	    datareq = [];
+	    plots = ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'];
+	    $.each(plots, function(i, plot) {
+		    datareq.push({observation: data[0].observation.toString(),
+				source: data[0].source,
+				table: 'transfer',
+				plot_type: plot,
+				func: 'individual'});
+		});
+	    load_plots(datareq);
 	});
 }
 
+
 // loads the plots for the latest set of observations of a given type
-function load_latestobs_plots() {
-    // toy request for demonstration purposes
-    datareq = [{observation: '32537722',
-		source: 'calibrator',
-		table: 'transfer',
-		plot_type: 'CalHistogram',
-		func:'individual'}];
-    
+function load_plots(datareq) {
     var items = [];
     var nTotalPlots = 0;
     var sseid;
@@ -49,17 +52,21 @@ function load_latestobs_plots() {
 		    }
 		    else if (event.data.slice(1, 4) == 'plt') {
 			plot_ctr++;
-			
 			if (nTotalPlots == plot_ctr) {
 			    $.each(items, function(i, img) {
-				    console.log(img);
-				    $('#calSN').attr('src', img.src);
+				    // this is a horrible kludge; solve with
+				    // better message passing
+				    for (iplot = 0; iplot < datareq.length; iplot++) {
+					if (img.src.indexOf(datareq[iplot].plot_type) != -1) {
+					    $('#'+datareq[iplot].plot_type).attr('src', img.src);
+					}
+				    }
 				});
 			}
 		    }
 		});
 	    es.addEventListener('err' + sseid, function (event) {
-		    display_win.show_err(event.data);
+		    console.log(event.data);
 		});
 
 	    // loop over each observation
@@ -68,7 +75,7 @@ function load_latestobs_plots() {
 		    
 		    // request the plots
 		    $.get("data_req", obsdata, function(data, status) {
-			    nTotalPlots += datareq.length;
+			    nTotalPlots += 1
 			});
 		});
 	});
