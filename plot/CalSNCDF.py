@@ -9,7 +9,7 @@ def CalSNCDF(request):
                                              .format(request['caldatapath'],
                                                      request['source'],
                                                      request['observation']))]
-        boloprops = [fr for fr in core.G3File('{}/downsampled/{}/{}/nominal_online_cal.g3' \
+        boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
                                                   .format(request['bolodatapath'],
                                                           request['source'],
                                                           request['observation']))] \

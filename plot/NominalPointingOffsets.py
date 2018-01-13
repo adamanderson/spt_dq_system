@@ -5,7 +5,7 @@ from spt3g import core, calibration
 # makes a plot of the nominal offset given the date
 def NominalPointingOffsets(request):
   try:
-    data = [fr for fr in core.G3File('{}/downsampled/{}/{}/nominal_online_cal.g3' \
+    data = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
                                                   .format(request['bolodatapath'],
                                                           request['source'],
                                                           request['observation']))] \
