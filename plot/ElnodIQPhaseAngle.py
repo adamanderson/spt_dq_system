@@ -14,7 +14,7 @@ def ElnodIQPhaseAngle(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
-        bolodatafile = core.G3File('{}/downsampled/{}/{}/0000.g3' \
+        bolodatafile = core.G3File('{}/{}/{}/0000.g3' \
                                        .format(request['bolodatapath'],
                                                request['source'],
                                                request['observation']))
