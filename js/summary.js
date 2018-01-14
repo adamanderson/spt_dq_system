@@ -7,32 +7,49 @@ function open_table(table) {
 	       'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
 	       'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
 
-    if(table == "lastobs") {
-	load_db_for_latestobs(sources, load_plots);
+    if (table == "lastobs") {
+	load_db_for_latestobs(sources, load_plots, 'lastobs');
+    }
+    else if (table == 'recent') {
+	load_db_for_latestobs(sources, load_plots, 'lastweek');
     }
 }
 
 // create sse listener
 var es = new EventSource("/sse");
 
-// loads the database information for the latest observation of a given type
-function load_db_for_latestobs(sources, fcallback_on_output) {
+// loads the database information for recent data of a given type
+function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
     $.each(sources, function(sourcename, plots) {
-	querydata = {search: {date: "latest",
-			      source: sourcename},
-		     dbname: "transfer"};
-	$.get('/dbpage', querydata, function(data, status) {
-		datareq = [];
-		$.each(plots, function(i, plot) {
-			datareq.push({observation: data[0].observation.toString(),
-				    source: data[0].source,
-				    table: 'transfer',
-				    plot_type: plot,
-				    func: 'individual'});
-		    });
-		fcallback_on_output(datareq);
-	    });
-    });
+	    var plot_mode;
+	    if (rangetype == 'lastobs') {
+		querydata = {search: {date: "latest",
+				      source: sourcename},
+			     dbname: "transfer"};
+		plot_mode = 'individual';
+	    }
+	    else if (rangetype == 'lastweek') {
+		time_lastweek = moment().add(-7, 'days');
+		time_now = moment();
+		querydata = {search: {date: {min: time_lastweek.format('YYYY-MM-DD'),
+					     max: time_now.format('YYYY-MM-DD')},
+				      source: sourcename},
+			     dbname: "transfer"};
+		plot_mode = 'timeseries';
+	    }
+	    $.get('/dbpage', querydata, function(data, status) {
+		    console.log(data);
+		    datareq = [];
+		    $.each(plots, function(i, plot) {
+			    datareq.push({observation: data[0].observation.toString(),
+					source: data[0].source,
+					table: 'transfer',
+					plot_type: plot,
+					func: plot_mode});
+			});
+		    fcallback_on_output(datareq);
+		});
+	});
 }
 
 
