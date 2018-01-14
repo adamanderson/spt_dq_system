@@ -122,6 +122,7 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
+		   console.log(rows);
 		   res.send(rows);
 	       });
 
@@ -249,22 +250,28 @@ app.get('/sourcelist', function(req, res) {
 
 
 function parseSearch(query, searchJSON, tab) {
+    // special option to just get the single most recent obserrvation
+    if (searchJSON.search.hasOwnProperty('date') &&
+	searchJSON.search['date'] == 'latest') {
+	query.where(tab + '.date = ?', squel.select()
+		    .field("MAX(" + tab + '.date)')
+		    .from(tab)
+		    .where(tab+'.source == ?', searchJSON.search['source']));
+	console.log(query.toString());
+	return query;
+    }
+
     for(var column in searchJSON.search) {
 	// special handling for ranges of dates
 	if(column == 'date' || column == 'modified') {
-	    // special option to just get the single most recent obesrvation
-	    if (searchJSON.search[column] == 'latest')
-		query.where(tab + '.' + column + ' = ?', squel.select().field("MAX(" + tab + '.' + column + ")").from(tab));
 	    // otherwise assume that some date range is specified
-	    else {
-		var min_time = searchJSON.search[column]['min'];
-		var max_time = searchJSON.search[column]['max'];
-		if(!min_time)
-		    min_time = "2017-01-01";
-		if(!max_time)
-		    max_time = moment().format('YYYY-MM-DD');
-		query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
-	    }
+	    var min_time = searchJSON.search[column]['min'];
+	    var max_time = searchJSON.search[column]['max'];
+	    if(!min_time)
+		min_time = "2017-01-01";
+	    if(!max_time)
+		max_time = moment().format('YYYY-MM-DD');
+	    query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
 	}
 	else {
 	    // handle other columns that span ranges
@@ -306,6 +313,7 @@ function parseSearch(query, searchJSON, tab) {
     else if (tab == "autoproc")
 	query.order('autoproc.modified', false);
 
+    console.log(query.toString());
     return query;
 }
 

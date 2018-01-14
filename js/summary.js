@@ -2,9 +2,13 @@ function open_table(table) {
     $('#recent').hide();
     $('#lastobs').hide();
     $('#'+table).show();
+    
+    sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
+	       'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
+	       'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
 
     if(table == "lastobs") {
-	load_db_for_latestobs('calibrator');
+	load_db_for_latestobs(sources, load_plots);
     }
 }
 
@@ -12,23 +16,23 @@ function open_table(table) {
 var es = new EventSource("/sse");
 
 // loads the database information for the latest observation of a given type
-function load_db_for_latestobs(sourcename) {
-    querydata = {search: {date: "latest",
-                          source: sourcename},
-                 dbname: "transfer"};
-    var obsdata;
-    $.get('/dbpage', querydata, function(data, status) {
-	    datareq = [];
-	    plots = ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'];
-	    $.each(plots, function(i, plot) {
-		    datareq.push({observation: data[0].observation.toString(),
-				source: data[0].source,
-				table: 'transfer',
-				plot_type: plot,
-				func: 'individual'});
-		});
-	    load_plots(datareq);
-	});
+function load_db_for_latestobs(sources, fcallback_on_output) {
+    $.each(sources, function(sourcename, plots) {
+	querydata = {search: {date: "latest",
+			      source: sourcename},
+		     dbname: "transfer"};
+	$.get('/dbpage', querydata, function(data, status) {
+		datareq = [];
+		$.each(plots, function(i, plot) {
+			datareq.push({observation: data[0].observation.toString(),
+				    source: data[0].source,
+				    table: 'transfer',
+				    plot_type: plot,
+				    func: 'individual'});
+		    });
+		fcallback_on_output(datareq);
+	    });
+    });
 }
 
 
