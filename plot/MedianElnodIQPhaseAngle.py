@@ -27,9 +27,11 @@ def MedianElnodIQPhaseAngle(request):
 
         for band in bands:
             try:
-                phase_data = np.array([180/np.pi * np.arctan(data[0]['ElnodEigenvalueDominantVectorQ'][bolo] / data[0]['ElnodEigenvalueDominantVectorI'][bolo])
+                phase_data = np.array([180/np.pi * np.arctan(data[0]['ElnodEigenvalueDominantVectorQ'][bolo] / 
+                                                             data[0]['ElnodEigenvalueDominantVectorI'][bolo])
                                 for bolo in data[0]['ElnodEigenvalueDominantVectorQ'].keys() \
-                                if boloprops[bolo].band / core.G3Units.GHz == band])
+                                if boloprops[bolo].band / core.G3Units.GHz == band and \
+                                       data[0]['ElnodEigenvalueDominantVectorI'][bolo] != 0])
                 
                 # cut bolometers with very small or zero phase angle 
                 phase_data = phase_data[np.isfinite(phase_data)][np.abs(phase_data[np.isfinite(phase_data)])>1e-4]
