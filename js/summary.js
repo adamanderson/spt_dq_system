@@ -3,14 +3,15 @@ function open_table(table) {
     $('#lastobs').hide();
     $('#'+table).show();
     
-    sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
-	       'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
-	       'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
-
     if (table == "lastobs") {
+	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
+		   'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
+		   'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
 	load_db_for_latestobs(sources, load_plots, 'lastobs');
     }
     else if (table == 'recent') {
+	sources = {'calibrator': ['MedianCalSN'],
+		   'elnod': ['MedianElnodIQPhaseAngle']};
 	load_db_for_latestobs(sources, load_plots, 'lastweek');
     }
 }
@@ -29,7 +30,7 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 		plot_mode = 'individual';
 	    }
 	    else if (rangetype == 'lastweek') {
-		time_lastweek = moment().add(-7, 'days');
+		time_lastweek = moment().add(-5, 'days');
 		time_now = moment();
 		querydata = {search: {date: {min: time_lastweek.format('YYYY-MM-DD'),
 					     max: time_now.format('YYYY-MM-DD')},
@@ -38,15 +39,20 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 		plot_mode = 'timeseries';
 	    }
 	    $.get('/dbpage', querydata, function(data, status) {
+		    observation_list = [];
+		    $.each(data, function(jobs, obsdata) {
+			    observation_list.push(obsdata.observation.toString());
+			});
 		    console.log(data);
 		    datareq = [];
 		    $.each(plots, function(i, plot) {
-			    datareq.push({observation: data[0].observation.toString(),
+			    datareq.push({observation: observation_list.join(' '),
 					source: data[0].source,
 					table: 'transfer',
 					plot_type: plot,
 					func: plot_mode});
 			});
+		    console.log(datareq);
 		    fcallback_on_output(datareq);
 		});
 	});
