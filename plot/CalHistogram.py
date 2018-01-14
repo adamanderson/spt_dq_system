@@ -30,10 +30,11 @@ def CalHistogram(request):
     fig = plt.figure()
     for band in bands:
         plt.hist(cal_dict[band][np.isfinite(cal_dict[band])],
-                 bins=np.linspace(-1, 9, 50),
+                 bins=np.linspace(-1, 6, 50),
                  label='{} GHz'.format(band),
                  histtype='step')
     plt.legend()
+    plt.xlim([-1,6])
 
     plt.xlabel('calibrator response [fW]')
     plt.title('Calibrator response for observation {}\n'
