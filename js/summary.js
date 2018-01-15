@@ -30,7 +30,7 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 		plot_mode = 'individual';
 	    }
 	    else if (rangetype == 'lastweek') {
-		time_lastweek = moment().add(-5, 'days');
+		time_lastweek = moment().add(-14, 'days');
 		time_now = moment();
 		querydata = {search: {date: {min: time_lastweek.format('YYYY-MM-DD'),
 					     max: time_now.format('YYYY-MM-DD')},

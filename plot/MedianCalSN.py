@@ -4,44 +4,32 @@ import matplotlib.dates as mdates
 from spt3g import core, calibration
 from spt3g.std_processing import obsid_to_g3time
 import datetime as dt
+import pickle
 
 # plot median calibrator S/N for a list of observations; this is a timeseries plot
 def MedianCalSN(request):
-    bands = [90, 150, 220]
-    
-    median_calSN = {90: [], 150: [], 220: []}
-    
-    for obsid in request['observation']:
-        try:
-            data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
-                                             .format(request['caldatapath'],
-                                                     request['source'],
-                                                     obsid))]
-            boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
-                                                  .format(request['bolodatapath'],
-                                                          request['source'],
-                                                          obsid))] \
-                                                  [0]["NominalBolometerProperties"]
-        except RuntimeError:
-            return "Could not find data files."
+    with open('skims/20180115_skim.pkl', 'rb') as f:
+        data = pickle.load(f)
 
-        for band in bands:
-            try:
-                cal_data = np.array([data[0]['CalibratorResponseSN'][bolo] \
-                                for bolo in data[0]['CalibratorResponseSN'].keys() \
-                                if boloprops[bolo].band / core.G3Units.GHz == band])
-            except KeyError:
-                return "CalibratorResponseSN does not exist for this observation."
-            median_calSN[band].append(np.median(cal_data[np.isfinite(cal_data)]))
+    waferlist = [selection_id for selection_id in \
+                 data['calibrator'][list(data['calibrator'].keys())[0]]['MedianCalSN'].keys()
+                 if 'w' in str(selection_id)]
 
-    timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                        for obsid in request['observation']])
+    median_calSN = {wafer: [data['calibrator'][obsid]['MedianCalSN'][wafer] \
+                                for obsid in request['observation'] \
+                                if obsid in data['calibrator'].keys()] \
+                        for wafer in waferlist}
+    timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in request['observation'] \
+                              if obsid in data['calibrator'].keys()])
+
     dts = [dt.datetime.fromtimestamp(ts) for ts in timestamps]
     datenums = mdates.date2num(dts)
+
     fig, ax = plt.subplots(1)
-    for band in bands:
-        ax.plot(datenums, median_calSN[band], 'o-', 
-                label='{} GHz'.format(band))
+    for wafer in waferlist:
+        ax.plot(datenums, median_calSN[wafer], 'o-', label=wafer)
+
     xfmt = mdates.DateFormatter('%m-%d %H:%M')
     ax.xaxis.set_major_formatter(xfmt)
     plt.xticks(rotation=25)
