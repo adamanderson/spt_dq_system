@@ -9,18 +9,45 @@ import os.path
 
 P0 = ap.ArgumentParser(description='',
                        formatter_class=ap.ArgumentDefaultsHelpFormatter)
-P0.add_argument('caldatapath', action='store', default=None,
+S = P0.add_subparsers(dest='mode', metavar='MODE', title='subcommands',
+                          help='Function to perform. For help, call: '
+                          '%(prog)s %(metavar)s -h')
+
+S0 = S.add_parser('rebuild', help='Rebuild the pickle files from scratch.',
+                  formatter_class=ap.ArgumentDefaultsHelpFormatter)
+S0.add_argument('caldatapath', action='store', default=None,
                 help='Path to calibration data to skim.')
-P0.add_argument('bolodatapath', action='store', default=None,
+S0.add_argument('bolodatapath', action='store', default=None,
                 help='Path to bolometer data (for bolometer properties.')
-P0.add_argument('outfilename', action='store', default=None,
+S0.add_argument('outfilename', action='store', default=None,
                 help='name of output data file to write.')
-P0.add_argument('--min-time', action='store', default='20180101',
+S0.add_argument('--min-time', action='store', default='20180101',
                 help='Minimum time of observations to skim. Format: YYYYMMDD')
-P0.add_argument('--max-time', action='store',
+S0.add_argument('--max-time', action='store',
                 default=datetime.datetime.now().strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
+
+S1 = S.add_parser('update', help='Updates the pickle file data skim when the '
+                  'autoprocessing file timestamp is newer than the stored '
+                  'timestamp or when there is no stored data for an '
+                  'autoprocessing data file.',
+                  formatter_class=ap.ArgumentDefaultsHelpFormatter)
+S1.add_argument('caldatapath', action='store', default=None,
+                help='Path to calibration data to skim.')
+S1.add_argument('bolodatapath', action='store', default=None,
+                help='Path to bolometer data (for bolometer properties.')
+S1.add_argument('infilename', action='store', default=None,
+                help='Name of input file to update.')
+S1.add_argument('outfilename', action='store', default=None,
+                help='Name of output data file to write.')
+S1.add_argument('--min-time', action='store', default='20180101',
+                help='Minimum time of observations to skim. Format: YYYYMMDD')
+S1.add_argument('--max-time', action='store',
+                default=datetime.datetime.now().strftime('%Y%m%d'),
+                help='Maximum time of observations to skim. Format: YYYYMMDD')
+
 args = P0.parse_args()
+
 
 # convert min/max times in observation IDs that we can compare with filenames
 min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(args.min_time)))
@@ -74,14 +101,20 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
         phase_data_on_selection[select_value] = np.median(phase_data[selection]
                                                           [np.isfinite(phase_data[selection])])
     return phase_data_on_selection
-
-                                                 
     
 function_dict = {'calibrator': {'MedianCalSN': median_cal_sn},
                  'elnod': {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle}}
 
 
-data = {}
+# create the output data dictionary
+print(args.mode)
+if args.mode == 'update':
+    with open(args.infilename, 'rb') as f:
+        data = pickle.load(f)
+else:
+    data = {}
+
+
 for source, quantities in function_dict.items():
     calfiles = glob.glob('{}/{}/*g3'.format(args.caldatapath, source))
     files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
@@ -89,21 +122,24 @@ for source, quantities in function_dict.items():
     
     print('Analyzing source: {}'.format(source))
 
-    data[source] = {}
+    if source not in data.keys():
+        data[source] = {}
     for fname in files_to_parse:
         obsid = os.path.splitext(os.path.basename(fname))[0]
         print('observation: {}'.format(obsid))
 
         d = [fr for fr in core.G3File(fname)]
         boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
-                                                  .format(args.bolodatapath,
-                                                          source,
+                                                  .format(args.bolodatapath, \
+                                                          source, \
                                                           obsid))] \
                                                   [0]["NominalBolometerProperties"]
-        data[source][obsid] = {}
-        for quantity_name in function_dict[source]:
-            data[source][obsid][quantity_name] = \
-                function_dict[source][quantity_name](d[0], selector_dict)
+        if obsid not in data[source].keys() or \
+                data[source][obsid]['timestamp'] != os.path.getctime(fname):
+            data[source][obsid] = {'timestamp': os.path.getctime(fname)}
+            for quantity_name in function_dict[source]:
+                data[source][obsid][quantity_name] = \
+                    function_dict[source][quantity_name](d[0], selector_dict)
             
 with open(args.outfilename, 'wb') as f:
     pickle.dump(data, f)
