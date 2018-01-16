@@ -29,6 +29,9 @@ app.get('/sse', sse.init);
 // counter to separate messages by plot request
 var sseid = 0;
 
+// python
+var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
+
 // determines if username and password are correct
 function authorizer(username, password, cb) {
   if (username != 'spt')
@@ -87,6 +90,11 @@ if (!fs.existsSync(config.plot_dir)){
       fs.mkdirSync(config.plot_dir);
 }
 app.use('/img', express.static(config.plot_dir));
+
+// serve directory for static plots
+console.log(config.staticplot_dir);
+app.use('/staticimg', express.static(config.static_plot_dir));
+
 
 // logs messages along with a timestamp. keeps writesteam open
 var ws = fs.createWriteStream('./db.log', {'flags': 'a'});
@@ -174,7 +182,6 @@ app.get('/data_req', function (req, res) {
   // execute python plotting script. Safe because user input
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
-  var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
   var args;
   if (func_val == 'individual' && tab == 'transfer')
     args = ['-B', './plot/_plot.py',
@@ -332,3 +339,17 @@ if(config.key_file && config.cert_file) {
 else {
     app.listen(parseInt(config.port))
 };
+
+
+
+// static timeseries plots update
+function updateStaticPlots() {
+    args = ['-B',
+	    'cache_timeseries_data.py',
+	    'update',
+	    '/poleanalysis/sptdaq/calresult/calibration/',
+	    '/spt_data/bolodata/fullrate/'];
+    var child = execFile(python, args);
+    console.log('updating plots');
+}
+setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes

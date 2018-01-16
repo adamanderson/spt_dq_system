@@ -1,5 +1,8 @@
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
+from spt3g.std_processing import obsid_to_g3time
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle as pickle
 import argparse as ap
@@ -13,18 +16,21 @@ S = P0.add_subparsers(dest='mode', metavar='MODE', title='subcommands',
                           help='Function to perform. For help, call: '
                           '%(prog)s %(metavar)s -h')
 
+timenow = datetime.datetime.now()
+default_mintime = datetime.datetime(timenow.year, timenow.month, timenow.day - (timenow.weekday()+3))
+
 S0 = S.add_parser('rebuild', help='Rebuild the pickle files from scratch.',
                   formatter_class=ap.ArgumentDefaultsHelpFormatter)
 S0.add_argument('caldatapath', action='store', default=None,
                 help='Path to calibration data to skim.')
 S0.add_argument('bolodatapath', action='store', default=None,
                 help='Path to bolometer data (for bolometer properties.')
-S0.add_argument('outfilename', action='store', default=None,
-                help='name of output data file to write.')
-S0.add_argument('--min-time', action='store', default='20180101',
+S0.add_argument('outdir', action='store', default=None,
+                help='Path in which to store output data.')
+S0.add_argument('--min-time', action='store', default=default_mintime.strftime('%Y%m%d'),
                 help='Minimum time of observations to skim. Format: YYYYMMDD')
 S0.add_argument('--max-time', action='store',
-                default=datetime.datetime.now().strftime('%Y%m%d'),
+                default=timenow.strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
 
 S1 = S.add_parser('update', help='Updates the pickle file data skim when the '
@@ -36,18 +42,18 @@ S1.add_argument('caldatapath', action='store', default=None,
                 help='Path to calibration data to skim.')
 S1.add_argument('bolodatapath', action='store', default=None,
                 help='Path to bolometer data (for bolometer properties.')
-S1.add_argument('infilename', action='store', default=None,
-                help='Name of input file to update.')
-S1.add_argument('outfilename', action='store', default=None,
-                help='Name of output data file to write.')
-S1.add_argument('--min-time', action='store', default='20180101',
+S1.add_argument('outdir', action='store', default=None,
+                help='Path in which to store output data.')
+S1.add_argument('--min-time', action='store', default=default_mintime.strftime('%Y%m%d'),
                 help='Minimum time of observations to skim. Format: YYYYMMDD')
 S1.add_argument('--max-time', action='store',
-                default=datetime.datetime.now().strftime('%Y%m%d'),
+                default=timenow.strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
-
 args = P0.parse_args()
+print(args.min_time)
+print(args.max_time)
 
+outdir = '{}/{}_cached_dq_plots'.format(args.outdir,args.min_time)
 
 # convert min/max times in observation IDs that we can compare with filenames
 min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(args.min_time)))
@@ -74,6 +80,7 @@ selector_dict = {90: select_band,
                  'w188': select_wafer,
                  'w201': select_wafer,
                  'w203': select_wafer}
+wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w201', 'w203']
 
 
 # functions that define quantities to be saved
@@ -108,10 +115,13 @@ function_dict = {'calibrator': {'MedianCalSN': median_cal_sn},
 
 # create the output data dictionary
 print(args.mode)
-if args.mode == 'update':
-    with open(args.infilename, 'rb') as f:
+# update the directory if in update mode and the directory already exists
+if args.mode == 'update' and os.path.exists(outdir):
+    with open('{}/data_cache.pkl'.format(outdir), 'rb') as f:
         data = pickle.load(f)
+# otherwise, build a new directory
 else:
+    os.mkdir('{}'.format(outdir))
     data = {}
 
 
@@ -127,19 +137,53 @@ for source, quantities in function_dict.items():
     for fname in files_to_parse:
         obsid = os.path.splitext(os.path.basename(fname))[0]
         print('observation: {}'.format(obsid))
-
-        d = [fr for fr in core.G3File(fname)]
-        boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
-                                                  .format(args.bolodatapath, \
-                                                          source, \
-                                                          obsid))] \
-                                                  [0]["NominalBolometerProperties"]
+        
+        print(data[source].keys())
         if obsid not in data[source].keys() or \
                 data[source][obsid]['timestamp'] != os.path.getctime(fname):
             data[source][obsid] = {'timestamp': os.path.getctime(fname)}
+            d = [fr for fr in core.G3File(fname)]
+            boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
+                                                      .format(args.bolodatapath, \
+                                                                  source, \
+                                                                  obsid))] \
+                                                                  [0]["NominalBolometerProperties"]
+
             for quantity_name in function_dict[source]:
                 data[source][obsid][quantity_name] = \
                     function_dict[source][quantity_name](d[0], selector_dict)
             
-with open(args.outfilename, 'wb') as f:
+with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
     pickle.dump(data, f)
+
+
+
+
+def median_cal_sn(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['calibrator']]
+        median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer] for obsid in data['calibrator']]
+        print(obsids)
+        print(median_calSN)
+
+        f = plt.figure()
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, median_calSN, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('median calibrator S/N')
+        plt.title('Calibrator S/N')
+        plt.tight_layout()
+        plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
+        plt.close()
+
+# create the plots
+median_cal_sn(data)

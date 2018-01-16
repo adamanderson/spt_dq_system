@@ -10,9 +10,9 @@ function open_table(table) {
 	load_db_for_latestobs(sources, load_plots, 'lastobs');
     }
     else if (table == 'recent') {
-	sources = {'calibrator': ['MedianCalSN'],
-		   'elnod': ['MedianElnodIQPhaseAngle']};
-	load_db_for_latestobs(sources, load_plots, 'lastweek');
+	// sources = {'calibrator': ['MedianCalSN'],
+	// 	   'elnod': ['MedianElnodIQPhaseAngle']};
+	// load_db_for_latestobs(sources, load_plots, 'lastweek');
     }
 }
 
