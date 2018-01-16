@@ -95,22 +95,72 @@ def median_cal_sn(frame, selector_dict):
                                                      [np.isfinite(calSN[selection])])
     return calSN_on_selection
 
+def median_cal_response(frame, selector_dict):
+    cal = np.array([frame['CalibratorResponse'][bolo] 
+                      for bolo in frame['CalibratorResponse'].keys()])
+    cal_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['CalibratorResponse'].keys()])
+        cal_on_selection[select_value] = np.median(cal[selection]
+                                                     [np.isfinite(cal[selection])])
+    return cal_on_selection
+
+def alive_bolos_cal(frame, selector_dict):
+    calSN = np.array([frame['CalibratorResponseSN'][bolo] 
+                      for bolo in frame['CalibratorResponseSN'].keys()])
+    alive_bolos_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['CalibratorResponseSN'].keys()])
+        calSN_on_wafer = calSN[selection][np.isfinite(calSN[selection])]
+        alive_bolos_on_selection[select_value] = len(calSN_on_wafer[calSN_on_wafer>10])
+    return alive_bolos_on_selection
+
+def median_elnod_sn_slope(frame, selector_dict):
+    elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
+                      for bolo in frame['ElnodSNSlopes'].keys()])
+    elnodSN_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['ElnodSNSlopes'].keys()])
+        elnodSN_on_wafer = elnodSN[selection][np.isfinite(elnodSN[selection])]
+        elnodSN_on_selection[select_value] = np.median(elnodSN_on_wafer)
+    return elnodSN_on_selection
+
 def median_elnod_iq_phase_angle(frame, selector_dict):
     phase_data = np.array([180/np.pi * np.arctan(frame['ElnodEigenvalueDominantVectorQ'][bolo] / \
                                                      frame['ElnodEigenvalueDominantVectorI'][bolo]) \
                                for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys() \
-                               if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0])
+                               if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
+                               frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0])
     phase_data_on_selection = {}
     for select_value, f_select in selector_dict.items():
         selection = np.array([f_select(boloprops, bolo, select_value)
                               for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys()
-                              if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0])
+                              if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
+                                  frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0])
         phase_data_on_selection[select_value] = np.median(phase_data[selection]
                                                           [np.isfinite(phase_data[selection])])
     return phase_data_on_selection
+
+def alive_bolos_elnod(frame, selector_dict):
+    elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
+                      for bolo in frame['ElnodSNSlopes'].keys()])
+    alive_bolos_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['ElnodSNSlopes'].keys()])
+        elnodSN_on_wafer = elnodSN[selection][np.isfinite(elnodSN[selection])]
+        alive_bolos_on_selection[select_value] = len(elnodSN_on_wafer[elnodSN_on_wafer>20])
+    return alive_bolos_on_selection
     
-function_dict = {'calibrator': {'MedianCalSN': median_cal_sn},
-                 'elnod': {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle}}
+function_dict = {'calibrator': {'MedianCalSN': median_cal_sn,
+                                'MedianCalResponse': median_cal_response,
+                                'AliveBolosCal': alive_bolos_cal},
+                 'elnod': {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
+                           'MedianElnodSNSlopes': median_elnod_sn_slope,
+                           'AliveBolosElnod': alive_bolos_elnod}}
 
 
 # create the output data dictionary
@@ -159,14 +209,12 @@ with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
 
 
 
-def median_cal_sn(data):
+def plot_median_cal_sn(data):
     for wafer in wafer_list:
         obsids = [obsid for obsid in data['calibrator']]
         median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer] for obsid in data['calibrator']]
-        print(obsids)
-        print(median_calSN)
 
-        f = plt.figure()
+        f = plt.figure(figsize=(8,6))
         timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids])
         dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
@@ -177,6 +225,7 @@ def median_cal_sn(data):
         xfmt = mdates.DateFormatter('%m-%d %H:%M')
         plt.gca().xaxis.set_major_formatter(xfmt)
         plt.xticks(rotation=25)
+        plt.ylim([0, 250])
         plt.legend()
         plt.xlabel('observation time')
         plt.ylabel('median calibrator S/N')
@@ -185,5 +234,136 @@ def median_cal_sn(data):
         plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
         plt.close()
 
+def plot_median_cal_response(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['calibrator']]
+        median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer] for obsid in data['calibrator']])
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, 1e15*median_cal, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.ylim([0, 4])
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('median calibrator response [fW]')
+        plt.title('Calibrator response')
+        plt.tight_layout()
+        plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
+        plt.close()
+
+def plot_alive_bolos_cal(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['calibrator']]
+        n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer] for obsid in data['calibrator']])
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, n_alive_bolos, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.ylim([0, 1600])
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('number of alive bolos')
+        plt.title('Number of bolos with calibrator S/N > 10')
+        plt.tight_layout()
+        plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
+        plt.close()
+
+def plot_median_elnod_sn(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['elnod']]
+        median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer] for obsid in data['elnod']]
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, median_elnodSN, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.ylim([0, 2000])
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('median elnod S/N')
+        plt.title('Elnod S/N')
+        plt.tight_layout()
+        plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
+        plt.close()
+
+def plot_median_elnod_iq_phase(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['elnod']]
+        median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] for obsid in data['elnod']]
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, median_elnod_iq, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.ylim([-90, 90])
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('median elnod IQ phase [deg]')
+        plt.title('Elnod IQ phase angle')
+        plt.tight_layout()
+        plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
+        plt.close()
+
+def plot_alive_bolos_elnod(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['elnod']]
+        alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer] for obsid in data['elnod']]
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, alive_bolos_elnod, 'o', label=wafer)
+
+        xfmt = mdates.DateFormatter('%m-%d %H:%M')
+        plt.gca().xaxis.set_major_formatter(xfmt)
+        plt.xticks(rotation=25)
+        plt.ylim([0, 1600])
+        plt.legend()
+        plt.xlabel('observation time')
+        plt.ylabel('number of alive bolos')
+        plt.title('Number of bolos with elnod S/N>20')
+        plt.tight_layout()
+        plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
+        plt.close()
+
+
 # create the plots
-median_cal_sn(data)
+plot_median_cal_sn(data)
+plot_median_cal_response(data)
+plot_alive_bolos_cal(data)
+plot_median_elnod_sn(data)
+plot_median_elnod_iq_phase(data)
+plot_alive_bolos_elnod(data)
