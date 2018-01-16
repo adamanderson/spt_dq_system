@@ -9,6 +9,21 @@
 </head>
 
 
+<script>
+wafer='w172';
+
+function update_figs()
+{
+  document["ts_median_cal_sn"].src                ='staticimg/median_cal_sn_'+wafer+'.png';
+}
+
+function set_variable(variable, newVal)
+{
+  window[variable]=newVal;
+  update_figs();
+}
+</script>
+
 
 <body>
 <div class="tab">
@@ -19,6 +34,18 @@
 
 <div id='recent'>
 <h1>Data from Last Week</h1>
+<!-- <a href="javascript:set_variable('wafer','w172');"> -->
+<button class="btn" onclick="set_variable('wafer','w172')">w172</button>
+<button class="btn" onclick="set_variable('wafer','w174')">w174</button>
+<button class="btn" onclick="set_variable('wafer','w176')">w176</button>
+<button class="btn" onclick="set_variable('wafer','w177')">w177</button>
+<button class="btn" onclick="set_variable('wafer','w180')">w180</button>
+<button class="btn" onclick="set_variable('wafer','w181')">w181</button>
+<button class="btn" onclick="set_variable('wafer','w187')">w187</button>
+<button class="btn" onclick="set_variable('wafer','w188')">w188</button>
+<button class="btn" onclick="set_variable('wafer','w201')">w201</button>
+<button class="btn" onclick="set_variable('wafer','w203')">w203</button>
+
 <table>
   <tr>
     <td>
@@ -27,7 +54,7 @@
   </tr>
   <tr>
     <td>
-      <img style="display:block;" width="100%" height="100%" src='staticimg/median_cal_sn_w172.png'>
+      <img style="display:block;" width="100%" height="100%" name='ts_median_cal_sn' src='staticimg/median_cal_sn_w172.png'>
     </td>
   </tr>
 </table>
