@@ -11,15 +11,15 @@
 
 <script>
 wafer='w172';
-
+weekdir='current'
 function update_figs()
 {
-  document["ts_median_cal_sn"].src                ='staticimg/median_cal_sn_'+wafer+'.png';
-  document["ts_median_cal_response"].src          ='staticimg/median_cal_response_'+wafer+'.png';
-  document["ts_alive_bolos_cal"].src              ='staticimg/alive_bolos_cal_'+wafer+'.png';
-  document["ts_median_elnod_sn"].src              ='staticimg/median_elnod_sn_'+wafer+'.png';
-  document["ts_median_elnod_iq"].src              ='staticimg/median_elnod_iq_phase_'+wafer+'.png';
-  document["ts_alive_bolos_elnod"].src            ='staticimg/alive_bolos_elnod_'+wafer+'.png';
+  document["ts_median_cal_sn"].src                ='staticimg/'+weekdir+'/median_cal_sn_'+wafer+'.png';
+  document["ts_median_cal_response"].src          ='staticimg/'+weekdir+'/median_cal_response_'+wafer+'.png';
+  document["ts_alive_bolos_cal"].src              ='staticimg/'+weekdir+'/alive_bolos_cal_'+wafer+'.png';
+  document["ts_median_elnod_sn"].src              ='staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
+  document["ts_median_elnod_iq"].src              ='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
+  document["ts_alive_bolos_elnod"].src            ='staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
 }
 
 function set_variable(variable, newVal)
@@ -30,7 +30,7 @@ function set_variable(variable, newVal)
 </script>
 
 
-<body>
+<body onload="open_table('recent')">
 <div class="tab">
   <button class="tablinks" onclick="open_table('recent')" id="recent-tab">Recent Data</button>
   <button class="tablinks" onclick="open_table('lastobs')" id="lastobs-tab">Last Observation</button>
@@ -49,7 +49,17 @@ function set_variable(variable, newVal)
 <button class="btn" onclick="set_variable('wafer','w188')">w188</button>
 <button class="btn" onclick="set_variable('wafer','w201')">w201</button>
 <button class="btn" onclick="set_variable('wafer','w203')">w203</button>
+<br>
+<br>
 
+<table>
+  <tr>
+    <td valign="top">
+      <div id="datalist">
+      </div>
+    </td>
+
+<td>
 <table style="table-layout:fixed">
   <tr>
     <td>
@@ -58,13 +68,13 @@ function set_variable(variable, newVal)
   </tr>
   <tr>
     <td>
-      <img style="display:block;" width="100%" name='ts_median_cal_response' src='staticimg/median_cal_response_w172.png'>
+      <img style="display:block;" width="100%" name='ts_median_cal_response' src='staticimg/current/median_cal_response_w172.png'>
     </td>
     <td>
-      <img style="display:block;" width="100%" name='ts_median_cal_sn' src='staticimg/median_cal_sn_w172.png'>
+      <img style="display:block;" width="100%" name='ts_median_cal_sn' src='staticimg/current/median_cal_sn_w172.png'>
     </td>
     <td>
-      <img style="display:block;" width="100%" name='ts_alive_bolos_cal' src='staticimg/alive_bolos_cal_w172.png'>
+      <img style="display:block;" width="100%" name='ts_alive_bolos_cal' src='staticimg/current/alive_bolos_cal_w172.png'>
     </td>
   </tr>
 </table>
@@ -77,13 +87,13 @@ function set_variable(variable, newVal)
   </tr>
   <tr>
     <td>
-      <img style="display:block;" width="100%" name='ts_median_elnod_sn' src='staticimg/median_elnod_sn_w172.png'>
+      <img style="display:block;" width="100%" name='ts_median_elnod_sn' src='staticimg/current/median_elnod_sn_w172.png'>
     </td>
     <td>
-      <img style="display:block;" width="100%" name='ts_median_elnod_iq' src='staticimg/median_elnod_iq_phase_w172.png'>
+      <img style="display:block;" width="100%" name='ts_median_elnod_iq' src='staticimg/current/median_elnod_iq_phase_w172.png'>
     </td>
     <td>
-      <img style="display:block;" width="100%" name='ts_alive_bolos_elnod' src='staticimg/alive_bolos_elnod_w172.png'>
+      <img style="display:block;" width="100%" name='ts_alive_bolos_elnod' src='staticimg/current/alive_bolos_elnod_w172.png'>
     </td>
   </tr>
 </table>
@@ -147,6 +157,8 @@ function set_variable(variable, newVal)
   </tr>
 
 </table>
+</td>
+</tr>
 </div>
 
 

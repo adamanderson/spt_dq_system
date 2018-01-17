@@ -91,9 +91,27 @@ if (!fs.existsSync(config.plot_dir)){
 }
 app.use('/img', express.static(config.plot_dir));
 
+
 // serve directory for static plots
 console.log(config.staticplot_dir);
 app.use('/staticimg', express.static(config.static_plot_dir));
+
+// get subdirectory information for previous plots
+app.get('/oldstaticdirs', function(req, res) {
+	// just do an ls on the plots directory to figure out the other
+	// subdirectories of plots
+	filelist = fs.readdirSync(config.static_plot_dir);
+	dirlist = [];
+	
+	// get the list of directories that contain plots
+	for (jfile=0; jfile<filelist.length; jfile++) {
+	    if (filelist[jfile].indexOf('cached_dq_plots') != -1) {
+		dirlist.push(filelist[jfile]);
+	    }
+	}
+	
+	res.send(dirlist);
+    });
 
 
 // logs messages along with a timestamp. keeps writesteam open
@@ -348,8 +366,17 @@ function updateStaticPlots() {
 	    'cache_timeseries_data.py',
 	    'update',
 	    '/poleanalysis/sptdaq/calresult/calibration/',
-	    '/spt_data/bolodata/fullrate/'];
+	    '/spt_data/bolodata/fullrate/',
+	    config.static_plot_dir];
     var child = execFile(python, args);
     console.log('updating plots');
+
+    child.stdout.on('data', function(data) {
+	    console.log(data);
+	});
+
+    child.stderr.on('data', function(data) {
+	    console.log(data);
+	});
 }
 setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes

@@ -9,6 +9,7 @@ import argparse as ap
 import glob
 import datetime
 import os.path
+import shutil
 
 P0 = ap.ArgumentParser(description='',
                        formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -17,7 +18,7 @@ S = P0.add_subparsers(dest='mode', metavar='MODE', title='subcommands',
                           '%(prog)s %(metavar)s -h')
 
 timenow = datetime.datetime.now()
-default_mintime = datetime.datetime(timenow.year, timenow.month, timenow.day - (timenow.weekday()+3))
+default_mintime = datetime.datetime(timenow.year, timenow.month, timenow.day - (timenow.weekday()+1))
 
 S0 = S.add_parser('rebuild', help='Rebuild the pickle files from scratch.',
                   formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -171,6 +172,9 @@ if args.mode == 'update' and os.path.exists(outdir):
         data = pickle.load(f)
 # otherwise, build a new directory
 else:
+    # delete the existing data directory if it exists and we are rebuilding
+    if os.path.exists(outdir):
+        shutil.rmtree('{}'.format(outdir))
     os.mkdir('{}'.format(outdir))
     data = {}
 
@@ -222,15 +226,16 @@ def plot_median_cal_sn(data):
 
         plt.plot(datenums, median_calSN, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([0, 250])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('median calibrator S/N')
-        plt.title('Calibrator S/N')
-        plt.tight_layout()
+        if len(median_calSN)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([0, 250])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median calibrator S/N')
+            plt.title('Calibrator S/N')
+            plt.tight_layout()
         plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -247,15 +252,16 @@ def plot_median_cal_response(data):
 
         plt.plot(datenums, 1e15*median_cal, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([0, 4])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('median calibrator response [fW]')
-        plt.title('Calibrator response')
-        plt.tight_layout()
+        if len(median_cal)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([0, 4])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median calibrator response [fW]')
+            plt.title('Calibrator response')
+            plt.tight_layout()
         plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -272,15 +278,16 @@ def plot_alive_bolos_cal(data):
 
         plt.plot(datenums, n_alive_bolos, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([0, 1600])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('number of alive bolos')
-        plt.title('Number of bolos with calibrator S/N > 10')
-        plt.tight_layout()
+        if len(n_alive_bolos)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([0, 1600])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('number of alive bolos')
+            plt.title('Number of bolos with calibrator S/N > 10')
+            plt.tight_layout()
         plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -297,15 +304,16 @@ def plot_median_elnod_sn(data):
 
         plt.plot(datenums, median_elnodSN, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([0, 2000])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('median elnod S/N')
-        plt.title('Elnod S/N')
-        plt.tight_layout()
+        if len(median_elnodSN)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([0, 2000])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median elnod S/N')
+            plt.title('Elnod S/N')
+            plt.tight_layout()
         plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -322,15 +330,16 @@ def plot_median_elnod_iq_phase(data):
 
         plt.plot(datenums, median_elnod_iq, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([-90, 90])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('median elnod IQ phase [deg]')
-        plt.title('Elnod IQ phase angle')
-        plt.tight_layout()
+        if len(median_elnod_iq)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([-90, 90])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median elnod IQ phase [deg]')
+            plt.title('Elnod IQ phase angle')
+            plt.tight_layout()
         plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -347,15 +356,16 @@ def plot_alive_bolos_elnod(data):
 
         plt.plot(datenums, alive_bolos_elnod, 'o', label=wafer)
 
-        xfmt = mdates.DateFormatter('%m-%d %H:%M')
-        plt.gca().xaxis.set_major_formatter(xfmt)
-        plt.xticks(rotation=25)
-        plt.ylim([0, 1600])
-        plt.legend()
-        plt.xlabel('observation time')
-        plt.ylabel('number of alive bolos')
-        plt.title('Number of bolos with elnod S/N>20')
-        plt.tight_layout()
+        if len(alive_bolos_elnod)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([0, 1600])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('number of alive bolos')
+            plt.title('Number of bolos with elnod S/N>20')
+            plt.tight_layout()
         plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
         plt.close()
 
@@ -367,3 +377,9 @@ plot_alive_bolos_cal(data)
 plot_median_elnod_sn(data)
 plot_median_elnod_iq_phase(data)
 plot_alive_bolos_elnod(data)
+
+
+# create symlink from latest data directory to current
+symlinkname = '{}/current'.format(args.outdir)
+os.symlink(outdir, '{}/temp'.format(args.outdir))
+os.rename('{}/temp'.format(args.outdir), '{}/current'.format(args.outdir))

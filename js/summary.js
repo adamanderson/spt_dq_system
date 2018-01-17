@@ -2,6 +2,8 @@ function open_table(table) {
     $('#recent').hide();
     $('#lastobs').hide();
     $('#'+table).show();
+
+    get_old_timeseries_plotdirs();
     
     if (table == "lastobs") {
 	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
@@ -9,12 +11,20 @@ function open_table(table) {
 		   'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
 	load_db_for_latestobs(sources, load_plots, 'lastobs');
     }
-    else if (table == 'recent') {
-	// sources = {'calibrator': ['MedianCalSN'],
-	// 	   'elnod': ['MedianElnodIQPhaseAngle']};
-	// load_db_for_latestobs(sources, load_plots, 'lastweek');
-    }
 }
+
+
+function get_old_timeseries_plotdirs() {
+    $.get('/oldstaticdirs', [], function(data, status) {
+	    data.reverse();
+	    $('#datalist').append("<a href=\"javascript:set_variable(\'weekdir\','" + data[0] + "');\">current</a><br>");
+	    for (jdir=0; jdir<data.length; jdir++) {
+		datestring = data[jdir].split('_')[0];
+  		$('#datalist').append("<a href=\"javascript:set_variable(\'weekdir\','" + data[jdir] + "');\">" + datestring + "</a><br>");
+	    }
+	});
+}
+
 
 // create sse listener
 var es = new EventSource("/sse");
