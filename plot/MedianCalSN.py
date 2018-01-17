@@ -35,7 +35,7 @@ def MedianCalSN(request):
     plt.xticks(rotation=25)
     plt.legend()
     plt.xlabel('observation time')
-    plt.ylabel('median calibration S/N')
+    plt.ylabel('median calibrator S/N')
     plt.title('Calibrator S/N')
     plt.tight_layout()
 
