@@ -86,14 +86,16 @@ app.use('/css',express.static(__dirname + '/css'));
 // create directory in /tmp to store plots
 // TODO: don't cache every plot. Remove old plots from time to time
 // NOTE: not a high priority because right now ~1.2TB free in /tmp
-if (!fs.existsSync(config.plot_dir)){
+if (!fs.existsSync(config.plot_dir)) {
       fs.mkdirSync(config.plot_dir);
 }
 app.use('/img', express.static(config.plot_dir));
 
 
 // serve directory for static plots
-console.log(config.staticplot_dir);
+if (!fs.existsSync(config.static_plot_dir)) {
+    fs.mkdirSync(config.static_plot_dir);
+}
 app.use('/staticimg', express.static(config.static_plot_dir));
 
 // get subdirectory information for previous plots

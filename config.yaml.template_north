@@ -6,6 +6,7 @@ key_file:
 cert_file:
 
 plot_dir: /tmp/data_quality/
+static_plot_dir: /tmp/data_quality/static/
 
 calib_data_dir: /spt/user/production/calibration/
 bolo_data_dir: /spt/data/bolodata/
