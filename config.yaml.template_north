@@ -1,0 +1,13 @@
+transfer_db_path: /spt/data/transfer_database/scanify.db
+auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
+autoproc_db_path: /spt/data/transfer_database/autoproc.db
+
+key_file:
+cert_file:
+
+plot_dir: /tmp/data_quality/
+
+calib_data_dir: /spt/user/production/calibration/
+bolo_data_dir: /spt/data/bolodata/
+
+port: 3000
