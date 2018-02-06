@@ -147,6 +147,7 @@ app.get('/dbpage', function(req, res) {
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
 	parseSearch(query, req.query, req.query.dbname);
+	console.log(query.toString());
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
@@ -303,7 +304,7 @@ function parseSearch(query, searchJSON, tab) {
 	    if(searchJSON.search[column].hasOwnProperty('min') && searchJSON.search[column]['min']!='')
 		query.where(tab+'.'+column + ' >= ?', searchJSON.search[column]['min']);
 	    if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
-		query.where(tab+'.'+column + ' <= ?', searchJSON.search[column]['min']);
+		query.where(tab+'.'+column + ' <= ?', searchJSON.search[column]['max']);
 	    
 	    // special handling for filenames or other things with wildcards
 	    if(column == 'filename' && searchJSON.search['filename'])
