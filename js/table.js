@@ -28,7 +28,7 @@ function open_tab(evt, tab) {
   plot_list();
 
   // hide/show obs id,source and type,filename search fields
-  if (tab == 'transfer_table') {
+  if (tab == 'scanify_table') {
     document.getElementById("obsid-row").style.display = "table-row";
     document.getElementById("source-row").style.display = "table-row";
     document.getElementById("type-row").style.display = "none";
@@ -53,8 +53,8 @@ function open_tab(evt, tab) {
 
 
 function make_table(type, select) {
-    //create Tabulator on DOM element with id "transfer_table"
-    $("#transfer_table").tabulator({
+    //create Tabulator on DOM element with id "scanify_table"
+    $("#scanify_table").tabulator({
 	    //pagination:"remote",  // use this for normal pagination
 	    ajaxURL:"/dbpage", 
 		ajaxParams: {search: {source: $("#obstype-search").val(),
@@ -62,7 +62,7 @@ function make_table(type, select) {
 			    max: $("#date-to").val()},
 			observation:    {min: $("#obsid-from").val(),
 			    max: $("#obsid-to").val()}},
-		    dbname: "transfer"},
+		    dbname: "scanify"},
 		ajaxConfig:'GET',
 		ajaxSorting: true,
 		//paginationSize:40,
@@ -88,7 +88,7 @@ function make_table(type, select) {
 
 function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
-  $("#transfer_table").tabulator({
+  $("#scanify_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {source: $("#obstype-search").val(),
@@ -96,7 +96,7 @@ function make_t_table(select) {
 			  max: $("#date-to").val()},
 		      observation:    {min: $("#obsid-from").val(),
 			  max: $("#obsid-to").val()}},
-		  dbname: "transfer"},
+		  dbname: "scanify"},
     ajaxConfig:'GET',
     ajaxSorting: true,
     //paginationSize:40,
@@ -154,11 +154,11 @@ function make_autoproc_table(select) {
   $("#autoproc_table").tabulator({
     //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
-    ajaxParams: {modified:  {min: $("#date-from").val(),
-		      max: $("#date-to").val()},
-                 observation:    {min: $("#obsid-from").val(),
-		      max: $("#obsid-to").val()},
-		  source: $("#obstype-search").val(),
+	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
+			  max: $("#date-to").val()},
+		      observation:    {min: $("#obsid-from").val(),
+			  max: $("#obsid-to").val()},
+		      source: $("#obstype-search").val()},
 		  dbname: "autoproc"},
     ajaxConfig:'GET',
     ajaxSorting: true,
@@ -199,7 +199,7 @@ function search() {
   var tab = document.getElementsByClassName("tablinks active")[0].id;
   if (tab == 'aux')
     asearch();
-  else if (tab == 'transfer')
+  else if (tab == 'scanify')
     tsearch();
   else if (tab == 'autoproc')
       autoprocsearch();
@@ -208,15 +208,15 @@ function search() {
 // sends search request and rebuilds table and plot types
 function tsearch() {
   // clear selections in table
-  $("#transfer_table").tabulator("deselectRow");
+  $("#scanify_table").tabulator("deselectRow");
   // package up the search fields into a json to send to server
   querydata = {search: {source: $("#obstype-search").val(),
 			date:  {min: $("#date-from").val(),
 				max: $("#date-to").val()},
 			observation:    {min: $("#obsid-from").val(),
 					 max: $("#obsid-to").val()}},
-	       dbname: "transfer"}
-  $("#transfer_table").tabulator("setData", "/dbpage", querydata);
+	       dbname: "scanify"}
+  $("#scanify_table").tabulator("setData", "/dbpage", querydata);
   plot_list();
 };
 
@@ -250,13 +250,13 @@ var es = new EventSource("/sse");
 function plot() {
   // holds selected observations
   var rows;
-  // check if transfer or aux
+  // check if scanify or aux
   var tab = document.getElementsByClassName("tablinks active")[0];
   if (tab.id == "aux") {
     rows = $("#aux_table").tabulator("getSelectedData");
   }
-  else if (tab.id == "transfer") {
-    rows = $("#transfer_table").tabulator("getSelectedData");
+  else if (tab.id == "scanify") {
+    rows = $("#scanify_table").tabulator("getSelectedData");
   }
 
   if (rows.length == 0) {
@@ -352,7 +352,7 @@ function plot() {
     });
   } else if (func_val == "timeseries") {
     // don't allow "any" source. Only one source allowed for timeseries mode
-    if (tab.id == 'transfer') {
+    if (tab.id == 'scanify') {
       if ($("#obstype-search").val() == '') {
         alert('Please search for a specific source in timeseries mode.');
         return;
@@ -361,7 +361,7 @@ function plot() {
     // loop over each plot type
     $.each(selected_values, function(i, type) {
       var obsdata;
-      if (tab.id == 'transfer') {
+      if (tab.id == 'scanify') {
         // combine requested observations into a string
         var obs = [];
         for (var j = 0; j < rows.length; j++)

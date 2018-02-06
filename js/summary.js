@@ -36,7 +36,7 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 	    if (rangetype == 'lastobs') {
 		querydata = {search: {date: "latest",
 				      source: sourcename},
-			     dbname: "transfer"};
+			     dbname: "scanify"};
 		plot_mode = 'individual';
 	    }
 	    else if (rangetype == 'lastweek') {
@@ -45,7 +45,7 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 		querydata = {search: {date: {min: time_lastweek.format('YYYY-MM-DD'),
 					     max: time_now.format('YYYY-MM-DD')},
 				      source: sourcename},
-			     dbname: "transfer"};
+			     dbname: "scanify"};
 		plot_mode = 'timeseries';
 	    }
 	    $.get('/dbpage', querydata, function(data, status) {
@@ -58,7 +58,7 @@ function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
 		    $.each(plots, function(i, plot) {
 			    datareq.push({observation: observation_list.join(' '),
 					source: data[0].source,
-					table: 'transfer',
+					table: 'scanify',
 					plot_type: plot,
 					func: plot_mode});
 			});

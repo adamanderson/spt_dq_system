@@ -29,7 +29,7 @@
     // to change # of selectable obs and load new plot types.
     function swtch(val) {
       if (val == "timeseries") {
-        $("#transfer_table").tabulator("destroy");
+        $("#scanify_table").tabulator("destroy");
         make_t_table(true);
         $("#aux_table").tabulator("destroy");
         make_aux_table(true);
@@ -38,7 +38,7 @@
         document.getElementById("select").style = "display:inline";
       }
       else if (val == "individual") {
-        $("#transfer_table").tabulator("destroy");
+        $("#scanify_table").tabulator("destroy");
         make_t_table(10);
         $("#aux_table").tabulator("destroy");
         make_aux_table(10);
@@ -162,11 +162,11 @@
   <br>
 
   <div class="tab">
-    <button class="tablinks" onclick="open_tab(event, 'transfer_table')" id="transfer">Transfer</button>
+    <button class="tablinks" onclick="open_tab(event, 'scanify_table')" id="scanify">Scanify</button>
     <button class="tablinks" onclick="open_tab(event, 'aux_table')" id="aux">Aux</button>
     <button class="tablinks" onclick="open_tab(event, 'autoproc_table')" id="autoproc">Autoprocessing</button>
   </div>
-  <div id="transfer_table" class="tabcontent"></div>
+  <div id="scanify_table" class="tabcontent"></div>
   <div id="aux_table" class="tabcontent"></div>
   <div id="autoproc_table" class="tabcontent"></div>
   </div>
@@ -182,7 +182,7 @@
 
   <script>
     // open default tab
-    document.getElementById("transfer").click();
+    document.getElementById("scanify").click();
     // redraw aux tab on the first switch, otherwise it has no display when made
     redraw = true;
   </script>
@@ -196,7 +196,7 @@
         // plot list needs to be made after diplay is active
         make_plot_list();
         // redraw tabulator header after display is active
-        $("#transfer_table").tabulator("redraw", true);
+        $("#scanify_table").tabulator("redraw", true);
         // create entries for the source list dropdown menu
         make_source_list();
       });

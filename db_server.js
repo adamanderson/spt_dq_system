@@ -51,7 +51,7 @@ function authorizer(username, password, cb) {
 }
 
 // database filenames
-db_files = {transfer: config.transfer_db_path,
+db_files = {scanify: config.scanify_db_path,
 	    aux_transfer: config.auxtransfer_db_path,
 	    autoproc: config.autoproc_db_path}
 
@@ -133,14 +133,14 @@ app.get('/dbpage', function(req, res) {
 	db = new sqlite3.Database(db_files[req.query.dbname]);
 
 	// If the autoprocessing database was requested, then merge with the
-	// transfer database so that we can get the date of the observations.
+	// scanify database so that we can get the date of the observations.
 	// Note that we must wrap this in a 'serialize' call because otherwise
-	// subsequent queries will execute before the transfer database is
+	// subsequent queries will execute before the scanify database is
 	// attached.
 	if(req.query.dbname == "autoproc") {
-	    db2 = new sqlite3.Database(db_files["transfer"]);
+	    db2 = new sqlite3.Database(db_files["scanify"]);
 	    db.serialize(function() {
-		    db.run("ATTACH \""+db2.filename+"\" as transfer");
+		    db.run("ATTACH \""+db2.filename+"\" as scanify");
 		});
 	}
 
@@ -150,7 +150,6 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
-		   console.log(rows);
 		   res.send(rows);
 	       });
 
@@ -185,7 +184,7 @@ app.get('/data_req', function (req, res) {
   var id = req.query['sseid'];
   options = {'timeout':20000};
   tab = req.query['table'];
-  if (tab == 'transfer') {
+  if (tab == 'scanify') {
     obs = req.query['observation'];
     source = req.query['source'];
   }
@@ -203,7 +202,7 @@ app.get('/data_req', function (req, res) {
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
   var args;
-  if (func_val == 'individual' && tab == 'transfer')
+  if (func_val == 'individual' && tab == 'scanify')
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,
@@ -212,7 +211,7 @@ app.get('/data_req', function (req, res) {
 	    config.bolo_data_dir,
 	    obs].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && tab == 'transfer')
+  else if (func_val == 'timeseries' && tab == 'scanify')
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,
@@ -265,9 +264,9 @@ app.get('/plot_list', function(req, res) {
 
 // get list of available sources
 app.get('/sourcelist', function(req, res) {
-	db = new sqlite3.Database(config.transfer_db_path);
+	db = new sqlite3.Database(config.scanify_db_path);
 	query = squel.select()
-	    .from('transfer')
+	    .from('scanify')
 	    .field('source')
 	    .distinct();
 	db.all(query.toString(), function(err, rows) {
@@ -284,7 +283,6 @@ function parseSearch(query, searchJSON, tab) {
 		    .field("MAX(" + tab + '.date)')
 		    .from(tab)
 		    .where(tab+'.source == ?', searchJSON.search['source']));
-	console.log(query.toString());
 	return query;
     }
 
@@ -322,8 +320,8 @@ function parseSearch(query, searchJSON, tab) {
 
     // joining commands
     if(tab == 'autoproc') {
-	query.field('autoproc.*').field('transfer.date');
-     	query.join('transfer', null, squel.expr().and("autoproc.observation == transfer.observation"));
+	query.field('autoproc.*').field('scanify.date');
+     	query.join('scanify', null, squel.expr().and("autoproc.observation == scanify.observation"));
     }
 
     // sorting commands
@@ -335,12 +333,13 @@ function parseSearch(query, searchJSON, tab) {
 	else
 	    query.order(sort, true);
     }
-    else if (tab == 'transfer' || tab == 'aux')
-	query.order('transfer.date', false);
+    else if (tab == 'scanify' || tab == 'aux')
+	query.order('scanify.date', false);
     else if (tab == "autoproc")
 	query.order('autoproc.modified', false);
-
+    
     console.log(query.toString());
+    
     return query;
 }
 

@@ -1,5 +1,5 @@
 {
-  "transfer": {
+  "scanify": {
     "individual": {
       "any": ["NominalPointingOffsets"],
       "calibrator": ["NominalPointingOffsets", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
