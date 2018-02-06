@@ -303,16 +303,16 @@ function parseSearch(query, searchJSON, tab) {
 	    // handle other columns that span ranges
 	    if(searchJSON.search[column].hasOwnProperty('min') && searchJSON.search[column]['min']!='')
 		query.where(tab+'.'+column + ' >= ?', searchJSON.search[column]['min']);
-	    if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
+	    else if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
 		query.where(tab+'.'+column + ' <= ?', searchJSON.search[column]['max']);
 	    
 	    // special handling for filenames or other things with wildcards
-	    if(column == 'filename' && searchJSON.search['filename'])
+	    else if(column == 'filename' && searchJSON.search['filename'])
 		query.where("filename LIKE ?", '%' + searchJSON.search['filename'] + '%');
 	
 	    // if neither min nor max is present assume we are looking for an exact
 	    // match on this column
-	    if(searchJSON.search[column].hasOwnProperty('min')==false && 
+	    else if(searchJSON.search[column].hasOwnProperty('min')==false && 
 	       searchJSON.search[column].hasOwnProperty('max')==false &&
 	       searchJSON.search[column]!='')
 		query.where(tab+'.'+column + " == ?", searchJSON.search[column]);
