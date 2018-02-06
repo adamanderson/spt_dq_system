@@ -156,6 +156,8 @@ function make_autoproc_table(select) {
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
+		      date:  {min: $("#date-from").val(),
+			  max: $("#date-to").val()},
 		      observation:    {min: $("#obsid-from").val(),
 			  max: $("#obsid-to").val()},
 		      source: $("#obstype-search").val()},
@@ -233,8 +235,10 @@ function asearch() {
 
 function autoprocsearch() {
     // package up the search fields into a json to send to server
-    querydata = {search: {modified:  {min: $("#date-from").val(),
-				      max: $("#date-to").val()},
+    querydata = {search: {date:  {min: $("#date-from").val(),
+				  max: $("#date-to").val()},
+			  modified:  {min: $("#modified-from").val(),
+				      max: $("#modified-to").val()},
 			  observation:    {min: $("#obsid-from").val(),
 					   max: $("#obsid-to").val()}},
 			  dbname: "autoproc"};

@@ -147,7 +147,6 @@ app.get('/dbpage', function(req, res) {
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
 	parseSearch(query, req.query, req.query.dbname);
-	console.log(query.toString());
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
@@ -297,24 +296,29 @@ function parseSearch(query, searchJSON, tab) {
 		min_time = "2017-01-01";
 	    if(!max_time)
 		max_time = moment().format('YYYY-MM-DD');
-	    query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	    // special handling to deal with joined 'autoproc' and 'scanify' databases
+	    if(tab == 'autoproc' && column == 'date')
+		query.where("date(scanify."+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
+	    else
+		query.where("date("+tab+'.'+column+") BETWEEN date(?) AND date(?)", min_time, max_time);
 	}
-	else {
+	else {	    
 	    // handle other columns that span ranges
 	    if(searchJSON.search[column].hasOwnProperty('min') && searchJSON.search[column]['min']!='')
 		query.where(tab+'.'+column + ' >= ?', searchJSON.search[column]['min']);
-	    else if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
+	    if(searchJSON.search[column].hasOwnProperty('max') && searchJSON.search[column]['max']!='')
 		query.where(tab+'.'+column + ' <= ?', searchJSON.search[column]['max']);
 	    
 	    // special handling for filenames or other things with wildcards
-	    else if(column == 'filename' && searchJSON.search['filename'])
+	    if(column == 'filename' && searchJSON.search['filename'])
 		query.where("filename LIKE ?", '%' + searchJSON.search['filename'] + '%');
 	
 	    // if neither min nor max is present assume we are looking for an exact
 	    // match on this column
-	    else if(searchJSON.search[column].hasOwnProperty('min')==false && 
+	    if(searchJSON.search[column].hasOwnProperty('min')==false && 
 	       searchJSON.search[column].hasOwnProperty('max')==false &&
-	       searchJSON.search[column]!='')
+	       searchJSON.search[column] != '' && 
+	       column != 'filename')
 		query.where(tab+'.'+column + " == ?", searchJSON.search[column]);
 	}
     }
