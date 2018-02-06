@@ -71,6 +71,7 @@
 
 <body>
   <script type="text/javascript" src="js/date_form.js"></script>
+  <script type="text/javascript" src="js/modified_form.js"></script>
   <script>
     // handles switching between plotting modes. Need to rebuild the table
     // to change # of selectable obs and load new plot types.
@@ -222,6 +223,7 @@
     // set initial date to be 3 days ago so the entire database doesn't load
     time = moment().subtract(3, "days");
     document.getElementById("date-from").value = time.format("YYYY-MM-DD");
+    document.getElementById("modified-from").value = time.format("YYYY-MM-DD");
   </script>
 
   <script type="text/javascript" src="js/plot_list.js"></script>
