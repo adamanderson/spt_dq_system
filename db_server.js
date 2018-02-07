@@ -146,6 +146,7 @@ app.get('/dbpage', function(req, res) {
 
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
+	console.log(req.query);
 	parseSearch(query, req.query, req.query.dbname);
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
@@ -184,15 +185,12 @@ app.get('/data_req', function (req, res) {
   var id = req.query['sseid'];
   options = {'timeout':20000};
   tab = req.query['table'];
-  if (tab == 'scanify') {
+  if (tab == 'scanify' || tab =='autoproc') {
     obs = req.query['observation'];
     source = req.query['source'];
   }
   else if (tab == 'aux') {
     filename = req.query['filename'];
-  }
-  else if (tab == 'autoproc') {
-      filename = req.query['filename'];
   }
   plot_type = req.query['plot_type'];
   func_val = req.query['func'];
@@ -202,7 +200,7 @@ app.get('/data_req', function (req, res) {
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
   var args;
-  if (func_val == 'individual' && tab == 'scanify')
+  if (func_val == 'individual' && (tab == 'scanify' || tab == 'autoproc'))
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,
@@ -211,7 +209,7 @@ app.get('/data_req', function (req, res) {
 	    config.bolo_data_dir,
 	    obs].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && tab == 'scanify')
+  else if (func_val == 'timeseries' && (tab == 'scanify' || tab == 'autoproc'))
     args = ['-B', './plot/_plot.py',
 	    func_val,
 	    source,

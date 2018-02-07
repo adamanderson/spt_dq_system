@@ -272,6 +272,10 @@ function plot() {
   else if (tab.id == "scanify") {
     rows = $("#scanify_table").tabulator("getSelectedData");
   }
+    else if (tab.id == "autoproc") {
+    rows = $("#autoproc_table").tabulator("getSelectedData");
+  }
+
 
   if (rows.length == 0) {
     alert("Please select at least one observation.");
