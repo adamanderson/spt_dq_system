@@ -34,6 +34,8 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "none";
+    document.getElementById("plot-type").style.display = "block";
+    document.getElementById("plot-button").style.display = "inline";
   }
   else if (tab == 'aux_table') {
     document.getElementById("obsid-row").style.display = "none";
@@ -41,6 +43,8 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
     document.getElementById("modified-row").style.display = "none";
+    document.getElementById("plot-type").style.display = "none";
+    document.getElementById("plot-button").style.display = "none";
   }
   else if (tab == 'autoproc_table') {
     document.getElementById("obsid-row").style.display = "table-row";
@@ -48,6 +52,8 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("plot-type").style.display = "block";
+    document.getElementById("plot-button").style.display = "inline";
   }
 }
 
