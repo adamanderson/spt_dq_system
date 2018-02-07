@@ -48,10 +48,29 @@
   },
   "autoproc": {
     "individual": {
-      "any": []
+      "any": ["NominalPointingOffsets"],
+      "calibrator": ["NominalPointingOffsets", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
+      "elnod": ["NominalPointingOffsets", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
+      "CenA": ["NominalPointingOffsets"],
+      "CenA-pixelraster": ["NominalPointingOffsets"],
+      "RCW38": ["NominalPointingOffsets"],
+      "RCW38-pixelraster": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
+      "0537-441-pixelraster": ["NominalPointingOffsets", "CoaddedMaps0537441"],
+      "saturn": ["NominalPointingOffsets"],
+      "debug-forced-scanify": ["NominalPointingOffsets"],
+      "noise": ["NominalPointingOffsets"]
     },
     "timeseries": {
-      "any": []
+      "any": [],
+      "calibrator": ["MedianCalSN"],
+      "elnod": ["MedianElnodIQPhaseAngle"],
+      "CenA": [],
+      "CenA-pixelraster": [],
+      "RCW38": [],
+      "RCW38-pixelraster": [],
+      "saturn": [],
+      "debug-forced-scanify": [],
+      "noise": []
     }
   }
 }
