@@ -34,6 +34,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "none";
+    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -43,6 +44,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
     document.getElementById("modified-row").style.display = "none";
+    document.getElementById("mode-row").style.display = "none";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
   }
@@ -52,6 +54,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
