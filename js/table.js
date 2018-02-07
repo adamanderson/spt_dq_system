@@ -249,7 +249,8 @@ function autoprocsearch() {
 			  modified:  {min: $("#modified-from").val(),
 				      max: $("#modified-to").val()},
 			  observation:    {min: $("#obsid-from").val(),
-					   max: $("#obsid-to").val()}},
+					   max: $("#obsid-to").val()},
+			  source: $("#obstype-search").val()},
 			  dbname: "autoproc"};
 		 $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
 		 plot_list();
