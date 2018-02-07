@@ -51,8 +51,6 @@ S1.add_argument('--max-time', action='store',
                 default=timenow.strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
 args = P0.parse_args()
-print(args.min_time)
-print(args.max_time)
 
 outdir = '{}/{}_cached_dq_plots'.format(args.outdir,args.min_time)
 
@@ -141,8 +139,11 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
                               for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys()
                               if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
                                   frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0])
-        phase_data_on_selection[select_value] = np.median(phase_data[selection]
-                                                          [np.isfinite(phase_data[selection])])
+        if selection.size == 0:
+            phase_data_on_selection[select_value] = None
+        else:
+            phase_data_on_selection[select_value] = np.median(phase_data[selection]
+                                                              [np.isfinite(phase_data[selection])])
     return phase_data_on_selection
 
 def alive_bolos_elnod(frame, selector_dict):
@@ -180,7 +181,7 @@ else:
 
 
 for source, quantities in function_dict.items():
-    calfiles = glob.glob('{}/{}/*g3'.format(args.caldatapath, source))
+    calfiles = glob.glob('{}/calibration/{}/*g3'.format(args.caldatapath, source))
     files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
                           int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
     
@@ -197,6 +198,7 @@ for source, quantities in function_dict.items():
                 data[source][obsid]['timestamp'] != os.path.getctime(fname):
             data[source][obsid] = {'timestamp': os.path.getctime(fname)}
             d = [fr for fr in core.G3File(fname)]
+
             boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
                                                       .format(args.bolodatapath, \
                                                                   source, \
@@ -204,8 +206,11 @@ for source, quantities in function_dict.items():
                                                                   [0]["NominalBolometerProperties"]
 
             for quantity_name in function_dict[source]:
-                data[source][obsid][quantity_name] = \
-                    function_dict[source][quantity_name](d[0], selector_dict)
+                func_result = function_dict[source][quantity_name](d[0], selector_dict)
+                if func_result:
+                    data[source][obsid][quantity_name] = func_result
+
+
             
 with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
     pickle.dump(data, f)
@@ -320,11 +325,14 @@ def plot_median_elnod_sn(data):
 def plot_median_elnod_iq_phase(data):
     for wafer in wafer_list:
         obsids = [obsid for obsid in data['elnod']]
-        median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] for obsid in data['elnod']]
+        median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer]
+                           for obsid in data['elnod']
+                           if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None]
 
         f = plt.figure(figsize=(8,6))
         timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
+                              for obsid in obsids
+                              if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None])
         dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
         datenums = mdates.date2num(dts)
 
