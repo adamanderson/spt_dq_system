@@ -84,6 +84,9 @@ wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w
 
 # functions that define quantities to be saved
 def median_cal_sn(frame, selector_dict):
+    if 'CalibratorResponseSN' not in frame.keys():
+        return None
+
     calSN = np.array([frame['CalibratorResponseSN'][bolo] 
                       for bolo in frame['CalibratorResponseSN'].keys()])
     calSN_on_selection = {}
@@ -95,6 +98,9 @@ def median_cal_sn(frame, selector_dict):
     return calSN_on_selection
 
 def median_cal_response(frame, selector_dict):
+    if 'CalibratorResponse' not in frame.keys():
+        return None
+    
     cal = np.array([frame['CalibratorResponse'][bolo] 
                       for bolo in frame['CalibratorResponse'].keys()])
     cal_on_selection = {}
@@ -106,6 +112,9 @@ def median_cal_response(frame, selector_dict):
     return cal_on_selection
 
 def alive_bolos_cal(frame, selector_dict):
+    if 'CalibratorResponseSN' not in frame.keys():
+        return None
+
     calSN = np.array([frame['CalibratorResponseSN'][bolo] 
                       for bolo in frame['CalibratorResponseSN'].keys()])
     alive_bolos_on_selection = {}
@@ -117,6 +126,9 @@ def alive_bolos_cal(frame, selector_dict):
     return alive_bolos_on_selection
 
 def median_elnod_sn_slope(frame, selector_dict):
+    if 'ElnodSNSlopes' not in frame.keys():
+        return None
+
     elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
                       for bolo in frame['ElnodSNSlopes'].keys()])
     elnodSN_on_selection = {}
@@ -128,6 +140,10 @@ def median_elnod_sn_slope(frame, selector_dict):
     return elnodSN_on_selection
 
 def median_elnod_iq_phase_angle(frame, selector_dict):
+    if 'ElnodEigenvalueDominantVectorQ' not in frame.keys() and \
+       'ElnodEigenvalueDominantVectorI' not in frame.keys():
+        return None
+
     phase_data = np.array([180/np.pi * np.arctan(frame['ElnodEigenvalueDominantVectorQ'][bolo] / \
                                                      frame['ElnodEigenvalueDominantVectorI'][bolo]) \
                                for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys() \
@@ -147,6 +163,9 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
     return phase_data_on_selection
 
 def alive_bolos_elnod(frame, selector_dict):
+    if 'ElnodSNSlopes' not in frame.keys():
+        return None
+
     elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
                       for bolo in frame['ElnodSNSlopes'].keys()])
     alive_bolos_on_selection = {}
@@ -156,8 +175,24 @@ def alive_bolos_elnod(frame, selector_dict):
         elnodSN_on_wafer = elnodSN[selection][np.isfinite(elnodSN[selection])]
         alive_bolos_on_selection[select_value] = len(elnodSN_on_wafer[elnodSN_on_wafer>20])
     return alive_bolos_on_selection
+
+def median_rcw38_fluxcal(frame, selector_dict):
+    if 'RCW38FluxCalibration' not in frame.keys():
+        return None
+
+    fluxcal = np.array([frame['RCW38FluxCalibration'][bolo] 
+                      for bolo in frame['RCW38FluxCalibration'].keys()])
+    fluxcal_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['RCW38FluxCalibration'].keys()])
+        fluxcal_on_wafer = fluxcal[selection][np.isfinite(fluxcal[selection])]
+        fluxcal_on_selection[select_value] = np.median(fluxcal_on_wafer)
+    return fluxcal_on_selection
+
     
-function_dict = {'calibrator': {'MedianCalSN': median_cal_sn,
+function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal},
+                 'calibrator': {'MedianCalSN': median_cal_sn,
                                 'MedianCalResponse': median_cal_response,
                                 'AliveBolosCal': alive_bolos_cal},
                  'elnod': {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
@@ -214,8 +249,6 @@ for source, quantities in function_dict.items():
             
 with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
     pickle.dump(data, f)
-
-
 
 
 def plot_median_cal_sn(data):
@@ -377,6 +410,33 @@ def plot_alive_bolos_elnod(data):
         plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
         plt.close()
 
+def plot_median_rcw38_fluxcal(data):
+    for wafer in wafer_list:
+        obsids = [obsid for obsid in data['RCW38-pixelraster']]
+        median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer] for obsid in data['RCW38-pixelraster']]
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, median_rcw38, 'o', label=wafer)
+
+        if len(median_rcw38)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([-100, 0])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median RCW38 flux calibration')
+            plt.title('RCW38 Flux Calibration')
+            plt.tight_layout()
+        plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
+        plt.close()
+
+
 
 # create the plots
 plot_median_cal_sn(data)
@@ -385,6 +445,7 @@ plot_alive_bolos_cal(data)
 plot_median_elnod_sn(data)
 plot_median_elnod_iq_phase(data)
 plot_alive_bolos_elnod(data)
+plot_median_rcw38_fluxcal(data)
 
 
 # create symlink from latest data directory to current
