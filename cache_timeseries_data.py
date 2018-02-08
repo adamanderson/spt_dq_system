@@ -190,14 +190,29 @@ def median_rcw38_fluxcal(frame, selector_dict):
         fluxcal_on_selection[select_value] = np.median(fluxcal_on_wafer)
     return fluxcal_on_selection
 
+def median_rcw38_intflux(frame, selector_dict):
+    if 'RCW38IntegralFlux' not in frame.keys():
+        return None
+
+    intflux = np.array([frame['RCW38IntegralFlux'][bolo] 
+                      for bolo in frame['RCW38IntegralFlux'].keys()])
+    intflux_on_selection = {}
+    for select_value, f_select in selector_dict.items():
+        selection = np.array([f_select(boloprops, bolo, select_value)
+                              for bolo in frame['RCW38IntegralFlux'].keys()])
+        intflux_on_wafer = intflux[selection][np.isfinite(intflux[selection])]
+        intflux_on_selection[select_value] = np.median(intflux_on_wafer)
+    return intflux_on_selection
+
     
-function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal},
-                 'calibrator': {'MedianCalSN': median_cal_sn,
-                                'MedianCalResponse': median_cal_response,
-                                'AliveBolosCal': alive_bolos_cal},
-                 'elnod': {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
-                           'MedianElnodSNSlopes': median_elnod_sn_slope,
-                           'AliveBolosElnod': alive_bolos_elnod}}
+function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
+                                       'MedianRCW38IntegralFlux': median_rcw38_intflux},
+                 'calibrator':        {'MedianCalSN': median_cal_sn,
+                                       'MedianCalResponse': median_cal_response,
+                                       'AliveBolosCal': alive_bolos_cal},
+                 'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
+                                       'MedianElnodSNSlopes': median_elnod_sn_slope,
+                                       'AliveBolosElnod': alive_bolos_elnod}}
 
 
 # create the output data dictionary
@@ -436,6 +451,31 @@ def plot_median_rcw38_fluxcal(data):
         plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
         plt.close()
 
+def plot_median_rcw38_intflux(data):
+    for wafer in wafer_list:   
+        obsids = [obsid for obsid in data['RCW38-pixelraster']]
+        median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer] for obsid in data['RCW38-pixelraster']]
+
+        f = plt.figure(figsize=(8,6))
+        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids])
+        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+        datenums = mdates.date2num(dts)
+
+        plt.plot(datenums, median_rcw38, 'o', label=wafer)
+
+        if len(median_rcw38)>0:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+            plt.ylim([2e-7, 7e-7])
+            plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('median RCW38 integral flux')
+            plt.title('RCW38 Integral Flux')
+            plt.tight_layout()
+        plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
+        plt.close()
 
 
 # create the plots
@@ -446,6 +486,7 @@ plot_median_elnod_sn(data)
 plot_median_elnod_iq_phase(data)
 plot_alive_bolos_elnod(data)
 plot_median_rcw38_fluxcal(data)
+plot_median_rcw38_intflux(data)
 
 
 # create symlink from latest data directory to current
