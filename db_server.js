@@ -130,7 +130,8 @@ function log(msg) {
 
 app.get('/dbpage', function(req, res) {
 	// open the database
-	db = new sqlite3.Database(db_files[req.query.dbname]);
+	db = new sqlite3.Database(db_files[req.query.dbname],
+				  sqlite3.OPEN_READONLY);
 
 	// If the autoprocessing database was requested, then merge with the
 	// scanify database so that we can get the date of the observations.
@@ -138,7 +139,8 @@ app.get('/dbpage', function(req, res) {
 	// subsequent queries will execute before the scanify database is
 	// attached.
 	if(req.query.dbname == "autoproc") {
-	    db2 = new sqlite3.Database(db_files["scanify"]);
+	    db2 = new sqlite3.Database(db_files["scanify"],
+				       sqlite3.OPEN_READONLY);
 	    db.serialize(function() {
 		    db.run("ATTACH \""+db2.filename+"\" as scanify");
 		});
@@ -262,7 +264,8 @@ app.get('/plot_list', function(req, res) {
 
 // get list of available sources
 app.get('/sourcelist', function(req, res) {
-	db = new sqlite3.Database(config.scanify_db_path);
+	db = new sqlite3.Database(config.scanify_db_path,
+				  sqlite3.OPEN_READONLY);
 	query = squel.select()
 	    .from('scanify')
 	    .field('source')
