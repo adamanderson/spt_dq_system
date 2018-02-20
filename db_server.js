@@ -368,6 +368,7 @@ else {
 
 
 // static timeseries plots update
+is_update_running = false;
 function updateStaticPlots() {
     args = ['-B',
 	    'cache_timeseries_data.py',
@@ -377,15 +378,21 @@ function updateStaticPlots() {
 	    config.static_plot_dir,
 	    '--min-time',
 	    '20180201'];
-    var child = execFile(python, args);
-    console.log('updating plots');
+    if(is_update_running == false) {
+	is_update_running = true;
+	var child = execFile(python, args, function() {
+		is_update_running = true;
+	    });
+	console.log('updating plots');
+	
+	child.stdout.on('data', function(data) {
+		console.log(data);
+	    });
 
-    child.stdout.on('data', function(data) {
-	    console.log(data);
-	});
+	child.stderr.on('data', function(data) {
+		console.log(data);
+	    });
+    }
 
-    child.stderr.on('data', function(data) {
-	    console.log(data);
-	});
 }
 //setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
