@@ -118,7 +118,8 @@ def compute_median(frame, datakey, select_dict):
                                   for bolo in frame[datakey].keys()]) & selection
         
         # get data that satisfies the selection and compute median
-        reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = np.median(data_list[selection][np.isfinite(data_list[selection])])
+        reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = \
+            np.median(data_list[selection][np.isfinite(data_list[selection])])
 
     return data_on_selection
 
@@ -143,9 +144,10 @@ def compute_nalive(frame, datakey, select_dict, sn_threshold):
             selection = np.array([f_select(boloprops, bolo, select_val)
                                   for bolo in frame[datakey].keys()]) & selection
         
-        # get data that satisfies the selection and compute median
+        # get data that satisfies the selection and compute # alive bolos
         data_on_selection = data_list[selection][np.isfinite(data_list[selection])]
-        nalive_on_selection[select_values[-1]] = len(data_on_selection[data_on_selection>sn_threshold])
+        reduce(operator.getitem, select_values[:-1], nalive_on_selection)[select_values[-1]] = \
+            len(data_on_selection[data_on_selection>sn_threshold])
 
     return nalive_on_selection
     
@@ -308,7 +310,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['calibrator']]
             f = plt.figure(figsize=(8,6))
 
-            for band in data['calibrator'][obsid]['MedianCalSN'][wafer].keys():
+            for band in [90, 150, 220]:
                 median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer][band]
                                 for obsid in data['calibrator']]
 
@@ -335,15 +337,18 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_cal_response(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['calibrator']]
-            median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer] for obsid in data['calibrator']])
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, 1e15*median_cal, 'o', label=wafer)
+            for band in [90, 150, 220]:
+                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer][band]
+                                       for obsid in data['calibrator']])
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, 1e15*median_cal, 'o', label='{} GHz'.format(band))
 
             if len(median_cal)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -361,15 +366,17 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_alive_bolos_cal(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['calibrator']]
-            n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer] for obsid in data['calibrator']])
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, n_alive_bolos, 'o', label=wafer)
+            for band in [90, 150, 220]:
+                n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer][band] for obsid in data['calibrator']])
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, n_alive_bolos, 'o', label='{} GHz'.format(band))
 
             if len(n_alive_bolos)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -387,15 +394,17 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_elnod_sn(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['elnod']]
-            median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer] for obsid in data['elnod']]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
+            
+            for band in [90, 150, 220]:
+                median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer][band] for obsid in data['elnod']]
 
-            plt.plot(datenums, median_elnodSN, 'o', label=wafer)
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, median_elnodSN, 'o', label='{} GHz'.format(band))
 
             if len(median_elnodSN)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -413,18 +422,20 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_elnod_iq_phase(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['elnod']]
-            median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer]
-                               for obsid in data['elnod']
-                               if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids
-                                  if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, median_elnod_iq, 'o', label=wafer)
+            for band in [90, 150, 220]: 
+                median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
+                                   for obsid in data['elnod']
+                                   if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids
+                                      if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, median_elnod_iq, 'o', label='{} GHz'.format(band))
 
             if len(median_elnod_iq)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -442,15 +453,17 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_alive_bolos_elnod(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['elnod']]
-            alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer] for obsid in data['elnod']]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, alive_bolos_elnod, 'o', label=wafer)
+            for band in [90, 150, 220]:
+                alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer][band] for obsid in data['elnod']]
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, alive_bolos_elnod, 'o', label='{} GHz'.format(band))
 
             if len(alive_bolos_elnod)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -468,15 +481,18 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_rcw38_fluxcal(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['RCW38-pixelraster']]
-            median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer] for obsid in data['RCW38-pixelraster']]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, median_rcw38, 'o', label=wafer)
+            for band in [90, 150, 220]:
+                median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer][band]
+                                for obsid in data['RCW38-pixelraster']]
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, median_rcw38, 'o', label='{} GHz'.format(band))
 
             if len(median_rcw38)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -494,15 +510,18 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_rcw38_intflux(data):
         for wafer in wafer_list:   
             obsids = [obsid for obsid in data['RCW38-pixelraster']]
-            median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer] for obsid in data['RCW38-pixelraster']]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
+            
+            for band in [90, 150, 220]:
+                median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer][band]
+                                for obsid in data['RCW38-pixelraster']]
 
-            plt.plot(datenums, median_rcw38, 'o', label=wafer)
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, median_rcw38, 'o', label='{} GHz'.format(band))
 
             if len(median_rcw38)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
