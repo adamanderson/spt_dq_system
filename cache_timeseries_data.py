@@ -1,6 +1,7 @@
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
 from spt3g.std_processing import obsid_to_g3time
+import datetime as dt
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,12 +52,6 @@ S1.add_argument('--max-time', action='store',
                 default=timenow.strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
 args = P0.parse_args()
-
-outdir = '{}/{}_cached_dq_plots'.format(args.outdir,args.min_time)
-
-# convert min/max times in observation IDs that we can compare with filenames
-min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(args.min_time)))
-max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(args.max_time)))
 
 
 # functions that define splits
@@ -214,282 +209,307 @@ function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw3
                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
                                        'AliveBolosElnod': alive_bolos_elnod}}
 
+# loop over data by week
+dt_mintime = dt.datetime(year=int(args.min_time[:4]),
+                         month=int(args.min_time[4:6]),
+                         day=int(args.min_time[6:8]))
+dt_maxtime = dt.datetime(year=int(args.max_time[:4]),
+                         month=int(args.max_time[4:6]),
+                         day=int(args.max_time[6:8]))
+d_to_next_week = dt.timedelta(days = 7 - dt_mintime.weekday())
+date_boundaries = [dt_mintime]
+next_day = dt_mintime + d_to_next_week
+while next_day < dt_maxtime:
+    date_boundaries.append(next_day)
+    next_day = next_day + dt.timedelta(days=7)
+date_boundaries.append(dt_maxtime)
 
-# create the output data dictionary
-print(args.mode)
-# update the directory if in update mode and the directory already exists
-if args.mode == 'update' and os.path.exists(outdir):
-    with open('{}/data_cache.pkl'.format(outdir), 'rb') as f:
-        data = pickle.load(f)
-# otherwise, build a new directory
-else:
-    # delete the existing data directory if it exists and we are rebuilding
-    if os.path.exists(outdir):
-        shutil.rmtree('{}'.format(outdir))
-    os.mkdir('{}'.format(outdir))
-    data = {}
+# delete the full output directory tree if we are in rebuild mode
+if args.mode == 'rebuild' and os.path.exists(args.outdir):
+    shutil.rmtree('{}'.format(args.outdir))
+    os.mkdir('{}'.format(args.outdir))
 
-
-for source, quantities in function_dict.items():
-    calfiles = glob.glob('{}/calibration/{}/*g3'.format(args.caldatapath, source))
-    files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
-                          int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
+for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
+    # convert min/max times in observation IDs that we can compare with filenames
+    min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
+    max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
     
-    print('Analyzing source: {}'.format(source))
+    # make the subdirectory based on time
+    outdir = '{}/{}_cached_dq_plots'.format(args.outdir, mindate.strftime('%Y%m%d'))
+    if args.mode == 'rebuild':
+        os.mkdir(outdir)
+        data = {}
+    if args.mode == 'update':
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        if os.path.exists(os.path.join(outdir, 'data_cache.pkl')):
+            data = pickle.load(open(os.path.join(outdir, 'data_cache.pkl'), 'rb'))
+        else:
+            data = {}
 
-    if source not in data.keys():
-        data[source] = {}
-    for fname in files_to_parse:
-        obsid = os.path.splitext(os.path.basename(fname))[0]
-        print('observation: {}'.format(obsid))
-        
-        print(data[source].keys())
-        if obsid not in data[source].keys() or \
-                data[source][obsid]['timestamp'] != os.path.getctime(fname):
-            data[source][obsid] = {'timestamp': os.path.getctime(fname)}
-            d = [fr for fr in core.G3File(fname)]
+    was_data_updated = False
 
-            boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
-                                                      .format(args.bolodatapath, \
-                                                                  source, \
-                                                                  obsid))] \
-                                                                  [0]["NominalBolometerProperties"]
+    for source, quantities in function_dict.items():
+        calfiles = glob.glob('{}/calibration/{}/*g3'.format(args.caldatapath, source))
+        files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
+                              int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
 
-            for quantity_name in function_dict[source]:
-                func_result = function_dict[source][quantity_name](d[0], selector_dict)
-                if func_result:
-                    data[source][obsid][quantity_name] = func_result
+        print('Analyzing source: {}'.format(source))
 
+        if source not in data.keys():
+            data[source] = {}
+        for fname in files_to_parse:
+            obsid = os.path.splitext(os.path.basename(fname))[0]
+            print('observation: {}'.format(obsid))
 
-            
-with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
-    pickle.dump(data, f)
+            print(data[source].keys())
+            if obsid not in data[source].keys() or \
+                    data[source][obsid]['timestamp'] != os.path.getctime(fname):
+                was_data_updated = True
+                data[source][obsid] = {'timestamp': os.path.getctime(fname)}
+                d = [fr for fr in core.G3File(fname)]
 
+                boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
+                                                          .format(args.bolodatapath, \
+                                                                      source, \
+                                                                      obsid))] \
+                                                                      [0]["NominalBolometerProperties"]
 
-def plot_median_cal_sn(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['calibrator']]
-        median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer] for obsid in data['calibrator']]
+                for quantity_name in function_dict[source]:
+                    func_result = function_dict[source][quantity_name](d[0], selector_dict)
+                    if func_result:
+                        data[source][obsid][quantity_name] = func_result
 
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, median_calSN, 'o', label=wafer)
-
-        if len(median_calSN)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([0, 250])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median calibrator S/N')
-            plt.title('Calibrator S/N')
-            plt.tight_layout()
-        plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_median_cal_response(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['calibrator']]
-        median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer] for obsid in data['calibrator']])
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, 1e15*median_cal, 'o', label=wafer)
-
-        if len(median_cal)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([0, 4])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median calibrator response [fW]')
-            plt.title('Calibrator response')
-            plt.tight_layout()
-        plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_alive_bolos_cal(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['calibrator']]
-        n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer] for obsid in data['calibrator']])
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, n_alive_bolos, 'o', label=wafer)
-
-        if len(n_alive_bolos)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([0, 1600])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('number of alive bolos')
-            plt.title('Number of bolos with calibrator S/N > 10')
-            plt.tight_layout()
-        plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_median_elnod_sn(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['elnod']]
-        median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer] for obsid in data['elnod']]
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, median_elnodSN, 'o', label=wafer)
-
-        if len(median_elnodSN)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([0, 2000])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median elnod S/N')
-            plt.title('Elnod S/N')
-            plt.tight_layout()
-        plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_median_elnod_iq_phase(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['elnod']]
-        median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer]
-                           for obsid in data['elnod']
-                           if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None]
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids
-                              if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, median_elnod_iq, 'o', label=wafer)
-
-        if len(median_elnod_iq)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([-90, 90])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median elnod IQ phase [deg]')
-            plt.title('Elnod IQ phase angle')
-            plt.tight_layout()
-        plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_alive_bolos_elnod(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['elnod']]
-        alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer] for obsid in data['elnod']]
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, alive_bolos_elnod, 'o', label=wafer)
-
-        if len(alive_bolos_elnod)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([0, 1600])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('number of alive bolos')
-            plt.title('Number of bolos with elnod S/N>20')
-            plt.tight_layout()
-        plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_median_rcw38_fluxcal(data):
-    for wafer in wafer_list:
-        obsids = [obsid for obsid in data['RCW38-pixelraster']]
-        median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer] for obsid in data['RCW38-pixelraster']]
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, median_rcw38, 'o', label=wafer)
-
-        if len(median_rcw38)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([-100, 0])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median RCW38 flux calibration')
-            plt.title('RCW38 Flux Calibration')
-            plt.tight_layout()
-        plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
-        plt.close()
-
-def plot_median_rcw38_intflux(data):
-    for wafer in wafer_list:   
-        obsids = [obsid for obsid in data['RCW38-pixelraster']]
-        median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer] for obsid in data['RCW38-pixelraster']]
-
-        f = plt.figure(figsize=(8,6))
-        timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                              for obsid in obsids])
-        dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-        datenums = mdates.date2num(dts)
-
-        plt.plot(datenums, median_rcw38, 'o', label=wafer)
-
-        if len(median_rcw38)>0:
-            xfmt = mdates.DateFormatter('%m-%d %H:%M')
-            plt.gca().xaxis.set_major_formatter(xfmt)
-            plt.xticks(rotation=25)
-            plt.ylim([2e-7, 7e-7])
-            plt.legend()
-            plt.xlabel('observation time')
-            plt.ylabel('median RCW38 integral flux')
-            plt.title('RCW38 Integral Flux')
-            plt.tight_layout()
-        plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
-        plt.close()
+    with open('{}/data_cache.pkl'.format(outdir), 'wb') as f:
+        pickle.dump(data, f)
 
 
-# create the plots
-plot_median_cal_sn(data)
-plot_median_cal_response(data)
-plot_alive_bolos_cal(data)
-plot_median_elnod_sn(data)
-plot_median_elnod_iq_phase(data)
-plot_alive_bolos_elnod(data)
-plot_median_rcw38_fluxcal(data)
-plot_median_rcw38_intflux(data)
+    def plot_median_cal_sn(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['calibrator']]
+            median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer] for obsid in data['calibrator']]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, median_calSN, 'o', label=wafer)
+
+            if len(median_calSN)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 250])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median calibrator S/N')
+                plt.title('Calibrator S/N')
+                plt.tight_layout()
+            plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_cal_response(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['calibrator']]
+            median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer] for obsid in data['calibrator']])
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, 1e15*median_cal, 'o', label=wafer)
+
+            if len(median_cal)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 4])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median calibrator response [fW]')
+                plt.title('Calibrator response')
+                plt.tight_layout()
+            plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_alive_bolos_cal(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['calibrator']]
+            n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer] for obsid in data['calibrator']])
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, n_alive_bolos, 'o', label=wafer)
+
+            if len(n_alive_bolos)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 1600])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('number of alive bolos')
+                plt.title('Number of bolos with calibrator S/N > 10')
+                plt.tight_layout()
+            plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_elnod_sn(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['elnod']]
+            median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer] for obsid in data['elnod']]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, median_elnodSN, 'o', label=wafer)
+
+            if len(median_elnodSN)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 2000])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median elnod S/N')
+                plt.title('Elnod S/N')
+                plt.tight_layout()
+            plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_elnod_iq_phase(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['elnod']]
+            median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer]
+                               for obsid in data['elnod']
+                               if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids
+                                  if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer] != None])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, median_elnod_iq, 'o', label=wafer)
+
+            if len(median_elnod_iq)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([-90, 90])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median elnod IQ phase [deg]')
+                plt.title('Elnod IQ phase angle')
+                plt.tight_layout()
+            plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_alive_bolos_elnod(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['elnod']]
+            alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer] for obsid in data['elnod']]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, alive_bolos_elnod, 'o', label=wafer)
+
+            if len(alive_bolos_elnod)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 1600])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('number of alive bolos')
+                plt.title('Number of bolos with elnod S/N>20')
+                plt.tight_layout()
+            plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_rcw38_fluxcal(data):
+        for wafer in wafer_list:
+            obsids = [obsid for obsid in data['RCW38-pixelraster']]
+            median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer] for obsid in data['RCW38-pixelraster']]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, median_rcw38, 'o', label=wafer)
+
+            if len(median_rcw38)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([-100, 0])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median RCW38 flux calibration')
+                plt.title('RCW38 Flux Calibration')
+                plt.tight_layout()
+            plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_rcw38_intflux(data):
+        for wafer in wafer_list:   
+            obsids = [obsid for obsid in data['RCW38-pixelraster']]
+            median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer] for obsid in data['RCW38-pixelraster']]
+
+            f = plt.figure(figsize=(8,6))
+            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                  for obsid in obsids])
+            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+            datenums = mdates.date2num(dts)
+
+            plt.plot(datenums, median_rcw38, 'o', label=wafer)
+
+            if len(median_rcw38)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([2e-7, 7e-7])
+                plt.legend()
+                plt.xlabel('observation time')
+                plt.ylabel('median RCW38 integral flux')
+                plt.title('RCW38 Integral Flux')
+                plt.tight_layout()
+            plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
+            plt.close()
 
 
-# create symlink from latest data directory to current
-symlinkname = '{}/current'.format(args.outdir)
-os.symlink(outdir, '{}/temp'.format(args.outdir))
-os.rename('{}/temp'.format(args.outdir), '{}/current'.format(args.outdir))
+    # only update figures if the underlying data actually changed.
+    if was_data_updated:
+        # create the plots
+        plot_median_cal_sn(data)
+        plot_median_cal_response(data)
+        plot_alive_bolos_cal(data)
+        plot_median_elnod_sn(data)
+        plot_median_elnod_iq_phase(data)
+        plot_alive_bolos_elnod(data)
+        plot_median_rcw38_fluxcal(data)
+        plot_median_rcw38_intflux(data)
+
+
+        # create symlink from latest data directory to current
+        symlinkname = '{}/current'.format(args.outdir)
+        os.symlink(outdir, '{}/temp'.format(args.outdir))
+        os.rename('{}/temp'.format(args.outdir), '{}/current'.format(args.outdir))
