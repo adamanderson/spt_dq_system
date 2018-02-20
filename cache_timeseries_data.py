@@ -315,10 +315,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([0, 250])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median calibrator S/N')
-                plt.title('Calibrator S/N ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median calibrator S/N')
+            plt.title('Calibrator S/N ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -344,10 +344,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([0, 5])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median calibrator response [fW]')
-                plt.title('Calibrator response ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median calibrator response [fW]')
+            plt.title('Calibrator response ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -372,10 +372,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([0, 600])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('number of alive bolos')
-                plt.title('Number of bolos with calibrator S/N > 10 ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('number of alive bolos')
+            plt.title('Number of bolos with calibrator S/N > 10 ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -400,10 +400,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([0, 2000])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median elnod S/N')
-                plt.title('Elnod S/N ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median elnod S/N')
+            plt.title('Elnod S/N ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -416,11 +416,12 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
                                    for obsid in data['elnod']
                                    if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
-                                   data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
+                                       data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids
-                                      if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
+                                      if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
+                                          data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
                 dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
                 datenums = mdates.date2num(dts)
 
@@ -432,10 +433,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([-90, 90])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median elnod IQ phase [deg]')
-                plt.title('Elnod IQ phase angle ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median elnod IQ phase [deg]')
+            plt.title('Elnod IQ phase angle ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -460,10 +461,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([0, 600])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('number of alive bolos')
-                plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('number of alive bolos')
+            plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -489,10 +490,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([-100, 0])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median RCW38 flux calibration')
-                plt.title('RCW38 Flux Calibration ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median RCW38 flux calibration')
+            plt.title('RCW38 Flux Calibration ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
             plt.close()
 
@@ -518,10 +519,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.xticks(rotation=25)
                 plt.ylim([2e-7, 7e-7])
                 plt.legend()
-                plt.xlabel('observation time')
-                plt.ylabel('median RCW38 integral flux')
-                plt.title('RCW38 Integral Flux ({})'.format(wafer))
-                plt.tight_layout()
+            plt.xlabel('observation time')
+            plt.ylabel('median RCW38 integral flux')
+            plt.title('RCW38 Integral Flux ({})'.format(wafer))
+            plt.tight_layout()
             plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
             plt.close()
 
