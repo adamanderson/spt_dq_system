@@ -11,6 +11,8 @@ import glob
 import datetime
 import os.path
 import shutil
+from functools import reduce
+import operator
 
 P0 = ap.ArgumentParser(description='',
                        formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -61,78 +63,112 @@ def select_band(boloprops, bolo, band):
 def select_wafer(boloprops, bolo, wafer):
     return boloprops[bolo].wafer_id == wafer
 
-selector_dict = {90: select_band,
-                 150: select_band,
-                 220: select_band,
-                 'w172': select_wafer,
-                 'w174': select_wafer,
-                 'w176': select_wafer,
-                 'w177': select_wafer,
-                 'w180': select_wafer,
-                 'w181': select_wafer,
-                 'w187': select_wafer,
-                 'w188': select_wafer,
-                 'w201': select_wafer,
-                 'w203': select_wafer}
+selector_dict = {('w172', 90): (select_wafer, select_band),
+                 ('w172', 150): (select_wafer, select_band),
+                 ('w172', 220): (select_wafer, select_band),
+                 ('w174', 90): (select_wafer, select_band),
+                 ('w174', 150): (select_wafer, select_band),
+                 ('w174', 220): (select_wafer, select_band),
+                 ('w176', 90): (select_wafer, select_band),
+                 ('w176', 150): (select_wafer, select_band),
+                 ('w176', 220): (select_wafer, select_band),
+                 ('w177', 90): (select_wafer, select_band),
+                 ('w177', 150): (select_wafer, select_band),
+                 ('w177', 220): (select_wafer, select_band),
+                 ('w180', 90): (select_wafer, select_band),
+                 ('w180', 150): (select_wafer, select_band),
+                 ('w180', 220): (select_wafer, select_band),
+                 ('w181', 90): (select_wafer, select_band),
+                 ('w181', 150): (select_wafer, select_band),
+                 ('w181', 220): (select_wafer, select_band),
+                 ('w187', 90): (select_wafer, select_band),
+                 ('w187', 150): (select_wafer, select_band),
+                 ('w187', 220): (select_wafer, select_band),
+                 ('w188', 90): (select_wafer, select_band),
+                 ('w188', 150): (select_wafer, select_band),
+                 ('w188', 220): (select_wafer, select_band),
+                 ('w201', 90): (select_wafer, select_band),
+                 ('w201', 150): (select_wafer, select_band),
+                 ('w201', 220): (select_wafer, select_band),
+                 ('w203', 90): (select_wafer, select_band),
+                 ('w203', 150): (select_wafer, select_band),
+                 ('w203', 220): (select_wafer, select_band)}
 wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w201', 'w203']
 
 
 # functions that define quantities to be saved
+def compute_median(frame, datakey, select_dict):
+    data_list = np.array([frame[datakey][bolo] 
+                          for bolo in frame[datakey].keys()])
+    data_on_selection = {}
+
+    for select_values, f_select_list in selector_dict.items():
+        selection = np.array([True for bolo in frame[datakey].keys()])
+        
+        # prep the dictionary for output
+        for keylist in [select_values[:j] for j in np.arange(len(select_values))+1]:
+            try:
+                reduce(operator.getitem, keylist, data_on_selection)
+            except:
+                reduce(operator.getitem, keylist[:-1], data_on_selection)[keylist[-1]] = {}
+
+        # compute the data selection
+        for select_val, f_select in zip(select_values, f_select_list):
+            selection = np.array([f_select(boloprops, bolo, select_val)
+                                  for bolo in frame[datakey].keys()]) & selection
+        
+        # get data that satisfies the selection and compute median
+        reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = np.median(data_list[selection][np.isfinite(data_list[selection])])
+
+    return data_on_selection
+
+
+def compute_nalive(frame, datakey, select_dict, sn_threshold):
+    data_list = np.array([frame[datakey][bolo] 
+                          for bolo in frame[datakey].keys()])
+    nalive_on_selection = {}
+
+    for select_values, f_select_list in selector_dict.items():
+        selection = np.array([True for bolo in frame[datakey].keys()])
+        
+        # prep the dictionary for output
+        for keylist in [select_values[:j] for j in np.arange(len(select_values))+1]:
+            try:
+                reduce(operator.getitem, keylist, nalive_on_selection)
+            except:
+                reduce(operator.getitem, keylist[:-1], nalive_on_selection)[keylist[-1]] = {}
+
+        # compute the data selection
+        for select_val, f_select in zip(select_values, f_select_list):
+            selection = np.array([f_select(boloprops, bolo, select_val)
+                                  for bolo in frame[datakey].keys()]) & selection
+        
+        # get data that satisfies the selection and compute median
+        data_on_selection = data_list[selection][np.isfinite(data_list[selection])]
+        nalive_on_selection[select_values[-1]] = len(data_on_selection[data_on_selection>sn_threshold])
+
+    return nalive_on_selection
+    
+
 def median_cal_sn(frame, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
         return None
-
-    calSN = np.array([frame['CalibratorResponseSN'][bolo] 
-                      for bolo in frame['CalibratorResponseSN'].keys()])
-    calSN_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['CalibratorResponseSN'].keys()])
-        calSN_on_selection[select_value] = np.median(calSN[selection]
-                                                     [np.isfinite(calSN[selection])])
-    return calSN_on_selection
+    return compute_median(frame, 'CalibratorResponseSN', selector_dict)
 
 def median_cal_response(frame, selector_dict):
     if 'CalibratorResponse' not in frame.keys():
         return None
-    
-    cal = np.array([frame['CalibratorResponse'][bolo] 
-                      for bolo in frame['CalibratorResponse'].keys()])
-    cal_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['CalibratorResponse'].keys()])
-        cal_on_selection[select_value] = np.median(cal[selection]
-                                                     [np.isfinite(cal[selection])])
-    return cal_on_selection
+    return compute_median(frame, 'CalibratorResponse', selector_dict)
 
 def alive_bolos_cal(frame, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
         return None
-
-    calSN = np.array([frame['CalibratorResponseSN'][bolo] 
-                      for bolo in frame['CalibratorResponseSN'].keys()])
-    alive_bolos_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['CalibratorResponseSN'].keys()])
-        calSN_on_wafer = calSN[selection][np.isfinite(calSN[selection])]
-        alive_bolos_on_selection[select_value] = len(calSN_on_wafer[calSN_on_wafer>10])
-    return alive_bolos_on_selection
+    return compute_nalive(frame, 'CalibratorResponseSN', selector_dict, 10)
 
 def median_elnod_sn_slope(frame, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
         return None
-
-    elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
-                      for bolo in frame['ElnodSNSlopes'].keys()])
-    elnodSN_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['ElnodSNSlopes'].keys()])
-        elnodSN_on_wafer = elnodSN[selection][np.isfinite(elnodSN[selection])]
-        elnodSN_on_selection[select_value] = np.median(elnodSN_on_wafer)
-    return elnodSN_on_selection
+    return compute_median(frame, 'ElnodSNSlopes', selector_dict)
 
 def median_elnod_iq_phase_angle(frame, selector_dict):
     if 'ElnodEigenvalueDominantVectorQ' not in frame.keys() and \
@@ -160,55 +196,37 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
 def alive_bolos_elnod(frame, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
         return None
-
-    elnodSN = np.array([frame['ElnodSNSlopes'][bolo] 
-                      for bolo in frame['ElnodSNSlopes'].keys()])
-    alive_bolos_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['ElnodSNSlopes'].keys()])
-        elnodSN_on_wafer = elnodSN[selection][np.isfinite(elnodSN[selection])]
-        alive_bolos_on_selection[select_value] = len(elnodSN_on_wafer[elnodSN_on_wafer>20])
-    return alive_bolos_on_selection
+    return compute_nalive(frame, 'ElnodSNSlopes', selector_dict, 20)
 
 def median_rcw38_fluxcal(frame, selector_dict):
     if 'RCW38FluxCalibration' not in frame.keys():
         return None
-
-    fluxcal = np.array([frame['RCW38FluxCalibration'][bolo] 
-                      for bolo in frame['RCW38FluxCalibration'].keys()])
-    fluxcal_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['RCW38FluxCalibration'].keys()])
-        fluxcal_on_wafer = fluxcal[selection][np.isfinite(fluxcal[selection])]
-        fluxcal_on_selection[select_value] = np.median(fluxcal_on_wafer)
-    return fluxcal_on_selection
+    return compute_median(frame, 'RCW38FluxCalibration', selector_dict)
 
 def median_rcw38_intflux(frame, selector_dict):
     if 'RCW38IntegralFlux' not in frame.keys():
         return None
-
-    intflux = np.array([frame['RCW38IntegralFlux'][bolo] 
-                      for bolo in frame['RCW38IntegralFlux'].keys()])
-    intflux_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['RCW38IntegralFlux'].keys()])
-        intflux_on_wafer = intflux[selection][np.isfinite(intflux[selection])]
-        intflux_on_selection[select_value] = np.median(intflux_on_wafer)
-    return intflux_on_selection
+    return compute_median(frame, 'RCW38IntegralFlux', selector_dict)
 
     
+# function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
+#                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
+#                  'calibrator':        {'MedianCalSN': median_cal_sn,
+#                                        'MedianCalResponse': median_cal_response,
+#                                        'AliveBolosCal': alive_bolos_cal},
+#                  'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
+#                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
+#                                        'AliveBolosElnod': alive_bolos_elnod}}
 function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
                  'calibrator':        {'MedianCalSN': median_cal_sn,
                                        'MedianCalResponse': median_cal_response,
                                        'AliveBolosCal': alive_bolos_cal},
-                 'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
+                 'elnod':             {#'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
                                        'AliveBolosElnod': alive_bolos_elnod}}
 
+                 
 # loop over data by week
 dt_mintime = dt.datetime(year=int(args.min_time[:4]),
                          month=int(args.min_time[4:6]),
@@ -277,6 +295,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
 
                 for quantity_name in function_dict[source]:
                     func_result = function_dict[source][quantity_name](d[0], selector_dict)
+                    print(func_result)
                     if func_result:
                         data[source][obsid][quantity_name] = func_result
 
@@ -287,15 +306,18 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     def plot_median_cal_sn(data):
         for wafer in wafer_list:
             obsids = [obsid for obsid in data['calibrator']]
-            median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer] for obsid in data['calibrator']]
-
             f = plt.figure(figsize=(8,6))
-            timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                  for obsid in obsids])
-            dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
-            datenums = mdates.date2num(dts)
 
-            plt.plot(datenums, median_calSN, 'o', label=wafer)
+            for band in data['calibrator'][obsid]['MedianCalSN'][wafer].keys():
+                median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer][band]
+                                for obsid in data['calibrator']]
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                                      for obsid in obsids])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+
+                plt.plot(datenums, median_calSN, 'o', label='{} GHz'.format(band))
 
             if len(median_calSN)>0:
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
@@ -503,7 +525,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         plot_median_cal_response(data)
         plot_alive_bolos_cal(data)
         plot_median_elnod_sn(data)
-        plot_median_elnod_iq_phase(data)
+        # plot_median_elnod_iq_phase(data)
         plot_alive_bolos_elnod(data)
         plot_median_rcw38_fluxcal(data)
         plot_median_rcw38_intflux(data)
