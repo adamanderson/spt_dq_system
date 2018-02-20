@@ -102,6 +102,9 @@ def compute_median(frame, datakey, select_dict):
                           for bolo in frame[datakey].keys()])
     data_on_selection = {}
 
+    if len(frame[datakey]) == 0:
+        return np.array([])
+
     for select_values, f_select_list in selector_dict.items():
         selection = np.array([True for bolo in frame[datakey].keys()])
         
@@ -177,23 +180,16 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
        'ElnodEigenvalueDominantVectorI' not in frame.keys():
         return None
 
-    phase_data = np.array([180/np.pi * np.arctan(frame['ElnodEigenvalueDominantVectorQ'][bolo] / \
-                                                     frame['ElnodEigenvalueDominantVectorI'][bolo]) \
-                               for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys() \
-                               if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
-                               frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0])
-    phase_data_on_selection = {}
-    for select_value, f_select in selector_dict.items():
-        selection = np.array([f_select(boloprops, bolo, select_value)
-                              for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys()
-                              if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
-                                  frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0])
-        if selection.size == 0:
-            phase_data_on_selection[select_value] = None
-        else:
-            phase_data_on_selection[select_value] = np.median(phase_data[selection]
-                                                              [np.isfinite(phase_data[selection])])
-    return phase_data_on_selection
+    newframe = core.G3Frame()
+    newframe['ElnodPhaseAngle'] = core.G3MapDouble()
+    for bolo in frame['ElnodEigenvalueDominantVectorQ'].keys():
+        if frame['ElnodEigenvalueDominantVectorI'][bolo] != 0 and \
+                frame['ElnodEigenvalueDominantVectorQ'][bolo] != 0:
+            newframe['ElnodPhaseAngle'][bolo] = 180/np.pi * \
+                np.arctan(frame['ElnodEigenvalueDominantVectorQ'][bolo] / \
+                          frame['ElnodEigenvalueDominantVectorI'][bolo])
+
+    return compute_median(newframe, 'ElnodPhaseAngle', selector_dict)
 
 def alive_bolos_elnod(frame, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
@@ -211,20 +207,12 @@ def median_rcw38_intflux(frame, selector_dict):
     return compute_median(frame, 'RCW38IntegralFlux', selector_dict)
 
     
-# function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
-#                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
-#                  'calibrator':        {'MedianCalSN': median_cal_sn,
-#                                        'MedianCalResponse': median_cal_response,
-#                                        'AliveBolosCal': alive_bolos_cal},
-#                  'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
-#                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
-#                                        'AliveBolosElnod': alive_bolos_elnod}}
 function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
                  'calibrator':        {'MedianCalSN': median_cal_sn,
                                        'MedianCalResponse': median_cal_response,
                                        'AliveBolosCal': alive_bolos_cal},
-                 'elnod':             {#'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
+                 'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
                                        'AliveBolosElnod': alive_bolos_elnod}}
 
@@ -329,7 +317,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median calibrator S/N')
-                plt.title('Calibrator S/N')
+                plt.title('Calibrator S/N ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
             plt.close()
@@ -354,11 +342,11 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
                 plt.gca().xaxis.set_major_formatter(xfmt)
                 plt.xticks(rotation=25)
-                plt.ylim([0, 4])
+                plt.ylim([0, 5])
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median calibrator response [fW]')
-                plt.title('Calibrator response')
+                plt.title('Calibrator response ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
             plt.close()
@@ -382,11 +370,11 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
                 plt.gca().xaxis.set_major_formatter(xfmt)
                 plt.xticks(rotation=25)
-                plt.ylim([0, 1600])
+                plt.ylim([0, 600])
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('number of alive bolos')
-                plt.title('Number of bolos with calibrator S/N > 10')
+                plt.title('Number of bolos with calibrator S/N > 10 ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
             plt.close()
@@ -414,7 +402,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median elnod S/N')
-                plt.title('Elnod S/N')
+                plt.title('Elnod S/N ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
             plt.close()
@@ -427,7 +415,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             for band in [90, 150, 220]: 
                 median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
                                    for obsid in data['elnod']
-                                   if data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
+                                   if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
+                                   data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids
@@ -445,7 +434,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median elnod IQ phase [deg]')
-                plt.title('Elnod IQ phase angle')
+                plt.title('Elnod IQ phase angle ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
             plt.close()
@@ -469,11 +458,11 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
                 plt.gca().xaxis.set_major_formatter(xfmt)
                 plt.xticks(rotation=25)
-                plt.ylim([0, 1600])
+                plt.ylim([0, 600])
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('number of alive bolos')
-                plt.title('Number of bolos with elnod S/N>20')
+                plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
             plt.close()
@@ -502,7 +491,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median RCW38 flux calibration')
-                plt.title('RCW38 Flux Calibration')
+                plt.title('RCW38 Flux Calibration ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
             plt.close()
@@ -531,7 +520,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
                 plt.xlabel('observation time')
                 plt.ylabel('median RCW38 integral flux')
-                plt.title('RCW38 Integral Flux')
+                plt.title('RCW38 Integral Flux ({})'.format(wafer))
                 plt.tight_layout()
             plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
             plt.close()
@@ -544,7 +533,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         plot_median_cal_response(data)
         plot_alive_bolos_cal(data)
         plot_median_elnod_sn(data)
-        # plot_median_elnod_iq_phase(data)
+        plot_median_elnod_iq_phase(data)
         plot_alive_bolos_elnod(data)
         plot_median_rcw38_fluxcal(data)
         plot_median_rcw38_intflux(data)
