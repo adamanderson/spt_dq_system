@@ -374,7 +374,9 @@ function updateStaticPlots() {
 	    'update',
 	    '/poleanalysis/sptdaq/calresult/calibration/',
 	    '/spt_data/bolodata/fullrate/',
-	    config.static_plot_dir];
+	    config.static_plot_dir,
+	    '--min-time',
+	    '20180201'];
     var child = execFile(python, args);
     console.log('updating plots');
 
@@ -386,4 +388,4 @@ function updateStaticPlots() {
 	    console.log(data);
 	});
 }
-setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
+//setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
