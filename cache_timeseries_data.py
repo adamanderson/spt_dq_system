@@ -270,7 +270,6 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsid = os.path.splitext(os.path.basename(fname))[0]
             print('observation: {}'.format(obsid))
 
-            print(data[source].keys())
             if obsid not in data[source].keys() or \
                     data[source][obsid]['timestamp'] != os.path.getctime(fname):
                 was_data_updated = True
@@ -285,7 +284,6 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
 
                 for quantity_name in function_dict[source]:
                     func_result = function_dict[source][quantity_name](d[0], selector_dict)
-                    print(func_result)
                     if func_result:
                         data[source][obsid][quantity_name] = func_result
 
