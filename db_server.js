@@ -4,6 +4,7 @@ var assert = require('assert');
 var bodyParser = require('body-parser');
 var squel = require("squel");
 var execFile = require('child_process').execFile;
+var exec = require('child_process').exec;
 var fs = require('fs');
 var readline = require('readline');
 var util = require('util');
@@ -369,30 +370,28 @@ else {
 
 // static timeseries plots update
 is_update_running = false;
+var child;
 function updateStaticPlots() {
     args = ['-B',
 	    'cache_timeseries_data.py',
 	    'update',
-	    '/poleanalysis/sptdaq/calresult/calibration/',
-	    '/spt_data/bolodata/fullrate/',
+	    '/spt/user/production',
+	    '/spt/data/bolodata/downsampled/',
 	    config.static_plot_dir,
 	    '--min-time',
 	    '20180201'];
     if(is_update_running == false) {
 	is_update_running = true;
-	var child = execFile(python, args, function() {
-		is_update_running = true;
+	child = execFile(python, args, function(err) {
+		console.log(err);
+		console.log('Finished updating plots.');
+		is_update_running = false;
 	    });
-	console.log('updating plots');
-	
-	child.stdout.on('data', function(data) {
-		console.log(data);
-	    });
-
-	child.stderr.on('data', function(data) {
-		console.log(data);
-	    });
+	console.log('Updating plots...');
     }
-
+    else {
+	console.log('Plot updater already running, so not spawning again!');
+    }
 }
-//setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
+
+setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
