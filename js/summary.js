@@ -8,6 +8,7 @@ function open_table(table) {
     if (table == "lastobs") {
 	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
 		   'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
+		   'RCW38': ['RCW38SkyTransmission'],
 		   'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
 	load_db_for_latestobs(sources, load_plots, 'lastobs');
     }

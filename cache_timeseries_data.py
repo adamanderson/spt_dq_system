@@ -206,8 +206,30 @@ def median_rcw38_intflux(frame, selector_dict):
         return None
     return compute_median(frame, 'RCW38IntegralFlux', selector_dict)
 
+def rcw38_sky_transmission(frame, selector_dict):
+    if 'RCW38SkyTransmission' not in frame.keys():
+        return None
+
+    data_on_selection = {}
+
+    for select_values, f_select_list in selector_dict.items():
+        # prep the dictionary for output
+        for keylist in [select_values[:j] for j in np.arange(len(select_values))+1]:
+            try:
+                reduce(operator.getitem, keylist, data_on_selection)
+            except:
+                reduce(operator.getitem, keylist[:-1], data_on_selection)[keylist[-1]] = {}
+
+        # get data that satisfies the selection and compute median
+        if str(select_values[-1]) in frame['RCW38SkyTransmission'].keys():
+            reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = \
+                frame['RCW38SkyTransmission'][str(select_values[-1])]
+
+    return data_on_selection
+
     
-function_dict = {'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
+function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmission},
+                 'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
                  'calibrator':        {'MedianCalSN': median_cal_sn,
                                        'MedianCalResponse': median_cal_response,
@@ -524,6 +546,37 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
             plt.close()
 
+    def plot_rcw38_sky_transmission(data):
+        for wafer in wafer_list:   
+            obsids = [obsid for obsid in data['RCW38']]
+            f = plt.figure(figsize=(8,6))
+            
+            for band in [90, 150, 220]:
+                rcw38_skytrans = [data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
+                                  for obsid in obsids
+                                  if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float]
+
+                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
+                                      for obsid in obsids
+                                      if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
+                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                datenums = mdates.date2num(dts)
+                
+                plt.plot(datenums, rcw38_skytrans, 'o', label='{} GHz'.format(band))
+
+            if len(rcw38_skytrans)>0:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0.85, 1.25])
+                plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel('RCW38 sky transmission')
+            plt.title('RCW38 Sky Transmission ({})'.format(wafer))
+            plt.tight_layout()
+            plt.savefig('{}/rcw38_sky_transmission_{}.png'.format(outdir, wafer))
+            plt.close()
+
 
     # only update figures if the underlying data actually changed.
     if was_data_updated:
@@ -536,7 +589,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         plot_alive_bolos_elnod(data)
         plot_median_rcw38_fluxcal(data)
         plot_median_rcw38_intflux(data)
-
+        plot_rcw38_sky_transmission(data)
 
         # create symlink from latest data directory to current
         symlinkname = '{}/current'.format(args.outdir)

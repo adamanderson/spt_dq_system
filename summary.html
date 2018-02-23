@@ -20,6 +20,9 @@ function update_figs()
   document["ts_median_elnod_sn"].src              ='staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
   document["ts_median_elnod_iq"].src              ='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
   document["ts_alive_bolos_elnod"].src            ='staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
+  document["ts_rcw38_sky_transmission"].src       ='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
+  document["ts_median_rcw38_fluxcal"].src            ='staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
+  document["ts_median_rcw38_intflux"].src            ='staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
 }
 
 function set_variable(variable, newVal)
@@ -101,19 +104,37 @@ function set_variable(variable, newVal)
 <table style="table-layout:fixed" width="66%">
   <tr>
     <td>
-      <h2>RCW38</h2>
+      <h2>RCW38 Fast Point</h2>
     </td>
   </tr>
   <tr>
     <td>
       <img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal' src='staticimg/current/median_rcw38_fluxcal_w172.png'>
     </td>
-        <td>
+    <td>
       <img style="display:block;" width="100%" name='ts_median_rcw38_intflux' src='staticimg/current/median_rcw38_intflux_w172.png'>
     </td>
     <td>
+    </td>
   </tr>
 </table>
+<table style="table-layout:fixed" width="33%">
+  <tr>
+    <td>
+      <h2>RCW38 Very Fast Point</h2>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' src='staticimg/current/rcw38_sky_transmission_w172.png'>
+    </td>
+    <td>
+    </td>
+    <td>
+    </td>
+  </tr>
+</table>
+
 </div>
 
 <div id='lastobs' style='display:none'>
@@ -174,6 +195,7 @@ function set_variable(variable, newVal)
   </tr>
 
 </table>
+
 </td>
 </tr>
 </div>
