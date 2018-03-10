@@ -1,0 +1,130 @@
+<html>
+<head>
+<link rel="stylesheet" href="css/default-skin/default-skin.css">
+<link rel="stylesheet" href="css/default.css">
+<script src="js/jquery-1.12.4.js"></script>
+<script src="js/jquery-ui.js"></script>
+<script src="js/monthly.js"></script>
+<script type="text/javascript" src="js/moment.min.js"></script>
+</head>
+    
+<script>
+    
+var date = new Date();
+
+date.setDate(date.getDate() + 20);
+
+mm = ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth()+1)).slice(-2) + '/' + date.getFullYear();
+mm = mm.substring(3,5)  
+yy = mm.substring(6,10)
+    
+
+    
+    
+wafer='w172';
+monthdir=yy+'-'+mm
+obsparameter= 'CalibratorResponse'
+obstype= 'calibrator'
+    
+function update_figs()
+{
+  document["histogram_over_time"].src                =
+      'staticimg/'+monthdir+'/'+monthdir+'_'+'HistogramOverTime'+'_'+obsparameter+'_'+obstype+'.png';
+  document["wafer_array"].src                =
+      'staticimg/'+monthdir+'/'+monthdir+'_'+'array'+'_'+obsparameter+'_'+obstype+'_'+wafer+'.png';
+}
+
+function set_variable(variable, newVal)
+{
+  window[variable]=newVal;
+  update_figs();
+}
+</script>
+    
+    
+    
+    
+    
+<body onload="open_table('recent')">
+<div class="tab">
+  <button class="tablinks" onclick="open_table('recent')" id="recent-tab">Recent Data</button>
+</div>
+    
+    
+<div id='recent'>
+<h1>Monthly Data Summary</h1>
+<div class="btn-group">
+  <button type="button" class="btn" onclick="set_variable('yy','2017')">2017</button>
+  <button type="button" class="btn" onclick="set_variable('yy','2018')">2018</button>
+  <button type="button" class="btn" onclick="set_variable('yy','2019')">2019</button>
+    
+    
+</div>    
+    
+<br>
+<div class="btn-group">
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-01')">Jan</button>
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-02')">Feb</button>
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-03')">Mar</button>
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-04')">Apr</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-05')">May</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-06')">Jun</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-07')">Jul</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-08')">Aug</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-09')">Sep</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-10')">Oct</button>  
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-11')">Nov</button>
+  <button type="button" class="btn" onclick="set_variable('monthdir','2018-12')">Dec</button>
+    
+    
+</div>
+    
+<br>
+
+    
+<button class="btn" onclick="set_variable('wafer','w172')">w172</button>
+<button class="btn" onclick="set_variable('wafer','w174')">w174</button>
+<button class="btn" onclick="set_variable('wafer','w176')">w176</button>
+<button class="btn" onclick="set_variable('wafer','w177')">w177</button>
+<button class="btn" onclick="set_variable('wafer','w180')">w180</button>
+<button class="btn" onclick="set_variable('wafer','w181')">w181</button>
+<button class="btn" onclick="set_variable('wafer','w187')">w187</button>
+<button class="btn" onclick="set_variable('wafer','w188')">w188</button>
+<button class="btn" onclick="set_variable('wafer','w201')">w201</button>
+<button class="btn" onclick="set_variable('wafer','w203')">w203</button>
+<br>
+<br>
+    
+
+<table>
+  <tr>
+    <td valign="top">
+      <div id="datalist">
+      </div>
+    </td>
+      
+<td>
+<table style="table-layout:fixed">
+  <tr>
+    <td>
+      <h2>Calibrator</h2>
+      <button class="btn" onclick="set_variable('obsparameter','CalibratorResponse')">CalResponse</button>
+      <button class="btn" onclick="set_variable('obsparameter','CalibratorResponseSN')">CalResponse SN</button>
+    </td>
+  </tr>
+    
+  <tr>
+      <td>
+      <img style="display:block;" width="100%" name='wafer_array' src=' ' >
+      
+      </td>
+  </tr>
+    
+  <tr>
+    <td>
+      <img style="display:block;" width="80%" name='histogram_over_time' src=' ' >
+    </td>
+    
+  </tr>
+</table>
+<br>
