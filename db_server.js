@@ -171,7 +171,10 @@ app.get('/display.html', function(req, res) {
 app.get('/summary.html', function(req, res) {
   res.sendFile( __dirname + "/" + "summary.html" );
 });
-
+//monthly summary
+app.get('/monthly.html', function(req, res) {
+  res.sendFile( __dirname + "/" + "monthly.html" );
+});
 
 // request new sseid
 app.get('/sseid', function(req, res) {
