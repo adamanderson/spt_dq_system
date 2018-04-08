@@ -1,0 +1,13 @@
+[Unit]
+Description=db_server.js - Data quality plots for SPT3G data
+After=network.target
+
+[Service]
+Environment=NODE_PORT=3000
+Type=simple
+User=adama
+ExecStart=/usr/bin/node /home/adama/SPT/spt_dq_system/db_server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
