@@ -10,34 +10,113 @@
     
 <script>
     
-var date = new Date();
-
+/*var date = new Date();
 date.setDate(date.getDate() + 20);
-
 mm = ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth()+1)).slice(-2) + '/' + date.getFullYear();
 mm = mm.substring(3,5)  
-yy = mm.substring(6,10)
-    
+yy = mm.substring(6,10)*/
 
+data={"calibrator": ["CalibratorResponse", "CalibratorResponseSN"],
+      "elnod": ["ElnodDrifts", "ElnodRSquared", "ElnodSNSlopes", "ElnodSigmaSlopes", "ElnodSlopes", "ElnodVariances"],
+      "RCW38-pixelraster":["PointingOffsetX","PointingOffsetY","RCW38FluxCalibration","RCW38IntegralFlux"] }
     
     
+//hard code, warning
+wafer_lst={
+        '2017-09':['w136','w139','w142','w147','w148','w152','w153','w157','w158','w162'],
+        '2017-10':['w136','w139','w142','w147','w148','w152','w153','w157','w158','w162'],
+        '2017-11':['w136','w139','w142','w147','w148','w152','w153','w157','w158','w162'],
+        '2017-12':['w136','w139','w142','w147','w148','w152','w153','w157','w158','w162'],
+        '2018-01':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-02':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-03':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-04':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-05':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-06':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-07':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-08':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-09':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-10':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-11':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203'],
+        '2018-12':['w172','w174','w176','w177','w180','w181','w187','w188','w201','w203']}
+    
+    
+    
+    
+yy= '2018';
+mm='00';
 wafer='w172';
-monthdir=yy+'-'+mm
-obsparameter= 'CalibratorResponse'
-obstype= 'calibrator'
+obsparameter= 'CalibratorResponse';
+obstype= 'calibrator';
     
 function update_figs()
-{
-  document["histogram_over_time"].src                =
+{ 
+  monthdir=yy+'-'+mm;
+  document["histogram_over_time"].src        =
       'staticimg/'+monthdir+'/'+monthdir+'_'+'HistogramOverTime'+'_'+obsparameter+'_'+obstype+'.png';
   document["wafer_array"].src                =
       'staticimg/'+monthdir+'/'+monthdir+'_'+'array'+'_'+obsparameter+'_'+obstype+'_'+wafer+'.png';
+  //window.alert(obsparameter);
+  
 }
-
 function set_variable(variable, newVal)
 {
   window[variable]=newVal;
   update_figs();
+  //window.alert(newVal);
+}
+    
+function generate_buttons()
+{
+  var w_buttons = document.getElementById("wafer_button");
+  var p_buttons = document.getElementById("parameter_button");
+  //removes existing buttons
+  while(w_buttons.firstChild){
+  w_buttons.removeChild(w_buttons.firstChild);
+  }
+  while(p_buttons.firstChild){
+  p_buttons.removeChild(p_buttons.firstChild);
+  }
+
+  var param = data[obstype];
+  var wafers = wafer_lst[monthdir];
+  
+  for ( var i=0; i < param.length; i++) {
+    btn = document.createElement("BUTTON");
+    btn.className="btn";
+    let temp= param[i]
+    t = document.createTextNode(param[i]);
+    btn.appendChild(t);
+      
+      
+    btn.addEventListener("click", function(){
+    set_variable('obsparameter',temp);
+    }, false);
+    //btn.setAttribute("onclick",set_variable('obsparameter', temp);
+    //btn.onclick=set_variable('obsparameter', );
+    //p_buttons.write(String(<button class="btn" onclick="set_variable('obsparameter',temp)">temp</button>));
+    p_buttons.appendChild(btn);
+    
+  }  
+  for ( var i=0; i < wafers.length; i++) {
+    btn = document.createElement("BUTTON");
+    btn.className="btn";
+    let temp= wafers[i]
+    t = document.createTextNode(temp);
+    btn.appendChild(t);
+      
+      
+    btn.addEventListener("click", function(){
+    set_variable('wafer',temp);
+    }, false);
+    //btn.setAttribute("onclick",set_variable('obsparameter', temp);
+    //btn.onclick=set_variable('obsparameter', );
+    //p_buttons.write(String(<button class="btn" onclick="set_variable('obsparameter',temp)">temp</button>));
+    w_buttons.appendChild(btn);
+    
+  } 
+  
+
 }
 </script>
     
@@ -60,28 +139,34 @@ function set_variable(variable, newVal)
     
     
 </div>    
-    
-<br>
+<br>    
 <div class="btn-group">
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-01')">Jan</button>
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-02')">Feb</button>
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-03')">Mar</button>
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-04')">Apr</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-05')">May</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-06')">Jun</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-07')">Jul</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-08')">Aug</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-09')">Sep</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-10')">Oct</button>  
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-11')">Nov</button>
-  <button type="button" class="btn" onclick="set_variable('monthdir','2018-12')">Dec</button>
+  <button type="button" class="btn" onclick="set_variable('mm','01')">Jan</button>
+  <button type="button" class="btn" onclick="set_variable('mm','02')">Feb</button>
+  <button type="button" class="btn" onclick="set_variable('mm','03')">Mar</button>
+  <button type="button" class="btn" onclick="set_variable('mm','04')">Apr</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','05')">May</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','06')">Jun</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','07')">Jul</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','08')">Aug</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','09')">Sep</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','10')">Oct</button>  
+  <button type="button" class="btn" onclick="set_variable('mm','11')">Nov</button>
+  <button type="button" class="btn" onclick="set_variable('mm','12')">Dec</button>
     
     
 </div>
-    
 <br>
-
-    
+<b id="sourcetext">Select a Source to proceed</b>
+<br>
+<br>
+<button class="btn" onclick="set_variable('obstype','calibrator');generate_buttons()">calibrator</button>
+<button class="btn" onclick="set_variable('obstype','elnod');generate_buttons()">elnod</button>
+<button class="btn" onclick="set_variable('obstype','RCW38-pixelraster');generate_buttons()">RCW38-pixelraster</button>
+<br>
+<br>
+<div id="wafer_button">
+ 
 <button class="btn" onclick="set_variable('wafer','w172')">w172</button>
 <button class="btn" onclick="set_variable('wafer','w174')">w174</button>
 <button class="btn" onclick="set_variable('wafer','w176')">w176</button>
@@ -92,8 +177,10 @@ function set_variable(variable, newVal)
 <button class="btn" onclick="set_variable('wafer','w188')">w188</button>
 <button class="btn" onclick="set_variable('wafer','w201')">w201</button>
 <button class="btn" onclick="set_variable('wafer','w203')">w203</button>
+</div>
 <br>
-<br>
+
+
     
 
 <table>
@@ -104,6 +191,7 @@ function set_variable(variable, newVal)
     </td>
       
 <td>
+<!--
 <table style="table-layout:fixed">
   <tr>
     <td>
@@ -127,4 +215,23 @@ function set_variable(variable, newVal)
     
   </tr>
 </table>
+-->
 <br>
+<table style="table-layout:fixed">
+  <tr>
+    <h2>Source</h2>
+    <div class="btn-group" id="parameter_button">
+    <button class="btn" onclick="set_variable('obsparameter','CalibratorResponse')">CalResponse</button>
+    <button class="btn" onclick="set_variable('obsparameter','CalibratorResponseSN')">CalResponse SN</button>
+    </div>
+  </tr>
+    
+  <tr>
+    <img style="display:block;" width="100%" name='wafer_array' src=' ' >
+  </tr>
+    
+  <tr>
+    <img style="display:block;" width="80%" name='histogram_over_time' src=' ' >
+    
+  </tr>
+</table>
