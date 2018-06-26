@@ -7,22 +7,32 @@ import numpy as np
 from spt3g import core, std_processing, mapmaker, dfmux, calibration, xtalk, todfilter, coordinateutils,cluster
 import argparse as ap
 
-#This script looks for existing monthly plots in plotpath and submit jobs to condor to make missing monthly plots
-#There is some hard coding with directories
+'''
+Generate monthly summary plots for a given source, this submits condor jobs
+'''
 
-plotpath= '/scratch/dyang18/dq_plots/'
 P = ap.ArgumentParser(description='Taring files for condor',
               formatter_class=ap.ArgumentDefaultsHelpFormatter)
 
 
-P.add_argument('source', action='store', 
+P.add_argument('source', action='store',
            default=None, help='name of source')
 P.add_argument('year',action='store', default=None,
-           help='the year to gather data for')
+           help='the date range of data to be plotted')
 
 args = P.parse_args()
 source=args.source
 year=args.year
+
+#directories to be modified
+plotpath= '/scratch/dyang18/dq_plots/'
+script='/home/dyang18/spt3g/spt3g_software/scratch/dyang18/'+source+'PlotCondor.py'
+log_root='/scratch/dyang18'
+datatarpath='/spt/user/dyang18/tar/'+str(year)+'/'+str(year)+'_'+source+'.tar.gz'
+bolotarpath='/spt/user/dyang18/tar/'+str(year)+'/'+str(year)+'_'+source+'BolometerProperties.tar.gz'
+grid_proxy='/home/dyang18/dyang'
+outputpath='/spt/user/dyang18/output/'
+
 
 currentDT = datetime.datetime.now()
 ctime= currentDT.strftime("%Y-%m")
@@ -48,17 +58,14 @@ print('making plots for '+ ' '.join(final))
 
 #Submission section for different months of data
 
-script='/home/dyang18/spt3g/spt3g_software/scratch/dyang18/'+source+'PlotCondor.py'
 
-log_root='/scratch/dyang18'
 
-input_files=['/spt/user/dyang18/tar/'+str(year)+'/'+str(year)+'_'+source+'.tar.gz','/spt/user/dyang18/tar/'+str(year)+'/'+str(year)+'_'+source+'BolometerProperties.tar.gz']
+input_files=[datatarpath,bolotarpath]
 output_files=[source+".tar.gz"]
-#bundle these things together in order to transfer one giant thing
-grid_proxy='/home/dyang18/dyang'
+
 args=[ '-d' +' ' +' '.join(final)]
 jobname='condor_{}'.format(time.strftime('%Y%m%d_%H%M%S'))
-output_root='/spt/user/dyang18/output/'+jobname
+output_root=outputpath+jobname
 cluster.condor_submit(script=script, args=args, caller='python', jobname=jobname,
                       log_root=log_root, output_root=output_root, input_files=input_files,
                       output_files=output_files, grid_proxy=grid_proxy, aux_input_files=[],
