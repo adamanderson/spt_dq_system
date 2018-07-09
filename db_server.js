@@ -375,8 +375,8 @@ function updateStaticPlots() {
     args = ['-B',
 	    'cache_timeseries_data.py',
 	    'update',
-	    '/spt/user/production',
-	    '/spt/data/bolodata/downsampled/',
+	    config.calib_data_dir,
+	    config.bolo_data_dir,
 	    config.static_plot_dir,
 	    '--min-time',
 	    '20180201'];
