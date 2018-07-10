@@ -318,23 +318,25 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['calibrator']]
             f = plt.figure(figsize=(8,6))
 
-            for band in [90, 150, 220]:
-                median_calSN = [data['calibrator'][obsid]['MedianCalSN'][wafer][band]
-                                for obsid in data['calibrator']]
+            for band in [90, 150, 220]:                
+                median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN'][wafer][band]
+                                for obsid in data['calibrator']])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, median_calSN, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_calSN)],
+                         median_calSN[np.isfinite(median_calSN)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_calSN)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0, 250])
-                plt.legend()
+                if len(median_calSN[np.isfinite(median_calSN)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0, 250])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator S/N')
             plt.title('Calibrator S/N ({})'.format(wafer))
@@ -353,17 +355,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, 1e15*median_cal, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_cal)],
+                         1e15*median_cal[np.isfinite(median_cal)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_cal)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0, 5])
-                plt.legend()
+                if len(median_cal[np.isfinite(median_cal)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0, 5])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator response [fW]')
             plt.title('Calibrator response ({})'.format(wafer))
@@ -381,17 +385,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, n_alive_bolos, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(n_alive_bolos)],
+                         n_alive_bolos[np.isfinite(n_alive_bolos)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(n_alive_bolos)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0, 600])
-                plt.legend()
+                if len(n_alive_bolos[np.isfinite(n_alive_bolos)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0, 600])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with calibrator S/N > 10 ({})'.format(wafer))
@@ -405,21 +411,23 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
             
             for band in [90, 150, 220]:
-                median_elnodSN = [data['elnod'][obsid]['MedianElnodSNSlopes'][wafer][band] for obsid in data['elnod']]
+                median_elnodSN = np.array([data['elnod'][obsid]['MedianElnodSNSlopes'][wafer][band] for obsid in data['elnod']])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, median_elnodSN, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_elnodSN)],
+                         median_elnodSN[np.isfinite(median_elnodSN)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_elnodSN)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0, 2000])
-                plt.legend()
+                if len(median_elnodSN[np.isfinite(median_elnodSN)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0, 2000])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median elnod S/N')
             plt.title('Elnod S/N ({})'.format(wafer))
@@ -433,26 +441,28 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]: 
-                median_elnod_iq = [data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
+                median_elnod_iq = np.array([data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
                                    for obsid in data['elnod']
                                    if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
-                                       data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
+                                       data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids
                                       if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
                                           data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, median_elnod_iq, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_elnod_iq)],
+                         median_elnod_iq[np.isfinite(median_elnod_iq)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_elnod_iq)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([-90, 90])
-                plt.legend()
+                if len(median_elnod_iq[np.isfinite(median_elnod_iq)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([-90, 90])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median elnod IQ phase [deg]')
             plt.title('Elnod IQ phase angle ({})'.format(wafer))
@@ -466,21 +476,23 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]:
-                alive_bolos_elnod = [data['elnod'][obsid]['AliveBolosElnod'][wafer][band] for obsid in data['elnod']]
+                alive_bolos_elnod = np.array([data['elnod'][obsid]['AliveBolosElnod'][wafer][band] for obsid in data['elnod']])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, alive_bolos_elnod, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(alive_bolos_elnod)],
+                         alive_bolos_elnod[np.isfinite(alive_bolos_elnod)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(alive_bolos_elnod)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0, 600])
-                plt.legend()
+                if len(alive_bolos_elnod[np.isfinite(alive_bolos_elnod)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0, 600])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
@@ -494,22 +506,24 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]:
-                median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer][band]
-                                for obsid in data['RCW38-pixelraster']]
+                median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer][band]
+                                for obsid in data['RCW38-pixelraster']])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, median_rcw38, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_rcw38)],
+                         median_rcw38[np.isfinite(median_rcw38)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_rcw38)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([-100, 0])
-                plt.legend()
+                if len(median_rcw38[np.isfinite(median_rcw38)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([-100, 0])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median RCW38 flux calibration')
             plt.title('RCW38 Flux Calibration ({})'.format(wafer))
@@ -523,22 +537,24 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
             
             for band in [90, 150, 220]:
-                median_rcw38 = [data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer][band]
-                                for obsid in data['RCW38-pixelraster']]
+                median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer][band]
+                                for obsid in data['RCW38-pixelraster']])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
-                plt.plot(datenums, median_rcw38, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(median_rcw38)],
+                         median_rcw38[np.isfinite(median_rcw38)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(median_rcw38)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([2e-7, 7e-7])
-                plt.legend()
+                if len(median_rcw38[np.isfinite(median_rcw38)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([2e-7, 7e-7])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median RCW38 integral flux')
             plt.title('RCW38 Integral Flux ({})'.format(wafer))
@@ -552,24 +568,26 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             f = plt.figure(figsize=(8,6))
             
             for band in [90, 150, 220]:
-                rcw38_skytrans = [data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
+                rcw38_skytrans = np.array([data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
                                   for obsid in obsids
-                                  if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float]
+                                  if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
                                       for obsid in obsids
                                       if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
-                dts = [datetime.datetime.fromtimestamp(ts) for ts in timestamps]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
                 
-                plt.plot(datenums, rcw38_skytrans, 'o', label='{} GHz'.format(band))
+                plt.plot(datenums[np.isfinite(rcw38_skytrans)],
+                         rcw38_skytrans[np.isfinite(rcw38_skytrans)],
+                         'o', label='{} GHz'.format(band))
 
-            if len(rcw38_skytrans)>0:
-                xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                plt.gca().xaxis.set_major_formatter(xfmt)
-                plt.xticks(rotation=25)
-                plt.ylim([0.85, 1.25])
-                plt.legend()
+                if len(rcw38_skytrans[np.isfinite(rcw38_skytrans)])>0:
+                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                    plt.gca().xaxis.set_major_formatter(xfmt)
+                    plt.xticks(rotation=25)
+                    plt.ylim([0.85, 1.25])
+                    plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('RCW38 sky transmission')
             plt.title('RCW38 Sky Transmission ({})'.format(wafer))
