@@ -1,3 +1,0 @@
-unset PYTHONPATH
-eval `/software/clustertools/py3-v1/setup.sh`
-export PYTHONPATH=$PYTHONPATH:/home/adama/code/:/home/adama/code/py3/spt3g_software/build/
