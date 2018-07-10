@@ -347,8 +347,6 @@ function parseSearch(query, searchJSON, tab) {
     else if (tab == "autoproc")
 	query.order('autoproc.modified', false);
     
-    console.log(query.toString());
-    
     return query;
 }
 
