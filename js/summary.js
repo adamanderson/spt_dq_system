@@ -16,6 +16,10 @@ function open_table(table) {
 
 
 function get_old_timeseries_plotdirs() {
+    // clear contents of the datalist div before we rebuild
+    $('#datalist').empty()
+
+    // now rebuild the div
     $.get('/oldstaticdirs', [], function(data, status) {
 	    data.reverse();
 	    $('#datalist').append("<a href=\"javascript:set_variable(\'weekdir\','" + data[0] + "');\">current</a><br>");
