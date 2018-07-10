@@ -1,6 +1,6 @@
 scanify_db_path: /spt/data/transfer_database/scanify.db
 auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
-autoproc_db_path: /home/adama/SPT/spt_dq_system/autoproc.db
+autoproc_db_path: /spt/user/production/autoproc.db
 
 key_file: /home/adama/SPT/spt_dq_system/key.pem
 cert_file: /home/adama/SPT/spt_dq_system/cert.pem
