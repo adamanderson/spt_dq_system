@@ -33,43 +33,16 @@ var sseid = 0;
 // python
 var python = '/cvmfs/spt.opensciencegrid.org/py3-v2/RHEL_7_x86_64/bin/python';
 
-// determines if username and password are correct
-function authorizer(username, password, cb) {
-  if (username != 'spt')
-    return cb(null, false);
-  // get hash
-  filePath = __dirname + '/hash';
-  fs.readFile(filePath, {encoding: 'utf-8'}, function(err, hash){
-    if (!err) {
-      // check password vs hash
-      bcrypt.compare(password, hash.trim(), function(err, res) {
-        return cb(null, res);
-      });
-    } else {
-      log(err);
-    }
-  });
-}
+// password authentication
+app.use(auth({
+    users: {'spt': 'sptjamz'},
+    challenge: true
+}));
 
 // database filenames
 db_files = {scanify: config.scanify_db_path,
 	    aux_transfer: config.auxtransfer_db_path,
 	    autoproc: config.autoproc_db_path}
-
-// response if wrong credentials
-function getUnauthorizedResponse(req) {
-  return 'Credentials rejected';
-}
-
-// password protect the website if certificate is given in config.yaml
-if(config.key_file && config.cert_file) {
-  app.use(auth({
-    authorizer: authorizer,
-    authorizeAsync: true,
-    challenge: true,
-    unauthorizedResponse: getUnauthorizedResponse,
-  }))
-}
 
 // setup home page
 app.use(express.static('public'));
@@ -351,20 +324,7 @@ function parseSearch(query, searchJSON, tab) {
 }
 
 
-// use https if certificate info is given in config.yaml
-if(config.key_file && config.cert_file) {
-  var options = {
-    key: fs.readFileSync(config.key_file),
-    cert: fs.readFileSync(config.cert_file)
-  };
-
-  // run server
-  log('Listening on port ' + config.port);
-  https.createServer(options, app).listen(parseInt(config.port));
-}
-else {
-    app.listen(parseInt(config.port))
-};
+app.listen(parseInt(config.port))
 
 
 
