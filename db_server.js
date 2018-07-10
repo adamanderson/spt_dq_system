@@ -31,7 +31,7 @@ app.get('/sse', sse.init);
 var sseid = 0;
 
 // python
-var python = '/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_6_x86_64/bin/python';
+var python = '/cvmfs/spt.opensciencegrid.org/py3-v2/RHEL_7_x86_64/bin/python';
 
 // determines if username and password are correct
 function authorizer(username, password, cb) {
@@ -149,7 +149,6 @@ app.get('/dbpage', function(req, res) {
 
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
-	console.log(req.query);
 	parseSearch(query, req.query, req.query.dbname);
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
@@ -379,7 +378,7 @@ function updateStaticPlots() {
 	    config.bolo_data_dir,
 	    config.static_plot_dir,
 	    '--min-time',
-	    '20180201'];
+	    '20180601'];
     if(is_update_running == false) {
 	is_update_running = true;
 	child = execFile(python, args, function(err) {
