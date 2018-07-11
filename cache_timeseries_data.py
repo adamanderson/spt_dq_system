@@ -155,18 +155,24 @@ def compute_nalive(frame, datakey, select_dict, sn_threshold):
     return nalive_on_selection
     
 
-def median_cal_sn(frame, selector_dict):
+def median_cal_sn_4Hz(frame, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
+        return None
+    elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
     return compute_median(frame, 'CalibratorResponseSN', selector_dict)
 
-def median_cal_response(frame, selector_dict):
+def median_cal_response_4Hz(frame, selector_dict):
     if 'CalibratorResponse' not in frame.keys():
+        return None
+    elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
     return compute_median(frame, 'CalibratorResponse', selector_dict)
 
-def alive_bolos_cal(frame, selector_dict):
+def alive_bolos_cal_4Hz(frame, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
+        return None
+    elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
     return compute_nalive(frame, 'CalibratorResponseSN', selector_dict, 10)
 
@@ -231,9 +237,9 @@ def rcw38_sky_transmission(frame, selector_dict):
 function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmission},
                  'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
                                        'MedianRCW38IntegralFlux': median_rcw38_intflux},
-                 'calibrator':        {'MedianCalSN': median_cal_sn,
-                                       'MedianCalResponse': median_cal_response,
-                                       'AliveBolosCal': alive_bolos_cal},
+                 'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
+                                       'MedianCalResponse_4Hz': median_cal_response_4Hz,
+                                       'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
                  'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
                                        'AliveBolosElnod': alive_bolos_elnod}}
@@ -313,14 +319,16 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         pickle.dump(data, f)
 
 
-    def plot_median_cal_sn(data):
+    def plot_median_cal_sn_4Hz(data):
         for wafer in wafer_list:
-            obsids = [obsid for obsid in data['calibrator']]
+            obsids = [obsid for obsid in data['calibrator']
+                      if 'MedianCalSN_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]:                
-                median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN'][wafer][band]
-                                for obsid in data['calibrator']])
+                median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
+                                         for obsid in data['calibrator']
+                                         if 'MedianCalSN_4Hz' in data['calibrator'][obsid]])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
@@ -339,19 +347,21 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                     plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator S/N')
-            plt.title('Calibrator S/N ({})'.format(wafer))
+            plt.title('4.0 Hz calibrator S/N ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_cal_sn_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_cal_sn_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
-    def plot_median_cal_response(data):
+    def plot_median_cal_response_4Hz(data):
         for wafer in wafer_list:
-            obsids = [obsid for obsid in data['calibrator']]
+            obsids = [obsid for obsid in data['calibrator'] 
+                      if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]:
-                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse'][wafer][band]
-                                       for obsid in data['calibrator']])
+                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
+                                       for obsid in data['calibrator']
+                                       if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
@@ -370,18 +380,21 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                     plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator response [fW]')
-            plt.title('Calibrator response ({})'.format(wafer))
+            plt.title('4.0 Hz calibrator response ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_cal_response_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_cal_response_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
-    def plot_alive_bolos_cal(data):
+    def plot_alive_bolos_cal_4Hz(data):
         for wafer in wafer_list:
-            obsids = [obsid for obsid in data['calibrator']]
+            obsids = [obsid for obsid in data['calibrator'] 
+                      if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
             for band in [90, 150, 220]:
-                n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal'][wafer][band] for obsid in data['calibrator']])
+                n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
+                                          for obsid in data['calibrator']
+                                          if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]])
 
                 timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                                       for obsid in obsids])
@@ -400,9 +413,9 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                     plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
-            plt.title('Number of bolos with calibrator S/N > 10 ({})'.format(wafer))
+            plt.title('Number of bolos with calibrator S/N > 10 at 4.0 Hz ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/alive_bolos_cal_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_elnod_sn(data):
@@ -599,9 +612,9 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     # only update figures if the underlying data actually changed.
     if was_data_updated:
         # create the plots
-        plot_median_cal_sn(data)
-        plot_median_cal_response(data)
-        plot_alive_bolos_cal(data)
+        plot_median_cal_sn_4Hz(data)
+        plot_median_cal_response_4Hz(data)
+        plot_alive_bolos_cal_4Hz(data)
         plot_median_elnod_sn(data)
         plot_median_elnod_iq_phase(data)
         plot_alive_bolos_elnod(data)
