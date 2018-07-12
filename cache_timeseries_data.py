@@ -53,6 +53,8 @@ S1.add_argument('--min-time', action='store', default=default_mintime.strftime('
 S1.add_argument('--max-time', action='store',
                 default=timenow.strftime('%Y%m%d'),
                 help='Maximum time of observations to skim. Format: YYYYMMDD')
+S1.add_argument('--new-plots', action='store_true', default=False,
+                help='Force regeneration of new plots, even if data has not changed.')
 args = P0.parse_args()
 
 
@@ -153,7 +155,68 @@ def compute_nalive(frame, datakey, select_dict, sn_threshold):
             len(data_on_selection[data_on_selection>sn_threshold])
 
     return nalive_on_selection
-    
+
+
+def median_nei_01Hz_to_05Hz(frame, selector_dict):
+    if 'NEI_0.1Hz_to_0.5Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEI_0.1Hz_to_0.5Hz', selector_dict)    
+
+def median_nei_1Hz_to_2Hz(frame, selector_dict):
+    if 'NEI_1.0Hz_to_2.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEI_1.0Hz_to_2.0Hz', selector_dict)    
+
+def median_nei_3Hz_to_5Hz(frame, selector_dict):
+    if 'NEI_3.0Hz_to_5.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEI_3.0Hz_to_5.0Hz', selector_dict)    
+
+def median_nei_10Hz_to_15Hz(frame, selector_dict):
+    if 'NEI_10.0Hz_to_15.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEI_10.0Hz_to_15.0Hz', selector_dict)    
+
+def median_nep_01Hz_to_05Hz(frame, selector_dict):
+    if 'NEP_0.1Hz_to_0.5Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEP_0.1Hz_to_0.5Hz', selector_dict)    
+
+def median_nep_1Hz_to_2Hz(frame, selector_dict):
+    if 'NEP_1.0Hz_to_2.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEP_1.0Hz_to_2.0Hz', selector_dict)    
+
+def median_nep_3Hz_to_5Hz(frame, selector_dict):
+    if 'NEP_3.0Hz_to_5.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEP_3.0Hz_to_5.0Hz', selector_dict)    
+
+def median_nep_10Hz_to_15Hz(frame, selector_dict):
+    if 'NEP_10.0Hz_to_15.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NEP_10.0Hz_to_15.0Hz', selector_dict)    
+
+def median_net_01Hz_to_05Hz(frame, selector_dict):
+    if 'NET_0.1Hz_to_0.5Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NET_0.1Hz_to_0.5Hz', selector_dict)    
+
+def median_net_1Hz_to_2Hz(frame, selector_dict):
+    if 'NET_1.0Hz_to_2.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NET_1.0Hz_to_2.0Hz', selector_dict)    
+
+def median_net_3Hz_to_5Hz(frame, selector_dict):
+    if 'NET_3.0Hz_to_5.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NET_3.0Hz_to_5.0Hz', selector_dict)    
+
+def median_net_10Hz_to_15Hz(frame, selector_dict):
+    if 'NET_10.0Hz_to_15.0Hz' not in frame.keys():
+        return None
+    return compute_median(frame, 'NET_10.0Hz_to_15.0Hz', selector_dict)    
+
 
 def median_cal_sn_4Hz(frame, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
@@ -242,7 +305,19 @@ function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmi
                                        'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
                  'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                        'MedianElnodSNSlopes': median_elnod_sn_slope,
-                                       'AliveBolosElnod': alive_bolos_elnod}}
+                                       'AliveBolosElnod': alive_bolos_elnod},
+                 'noise':             {'NEI_0.1Hz_to_0.5Hz': median_nei_01Hz_to_05Hz,
+                                       'NEI_1.0Hz_to_2.0Hz': median_nei_1Hz_to_2Hz,
+                                       'NEI_3.0Hz_to_5.0Hz': median_nei_3Hz_to_5Hz,
+                                       'NEI_10.0Hz_to_15.0Hz': median_nei_10Hz_to_15Hz,
+                                       'NEP_0.1Hz_to_0.5Hz': median_nep_01Hz_to_05Hz,
+                                       'NEP_1.0Hz_to_2.0Hz': median_nep_1Hz_to_2Hz,
+                                       'NEP_3.0Hz_to_5.0Hz': median_nep_3Hz_to_5Hz,
+                                       'NEP_10.0Hz_to_15.0Hz': median_nep_10Hz_to_15Hz,
+                                       'NET_0.1Hz_to_0.5Hz': median_net_01Hz_to_05Hz,
+                                       'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
+                                       'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
+                                       'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
 
                  
 # loop over data by week
@@ -325,6 +400,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                       if 'MedianCalSN_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]:                
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
                                          for obsid in data['calibrator']
@@ -340,16 +416,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_calSN[np.isfinite(median_calSN)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0, 250])
-                    plt.legend()
+                    is_empty = False
+                    
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 250])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator S/N')
             plt.title('4.0 Hz calibrator S/N ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_cal_sn_4Hz_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/median_cal_sn_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_cal_response_4Hz(data):
@@ -358,6 +437,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                       if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]:
                 median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
                                        for obsid in data['calibrator']
@@ -373,16 +453,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_cal[np.isfinite(median_cal)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0, 5])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 5])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median calibrator response [fW]')
             plt.title('4.0 Hz calibrator response ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_cal_response_4Hz_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/median_cal_response_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_alive_bolos_cal_4Hz(data):
@@ -391,6 +474,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                       if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]:
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
                                           for obsid in data['calibrator']
@@ -406,16 +490,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(n_alive_bolos[np.isfinite(n_alive_bolos)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0, 600])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 600])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with calibrator S/N > 10 at 4.0 Hz ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_elnod_sn(data):
@@ -423,6 +510,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['elnod']]
             f = plt.figure(figsize=(8,6))
             
+            is_empty = True
             for band in [90, 150, 220]:
                 median_elnodSN = np.array([data['elnod'][obsid]['MedianElnodSNSlopes'][wafer][band] for obsid in data['elnod']])
 
@@ -436,11 +524,14 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_elnodSN[np.isfinite(median_elnodSN)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0, 2000])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 2000])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median elnod S/N')
             plt.title('Elnod S/N ({})'.format(wafer))
@@ -453,6 +544,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['elnod']]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]: 
                 median_elnod_iq = np.array([data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band]
                                    for obsid in data['elnod']
@@ -471,16 +563,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_elnod_iq[np.isfinite(median_elnod_iq)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([-90, 90])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([-90, 90])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median elnod IQ phase [deg]')
             plt.title('Elnod IQ phase angle ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_alive_bolos_elnod(data):
@@ -488,6 +583,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['elnod']]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]:
                 alive_bolos_elnod = np.array([data['elnod'][obsid]['AliveBolosElnod'][wafer][band] for obsid in data['elnod']])
 
@@ -501,16 +597,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(alive_bolos_elnod[np.isfinite(alive_bolos_elnod)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0, 600])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0, 600])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_rcw38_fluxcal(data):
@@ -518,6 +617,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['RCW38-pixelraster']]
             f = plt.figure(figsize=(8,6))
 
+            is_empty = True
             for band in [90, 150, 220]:
                 median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer][band]
                                 for obsid in data['RCW38-pixelraster']])
@@ -532,16 +632,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_rcw38[np.isfinite(median_rcw38)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([-100, 0])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([-100, 0])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median RCW38 flux calibration')
             plt.title('RCW38 Flux Calibration ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_rcw38_intflux(data):
@@ -549,6 +652,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['RCW38-pixelraster']]
             f = plt.figure(figsize=(8,6))
             
+            is_empty = True
             for band in [90, 150, 220]:
                 median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer][band]
                                 for obsid in data['RCW38-pixelraster']])
@@ -563,16 +667,19 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(median_rcw38[np.isfinite(median_rcw38)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([2e-7, 7e-7])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([2e-7, 7e-7])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('median RCW38 integral flux')
             plt.title('RCW38 Integral Flux ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_rcw38_sky_transmission(data):
@@ -580,6 +687,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             obsids = [obsid for obsid in data['RCW38']]
             f = plt.figure(figsize=(8,6))
             
+            is_empty = True
             for band in [90, 150, 220]:
                 rcw38_skytrans = np.array([data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
                                   for obsid in obsids
@@ -596,21 +704,72 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                          'o', label='{} GHz'.format(band))
 
                 if len(rcw38_skytrans[np.isfinite(rcw38_skytrans)])>0:
-                    xfmt = mdates.DateFormatter('%m-%d %H:%M')
-                    plt.gca().xaxis.set_major_formatter(xfmt)
-                    plt.xticks(rotation=25)
-                    plt.ylim([0.85, 1.25])
-                    plt.legend()
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim([0.85, 1.25])
+                plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('RCW38 sky transmission')
             plt.title('RCW38 Sky Transmission ({})'.format(wafer))
             plt.tight_layout()
-            plt.savefig('{}/rcw38_sky_transmission_{}.png'.format(outdir, wafer))
+            #plt.savefig('{}/rcw38_sky_transmission_{}.png'.format(outdir, wafer))
+            plt.close()
+
+    def plot_median_noise(data, noise_type):
+        nex_name = noise_type.split('_')[0]
+        labels = {'NEI': 'NEI [pA / sqrt(Hz)]',
+                  'NET': 'NET [uK rtsec]',
+                  'NEP': 'NEP [aW / sqrt(Hz)]'}
+        limits = {'NEI': [0, 50],
+                  'NET': [0, 5000],
+                  'NEP': [20, 150]}
+        units  = {'NEI': core.G3Units.amp*1e-12 / np.sqrt(core.G3Units.Hz),
+                  'NET': core.G3Units.microkelvin * np.sqrt(core.G3Units.sec),
+                  'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
+
+        for wafer in wafer_list: 
+            obsids = [obsid for obsid in data['noise']]
+            f = plt.figure(figsize=(8,6))
+            
+            is_empty = True
+            for band in [90, 150, 220]:
+                noise = np.array([data['noise'][obsid][noise_type][wafer][band] / units[nex_name]
+                                  for obsid in obsids
+                                  if type(data['noise'][obsid][noise_type][wafer][band])==float])
+
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
+                              for obsid in obsids
+                              if type(data['noise'][obsid][noise_type][wafer][band])==float]
+                dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+                datenums = mdates.date2num(dts)
+                
+                plt.plot(datenums[np.isfinite(noise)],
+                         noise[np.isfinite(noise)],
+                         'o', label='{} GHz'.format(band))
+
+                if len(noise[np.isfinite(noise)])>0:
+                    is_empty = False
+
+            if is_empty == False:
+                xfmt = mdates.DateFormatter('%m-%d %H:%M')
+                plt.gca().xaxis.set_major_formatter(xfmt)
+                plt.xticks(rotation=25)
+                plt.ylim(limits[nex_name])
+                plt.legend()
+            plt.xlabel('observation time')
+            plt.ylabel(labels[nex_name])
+            plt.title(noise_type.replace('_', ' '))
+            plt.tight_layout()
+            #plt.savefig('{}/median_{}_{}.png'.format(outdir, noise_type, wafer))
             plt.close()
 
 
     # only update figures if the underlying data actually changed.
-    if was_data_updated:
+    if was_data_updated or args.new_plots:
         # create the plots
         plot_median_cal_sn_4Hz(data)
         plot_median_cal_response_4Hz(data)
@@ -621,6 +780,18 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         plot_median_rcw38_fluxcal(data)
         plot_median_rcw38_intflux(data)
         plot_rcw38_sky_transmission(data)
+        plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz')
+        plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz')
+        plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz')
+        plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz')
+        plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz')
+        plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz')
+        plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz')
+        plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz')
+        plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz')
+        plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz')
+        plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz')
+        plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz')
 
         # create symlink from latest data directory to current
         symlinkname = '{}/current'.format(args.outdir)
