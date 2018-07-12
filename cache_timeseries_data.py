@@ -2,6 +2,8 @@ from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
 from spt3g.std_processing import obsid_to_g3time
 import datetime as dt
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
