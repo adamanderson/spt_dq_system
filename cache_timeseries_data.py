@@ -330,8 +330,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                          for obsid in data['calibrator']
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid]])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -363,8 +363,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                        for obsid in data['calibrator']
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -396,8 +396,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                           for obsid in data['calibrator']
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -426,8 +426,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             for band in [90, 150, 220]:
                 median_elnodSN = np.array([data['elnod'][obsid]['MedianElnodSNSlopes'][wafer][band] for obsid in data['elnod']])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -459,10 +459,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                    if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
                                        data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids
-                                      if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
-                                          data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids
+                              if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
+                              data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -491,8 +491,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             for band in [90, 150, 220]:
                 alive_bolos_elnod = np.array([data['elnod'][obsid]['AliveBolosElnod'][wafer][band] for obsid in data['elnod']])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -522,8 +522,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38FluxCalibration'][wafer][band]
                                 for obsid in data['RCW38-pixelraster']])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -553,8 +553,8 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 median_rcw38 = np.array([data['RCW38-pixelraster'][obsid]['MedianRCW38IntegralFlux'][wafer][band]
                                 for obsid in data['RCW38-pixelraster']])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
-                                      for obsid in obsids])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
 
@@ -585,9 +585,9 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                   for obsid in obsids
                                   if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
 
-                timestamps = np.sort([obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                                      for obsid in obsids
-                                      if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
+                timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
+                              for obsid in obsids
+                              if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
                 
