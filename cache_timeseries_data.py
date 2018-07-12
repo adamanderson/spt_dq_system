@@ -431,7 +431,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('median calibrator S/N')
             plt.title('4.0 Hz calibrator S/N ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/median_cal_sn_4Hz_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_cal_sn_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_cal_response_4Hz(data):
@@ -468,7 +468,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('median calibrator response [fW]')
             plt.title('4.0 Hz calibrator response ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/median_cal_response_4Hz_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_cal_response_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_alive_bolos_cal_4Hz(data):
@@ -505,7 +505,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with calibrator S/N > 10 at 4.0 Hz ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_elnod_sn(data):
@@ -578,7 +578,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('median elnod IQ phase [deg]')
             plt.title('Elnod IQ phase angle ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_alive_bolos_elnod(data):
@@ -612,7 +612,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('number of alive bolos')
             plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_rcw38_fluxcal(data):
@@ -647,7 +647,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('median RCW38 flux calibration')
             plt.title('RCW38 Flux Calibration ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_rcw38_fluxcal_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_rcw38_intflux(data):
@@ -682,7 +682,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('median RCW38 integral flux')
             plt.title('RCW38 Integral Flux ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/median_rcw38_intflux_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_rcw38_sky_transmission(data):
@@ -693,12 +693,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             is_empty = True
             for band in [90, 150, 220]:
                 rcw38_skytrans = np.array([data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
-                                  for obsid in obsids
-                                  if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float])
+                                           for obsid in obsids])
 
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                              for obsid in obsids
-                              if type(data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band])==float]
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
                 
@@ -719,7 +717,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel('RCW38 sky transmission')
             plt.title('RCW38 Sky Transmission ({})'.format(wafer))
             plt.tight_layout()
-            #plt.savefig('{}/rcw38_sky_transmission_{}.png'.format(outdir, wafer))
+            plt.savefig('{}/rcw38_sky_transmission_{}.png'.format(outdir, wafer))
             plt.close()
 
     def plot_median_noise(data, noise_type):
@@ -727,9 +725,9 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         labels = {'NEI': 'NEI [pA / sqrt(Hz)]',
                   'NET': 'NET [uK rtsec]',
                   'NEP': 'NEP [aW / sqrt(Hz)]'}
-        limits = {'NEI': [0, 50],
+        limits = {'NEI': [0, 100],
                   'NET': [0, 5000],
-                  'NEP': [20, 150]}
+                  'NEP': [0, 200]}
         units  = {'NEI': core.G3Units.amp*1e-12 / np.sqrt(core.G3Units.Hz),
                   'NET': core.G3Units.microkelvin * np.sqrt(core.G3Units.sec),
                   'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
@@ -741,12 +739,9 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             is_empty = True
             for band in [90, 150, 220]:
                 noise = np.array([data['noise'][obsid][noise_type][wafer][band] / units[nex_name]
-                                  for obsid in obsids
-                                  if type(data['noise'][obsid][noise_type][wafer][band])==float])
-
+                                  for obsid in obsids])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                              for obsid in obsids
-                              if type(data['noise'][obsid][noise_type][wafer][band])==float]
+                              for obsid in obsids]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
                 
@@ -767,12 +762,12 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             plt.ylabel(labels[nex_name])
             plt.title(noise_type.replace('_', ' '))
             plt.tight_layout()
-            #plt.savefig('{}/median_{}_{}.png'.format(outdir, noise_type, wafer))
+            plt.savefig('{}/median_{}_{}.png'.format(outdir, noise_type, wafer))
             plt.close()
 
 
     # only update figures if the underlying data actually changed.
-    if was_data_updated or args.new_plots:
+    if was_data_updated or (args.mode == 'update' and args.new_plots):
         # create the plots
         plot_median_cal_sn_4Hz(data)
         plot_median_cal_response_4Hz(data)
