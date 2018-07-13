@@ -296,6 +296,8 @@ def rcw38_sky_transmission(frame, selector_dict):
         if str(select_values[-1]) in frame['RCW38SkyTransmission'].keys():
             reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = \
                 frame['RCW38SkyTransmission'][str(select_values[-1])]
+        else:
+            reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = np.nan
 
     return data_on_selection
 
@@ -693,13 +695,14 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             is_empty = True
             for band in [90, 150, 220]:
                 rcw38_skytrans = np.array([data['RCW38'][obsid]['RCW38SkyTransmission'][wafer][band]
-                                           for obsid in obsids])
-
+                                           for obsid in obsids
+                                           if 'RCW38SkyTransmission' in data['RCW38'][obsid].keys()])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                              for obsid in obsids]
+                              for obsid in obsids
+                              if 'RCW38SkyTransmission' in data['RCW38'][obsid].keys()]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
-                
+
                 plt.plot(datenums[np.isfinite(rcw38_skytrans)],
                          rcw38_skytrans[np.isfinite(rcw38_skytrans)],
                          'o', label='{} GHz'.format(band))
@@ -739,9 +742,11 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             is_empty = True
             for band in [90, 150, 220]:
                 noise = np.array([data['noise'][obsid][noise_type][wafer][band] / units[nex_name]
-                                  for obsid in obsids])
+                                  for obsid in obsids
+                                  if noise_type in data['noise'][obsid].keys()])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
-                              for obsid in obsids]
+                              for obsid in obsids
+                              if noise_type in data['noise'][obsid].keys()]
                 dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
                 datenums = mdates.date2num(dts)
                 
