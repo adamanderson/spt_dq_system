@@ -66,7 +66,10 @@ def select_band(boloprops, bolo, band):
     return boloprops[bolo].band / core.G3Units.GHz == band
 
 def select_wafer(boloprops, bolo, wafer):
-    return boloprops[bolo].wafer_id == wafer
+    if wafer == 'all':
+        return True
+    else:
+        return boloprops[bolo].wafer_id == wafer
 
 selector_dict = {('w172', 90): (select_wafer, select_band),
                  ('w172', 150): (select_wafer, select_band),
@@ -97,8 +100,11 @@ selector_dict = {('w172', 90): (select_wafer, select_band),
                  ('w201', 220): (select_wafer, select_band),
                  ('w203', 90): (select_wafer, select_band),
                  ('w203', 150): (select_wafer, select_band),
-                 ('w203', 220): (select_wafer, select_band)}
-wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w201', 'w203']
+                 ('w203', 220): (select_wafer, select_band),
+                 ('all', 90): (select_wafer, select_band),
+                 ('all', 150): (select_wafer, select_band),
+                 ('all', 220): (select_wafer, select_band)}
+wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w201', 'w203', 'all']
 
 
 # functions that define quantities to be saved
@@ -501,7 +507,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
                 plt.gca().xaxis.set_major_formatter(xfmt)
                 plt.xticks(rotation=25)
-                plt.ylim([0, 600])
+                if wafer == 'all':
+                    plt.ylim([0, 6000])
+                else:
+                    plt.ylim([0, 600])
                 plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
@@ -608,7 +617,10 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 xfmt = mdates.DateFormatter('%m-%d %H:%M')
                 plt.gca().xaxis.set_major_formatter(xfmt)
                 plt.xticks(rotation=25)
-                plt.ylim([0, 600])
+                if wafer == 'all':
+                    plt.ylim([0, 6000])
+                else:
+                    plt.ylim([0, 600])
                 plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
@@ -765,7 +777,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
             plt.xlabel('observation time')
             plt.ylabel(labels[nex_name])
-            plt.title(noise_type.replace('_', ' '))
+            plt.title('{} ({})'.format(noise_type.replace('_', ' '), wafer))
             plt.tight_layout()
             plt.savefig('{}/median_{}_{}.png'.format(outdir, noise_type, wafer))
             plt.close()
