@@ -3,7 +3,7 @@
     "individual": {
       "any": ["NominalPointingOffsets"],
       "calibrator": ["NominalPointingOffsets", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
-      "elnod": ["NominalPointingOffsets", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
+      "elnod": ["NominalPointingOffsets", "ElnodSlopesHistogram", "ElnodSNSlopesHistogram", "ElnodSigmaSlopesHistogram", "ElnodIQPhaseAngle"],
       "CenA": ["NominalPointingOffsets"],
       "CenA-pixelraster": ["NominalPointingOffsets"],
       "RCW38": ["NominalPointingOffsets"],
@@ -50,7 +50,7 @@
     "individual": {
       "any": ["NominalPointingOffsets"],
       "calibrator": ["NominalPointingOffsets", "CalSNHistogram", "CalSNCDF", "CalHistogram"],
-      "elnod": ["NominalPointingOffsets", "ElnodSNSlopesHistogram", "ElnodIQPhaseAngle"],
+      "elnod": ["NominalPointingOffsets", "ElnodSlopesHistogram", "ElnodSNSlopesHistogram", "ElnodSigmaSlopesHistogram", "ElnodIQPhaseAngle"],
       "CenA": ["NominalPointingOffsets"],
       "CenA-pixelraster": ["NominalPointingOffsets"],
       "RCW38": ["NominalPointingOffsets"],
