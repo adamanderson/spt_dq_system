@@ -246,7 +246,7 @@ def alive_bolos_cal_4Hz(frame, selector_dict):
         return None
     elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
-    return compute_nalive(frame, 'CalibratorResponseSN', selector_dict, 10)
+    return compute_nalive(frame, 'CalibratorResponseSN', selector_dict, 20)
 
 def median_elnod_sn_slope(frame, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
@@ -514,7 +514,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                 plt.legend()
             plt.xlabel('observation time')
             plt.ylabel('number of alive bolos')
-            plt.title('Number of bolos with calibrator S/N > 10 at 4.0 Hz ({})'.format(wafer))
+            plt.title('Number of bolos with calibrator S/N > 20 at 4.0 Hz ({})'.format(wafer))
             plt.tight_layout()
             plt.savefig('{}/alive_bolos_cal_4Hz_{}.png'.format(outdir, wafer))
             plt.close()
