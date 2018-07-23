@@ -38,12 +38,12 @@ def ElnodSigmaSlopesHistogram(request):
     fig = plt.figure()
     for band in bands:
         plt.hist(cal_dict[band][np.isfinite(cal_dict[band])],
-                 bins=np.linspace(0,10000,101),
+                 bins=np.linspace(0,500,101),
                  label='{} GHz'.format(band),
                  histtype='step')
     plt.legend()
 
-    plt.xlim([0, 10000])
+    plt.xlim([0, 500])
     plt.xlabel('elnod sigma slopes')
     plt.title('Elnod sigma slope for observation {} at el={:.1f} deg'.format(request['observation'], el))
     plt.tight_layout()
