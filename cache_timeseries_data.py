@@ -24,7 +24,8 @@ S = P0.add_subparsers(dest='mode', metavar='MODE', title='subcommands',
                           '%(prog)s %(metavar)s -h')
 
 timenow = datetime.datetime.now()
-default_mintime = datetime.datetime(timenow.year, timenow.month, timenow.day - (timenow.weekday()+1))
+dt = datetime.timedelta(-1*(timenow.weekday()+1))
+default_mintime = timenow + dt
 
 S0 = S.add_parser('rebuild', help='Rebuild the pickle files from scratch.',
                   formatter_class=ap.ArgumentDefaultsHelpFormatter)
