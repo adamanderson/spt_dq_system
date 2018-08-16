@@ -4,7 +4,6 @@ matplotlib.use('Agg')
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
 from spt3g.std_processing import obsid_to_g3time
-import datetime as dt
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
@@ -333,18 +332,18 @@ function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmi
 
                  
 # loop over data by week
-dt_mintime = dt.datetime(year=int(args.min_time[:4]),
+dt_mintime = datetime.datetime(year=int(args.min_time[:4]),
                          month=int(args.min_time[4:6]),
                          day=int(args.min_time[6:8]))
-dt_maxtime = dt.datetime(year=int(args.max_time[:4]),
+dt_maxtime = datetime.datetime(year=int(args.max_time[:4]),
                          month=int(args.max_time[4:6]),
                          day=int(args.max_time[6:8]))
-d_to_next_week = dt.timedelta(days = 7 - dt_mintime.weekday())
+d_to_next_week = datetime.timedelta(days = 7 - dt_mintime.weekday())
 date_boundaries = [dt_mintime]
 next_day = dt_mintime + d_to_next_week
 while next_day < dt_maxtime:
     date_boundaries.append(next_day)
-    next_day = next_day + dt.timedelta(days=7)
+    next_day = next_day + datetime.timedelta(days=7)
 date_boundaries.append(dt_maxtime)
 
 # delete the full output directory tree if we are in rebuild mode
