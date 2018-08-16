@@ -25,6 +25,7 @@ S = P0.add_subparsers(dest='mode', metavar='MODE', title='subcommands',
 timenow = datetime.datetime.now()
 dt = datetime.timedelta(-1*(timenow.weekday()+1))
 default_mintime = timenow + dt
+cache_dir_stub = 'cached_dq_plots'
 
 S0 = S.add_parser('rebuild', help='Rebuild the pickle files from scratch.',
                   formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -357,7 +358,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
     
     # make the subdirectory based on time
-    outdir = '{}/{}_cached_dq_plots'.format(args.outdir, mindate.strftime('%Y%m%d'))
+    outdir = '{}/{}_{}'.format(args.outdir, mindate.strftime('%Y%m%d'), cache_dir_stub)
     if args.mode == 'rebuild':
         os.mkdir(outdir)
         data = {}
@@ -808,7 +809,14 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz')
         plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz')
 
-        # create symlink from latest data directory to current
+        # Create symlink from latest data directory to current
+        # The latest data directory is not necessarily reliably identified by
+        # the modification timestamp; instead, it is defined by having the
+        # latest value of timestamp in its filename. Based on the naming scheme
+        # for directories, an alphanumeric sort should also produce
+        # chronological ordering, so we'll rely on this assumption.
         symlinkname = '{}/current'.format(args.outdir)
-        os.symlink(outdir, '{}/temp'.format(args.outdir))
+        dirnames = np.sort(glob.glob('{}/*{}'.format(args.outdir, cache_dir_stub)))
+        latest_dirname = dirnames[-1]
+        os.symlink(latest_dirname, '{}/temp'.format(args.outdir))
         os.rename('{}/temp'.format(args.outdir), '{}/current'.format(args.outdir))
