@@ -2,6 +2,8 @@ scanify_db_path: /spt/data/transfer_database/scanify.db
 auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
 autoproc_db_path: /spt/user/production/autoproc.db
 
+python_location: /software/clustertools/py3-v1/RHEL_7_x86_64/bin/python
+
 plot_dir: /tmp/data_quality/
 static_plot_dir: /tmp/data_quality/static/
 

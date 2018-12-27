@@ -30,9 +30,6 @@ app.get('/sse', sse.init);
 // counter to separate messages by plot request
 var sseid = 0;
 
-// python
-var python = '/cvmfs/spt.opensciencegrid.org/py3-v2/RHEL_7_x86_64/bin/python';
-
 // password authentication
 app.use(auth({
     users: {'spt': 'sptjamz'},
@@ -203,12 +200,13 @@ app.get('/data_req', function (req, res) {
     args = ['-B', './plot/_plot.py', func_val, 'aux', plot_type].concat(
         filename.split(' '));
   var err = null;
-  var child = execFile(python, args, options);
+  var child = execFile(config.python_location, args, options);
 
   child.stdout.on('data', function(data) {
     // sometimes stdout combines messages so split them up and send them
     // individually
     var msgs = data.split('\n');
+
     // remove empty strings
     msgs = msgs.filter(entry => entry.trim() != '');
 
@@ -342,7 +340,7 @@ function updateStaticPlots() {
 	    '20180601'];
     if(is_update_running == false) {
 	is_update_running = true;
-	child = execFile(python, args, function(err) {
+	child = execFile(config.python_location, args, function(err) {
 		console.log(err);
 		console.log('Finished updating plots.');
 		is_update_running = false;

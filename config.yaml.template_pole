@@ -2,6 +2,8 @@ transfer_db_path: /poleanalysis/sptdaq/db/transfer.db
 auxtransfer_db_path: /poleanalysis/sptdaq/db/aux_transfer.db
 autoproc_db_path: /poleanalysis/sptdaq/db/autoproc.db
 
+python_location: /software/clustertools/py3-v1/RHEL_7_x86_64/bin/python
+
 key_file:
 cert_file:
 
