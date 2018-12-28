@@ -13,22 +13,10 @@ def NominalPointingOffsets(request):
   except RuntimeError:
     return "Could not find data file."
 
-  x = []
-  y = []
-  bands = []
-  pols = []
-  for key, item in data.items():
-    x_off = item.x_offset
-    y_off = item.y_offset
-    if (x_off < 0.02 and x_off > -0.02 and y_off > -0.02 and y_off < 0.02):
-      x.append(x_off / core.G3Units.deg)
-      y.append(y_off / core.G3Units.deg)
-      bands.append(item.band / core.G3Units.GHz)
-      pols.append(item.physical_name.split('.')[-1])
-  x = np.array(x)
-  y = np.array(y)
-  bands = np.array(bands)
-  pols = np.array(pols)
+  x = np.array([data[bolo].x_offset / core.G3Units.deg for bolo in data.keys()])
+  y = np.array([data[bolo].y_offset / core.G3Units.deg for bolo in data.keys()])
+  bands = np.array([data[bolo].band / core.G3Units.GHz for bolo in data.keys()])
+  pols = np.array([data[bolo].physical_name.split('.')[-1] for bolo in data.keys()])
 
   fig = plt.figure(figsize=(15,5))
   for jband, band in enumerate([90, 150, 220]):
