@@ -3,17 +3,11 @@ This project is a website for data quality monitoring of SPT-3G in the north and
 # Installation
 1.) In order to run the data quality page locally, the only dependencies you will need that are not installed automatically in a later step are node.js and its package manager npm. The data quality system has been tested with node.js versions >=7.10.1. These packages are already installed on anal at pole and amundsen/scott in the north. For work on other machines, you can install node.js from its website: [https://nodejs.org/en/](https://nodejs.org/en/)
 
-2.) The python components of the data quality system require python3. The easiest way to enforce the use of python3 on SPT machines is to use run the clustertools environment setup script:
-```
-eval `/cvmfs/spt.opensciencegrid.org/py3-v1/setup.sh`
-```
+2.) The python components of the data quality system require python3. The easiest way to enforce the use of python3 on SPT machines is to use the clustertools system install at pole or on scott/amundsen in the north. For instructions on installing clustertools on other machines, refer to the clustertools github page: [https://github.com/SouthPoleTelescope/clustertools](https://github.com/SouthPoleTelescope/clustertools)
 
-For instructions on installing clustertools on other machines, refer to the clustertools github page: [https://github.com/SouthPoleTelescope/clustertools](https://github.com/SouthPoleTelescope/clustertools)
-
-3.) After cloning the repository, install the javascript dependencies via npm:
+3.) After cloning the repository, run the setup script to get server- and client-side dependencies, and to build a local version of `spt3g_software`. Select `pole` or `north` depending on the install location.
 ```
-cd spt_dq_system/
-npm install
+./setup.sh [pole/north]
 ```
 
 4.) Create a `config.yaml` file. In practice, the easiest way to do this is to copy one of two template files, `config.yaml.template_north` and `config.yaml.template_pole`, intended as examples for running and pole and in the north, and to modify it to have paths that suit your needs. The fields have the following meanings:
