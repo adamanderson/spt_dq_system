@@ -14,6 +14,7 @@ def CalHistogram(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        boloprops_bolos = list(boloprops.keys())
     except RuntimeError:
         return "Could not find data file."
 
@@ -22,8 +23,9 @@ def CalHistogram(request):
         cal_dict = {}
         for band in bands:
             cal_dict[band] = np.array([1e15 * data[0]['CalibratorResponse'][bolo] \
-                                  for bolo in data[0]['CalibratorResponse'].keys() \
-                                  if boloprops[bolo].band / core.G3Units.GHz == band])
+                                       for bolo in data[0]['CalibratorResponse'].keys() \
+                                       if bolo in boloprops_bolos and \
+                                       boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
         return "CalibratorResponse does not exist for this observation."
 

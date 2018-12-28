@@ -10,11 +10,6 @@ def CoaddedMaps0537441(request):
                                              .format(request['caldatapath'],
                                                      request['source'],
                                                      request['observation']))]
-    boloprops = [fr for fr in core.G3File('{}/{}/{}/nominal_online_cal.g3' \
-                                                  .format(request['bolodatapath'],
-                                                          request['source'],
-                                                          request['observation']))] \
-                                                  [0]["NominalBolometerProperties"]
   except RuntimeError:
     return "Could not find data file."
 

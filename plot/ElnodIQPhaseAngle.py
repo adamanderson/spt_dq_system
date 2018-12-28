@@ -14,6 +14,7 @@ def ElnodIQPhaseAngle(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        boloprops_bolos = list(boloprops.keys())
         bolodatafile = core.G3File('{}/{}/{}/0000.g3' \
                                        .format(request['bolodatapath'],
                                                request['source'],
@@ -29,9 +30,10 @@ def ElnodIQPhaseAngle(request):
         for band in bands:
             plot_dict[band] = np.array([180/np.pi * np.arctan(data[0]['ElnodEigenvalueDominantVectorQ'][bolo] /
                                                               data[0]['ElnodEigenvalueDominantVectorI'][bolo])
-                                           for bolo in data[0]['ElnodEigenvalueDominantVectorQ'].keys() 
-                                           if boloprops[bolo].band / core.G3Units.GHz == band and \
-                                            data[0]['ElnodEigenvalueDominantVectorI'][bolo] != 0])
+                                        for bolo in data[0]['ElnodEigenvalueDominantVectorQ'].keys() 
+                                        if bolo in boloprops_bolos and \
+                                        boloprops[bolo].band / core.G3Units.GHz == band and \
+                                        data[0]['ElnodEigenvalueDominantVectorI'][bolo] != 0])
     except KeyError:
         return "ElnodEigenvalueDominantVectorQ or *I does not exist for this observation."
 

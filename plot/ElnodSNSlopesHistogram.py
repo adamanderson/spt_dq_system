@@ -14,6 +14,7 @@ def ElnodSNSlopesHistogram(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        boloprops_bolos = list(boloprops.keys())
         bolodatafile = core.G3File('{}/{}/{}/0000.g3' \
                                        .format(request['bolodatapath'],
                                                request['source'],
@@ -28,8 +29,9 @@ def ElnodSNSlopesHistogram(request):
         cal_dict = {}
         for band in bands:
             cal_dict[band] = np.array([data[0]['ElnodSNSlopes'][bolo] \
-                                           for bolo in data[0]['ElnodSNSlopes'].keys() \
-                                           if boloprops[bolo].band / core.G3Units.GHz == band])
+                                       for bolo in data[0]['ElnodSNSlopes'].keys() \
+                                       if bolo in boloprops_bolos and \
+                                       boloprops[bolo].band / core.G3Units.GHz == band])
     except KeyError:
         return "ElnodSNSlopes does not exist for this observation."
 

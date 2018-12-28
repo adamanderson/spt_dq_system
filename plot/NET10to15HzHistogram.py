@@ -14,6 +14,7 @@ def NET10to15HzHistogram(request):
                                                           request['source'],
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
+        boloprops_bolos = list(boloprops.keys())
     except RuntimeError:
         return "Could not find data file."
 
@@ -22,8 +23,9 @@ def NET10to15HzHistogram(request):
         cal_dict = {}
         for band in bands:
             cal_dict[band] = np.array([data[0]['NET_10.0Hz_to_15.0Hz'][bolo] \
-                                  for bolo in data[0]['NET_10.0Hz_to_15.0Hz'].keys() \
-                                  if boloprops[bolo].band / core.G3Units.GHz == band])
+                                       for bolo in data[0]['NET_10.0Hz_to_15.0Hz'].keys() \
+                                       if bolo in boloprops_bolos and \
+                                       boloprops[bolo].band / core.G3Units.GHz == band])
             cal_dict[band] = cal_dict[band] / (1e-6*core.G3Units.K * np.sqrt(core.G3Units.sec))
     except KeyError:
         return "NET_10.0Hz_to_15.0Hz does not exist for this observation."
