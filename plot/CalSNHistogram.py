@@ -41,5 +41,6 @@ def CalSNHistogram(request):
     plt.title('Calibrator S/N for observation {}\n'
               'chop freq. = {:.1f} Hz'.format(request['observation'],
                                               data[0]["CalibratorResponseFrequency"] / core.G3Units.Hz))
+    plt.grid()
     plt.tight_layout()
     return fig

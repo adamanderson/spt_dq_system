@@ -29,4 +29,5 @@ def NominalPointingOffsets(request):
   plt.ylabel('y Offset [deg]')
   plt.title('Nominal Bolometer Positions of ' + request['source'] + ' at time ' + request['observation'])
   plt.axis(np.array([-0.02, 0.02, -0.02, 0.02]) / core.G3Units.deg)
+  plt.grid()
   return fig

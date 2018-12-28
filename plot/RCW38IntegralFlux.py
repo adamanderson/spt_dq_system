@@ -43,4 +43,5 @@ def RCW38IntegralFlux(request):
 
   plt.xlabel('RCW38IntegralFlux')
   plt.title('RCW38IntegralFlux of ' + request['source'] + ' at time ' + request['observation'])
+  plt.grid()
   return fig

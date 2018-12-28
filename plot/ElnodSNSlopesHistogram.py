@@ -48,5 +48,6 @@ def ElnodSNSlopesHistogram(request):
     plt.xlim([-100, 4000])
     plt.xlabel('elnod slopes S/N')
     plt.title('Elnod slope S/N for observation {} at el={:.1f} deg'.format(request['observation'], el))
+    plt.grid()
     plt.tight_layout()
     return fig

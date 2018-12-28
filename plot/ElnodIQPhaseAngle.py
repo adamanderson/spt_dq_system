@@ -50,5 +50,6 @@ def ElnodIQPhaseAngle(request):
     plt.xlim([-45, 45])
     plt.xlabel('phase angle [deg]')
     plt.title('Elnod phase angle for observation {} at el={:.1f} deg'.format(request['observation'], el))
+    plt.grid()
     plt.tight_layout()
     return fig

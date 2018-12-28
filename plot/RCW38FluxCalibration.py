@@ -40,7 +40,7 @@ def RCW38FluxCalibration(request):
              label='{} GHz'.format(band),
              histtype='step')
   plt.legend(loc='upper left')
-
   plt.xlabel('RCW38FluxCalibration')
   plt.title('RCW38FluxCalibration of ' + request['source'] + ' at time ' + request['observation'])
+  plt.grid()
   return fig

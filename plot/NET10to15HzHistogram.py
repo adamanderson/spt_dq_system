@@ -42,5 +42,6 @@ def NET10to15HzHistogram(request):
 
     plt.xlabel('NET [uK rtsec]')
     plt.title('NET in 10-15Hz for observation {}\n'.format(request['observation']))
+    plt.grid()
     plt.tight_layout()
     return fig
