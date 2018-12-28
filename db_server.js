@@ -158,7 +158,7 @@ app.get('/sseid', function(req, res) {
 app.get('/data_req', function (req, res) {
   // save id to send messages to
   var id = req.query['sseid'];
-  options = {'timeout':20000};
+  options = {'timeout':60000};
   tab = req.query['table'];
   if (tab == 'scanify' || tab =='autoproc') {
     obs = req.query['observation'];
