@@ -50,12 +50,7 @@ node temp.js > hash
 rm temp.js
 ```
 
-6.) Add `spt_dq_system` to your `PYTHONPATH`:
-```
-export PYTHONPATH=$PYTHONPATH:/path/to/spt_dq_system/
-```
-
-7.) Launch the server with:
+6.) Launch the server with:
 ```
 node db_server.js
 ```
@@ -64,7 +59,7 @@ In case you have non-python3 default environment variables set, run node.js with
 eval `/software/clustertools/py3-v1/setup.sh` $SPT3G_SOFTWARE/build/env-shell.sh node db_server.js
 ```
 
-8.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
+7.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
 ```
 https://scott.grid.uchicago.edu:3002/
 ```
