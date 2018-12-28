@@ -42,6 +42,5 @@ def NET1to2HzHistogram(request):
 
     plt.xlabel('NET [uK rtsec]')
     plt.title('NET in 1-2Hz for observation {}\n'.format(request['observation']))
-    plt.grid()
     plt.tight_layout()
     return fig
