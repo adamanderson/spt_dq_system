@@ -64,13 +64,19 @@ args = P0.parse_args()
 
 # functions that define splits
 def select_band(boloprops, bolo, band):
-    return boloprops[bolo].band / core.G3Units.GHz == band
+    try:
+        return boloprops[bolo].band / core.G3Units.GHz == band
+    except:
+        return False
 
 def select_wafer(boloprops, bolo, wafer):
     if wafer == 'all':
         return True
     else:
-        return boloprops[bolo].wafer_id == wafer
+        try:
+            return boloprops[bolo].wafer_id == wafer
+        except:
+            return False
 
 selector_dict = {('w172', 90): (select_wafer, select_band),
                  ('w172', 150): (select_wafer, select_band),
@@ -102,10 +108,18 @@ selector_dict = {('w172', 90): (select_wafer, select_band),
                  ('w203', 90): (select_wafer, select_band),
                  ('w203', 150): (select_wafer, select_band),
                  ('w203', 220): (select_wafer, select_band),
+                 ('w204', 90): (select_wafer, select_band),
+                 ('w204', 150): (select_wafer, select_band),
+                 ('w204', 220): (select_wafer, select_band),
+                 ('w206', 90): (select_wafer, select_band),
+                 ('w206', 150): (select_wafer, select_band),
+                 ('w206', 220): (select_wafer, select_band),
                  ('all', 90): (select_wafer, select_band),
                  ('all', 150): (select_wafer, select_band),
                  ('all', 220): (select_wafer, select_band)}
-wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180', 'w181', 'w187', 'w188', 'w201', 'w203', 'all']
+wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180',
+              'w181', 'w187', 'w188', 'w201', 'w203',
+              'w204', 'w206', 'all']
 
 
 # functions that define quantities to be saved
