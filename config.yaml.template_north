@@ -11,3 +11,5 @@ calib_data_dir: /spt/user/production/
 bolo_data_dir: /spt/data/bolodata/downsampled/
 
 port: 3000
+
+min_time_static_plots: 20180620

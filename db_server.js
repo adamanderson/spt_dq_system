@@ -337,7 +337,7 @@ function updateStaticPlots() {
 	    config.bolo_data_dir,
 	    config.static_plot_dir,
 	    '--min-time',
-	    '20180601'];
+	    config.min_time_static_plots];
     if(is_update_running == false) {
 	is_update_running = true;
 	child = execFile(config.python_location, args, function(err) {

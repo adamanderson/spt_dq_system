@@ -14,3 +14,5 @@ calib_data_dir: /poleanalysis/sptdaq/calresult/
 bolo_data_dir: /spt_data/bolodata/
 
 port: 3000
+
+min_time_static_plots: 20181220
