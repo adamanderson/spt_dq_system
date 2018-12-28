@@ -105,7 +105,7 @@ def plot(request):
     # load python file and function
     # only import from plot package so that the user passed plot_type
     # cannot import arbitrary modules
-    module = import_module('plot.' + request['plot_type'])
+    module = import_module(request['plot_type'])
   except Exception as e:
     err_handler(e, request)
   try:
