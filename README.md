@@ -50,7 +50,7 @@ node db_server.js
 ```
 In case you have non-python3 default environment variables set, run node.js with a python3 environment using a version of `spt3g_software` built against python3. For example:
 ```
-eval `/software/clustertools/py3-v1/setup.sh` $SPT3G_SOFTWARE/build/env-shell.sh node db_server.js
+eval `/software/clustertools/py3-v1/setup.sh` spt3g_software/build/env-shell.sh node db_server.js
 ```
 
 7.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
