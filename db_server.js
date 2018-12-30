@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var express = require('express');
 var sqlite3 = require('sqlite3');
 var assert = require('assert');
