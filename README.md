@@ -52,6 +52,7 @@ In case you have non-python3 default environment variables set, run node.js with
 ```
 eval `/software/clustertools/py3-v1/setup.sh` spt3g_software/build/env-shell.sh node db_server.js
 ```
+If you already have set your `spt3g_software` environment by running `env-shell.sh` from a copy compiled against a different version of clustertools, then plotting will likely fail. The version of `spt3g_software` that all environment variables point to must be compiled against the enabled version of clustertools. If this is not the case, you will need to change versions of clustertools `setup.sh` and/or `spt3g_software` `env-shell.sh`, or unset all the environment variables modified by `env-shell.sh`.
 
 7.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
 ```
