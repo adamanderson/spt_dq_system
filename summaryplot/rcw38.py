@@ -2,17 +2,17 @@ from statistics import compute_median
 from functools import reduce
 import operator
 
-def median_rcw38_fluxcal(frame, selector_dict):
+def median_rcw38_fluxcal(frame, boloprops, selector_dict):
     if 'RCW38FluxCalibration' not in frame.keys():
         return None
-    return compute_median(frame, 'RCW38FluxCalibration', selector_dict)
+    return compute_median(frame, 'RCW38FluxCalibration', boloprops, selector_dict)
 
-def median_rcw38_intflux(frame, selector_dict):
+def median_rcw38_intflux(frame, boloprops, selector_dict):
     if 'RCW38IntegralFlux' not in frame.keys():
         return None
-    return compute_median(frame, 'RCW38IntegralFlux', selector_dict)
+    return compute_median(frame, 'RCW38IntegralFlux', boloprops, selector_dict)
 
-def rcw38_sky_transmission(frame, selector_dict):
+def rcw38_sky_transmission(frame, boloprops, selector_dict):
     if 'RCW38SkyTransmission' not in frame.keys():
         return None
 

@@ -4,7 +4,7 @@ import operator
 
 
 # functions that define quantities to be saved
-def compute_median(frame, datakey, selector_dict):
+def compute_median(frame, datakey, boloprops, selector_dict):
     data_list = np.array([frame[datakey][bolo] 
                           for bolo in frame[datakey].keys()])
     data_on_selection = {}
@@ -34,7 +34,7 @@ def compute_median(frame, datakey, selector_dict):
     return data_on_selection
 
 
-def compute_nalive(frame, datakey, selector_dict, sn_threshold):
+def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold):
     data_list = np.array([frame[datakey][bolo] 
                           for bolo in frame[datakey].keys()])
     nalive_on_selection = {}

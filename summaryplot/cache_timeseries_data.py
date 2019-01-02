@@ -217,7 +217,7 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
                                                                       [0]["NominalBolometerProperties"]
 
                 for quantity_name in function_dict[source]:
-                    func_result = function_dict[source][quantity_name](d[0], selector_dict)
+                    func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
                     if func_result:
                         data[source][obsid][quantity_name] = func_result
 

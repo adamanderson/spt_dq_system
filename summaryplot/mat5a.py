@@ -1,16 +1,16 @@
 from statistics import compute_median
 
-def median_mat5a_fluxcal(frame, selector_dict):
+def median_mat5a_fluxcal(frame, boloprops, selector_dict):
     if 'MAT5AFluxCalibration' not in frame.keys():
         return None
-    return compute_median(frame, 'MAT5AFluxCalibration', selector_dict)
+    return compute_median(frame, 'MAT5AFluxCalibration', boloprops, selector_dict)
 
-def median_mat5a_intflux(frame, selector_dict):
+def median_mat5a_intflux(frame, boloprops, selector_dict):
     if 'MAT5AIntegralFlux' not in frame.keys():
         return None
-    return compute_median(frame, 'MAT5AIntegralFlux', selector_dict)
+    return compute_median(frame, 'MAT5AIntegralFlux', boloprops, selector_dict)
 
-def mat5a_sky_transmission(frame, selector_dict):
+def mat5a_sky_transmission(frame, boloprops, selector_dict):
     if 'MAT5ASkyTransmission' not in frame.keys():
         return None
 

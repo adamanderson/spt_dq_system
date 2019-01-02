@@ -1,11 +1,11 @@
 from statistics import compute_median, compute_nalive
 
-def median_elnod_sn_slope(frame, selector_dict):
+def median_elnod_sn_slope(frame, boloprops, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
         return None
-    return compute_median(frame, 'ElnodSNSlopes', selector_dict)
+    return compute_median(frame, 'ElnodSNSlopes', boloprops, selector_dict)
 
-def median_elnod_iq_phase_angle(frame, selector_dict):
+def median_elnod_iq_phase_angle(frame, boloprops, selector_dict):
     if 'ElnodEigenvalueDominantVectorQ' not in frame.keys() and \
        'ElnodEigenvalueDominantVectorI' not in frame.keys():
         return None
@@ -19,10 +19,10 @@ def median_elnod_iq_phase_angle(frame, selector_dict):
                 np.arctan(frame['ElnodEigenvalueDominantVectorQ'][bolo] / \
                           frame['ElnodEigenvalueDominantVectorI'][bolo])
 
-    return compute_median(newframe, 'ElnodPhaseAngle', selector_dict)
+    return compute_median(newframe, 'ElnodPhaseAngle', boloprops, selector_dict)
 
-def alive_bolos_elnod(frame, selector_dict):
+def alive_bolos_elnod(frame, boloprops, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
         return None
-    return compute_nalive(frame, 'ElnodSNSlopes', selector_dict, 20)
+    return compute_nalive(frame, 'ElnodSNSlopes', boloprops, selector_dict, 20)
 
