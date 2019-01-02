@@ -27,6 +27,11 @@ function update_figs()
   document["ts_median_rcw38_fluxcal"].src         ='staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
   document["ts_median_rcw38_intflux"].src         ='staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
 
+  document["ts_mat5a_sky_transmission"].src       ='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
+
+  document["ts_median_mat5a_fluxcal"].src         ='staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
+  document["ts_median_mat5a_intflux"].src         ='staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
+
   document["ts_median_net_01Hz_to_05Hz"].src      ='staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
   document["ts_median_net_1Hz_to_2Hz"].src        ='staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
   document["ts_median_net_3Hz_to_5Hz"].src        ='staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
@@ -163,6 +168,46 @@ function set_variable(variable, newVal)
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png'">
 	<img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' src='staticimg/current/rcw38_sky_transmission_all.png'>
+      </a>
+    </td>
+    <td>
+    </td>
+    <td>
+    </td>
+  </tr>
+</table>
+<br>
+<table style="table-layout:fixed" width="66%">
+  <tr>
+    <td>
+      <h2>MAT5A Fast Point</h2>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal' src='staticimg/current/median_mat5a_fluxcal_all.png'>
+      </a>
+    </td>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_median_mat5a_intflux' src='staticimg/current/median_mat5a_intflux_all.png'>
+      </a>
+    </td>
+    <td>
+    </td>
+  </tr>
+</table>
+<table style="table-layout:fixed" width="33%">
+  <tr>
+    <td>
+      <h2>MAT5A Very Fast Point</h2>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' src='staticimg/current/mat5a_sky_transmission_all.png'>
       </a>
     </td>
     <td>
