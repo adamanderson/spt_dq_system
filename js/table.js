@@ -89,7 +89,8 @@ function make_t_table(select) {
       {title:"Downsampled transfer", field:"transfer_downsampled",
           formatter:"tickCross"},
       {title:"Date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+	  {title:"Log file", field:"log_file"}
     ]
   });
 }

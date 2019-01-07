@@ -132,7 +132,14 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
-		   res.send(rows);
+			   // append log file information to database results
+			   if(req.query.dbname == 'scanify') {
+				   for(var jrow in rows) {
+					   rows[jrow]['log_file'] = config.scanify_log_path + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+					   console.log(rows[jrow]['log_file'])
+				   }
+			   }
+			   res.send(rows);
 	       });
 
 	// close the database
