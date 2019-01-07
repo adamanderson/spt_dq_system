@@ -22,10 +22,10 @@ function get_old_timeseries_plotdirs() {
     // now rebuild the div
     $.get('/oldstaticdirs', [], function(data, status) {
 	    data.reverse();
-	    $('#datalist').append("<a href=\"javascript:set_variable(\'weekdir\','" + data[0] + "');\">current</a><br>");
+		$('#datalist').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[0] + "')\";>current</button>");
 	    for (jdir=0; jdir<data.length; jdir++) {
 		datestring = data[jdir].split('_')[0];
-  		$('#datalist').append("<a href=\"javascript:set_variable(\'weekdir\','" + data[jdir] + "');\">" + datestring + "</a><br>");
+		$('#datalist').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 	    }
 	});
 }
