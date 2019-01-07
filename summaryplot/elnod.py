@@ -1,5 +1,6 @@
 from statistics import compute_median, compute_nalive
 from spt3g import core
+import numpy as np
 
 def median_elnod_sn_slope(frame, boloprops, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
