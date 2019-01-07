@@ -17,6 +17,7 @@ var moment = require('moment');
 var SSE = require('express-sse');
 var sse = new SSE();
 var yaml = require('yamljs');
+var serveIndex = require('serve-index')
 
 // TODO error handling
 
@@ -55,6 +56,12 @@ app.get('/', function (req, res) {
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
+
+// file browser for log files
+app.use('/scanify_logs', express.static('/data/autoproc/logs/scanify/'),
+		serveIndex('/data/autoproc/logs/scanify/', {'icons': true}))
+app.use('/autoproc_logs', express.static('/poleanalysis/sptdaq/calresult/logs/'),
+		serveIndex('/poleanalysis/sptdaq/calresult/logs/', {'icons': true}))
 
 // create directory in /tmp to store plots
 // TODO: don't cache every plot. Remove old plots from time to time
