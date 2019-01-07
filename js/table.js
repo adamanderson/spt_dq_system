@@ -61,40 +61,6 @@ function open_tab(evt, tab) {
 }
 
 
-function make_table(type, select) {
-    //create Tabulator on DOM element with id "scanify_table"
-    $("#scanify_table").tabulator({
-	    //pagination:"remote",  // use this for normal pagination
-	    ajaxURL:"/dbpage", 
-		ajaxParams: {search: {source: $("#obstype-search").val(),
-			date:  {min: $("#date-from").val(),
-			    max: $("#date-to").val()},
-			observation:    {min: $("#obsid-from").val(),
-			    max: $("#obsid-to").val()}},
-		    dbname: "scanify"},
-		ajaxConfig:'GET',
-		ajaxSorting: true,
-		//paginationSize:40,
-		selectable: select,
-		index:"_id",
-		height:"400px", // set height of table (optional)
-		fitColumns:true, //fit columns to width of table (optional)
-		columns:[ //Define Table Columns
-			 {title:"Observation ID", field:"observation", sorter:"number"},
-			 {title:"Source", field:"source"},
-			 {title:"Fullrate status", field:"status_fullrate"},
-			 {title:"Downsampled status", field:"status_downsampled"},
-			 {title:"Fullrate transfer", field:"transfer_fullrate",
-				 formatter:"tickCross"},
-			 {title:"Downsampled transfer", field:"transfer_downsampled",
-				 formatter:"tickCross"},
-			 {title:"Date (UTC)", field:"date", sorter:"date",
-				 sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
-			  ]
-		});
-}
-
-
 function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#scanify_table").tabulator({
