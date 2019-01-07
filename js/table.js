@@ -152,7 +152,8 @@ function make_autoproc_table(select) {
       {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
       {title:"Observation date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+	  {title:"Log file", field:"log_file"}
     ]
   });
 }

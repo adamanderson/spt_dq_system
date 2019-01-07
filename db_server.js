@@ -139,6 +139,12 @@ app.get('/dbpage', function(req, res) {
 					   console.log(rows[jrow]['log_file'])
 				   }
 			   }
+			   if(req.query.dbname == 'autoproc') {
+				   for(var jrow in rows) {
+					   rows[jrow]['log_file'] = config.autoproc_log_path + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+					   console.log(rows[jrow]['log_file'])
+				   }
+			   }
 			   res.send(rows);
 	       });
 
