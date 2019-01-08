@@ -1,20 +1,23 @@
-transfer_db_path: /poleanalysis/sptdaq/db/transfer.db
-auxtransfer_db_path: /poleanalysis/sptdaq/db/aux_transfer.db
-autoproc_db_path: /poleanalysis/sptdaq/db/autoproc.db
+site: pole
+
+scanify_db_path: /poleanalysis/sptdaq/db/db/scanify.db
+auxtransfer_db_path: /poleanalysis/sptdaq/db/db/aux_transfer.db
+autoproc_db_path: /poleanalysis/sptdaq/db/db/autoproc.db
 
 scanify_log_path: /data/autoproc/logs/scanify/
 autoproc_log_path: /poleanalysis/sptdaq/calresult/logs/
 
-python_location: /software/clustertools/py3-v1/RHEL_7_x86_64/bin/python
+python_location: /software/clustertools/py3-v3/RHEL_7_x86_64/bin/python
 
 key_file:
 cert_file:
 
 plot_dir: /tmp/data_quality/
-static_plot_dir: /tmp/data_quality/static/
+static_plot_dir: /var/www/spt_dq_system/static_plot_cache/
 
 calib_data_dir: /poleanalysis/sptdaq/calresult/
-bolo_data_dir: /spt_data/bolodata/
+bolo_data_dir: /spt_data/bolodata/fullrate/
+
 
 port: 3000
 
