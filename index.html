@@ -53,7 +53,7 @@ else
     function swtch(val) {
       if (val == "timeseries") {
         $("#scanify_table").tabulator("destroy");
-        make_t_table(true);
+        make_t_table(true, window.location.href);
         $("#aux_table").tabulator("destroy");
         make_aux_table(true);
         $("#autoproc_table").tabulator("destroy");
@@ -62,7 +62,7 @@ else
       }
       else if (val == "individual") {
         $("#scanify_table").tabulator("destroy");
-        make_t_table(10);
+        make_t_table(10, window.location.href);
         $("#aux_table").tabulator("destroy");
         make_aux_table(10);
         $("#autoproc_table").tabulator("destroy");

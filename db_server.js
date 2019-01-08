@@ -135,14 +135,12 @@ app.get('/dbpage', function(req, res) {
 			   // append log file information to database results
 			   if(req.query.dbname == 'scanify') {
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = config.scanify_log_path + rows[jrow]['source'] + '/' + rows[jrow]['observation']
-					   console.log(rows[jrow]['log_file'])
+					   rows[jrow]['log_file'] = 'scanify_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
 			   }
 			   if(req.query.dbname == 'autoproc') {
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = config.autoproc_log_path + rows[jrow]['source'] + '/' + rows[jrow]['observation']
-					   console.log(rows[jrow]['log_file'])
+					   rows[jrow]['log_file'] = 'autoproc_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
 			   }
 			   res.send(rows);
