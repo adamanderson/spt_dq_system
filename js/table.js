@@ -76,7 +76,7 @@ function make_t_table(select, baseUrl) {
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
 	  {title:"Observation ID", field:"observation", sorter:"number",
 	   formatter:"link",
@@ -101,7 +101,6 @@ function make_t_table(select, baseUrl) {
 function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
-    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {date:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
@@ -110,11 +109,10 @@ function make_aux_table(select) {
 		  dbname: "aux_transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
-    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
       {title:"Filename", field:"filename"},
       {title:"Type", field:"type"},
@@ -145,7 +143,7 @@ function make_autoproc_table(select) {
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
 	  {title:"Source", field:"source", sorter:"number",
 	   formatter:function(cell, formatterParams, onRendered) {
