@@ -240,6 +240,7 @@ div.tab button.active {
 }
 
 .tabulator .tabulator-header .tabulator-col {
+  background-color: var(--dark-purple);
   border-right: 1px solid var(--light-black);
 }
 
