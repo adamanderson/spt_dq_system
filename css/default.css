@@ -8,6 +8,16 @@
   --dark-purple: #604c59;
 }
 
+a {
+  color: skyblue;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:visited {
+  color: lightcoral;
+}
+
 /* default test, color, and background */
 body {
   background: var(--light-gray);
