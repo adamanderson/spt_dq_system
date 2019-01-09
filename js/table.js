@@ -131,7 +131,6 @@ function make_aux_table(select) {
 function make_autoproc_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#autoproc_table").tabulator({
-    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
@@ -143,20 +142,25 @@ function make_autoproc_table(select) {
 		  dbname: "autoproc"},
     ajaxConfig:'GET',
     ajaxSorting: true,
-    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
     fitColumns:true, //fit columns to width of table (optional)
     columns:[ //Define Table Columns
-      {title:"Source", field:"source"},
+	  {title:"Source", field:"source", sorter:"number",
+	   formatter:function(cell, formatterParams, onRendered) {
+		   logFileName = cell.getData().log_file
+		   if(logFileName.indexOf("calframe") == -1)
+			   return "<a href=" + window.location.href + logFileName + ">" + cell.getData().source + "</a>";
+		   else
+		       return cell.getData().source;
+	   }},
       {title:"Observation", field:"observation"},
       {title:"Status", field:"status"},
       {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
       {title:"Observation date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-	  {title:"Log file", field:"log_file"}
     ]
   });
 }
