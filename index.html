@@ -47,33 +47,6 @@ else
 <body>
   <script type="text/javascript" src="js/date_form.js"></script>
   <script type="text/javascript" src="js/modified_form.js"></script>
-  <script>
-    // handles switching between plotting modes. Need to rebuild the table
-    // to change # of selectable obs and load new plot types.
-    function swtch(val) {
-      if (val == "timeseries") {
-        $("#scanify_table").tabulator("destroy");
-        make_t_table(true, window.location.href);
-        $("#aux_table").tabulator("destroy");
-        make_aux_table(true);
-        $("#autoproc_table").tabulator("destroy");
-        make_autoproc_table(true);
-        document.getElementById("select").style = "display:inline";
-      }
-      else if (val == "individual") {
-        $("#scanify_table").tabulator("destroy");
-        make_t_table(10, window.location.href);
-        $("#aux_table").tabulator("destroy");
-        make_aux_table(10);
-        $("#autoproc_table").tabulator("destroy");
-        make_autoproc_table(10);
-        document.getElementById("select").style = "display:none";
-      }
-      plot_list();
-      // redraw since we are remaking the table
-      redraw = true;
-    }
-  </script>
 
   <!-- Display blank page until content is loaded -->
   <div id='loader'></div>
@@ -131,22 +104,6 @@ else
       </td>
       <td></td>
     </tr>
-    <tr id="mode-row">
-      <td>Mode</td>
-      <td>
-        <div class="radio">
-        <input type="radio" value="individual" name="func" id="rad_ind"
-          onchange="swtch('individual');" checked>
-        <label for="rad_ind" class="radio-label">Individual</label>
-        </div>
-        <div class="radio">
-        <input type="radio" value="timeseries" name="func" id="rad_tim"
-          onchange="swtch('timeseries');">
-        <label for="rad_tim" class="radio-label">Timeseries</label>
-        </div>
-      </td>
-      <td></td>
-    </tr>
   </table>
 
   <br>
@@ -155,10 +112,6 @@ else
 
   <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("selectRow");' style="display:none" id="select">Select All
   </button>
-  <script>
-    if ($('input[name="func"]:checked').val() == "timeseries")
-      document.getElementById("select").style = "display:inline";
-  </script>
 
   <button class="btn" onclick='$("#" + document.getElementsByClassName("tablinks active")[0].id + "_table").tabulator("deselectRow");' id="deselect">Deselect All
   </button>

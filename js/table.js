@@ -34,7 +34,6 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "none";
-    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -44,7 +43,6 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
     document.getElementById("modified-row").style.display = "none";
-    document.getElementById("mode-row").style.display = "none";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
   }
@@ -54,7 +52,6 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
-    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -165,17 +162,9 @@ function make_autoproc_table(select) {
 
 
 // get plotting mode and build the table
-var func_val = $('input[name="func"]:checked').val();
-if (func_val == "timeseries") {
-  make_t_table(true);
-  make_aux_table(true);
-  make_autoproc_table(true);
-}
-else if (func_val == "individual") {
-  make_t_table(10);
-  make_aux_table(10);
-  make_autoproc_table(10);
-}
+make_t_table(10);
+make_aux_table(10);
+make_autoproc_table(10);
 
 
 // wrapper for two search functions
@@ -317,67 +306,24 @@ function plot() {
   var func_val = $('input[name="func"]:checked').val();
 
   // set the number of images and variables to keep track of creation
-  if (func_val == "individual")
-    display_win.images_to_load = selected_values.length * rows.length;
-  else if (func_val == "timeseries")
-    display_win.images_to_load = selected_values.length;
+  display_win.images_to_load = selected_values.length * rows.length;
   display_win.loaded_count = 0;
   display_win.loading_progress = 0;
 
-  if (func_val == "individual") {
-    // loop over each observation
-    $.each(rows, function(i, obsdata) {
-      // combine all requested plot types into a string
-      obsdata['plot_type'] = selected_values.join(' ');
+  // loop over each observation
+  $.each(rows, function(i, obsdata) {
+    // combine all requested plot types into a string
+    obsdata['plot_type'] = selected_values.join(' ');
+    obsdata['table'] = tab.id;
+    obsdata['func'] = func_val;
+    obsdata['sseid'] = sseid;
 
-      obsdata['table'] = tab.id;
-
-      obsdata['func'] = func_val;
-
-      obsdata['sseid'] = sseid;
-
-      // request the plot
-      $.get("data_req", obsdata, function(data, status) {
-        image_ctr += selected_values.length;
-      });
+    // request the plot
+    $.get("data_req", obsdata, function(data, status) {
+      image_ctr += selected_values.length;
     });
-  } else if (func_val == "timeseries") {
-    // don't allow "any" source. Only one source allowed for timeseries mode
-    if (tab.id == 'scanify') {
-      if ($("#obstype-search").val() == '') {
-        alert('Please search for a specific source in timeseries mode.');
-        return;
-      }
-    }
-    // loop over each plot type
-    $.each(selected_values, function(i, type) {
-      var obsdata;
-      if (tab.id == 'scanify') {
-        // combine requested observations into a string
-        var obs = [];
-        for (var j = 0; j < rows.length; j++)
-          obs.push(rows[j]['observation']);
-
-        obsdata = {plot_type: type, observation: obs.join(' '),
-            source: rows[0]['source'], func: func_val, table: tab.id,
-            sseid: sseid};
-      } else if (tab.id == 'aux') {
-        // combine requested observations into a string
-        var obs = [];
-        for (var j = 0; j < rows.length; j++)
-          obs.push(rows[j]['filename']);
-
-        obsdata = {plot_type: type, filename: obs.join(' '),
-            date: rows[0]['date'], func: func_val, table: tab.id,
-            sseid: sseid};
-      }
-      // request plots
-      $.get("data_req", obsdata, function(data, status) {
-        image_ctr++;
-      });
-    });
-  }
-  }
+  });
+}
 }
 
 // used to sort image items

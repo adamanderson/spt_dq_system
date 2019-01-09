@@ -35,8 +35,6 @@ import hashlib
 # argparse arguments. [AJA]
 parser = argparse.ArgumentParser(
     description='Calls plotting functions in other files for a webserver.')
-parser.add_argument('mode', type=str,
-    help='The plotting mode. Currently individual or timeseries.')
 parser.add_argument('source', type=str,
     help='The source of the observation.')
 parser.add_argument('plotpath', type=str,
@@ -55,7 +53,7 @@ parser.add_argument('multi', type=str, nargs=argparse.REMAINDER,
 args = parser.parse_args()
 if (len(args.multi) == 0):
   print('_plot.py: error: ' +
-      'the following arguments are required: mode, source, single, multi',
+      'the following arguments are required: source, single, multi',
       flush=True)
   exit(1)
 
@@ -174,20 +172,6 @@ def individual():
     except Exception as e:
       print(e, file=sys.stderr)
 
-def timeseries():
-  # load arguments into a dict to be passed to plotting functions
-  request = {'source': args.source,
-             'plot_type': args.single,
-             'observation': args.multi,
-             'plotpath': args.plotpath,
-             'caldatapath': args.caldatapath, 
-             'bolodatapath': args.bolodatapath}
-  print(request)
-  plot(request);
-
 #start process
 if __name__ == '__main__':
-  if (args.mode == 'individual'):
     individual()
-  elif (args.mode == 'timeseries'):
-    timeseries()

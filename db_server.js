@@ -188,37 +188,23 @@ app.get('/data_req', function (req, res) {
     filename = req.query['filename'];
   }
   plot_type = req.query['plot_type'];
-  func_val = req.query['func'];
 
   log(util.inspect(req.query));
   // execute python plotting script. Safe because user input
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
   var args;
-  if (func_val == 'individual' && (tab == 'scanify' || tab == 'autoproc'))
+  if (tab == 'scanify' || tab == 'autoproc')
     args = ['-B', './plot/_plot.py',
-	    func_val,
 	    source,
 	    config.plot_dir,
 	    config.calib_data_dir,
 	    config.bolo_data_dir,
 	    obs].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && (tab == 'scanify' || tab == 'autoproc'))
-    args = ['-B', './plot/_plot.py',
-	    func_val,
-	    source,
-	    config.plot_dir,
-	    config.calib_data_dir,
-	    config.bolo_data_dir,
-	    plot_type].concat(
-        obs.split(' '));
-  else if (func_val == 'individual' && tab == 'aux')
-    args = ['-B', './plot/_plot.py', func_val, 'aux', filename].concat(
+  else if (tab == 'aux')
+    args = ['-B', './plot/_plot.py', 'aux', filename].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && tab == 'aux')
-    args = ['-B', './plot/_plot.py', func_val, 'aux', plot_type].concat(
-        filename.split(' '));
   var err = null;
   var child = execFile(config.python_location, args, options);
 
@@ -251,9 +237,9 @@ app.get('/plot_list', function(req, res) {
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
   // check if plot_config has an entry for this source. Otherwise return 'any'
-  if (json[req.query['tab']][req.query['func']][req.query['type']] == null)
+  if (json[req.query['tab']][req.query['type']] == null)
     req.query['type'] = 'any';
-  res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
+  res.json(json[req.query['tab']][req.query['type']]);
 });
 
 // get list of available sources
