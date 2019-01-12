@@ -27,7 +27,6 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.17.1",
-    "chosen-js": "^1.7.0",
     "express": "^4.15.2",
     "express-basic-auth": "^1.1.1",
     "express-sse": "^0.4.1",
