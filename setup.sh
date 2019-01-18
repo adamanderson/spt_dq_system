@@ -1,5 +1,5 @@
 # check arguments
-if [ "$1" != "pole" ] && [ "$2" != "north" ];
+if [ "$1" != "pole" ] && [ "$1" != "north" ];
 then
 	echo "Did not specify site argument of 'pole' or 'north'. "\
 	"Refusing to run."
