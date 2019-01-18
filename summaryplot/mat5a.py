@@ -1,4 +1,7 @@
 from statistics import compute_median
+from functools import reduce
+import operator
+import numpy as np
 
 def median_mat5a_fluxcal(frame, boloprops, selector_dict):
     if 'MAT5AFluxCalibration' not in frame.keys():
