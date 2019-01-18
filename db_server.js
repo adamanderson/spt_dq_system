@@ -11,7 +11,6 @@ var fs = require('fs');
 var readline = require('readline');
 var util = require('util');
 var auth = require('express-basic-auth');
-var https = require('https');
 var moment = require('moment');
 var SSE = require('express-sse');
 var sse = new SSE();
