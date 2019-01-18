@@ -1,15 +1,22 @@
+site: north
+
 scanify_db_path: /spt/data/transfer_database/scanify.db
 auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
 autoproc_db_path: /spt/user/production/autoproc.db
 
-python_location: /software/clustertools/py3-v1/RHEL_7_x86_64/bin/python
+autoproc_log_path: /spt/user/production/logs/
 
-plot_dir: /tmp/data_quality/
-static_plot_dir: /tmp/data_quality/static/
+python_location: /cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/bin/python
+
+key_file:
+cert_file:
+
+plot_dir: /tmp/data_quality_adama/
+static_plot_dir: /home/adama/SPT/dev/spt_dq_system/static_plots/
 
 calib_data_dir: /spt/user/production/
 bolo_data_dir: /spt/data/bolodata/downsampled/
 
-port: 3000
+port: 3001
 
-min_time_static_plots: 20180620
+min_time_static_plots: 20181220
