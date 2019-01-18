@@ -42,5 +42,5 @@ fi
 mkdir spt3g_software/build
 cd spt3g_software/build
 cmake ..
-make -j4
+make $2
 cd ..
