@@ -1,6 +1,7 @@
 from statistics import compute_median
 from functools import reduce
 import operator
+import numpy as np
 
 def median_rcw38_fluxcal(frame, boloprops, selector_dict):
     if 'RCW38FluxCalibration' not in frame.keys():
