@@ -1,5 +1,5 @@
 # check arguments
-if [ "$1" != "pole" ] && [ "$2" != "north" ];
+if [ "$1" != "pole" ] && [ "$1" != "north" ];
 then
 	echo "Did not specify site argument of 'pole' or 'north'. "\
 	"Refusing to run."
@@ -16,9 +16,10 @@ mv jquery-ui.css ../css
 wget https://code.jquery.com/jquery-1.12.4.js
 wget https://code.jquery.com/ui/1.12.1/jquery-ui.js
 wget https://momentjs.com/downloads/moment.min.js
-wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.1.5/css/tabulator.min.css
+wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.1.5/css/tabulator.min.css
 mv tabulator.min.css ../css
-wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.1.5/js/tabulator.min.js
+wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.1.5/js/tabulator.min.js
+wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.1.5/js/jquery_wrapper.min.js
 wget https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.2/TweenMax.min.js
 cd ..
 
@@ -41,5 +42,5 @@ fi
 mkdir spt3g_software/build
 cd spt3g_software/build
 cmake ..
-make -j4
+make $2
 cd ..

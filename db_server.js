@@ -11,12 +11,11 @@ var fs = require('fs');
 var readline = require('readline');
 var util = require('util');
 var auth = require('express-basic-auth');
-var bcrypt = require('bcryptjs');
-var https = require('https');
 var moment = require('moment');
 var SSE = require('express-sse');
 var sse = new SSE();
 var yaml = require('yamljs');
+var serveIndex = require('serve-index')
 
 // TODO error handling
 
@@ -55,6 +54,12 @@ app.get('/', function (req, res) {
 // needed to load js and css files
 app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
+
+// file browser for log files
+app.use('/scanify_logs', express.static('/data/autoproc/logs/scanify/'),
+		serveIndex('/data/autoproc/logs/scanify/', {'icons': true}))
+app.use('/autoproc_logs', express.static('/poleanalysis/sptdaq/calresult/logs/'),
+		serveIndex('/poleanalysis/sptdaq/calresult/logs/', {'icons': true}))
 
 // create directory in /tmp to store plots
 // TODO: don't cache every plot. Remove old plots from time to time
@@ -125,7 +130,18 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
-		   res.send(rows);
+			   // append log file information to database results
+			   if(req.query.dbname == 'scanify') {
+				   for(var jrow in rows) {
+					   rows[jrow]['log_file'] = 'scanify_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+				   }
+			   }
+			   if(req.query.dbname == 'autoproc') {
+				   for(var jrow in rows) {
+					   rows[jrow]['log_file'] = 'autoproc_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+				   }
+			   }
+			   res.send(rows);
 	       });
 
 	// close the database
@@ -170,37 +186,23 @@ app.get('/data_req', function (req, res) {
     filename = req.query['filename'];
   }
   plot_type = req.query['plot_type'];
-  func_val = req.query['func'];
 
   log(util.inspect(req.query));
   // execute python plotting script. Safe because user input
   // is passed as arguments to the python script and the python
   // script handles the arguments safely.
   var args;
-  if (func_val == 'individual' && (tab == 'scanify' || tab == 'autoproc'))
+  if (tab == 'scanify' || tab == 'autoproc')
     args = ['-B', './plot/_plot.py',
-	    func_val,
 	    source,
 	    config.plot_dir,
 	    config.calib_data_dir,
 	    config.bolo_data_dir,
 	    obs].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && (tab == 'scanify' || tab == 'autoproc'))
-    args = ['-B', './plot/_plot.py',
-	    func_val,
-	    source,
-	    config.plot_dir,
-	    config.calib_data_dir,
-	    config.bolo_data_dir,
-	    plot_type].concat(
-        obs.split(' '));
-  else if (func_val == 'individual' && tab == 'aux')
-    args = ['-B', './plot/_plot.py', func_val, 'aux', filename].concat(
+  else if (tab == 'aux')
+    args = ['-B', './plot/_plot.py', 'aux', filename].concat(
         plot_type.split(' '));
-  else if (func_val == 'timeseries' && tab == 'aux')
-    args = ['-B', './plot/_plot.py', func_val, 'aux', plot_type].concat(
-        filename.split(' '));
   var err = null;
   var child = execFile(config.python_location, args, options);
 
@@ -233,9 +235,9 @@ app.get('/plot_list', function(req, res) {
     req.query['type'] = 'any';
   var json = JSON.parse(fs.readFileSync('./plot/plot_config.json', 'utf8'));
   // check if plot_config has an entry for this source. Otherwise return 'any'
-  if (json[req.query['tab']][req.query['func']][req.query['type']] == null)
+  if (json[req.query['tab']][req.query['type']] == null)
     req.query['type'] = 'any';
-  res.json(json[req.query['tab']][req.query['func']][req.query['type']]);
+  res.json(json[req.query['tab']][req.query['type']]);
 });
 
 // get list of available sources

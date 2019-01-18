@@ -2,7 +2,6 @@
 function plot_list() {
   // type holds obs source and plotting mode
   var type = {"type": $("#obstype-search").val(),
-      'func': $('input[name="func"]:checked').val(),
       'tab': document.getElementsByClassName("tablinks active")[0].id};
   if (document.getElementsByClassName("tablinks active")[0].id == 'aux')
     type['type'] = $("#auxtype-search").val();

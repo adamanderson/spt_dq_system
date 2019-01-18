@@ -34,7 +34,6 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "none";
-    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -44,7 +43,6 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
     document.getElementById("modified-row").style.display = "none";
-    document.getElementById("mode-row").style.display = "none";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
   }
@@ -54,51 +52,15 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
-    document.getElementById("mode-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
 }
 
 
-function make_table(type, select) {
-    //create Tabulator on DOM element with id "scanify_table"
-    $("#scanify_table").tabulator({
-	    //pagination:"remote",  // use this for normal pagination
-	    ajaxURL:"/dbpage", 
-		ajaxParams: {search: {source: $("#obstype-search").val(),
-			date:  {min: $("#date-from").val(),
-			    max: $("#date-to").val()},
-			observation:    {min: $("#obsid-from").val(),
-			    max: $("#obsid-to").val()}},
-		    dbname: "scanify"},
-		ajaxConfig:'GET',
-		ajaxSorting: true,
-		//paginationSize:40,
-		selectable: select,
-		index:"_id",
-		height:"400px", // set height of table (optional)
-		fitColumns:true, //fit columns to width of table (optional)
-		columns:[ //Define Table Columns
-			 {title:"Observation ID", field:"observation", sorter:"number"},
-			 {title:"Source", field:"source"},
-			 {title:"Fullrate status", field:"status_fullrate"},
-			 {title:"Downsampled status", field:"status_downsampled"},
-			 {title:"Fullrate transfer", field:"transfer_fullrate",
-				 formatter:"tickCross"},
-			 {title:"Downsampled transfer", field:"transfer_downsampled",
-				 formatter:"tickCross"},
-			 {title:"Date (UTC)", field:"date", sorter:"date",
-				 sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
-			  ]
-		});
-}
-
-
-function make_t_table(select) {
+function make_t_table(select, baseUrl) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#scanify_table").tabulator({
-    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {source: $("#obstype-search").val(),
 		      date:  {min: $("#date-from").val(),
@@ -108,22 +70,27 @@ function make_t_table(select) {
 		  dbname: "scanify"},
     ajaxConfig:'GET',
     ajaxSorting: true,
-    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
-      {title:"Observation ID", field:"observation", sorter:"number"},
+	  {title:"Observation ID", field:"observation", sorter:"number",
+	   formatter:"link",
+	   formatterParams:{labelField:"observation", target:"_blank",
+						url:function(cell) {
+							return window.location.href + cell.getData().log_file;
+						}}},
       {title:"Source", field:"source"},
-      {title:"Fullrate status", field:"status_fullrate"},
-      {title:"Downsampled status", field:"status_downsampled"},
-      {title:"Fullrate transfer", field:"transfer_fullrate",
+	  {title:"Scanify status", field:"status_scanify"},
+      {title:"Transfer status<br>(fullrate)", field:"status_fullrate"},
+      {title:"Transfer status<br>(downsampled)", field:"status_downsampled"},
+      {title:"Marked for transfer<br>(fullrate)", field:"transfer_fullrate",
           formatter:"tickCross"},
-      {title:"Downsampled transfer", field:"transfer_downsampled",
+      {title:"Marked for transfer<br>(downsampled)", field:"transfer_downsampled",
           formatter:"tickCross"},
       {title:"Date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
     ]
   });
 }
@@ -131,7 +98,6 @@ function make_t_table(select) {
 function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
-    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {date:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
@@ -140,11 +106,10 @@ function make_aux_table(select) {
 		  dbname: "aux_transfer"},
     ajaxConfig:'GET',
     ajaxSorting: true,
-    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
       {title:"Filename", field:"filename"},
       {title:"Type", field:"type"},
@@ -161,7 +126,6 @@ function make_aux_table(select) {
 function make_autoproc_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#autoproc_table").tabulator({
-    //pagination:"remote",  // use this for normal pagination
     ajaxURL:"/dbpage", //set the ajax URL
 	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
@@ -173,36 +137,34 @@ function make_autoproc_table(select) {
 		  dbname: "autoproc"},
     ajaxConfig:'GET',
     ajaxSorting: true,
-    //paginationSize:40,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-    fitColumns:true, //fit columns to width of table (optional)
+	layout:"fitColumns",
     columns:[ //Define Table Columns
-      {title:"Source", field:"source"},
+	  {title:"Source", field:"source", sorter:"number",
+	   formatter:function(cell, formatterParams, onRendered) {
+		   logFileName = cell.getData().log_file
+		   if(logFileName.indexOf("calframe") == -1)
+			   return "<a href=" + window.location.href + logFileName + ">" + cell.getData().source + "</a>";
+		   else
+		       return cell.getData().source;
+	   }},
       {title:"Observation", field:"observation"},
       {title:"Status", field:"status"},
       {title:"Modified (UTC)", field:"modified", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
       {title:"Observation date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
     ]
   });
 }
 
 
 // get plotting mode and build the table
-var func_val = $('input[name="func"]:checked').val();
-if (func_val == "timeseries") {
-  make_t_table(true);
-  make_aux_table(true);
-  make_autoproc_table(true);
-}
-else if (func_val == "individual") {
-  make_t_table(10);
-  make_aux_table(10);
-  make_autoproc_table(10);
-}
+make_t_table(10);
+make_aux_table(10);
+make_autoproc_table(10);
 
 
 // wrapper for two search functions
@@ -344,67 +306,24 @@ function plot() {
   var func_val = $('input[name="func"]:checked').val();
 
   // set the number of images and variables to keep track of creation
-  if (func_val == "individual")
-    display_win.images_to_load = selected_values.length * rows.length;
-  else if (func_val == "timeseries")
-    display_win.images_to_load = selected_values.length;
+  display_win.images_to_load = selected_values.length * rows.length;
   display_win.loaded_count = 0;
   display_win.loading_progress = 0;
 
-  if (func_val == "individual") {
-    // loop over each observation
-    $.each(rows, function(i, obsdata) {
-      // combine all requested plot types into a string
-      obsdata['plot_type'] = selected_values.join(' ');
+  // loop over each observation
+  $.each(rows, function(i, obsdata) {
+    // combine all requested plot types into a string
+    obsdata['plot_type'] = selected_values.join(' ');
+    obsdata['table'] = tab.id;
+    obsdata['func'] = func_val;
+    obsdata['sseid'] = sseid;
 
-      obsdata['table'] = tab.id;
-
-      obsdata['func'] = func_val;
-
-      obsdata['sseid'] = sseid;
-
-      // request the plot
-      $.get("data_req", obsdata, function(data, status) {
-        image_ctr += selected_values.length;
-      });
+    // request the plot
+    $.get("data_req", obsdata, function(data, status) {
+      image_ctr += selected_values.length;
     });
-  } else if (func_val == "timeseries") {
-    // don't allow "any" source. Only one source allowed for timeseries mode
-    if (tab.id == 'scanify') {
-      if ($("#obstype-search").val() == '') {
-        alert('Please search for a specific source in timeseries mode.');
-        return;
-      }
-    }
-    // loop over each plot type
-    $.each(selected_values, function(i, type) {
-      var obsdata;
-      if (tab.id == 'scanify') {
-        // combine requested observations into a string
-        var obs = [];
-        for (var j = 0; j < rows.length; j++)
-          obs.push(rows[j]['observation']);
-
-        obsdata = {plot_type: type, observation: obs.join(' '),
-            source: rows[0]['source'], func: func_val, table: tab.id,
-            sseid: sseid};
-      } else if (tab.id == 'aux') {
-        // combine requested observations into a string
-        var obs = [];
-        for (var j = 0; j < rows.length; j++)
-          obs.push(rows[j]['filename']);
-
-        obsdata = {plot_type: type, filename: obs.join(' '),
-            date: rows[0]['date'], func: func_val, table: tab.id,
-            sseid: sseid};
-      }
-      // request plots
-      $.get("data_req", obsdata, function(data, status) {
-        image_ctr++;
-      });
-    });
-  }
-  }
+  });
+}
 }
 
 // used to sort image items
