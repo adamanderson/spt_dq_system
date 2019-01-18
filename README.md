@@ -9,6 +9,7 @@ This project is a website for data quality monitoring of SPT-3G in the north and
 ```
 ./setup.sh [pole/north]
 ```
+The rationale behind building a local version of `spt3g_software` is that user versions of the repo are subject to change and we would like the copy used by the server to remain unchanged unless deliberately updated.
 
 4.) Create a `config.yaml` file. In practice, the easiest way to do this is to copy one of two template files, `config.yaml.template_north` and `config.yaml.template_pole`, intended as examples for running and pole and in the north, and to modify it to have paths that suit your needs. The fields have the following meanings:
 
@@ -25,41 +26,21 @@ This project is a website for data quality monitoring of SPT-3G in the north and
 * `port`: Port from which website will be accessible. This must be unused; note that production versions of the data quality system run on port 3000 at pole and in the north, and a development version is often running on port 3001, so you may want to choose a port different from these.
 * `min_time_static_plots`: Date string of format `YYYYMMDD` at which to start static plot generation. 
 
-5.) If you do not want password-protected login, then skip this step. Otherwise, run the following in a terminal:
-
-```
-openssl genrsa -des3 -passout pass:x -out server.pass.key 2048                
-openssl rsa -passin pass:x -in server.pass.key -out key.pem                   
-rm server.pass.key                                                            
-openssl req -new -key key.pem -out server.csr                                 
-openssl x509 -req -sha256 -days 365 -in server.csr -signkey key.pem -out cert.pem                                                                             
-rm server.csr
-```
-
-Then create a hash for the password, with the commands below. Note that the login username is fixed to be 'spt'. Change 'your_password' below to the password you want to use.
-
-```
-echo "var bcrypt = require('bcryptjs');var salt = bcrypt.genSaltSync(10);var hash = bcrypt.hashSync('your_password', salt);console.log(hash);" > temp.js
-node temp.js > hash
-rm temp.js
-```
-
-6.) Launch the server with:
+5.) Launch the server. If you are certain that you have the correct environment set up, this can be done simply with:
 ```
 node db_server.js
 ```
-In case you have non-python3 default environment variables set, run node.js with a python3 environment using a version of `spt3g_software` built against python3. For example:
+To ensure that the proper environment is being used, it is better to launch the server with the following:
 ```
-eval `/software/clustertools/py3-v1/setup.sh` spt3g_software/build/env-shell.sh node db_server.js
-```
-If you already have set your `spt3g_software` environment by running `env-shell.sh` from a copy compiled against a different version of clustertools, then plotting will likely fail. The version of `spt3g_software` that all environment variables point to must be compiled against the enabled version of clustertools. If this is not the case, you will need to change versions of clustertools `setup.sh` and/or `spt3g_software` `env-shell.sh`, or unset all the environment variables modified by `env-shell.sh`.
+# north
+/bin/bash -c 'unset SPT3G_SOFTWARE_PATH; unset SPT3G_SOFTWARE_BUILD_PATH; unset SPT3G_BUILD_ROOT; unset PATH; unset LD_LIBRARY_PATH; unset PYTHONPATH; eval `/cvmfs/spt.opensciencegrid.org/py3-v3/setup.sh` /PATH/TO/YOUR/INSTALL/spt_dq_system/spt3g_software/build/env-shell.sh /PATH/TO/YOUR/INSTALL/spt_dq_system/db_server.js'
 
-7.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
+# pole
+/bin/bash -c 'unset SPT3G_SOFTWARE_PATH; unset SPT3G_SOFTWARE_BUILD_PATH; unset SPT3G_BUILD_ROOT; unset PATH; unset LD_LIBRARY_PATH; unset PYTHONPATH; eval `/software/clustertools/py3-v3/setup.sh` /PATH/TO/YOUR/INSTALL/spt_dq_system/spt3g_software/build/env-shell.sh /PATH/TO/YOUR/INSTALL/spt_dq_system/db_server.js'
 ```
-https://scott.grid.uchicago.edu:3002/
-```
+To avoid conflicts with environment variables set by other copies of `spt3g_software`, this invocation unsets all variables used by other copies, and runs using the environment of the version built inside the `spt_dq_server` directory.
 
-Without password-protection, go to:
+6.) Visit the page. If your port is 3002, and you are using password protection and scott, for example, then go to:
 ```
 http://scott.grid.uchicago.edu:3002/
 ```
