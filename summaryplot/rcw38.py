@@ -4,6 +4,10 @@ import operator
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core
+from spt3g.std_processing import obsid_to_g3time
+import datetime
+import matplotlib.dates as mdates
+
 
 def median_rcw38_fluxcal(frame, boloprops, selector_dict):
     if 'RCW38FluxCalibration' not in frame.keys():
@@ -41,8 +45,8 @@ def rcw38_sky_transmission(frame, boloprops, selector_dict):
     return data_on_selection
 
 
-def plot_median_rcw38_fluxcal(data):
-    for wafer in wafer_list:
+def plot_median_rcw38_fluxcal(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -79,8 +83,8 @@ def plot_median_rcw38_fluxcal(data):
         plt.close()
 
 
-def plot_median_rcw38_intflux(data):
-    for wafer in wafer_list:   
+def plot_median_rcw38_intflux(data, wafers, outdir):
+    for wafer in wafers:   
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -117,8 +121,8 @@ def plot_median_rcw38_intflux(data):
         plt.close()
 
 
-def plot_rcw38_sky_transmission(data):
-    for wafer in wafer_list:   
+def plot_rcw38_sky_transmission(data, wafers, outdir):
+    for wafer in wafers:   
         obsids = [obsid for obsid in data['RCW38']]
         f = plt.figure(figsize=(8,6))
 

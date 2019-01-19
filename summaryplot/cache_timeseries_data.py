@@ -3,9 +3,6 @@ matplotlib.use('Agg')
 
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
-from spt3g.std_processing import obsid_to_g3time
-import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
 import numpy as np
 import pickle as pickle
 import argparse as ap
@@ -172,6 +169,8 @@ if args.mode == 'rebuild' and os.path.exists(args.outdir):
     os.mkdir('{}'.format(args.outdir))
 
 for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
+    print(mindate)
+
     # convert min/max times in observation IDs that we can compare with filenames
     min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
     max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
@@ -227,30 +226,30 @@ for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
     # only update figures if the underlying data actually changed.
     if was_data_updated or (args.mode == 'update' and args.new_plots):
         # create the plots
-        plot_median_cal_sn_4Hz(data)
-        plot_median_cal_response_4Hz(data)
-        plot_alive_bolos_cal_4Hz(data)
-        plot_median_elnod_sn(data)
-        plot_median_elnod_iq_phase(data)
-        plot_alive_bolos_elnod(data)
-        plot_median_rcw38_fluxcal(data)
-        plot_median_rcw38_intflux(data)
-        plot_rcw38_sky_transmission(data)
-        plot_median_mat5a_fluxcal(data)
-        plot_median_mat5a_intflux(data)
-        plot_mat5a_sky_transmission(data)
-        plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz')
-        plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz')
-        plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz')
-        plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz')
-        plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz')
-        plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz')
-        plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz')
-        plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz')
-        plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz')
-        plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz')
-        plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz')
-        plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz')
+        plot_median_cal_sn_4Hz(data, wafer_list, outdir)
+        plot_median_cal_response_4Hz(data, wafer_list, outdir)
+        plot_alive_bolos_cal_4Hz(data, wafer_list, outdir)
+        plot_median_elnod_sn(data, wafer_list, outdir)
+        plot_median_elnod_iq_phase(data, wafer_list, outdir)
+        plot_alive_bolos_elnod(data, wafer_list, outdir)
+        plot_median_rcw38_fluxcal(data, wafer_list, outdir)
+        plot_median_rcw38_intflux(data, wafer_list, outdir)
+        plot_rcw38_sky_transmission(data, wafer_list, outdir)
+        plot_median_mat5a_fluxcal(data, wafer_list, outdir)
+        plot_median_mat5a_intflux(data, wafer_list, outdir)
+        plot_mat5a_sky_transmission(data, wafer_list, outdir)
+        plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, outdir)
+        plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, outdir)
 
         # Create symlink from latest data directory to current
         # The latest data directory is not necessarily reliably identified by

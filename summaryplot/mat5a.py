@@ -4,7 +4,10 @@ import operator
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core
+from spt3g.std_processing import obsid_to_g3time
 import datetime
+import matplotlib.dates as mdates
+
 
 def median_mat5a_fluxcal(frame, boloprops, selector_dict):
     if 'MAT5AFluxCalibration' not in frame.keys():
@@ -42,8 +45,8 @@ def mat5a_sky_transmission(frame, boloprops, selector_dict):
     return data_on_selection
 
 
-def plot_median_mat5a_fluxcal(data):
-    for wafer in wafer_list:
+def plot_median_mat5a_fluxcal(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -79,8 +82,8 @@ def plot_median_mat5a_fluxcal(data):
         plt.savefig('{}/median_mat5a_fluxcal_{}.png'.format(outdir, wafer))
         plt.close()
 
-def plot_median_mat5a_intflux(data):
-    for wafer in wafer_list:   
+def plot_median_mat5a_intflux(data, wafers, outdir):
+    for wafer in wafers:   
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -116,8 +119,8 @@ def plot_median_mat5a_intflux(data):
         plt.savefig('{}/median_mat5a_intflux_{}.png'.format(outdir, wafer))
         plt.close()
 
-def plot_mat5a_sky_transmission(data):
-    for wafer in wafer_list:   
+def plot_mat5a_sky_transmission(data, wafers, outdir):
+    for wafer in wafers:   
         obsids = [obsid for obsid in data['MAT5A']]
         f = plt.figure(figsize=(8,6))
 

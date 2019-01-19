@@ -1,7 +1,10 @@
 from statistics import compute_median, compute_nalive
 import numpy as np
 import matplotlib.pyplot as plt
+from spt3g.std_processing import obsid_to_g3time
 from spt3g import core
+import datetime
+import matplotlib.dates as mdates
 
 
 def median_cal_sn_4Hz(frame, boloprops, selector_dict):
@@ -26,8 +29,8 @@ def alive_bolos_cal_4Hz(frame, boloprops, selector_dict):
     return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20)
 
 
-def plot_median_cal_sn_4Hz(data):
-    for wafer in wafer_list:
+def plot_median_cal_sn_4Hz(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
                   if 'MedianCalSN_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
@@ -64,8 +67,8 @@ def plot_median_cal_sn_4Hz(data):
         plt.close()
 
 
-def plot_median_cal_response_4Hz(data):
-    for wafer in wafer_list:
+def plot_median_cal_response_4Hz(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
                   if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
@@ -102,8 +105,8 @@ def plot_median_cal_response_4Hz(data):
         plt.close()
 
 
-def plot_alive_bolos_cal_4Hz(data):
-    for wafer in wafer_list:
+def plot_alive_bolos_cal_4Hz(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
                   if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))

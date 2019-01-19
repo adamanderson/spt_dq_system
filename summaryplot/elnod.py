@@ -3,7 +3,9 @@ from spt3g import core
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core
+from spt3g.std_processing import obsid_to_g3time
 import datetime
+import matplotlib.dates as mdates
 
 
 def median_elnod_sn_slope(frame, boloprops, selector_dict):
@@ -36,8 +38,8 @@ def alive_bolos_elnod(frame, boloprops, selector_dict):
     return compute_nalive(frame, 'ElnodSNSlopes', boloprops, selector_dict, 20)
 
 
-def plot_median_elnod_sn(data):
-    for wafer in wafer_list:
+def plot_median_elnod_sn(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -71,8 +73,8 @@ def plot_median_elnod_sn(data):
         plt.close()
 
 
-def plot_median_elnod_iq_phase(data):
-    for wafer in wafer_list:
+def plot_median_elnod_iq_phase(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -111,8 +113,8 @@ def plot_median_elnod_iq_phase(data):
         plt.close()
 
 
-def plot_alive_bolos_elnod(data):
-    for wafer in wafer_list:
+def plot_alive_bolos_elnod(data, wafers, outdir):
+    for wafer in wafers:
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 

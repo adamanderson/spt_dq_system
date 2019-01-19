@@ -2,7 +2,9 @@ from statistics import compute_median
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core
-
+from spt3g.std_processing import obsid_to_g3time
+import matplotlib.dates as mdates
+import datetime
 
 def median_nei_01Hz_to_05Hz(frame, boloprops, selector_dict):
     if 'NEI_0.1Hz_to_0.5Hz' not in frame.keys():
@@ -76,7 +78,7 @@ def median_net_10Hz_to_15Hz(frame, boloprops, selector_dict):
     return compute_median(frame, 'NET_10.0Hz_to_15.0Hz', boloprops, selector_dict)    
 
 
-def plot_median_noise(data, noise_type):
+def plot_median_noise(data, noise_type, wafers, outdir):
     nex_name = noise_type.split('_')[0]
     labels = {'NEI': 'NEI [pA / sqrt(Hz)]',
               'NET': 'NET [uK rtsec]',
@@ -88,7 +90,7 @@ def plot_median_noise(data, noise_type):
               'NET': core.G3Units.microkelvin * np.sqrt(core.G3Units.sec),
               'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
 
-    for wafer in wafer_list: 
+    for wafer in wafers: 
         obsids = [obsid for obsid in data['noise']]
         f = plt.figure(figsize=(8,6))
 
