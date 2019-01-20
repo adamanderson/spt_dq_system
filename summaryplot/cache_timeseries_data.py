@@ -281,7 +281,6 @@ elif args.mode == 'plot':
     weekly_datetimes = {datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
                                                    '%Y%m%d'):
                         fname for fname in weekly_filenames}
-
     for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         # convert min/max time for this interval to obsids that we can compare
         # to data obsids
@@ -291,16 +290,20 @@ elif args.mode == 'plot':
         # load data from this date range
         data = {}
         for dt, fname in weekly_datetimes.items():
-            if dt > mindate and dt < maxdate:
+            if dt >= mindate and dt <= maxdate:
+                print('opening {}'.format(fname))
                 with open(fname, 'rb') as f:
-                 nextdata = pickle.load(f)
+                    nextdata = pickle.load(f)
+
+                data = {**data, **nextdata}
                  
-                 # restrict data to time range
-                 for source in nextdata:
-                     for obsid in nextdata[source]:
-                         if obsid < min_obsid or obsid > max_obsid:
-                             nextdata[source].pop(obsid)
-                 data = {**data, **nextdata}
+        # restrict data to time range
+        sourcelist = list(data.keys())
+        for source in sourcelist:
+            obsidlist = list(data[source].keys())
+            for obsid in obsidlist:
+                if int(obsid) <= min_obsid or int(obsid) >= max_obsid:
+                    data[source].pop(obsid)
 
         # get maximum obsid that went into existing plots
         if os.path.exists(os.path.join(outdir, 'max_obsid.dat')):
@@ -311,8 +314,9 @@ elif args.mode == 'plot':
 
         # check whether data contains newer obsids than the plot, and if so,
         # remake the plots
-        data_obsids = [obsid for source in data.keys() for obsid in data[source].keys()
-                       if obsid > min_obsid and obsid < max_obsid]
+        data_obsids = [int(obsid) for source in data.keys()
+                       for obsid in data[source].keys()
+                       if int(obsid) >= min_obsid and int(obsid) <= max_obsid]
         if any([plot_obsid < oid for oid in data_obsids]):
             # create the plots
             plot_median_cal_sn_4Hz(data, wafer_list, outdir)
