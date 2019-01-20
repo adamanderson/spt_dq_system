@@ -265,18 +265,9 @@ elif args.mode == 'plot':
     datadir = os.path.join(args.outdir, 'data')
 
     # delete the full output directory tree if we are in rebuild mode
-    if args.mode == 'rebuild' and os.path.exists(plotsdir):
+    if args.action == 'rebuild' and os.path.exists(plotsdir):
         shutil.rmtree(plotsdir)        
 
-    if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
-        outdir = os.path.join(args.outdir, 'plots', args.timeinterval)
-        os.makedirs(outdir, exist_ok=True)
-    else: # checked arguments at top so we know this is castable to float
-        outdir = os.path.join(args.outdir, 'plots',
-                              'last_{}'.format(float(args.timeinterval)))
-        os.makedirs(outdir, exist_ok=True)
-
-    # check if plots are stale
     weekly_filenames = glob(os.path.join(datadir, '*pkl'))
     weekly_datetimes = {datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
                                                    '%Y%m%d'):
@@ -286,6 +277,16 @@ elif args.mode == 'plot':
         # to data obsids
         min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
         max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
+
+        if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
+            outdir = os.path.join(args.outdir, 'plots', args.timeinterval,
+                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+            os.makedirs(outdir, exist_ok=True)
+        else: # checked arguments at top so we know this is castable to float
+            outdir = os.path.join(args.outdir, 'plots',
+                                  'last_{}'.format(float(args.timeinterval)),
+                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+            os.makedirs(outdir, exist_ok=True)
 
         # load data from this date range
         data = {}
@@ -346,9 +347,10 @@ elif args.mode == 'plot':
 
             # Get maximum obsid of data and save it to a file so that we can
             # detect when plots need to be updated.
-            max_obsid = np.max([np.max(list(data[source].keys())) for source in data])
+            max_obsid = np.max([np.max(np.array(list(data[source].keys()),dtype=int))
+                                for source in data])
             with open(os.path.join(outdir, 'max_obsid.dat'), 'w') as f:
-                f.write(max_obsid)
+                f.write(str(max_obsid))
 
             # # Create symlink from latest data directory to current
             # # The latest data directory is not necessarily reliably identified by
