@@ -127,7 +127,7 @@ if args.mode == 'skim':
 
     # delete the full output directory tree if we are in rebuild mode
     if args.mode == 'rebuild' and os.path.exists(datadir):
-        shutil.rmtree(plotsdir)        
+        shutil.rmtree(datadir)        
     datadir = os.path.join(args.outdir, 'data')
     os.makedirs(datadir, exist_ok=True)
 
@@ -272,7 +272,7 @@ elif args.mode == 'plot':
 
     # delete the full output directory tree if we are in rebuild mode
     if args.action == 'rebuild' and os.path.exists(plotsdir):
-        shutil.rmtree(plotsdir)        
+        shutil.rmtree(plotstimedir)        
 
     weekly_filenames = glob(os.path.join(datadir, '*pkl'))
     weekly_datetimes = {datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
