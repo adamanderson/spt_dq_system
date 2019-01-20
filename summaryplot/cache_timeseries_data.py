@@ -6,7 +6,7 @@ from spt3g.std_processing.utils import time_to_obsid
 import numpy as np
 import pickle as pickle
 import argparse as ap
-import glob
+from glob import glob
 import datetime
 import os.path
 import shutil
@@ -32,34 +32,47 @@ S = P0.add_subparsers(dest='mode', title='subcommands',
 parser_skim = S.add_parser('skim',
                            help='Skim summary data from autoprocessing outputs '
                            'for timeseries plotting.')
+parser_skim.add_argument('action', choices=['update', 'rebuild'], default=None,
+                         help='Update or rebuild the data skims or plots.')
+parser_skim.add_argument('outdir', action='store', default=None,
+                         help='Path containing skimmed data and plots.')
 parser_skim.add_argument('caldatapath', default=None,
                          help='Path to calibration data to skim.')
 parser_skim.add_argument('bolodatapath', default=None,
                          help='Path to bolometer data (for bolometer properties.')
+parser_skim.add_argument('--min-time', action='store',
+                         default=default_mintime.strftime('%Y%m%d'),
+                         help='Minimum time of observations to skim. Format: '
+                         'YYYYMMDD')
+parser_skim.add_argument('--max-time', action='store',
+                         default=timenow.strftime('%Y%m%d'),
+                         help='Maximum time of observations to skim. Format: '
+                         'YYYYMMDD')
 
 # plot data mode
 parser_plot = S.add_parser('plot',
                            help='Plot data from skims of autoprocessing data.')
+parser_plot.add_argument('action', choices=['update', 'rebuild'], default=None,
+                         help='Update or rebuild the data skims or plots.')
 parser_plot.add_argument('timeinterval', default=None,
                          help='Time interval at which to generate plots. '
                          'Available options are "weekly", "monthly" or "N", '
                          'where N is generates a plot containing data from '
                          'only the most recent N days.')
+parser_plot.add_argument('outdir', action='store', default=None,
+                         help='Path containing skimmed data and plots.')
+parser_plot.add_argument('--min-time', action='store',
+                         default=default_mintime.strftime('%Y%m%d'),
+                         help='Minimum time of observations to skim. Format: '
+                         'YYYYMMDD')
+parser_plot.add_argument('--max-time', action='store',
+                         default=timenow.strftime('%Y%m%d'),
+                         help='Maximum time of observations to skim. Format: '
+                         'YYYYMMDD')
 
-# arguments common to each mode
-for parser in [parser_skim, parser_plot]:
-    parser.add_argument('outdir', action='store', default=None,
-                        help='Path containing skimmed data and plots.')
-    parser.add_argument('--min-time', action='store',
-                        default=default_mintime.strftime('%Y%m%d'),
-                        help='Minimum time of observations to skim. Format: '
-                        'YYYYMMDD')
-    parser.add_argument('--max-time', action='store',
-                        default=timenow.strftime('%Y%m%d'),
-                        help='Maximum time of observations to skim. Format: '
-                        'YYYYMMDD')
-    parser.add_argument('action', choices=['update', 'rebuild'], default=None,
-                        help='Update or rebuild the data skims or plots.')
+
+
+
 
 args = P0.parse_args()
 
@@ -264,9 +277,10 @@ elif args.mode == 'plot':
         os.makedirs(outdir, exist_ok=True)
 
     # check if plots are stale
-    weekly_filenames = glob(os.join(datadir, '*pkl'))
-    weekly_datetimes = {datetime.strptime(os.path.basename(dname).split('_')[0]): fname
-                        for fname in weekly_filenames}
+    weekly_filenames = glob(os.path.join(datadir, '*pkl'))
+    weekly_datetimes = {datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
+                                                   '%Y%m%d'):
+                        fname for fname in weekly_filenames}
 
     for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         # convert min/max time for this interval to obsids that we can compare
@@ -276,7 +290,7 @@ elif args.mode == 'plot':
 
         # load data from this date range
         data = {}
-        for dt, fname in weekly_datetimes.iteritems():
+        for dt, fname in weekly_datetimes.items():
             if dt > mindate and dt < maxdate:
                 with open(fname, 'rb') as f:
                  nextdata = pickle.load(f)
