@@ -103,6 +103,7 @@ while next_day < dt_maxtime:
             next_day = datetime.datetime(year=next_day.year+1,
                                          month=1,
                                          day=next_day.day)
+date_boundaries.append(dt_maxtime)
 
 
 # SKIM MODE
