@@ -227,7 +227,7 @@ if args.mode == 'skim':
 
         # update the data skim
         for source, quantities in function_dict.items():
-            calfiles = glob.glob('{}/calibration/{}/*g3'.format(args.caldatapath, source))
+            calfiles = glob('{}/calibration/{}/*g3'.format(args.caldatapath, source))
             files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
                               int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
 
@@ -261,7 +261,13 @@ if args.mode == 'skim':
 
 # PLOT MODE
 elif args.mode == 'plot':
+    if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
+        timeinterval_stub = args.timeinterval
+    else: # checked arguments at top so we know this is castable to float
+        timeinterval_stub = 'last_{}'.format(float(args.timeinterval))
+
     plotsdir = os.path.join(args.outdir, 'plots')
+    plotstimedir = os.path.join(args.outdir, 'plots', timeinterval_stub)
     datadir = os.path.join(args.outdir, 'data')
 
     # delete the full output directory tree if we are in rebuild mode
@@ -278,15 +284,9 @@ elif args.mode == 'plot':
         min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
         max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
 
-        if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
-            outdir = os.path.join(args.outdir, 'plots', args.timeinterval,
-                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
-            os.makedirs(outdir, exist_ok=True)
-        else: # checked arguments at top so we know this is castable to float
-            outdir = os.path.join(args.outdir, 'plots',
-                                  'last_{}'.format(float(args.timeinterval)),
-                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
-            os.makedirs(outdir, exist_ok=True)
+        outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
+                              mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+        os.makedirs(outdir, exist_ok=True)
 
         # load data from this date range
         data = {}
@@ -352,14 +352,16 @@ elif args.mode == 'plot':
             with open(os.path.join(outdir, 'max_obsid.dat'), 'w') as f:
                 f.write(str(max_obsid))
 
-            # # Create symlink from latest data directory to current
-            # # The latest data directory is not necessarily reliably identified by
-            # # the modification timestamp; instead, it is defined by having the
-            # # latest value of timestamp in its filename. Based on the naming scheme
-            # # for directories, an alphanumeric sort should also produce
-            # # chronological ordering, so we'll rely on this assumption.
-            # symlinkname = '{}/current'.format(args.outdir)
-            # dirnames = np.sort(glob.glob('{}/*{}'.format(args.outdir, cache_dir_stub)))
-            # latest_dirname = dirnames[-1]
-            # os.symlink(latest_dirname, '{}/temp'.format(args.outdir))
-            # os.rename('{}/temp'.format(args.outdir), '{}/current'.format(args.outdir))
+        # Create symlink from latest data directory to current
+        # The latest data directory is not necessarily reliably identified by
+        # the modification timestamp; instead, it is defined by having the
+        # latest value of timestamp in its filename. Based on the naming scheme
+        # for directories, an alphanumeric sort should also produce
+        # chronological ordering, so we'll rely on this assumption.
+        symlinkname = '{}/current_{}'.format(plotstimedir, timeinterval_stub)
+        dirnames = np.sort(glob('{}/*{}'.format(plotstimedir, cache_dir_stub)))
+        latest_dirname = dirnames[-1]
+        os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
+        os.rename('{}/temp'.format(plotstimedir), '{}/current'.format(plotstimedir))
+
+        # Can we eliminate variable `cache_dir_stub`??
