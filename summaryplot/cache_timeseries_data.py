@@ -284,8 +284,12 @@ elif args.mode == 'plot':
         min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
         max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
 
-        outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
-                              mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+        if args.timeinterval == 'weekly':
+            outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
+                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+        if args.timeinterval == 'monthly':
+            outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
+                                  mindate.strftime('%Y%m'))
         os.makedirs(outdir, exist_ok=True)
 
         # load data from this date range
