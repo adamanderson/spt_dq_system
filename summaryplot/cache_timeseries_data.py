@@ -19,7 +19,6 @@ from rcw38 import *
 timenow = datetime.datetime.now()
 dt = datetime.timedelta(-1*(timenow.weekday()+1))
 default_mintime = timenow + dt
-cache_dir_stub = 'cached_dq_plots'
 
 
 P0 = ap.ArgumentParser(description='',
@@ -286,7 +285,7 @@ elif args.mode == 'plot':
 
         if args.timeinterval == 'weekly':
             outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
-                                  mindate.strftime('%Y%m%d')+'_'+cache_dir_stub)
+                                  mindate.strftime('%Y%m%d'))
         if args.timeinterval == 'monthly':
             outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
                                   mindate.strftime('%Y%m'))
@@ -363,9 +362,9 @@ elif args.mode == 'plot':
         # for directories, an alphanumeric sort should also produce
         # chronological ordering, so we'll rely on this assumption.
         symlinkname = '{}/current_{}'.format(plotstimedir, timeinterval_stub)
-        dirnames = np.sort(glob('{}/*{}'.format(plotstimedir, cache_dir_stub)))
+        if os.path.exists(symlinkname):
+            os.unlink(symlinkname)
+        dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
         latest_dirname = dirnames[-1]
         os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
         os.rename('{}/temp'.format(plotstimedir), '{}/current'.format(plotstimedir))
-
-        # Can we eliminate variable `cache_dir_stub`??
