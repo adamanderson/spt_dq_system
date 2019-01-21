@@ -270,7 +270,7 @@ elif args.mode == 'plot':
     datadir = os.path.join(args.outdir, 'data')
 
     # delete the full output directory tree if we are in rebuild mode
-    if args.action == 'rebuild' and os.path.exists(plotsdir):
+    if args.action == 'rebuild' and os.path.exists(plotstimedir):
         shutil.rmtree(plotstimedir)        
 
     weekly_filenames = np.array(glob(os.path.join(datadir, '*pkl')))
@@ -319,7 +319,6 @@ elif args.mode == 'plot':
         data = {}
         for ind in dt_ind_inrange:
             fname = weekly_filenames[ind]
-            print('opening {}'.format(fname))
             with open(fname, 'rb') as f:
                 nextdata = pickle.load(f)
             for source in nextdata:
