@@ -110,11 +110,11 @@ while next_day < dt_maxtime:
         try:
             next_day = datetime.datetime(year=next_day.year,
                                          month=next_day.month+1,
-                                         day=next_day.day)
+                                         day=1)
         except ValueError:
             next_day = datetime.datetime(year=next_day.year+1,
                                          month=1,
-                                         day=next_day.day)
+                                         day=1)
 date_boundaries.append(dt_maxtime)
 
 
@@ -273,10 +273,13 @@ elif args.mode == 'plot':
     if args.action == 'rebuild' and os.path.exists(plotsdir):
         shutil.rmtree(plotstimedir)        
 
-    weekly_filenames = glob(os.path.join(datadir, '*pkl'))
-    weekly_datetimes = {datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
-                                                   '%Y%m%d'):
-                        fname for fname in weekly_filenames}
+    weekly_filenames = np.array(glob(os.path.join(datadir, '*pkl')))
+    weekly_datetimes = np.array([datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
+                                                            '%Y%m%d')
+                                 for fname in weekly_filenames])
+    ind_sort = np.argsort(weekly_datetimes)
+    weekly_filenames = weekly_filenames[ind_sort]
+    weekly_datetimes = weekly_datetimes[ind_sort]
     for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
         # convert min/max time for this interval to obsids that we can compare
         # to data obsids
@@ -292,15 +295,39 @@ elif args.mode == 'plot':
         os.makedirs(outdir, exist_ok=True)
 
         # load data from this date range
+        dt_ind = np.arange(len(weekly_datetimes))
+        # case 1: plot time range is newer than all data timestamps; then load
+        # last data file only
+        if np.all(weekly_datetimes <= maxdate) and \
+           np.all(weekly_datetimes <= mindate):
+            dt_ind_inrange = np.array([len(weekly_datetimes) - 1])
+        # case 2: plot time range is older than all data timestamps; then load
+        # no data files
+        elif np.all(weekly_datetimes >= maxdate) and \
+             np.all(weekly_datetimes >= mindate):
+            dt_ind_inrange = np.array([])
+        # case 3: all others; then load all data files that are between the
+        # endpoints of the plot time range, plus the data file with timestamp
+        # that falls just before the beginning of the plot time range, if such
+        # a file exists
+        else:
+            dt_ind_inrange = dt_ind[(weekly_datetimes <= maxdate) &
+                                    (weekly_datetimes >= mindate)]
+            if np.min(dt_ind_inrange) > 0:
+                dt_ind_inrange = np.append(dt_ind_inrange,
+                                           np.min(dt_ind_inrange) - 1)
         data = {}
-        for dt, fname in weekly_datetimes.items():
-            if dt >= mindate and dt <= maxdate:
-                print('opening {}'.format(fname))
-                with open(fname, 'rb') as f:
-                    nextdata = pickle.load(f)
+        for ind in dt_ind_inrange:
+            fname = weekly_filenames[ind]
+            print('opening {}'.format(fname))
+            with open(fname, 'rb') as f:
+                nextdata = pickle.load(f)
+            for source in nextdata:
+                if source in data:
+                    data[source] = {**data[source], **nextdata[source]}
+                else:
+                    data[source] = nextdata[source]
 
-                data = {**data, **nextdata}
-                 
         # restrict data to time range
         sourcelist = list(data.keys())
         for source in sourcelist:
@@ -350,8 +377,8 @@ elif args.mode == 'plot':
 
             # Get maximum obsid of data and save it to a file so that we can
             # detect when plots need to be updated.
-            max_obsid = np.max([np.max(np.array(list(data[source].keys()),dtype=int))
-                                for source in data])
+            max_obsids = np.max([int(obsid) for source in data.keys()
+                                 for obsid in data[source].keys()])
             with open(os.path.join(outdir, 'max_obsid.dat'), 'w') as f:
                 f.write(str(max_obsid))
 
@@ -361,7 +388,7 @@ elif args.mode == 'plot':
         # latest value of timestamp in its filename. Based on the naming scheme
         # for directories, an alphanumeric sort should also produce
         # chronological ordering, so we'll rely on this assumption.
-        symlinkname = '{}/current_{}'.format(plotstimedir, timeinterval_stub)
+        symlinkname = '{}/current'.format(plotstimedir)
         if os.path.exists(symlinkname):
             os.unlink(symlinkname)
         dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
