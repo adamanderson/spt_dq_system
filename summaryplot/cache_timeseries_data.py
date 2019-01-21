@@ -100,7 +100,9 @@ dt_maxtime = datetime.datetime(year=int(args.max_time[:4]),
 
 date_boundaries = []
 next_day = dt_mintime
-if args.timeinterval == 'weekly' or args.timeinterval == 'monthly':
+
+if args.mode == 'skim' or (args.timeinterval == 'weekly' or
+                           args.timeinterval == 'monthly'):
     while next_day < dt_maxtime:
         date_boundaries.append(next_day)
 
