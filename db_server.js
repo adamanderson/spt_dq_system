@@ -80,18 +80,16 @@ app.use('/staticimg', express.static(config.static_plot_dir));
 app.get('/oldstaticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	filelist = fs.readdirSync(config.static_plot_dir);
+	filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
+							  req.query.interval + '/');
 	dirlist = [];
 	
 	// get the list of directories that contain plots
 	for (jfile=0; jfile<filelist.length; jfile++) {
-	    if (filelist[jfile].indexOf('cached_dq_plots') != -1) {
-		dirlist.push(filelist[jfile]);
-	    }
+		dirlist.push('plots/' + req.query.interval + '/' + filelist[jfile]);
 	}
-	
 	res.send(dirlist);
-    });
+});
 
 
 // logs messages along with a timestamp. keeps writesteam open
