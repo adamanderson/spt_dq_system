@@ -5,6 +5,7 @@ function open_table(table) {
 
     get_old_timeseries_plotdirs('weekly');
     get_old_timeseries_plotdirs('monthly');
+    get_old_timeseries_plotdirs('last_3days');
     
     if (table == "lastobs") {
 	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
