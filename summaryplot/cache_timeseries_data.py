@@ -80,7 +80,7 @@ if args.mode == 'plot' and \
    args.timeinterval != 'monthly' and \
    args.timeinterval != 'weekly':
     try:
-        float(args.timeinterval)
+        int(args.timeinterval)
     except:
         raise ValueError('Argument `timeinterval` is none of `monthly`, '
                          '`weekly` or a number of days.')
@@ -100,22 +100,25 @@ dt_maxtime = datetime.datetime(year=int(args.max_time[:4]),
 
 date_boundaries = []
 next_day = dt_mintime
-while next_day < dt_maxtime:
-    date_boundaries.append(next_day)
+if args.timeinterval == 'weekly' or args.timeinterval == 'monthly':
+    while next_day < dt_maxtime:
+        date_boundaries.append(next_day)
 
-    if args.mode == 'skim' or args.timeinterval == 'weekly': # weekly mode
-        next_day = next_day + datetime.timedelta(days = 7 - next_day.weekday())
+        if args.mode == 'skim' or args.timeinterval == 'weekly': # weekly mode
+            next_day = next_day + datetime.timedelta(days = 7 - next_day.weekday())
 
-    elif args.timeinterval == 'monthly': # monthly mode
-        try:
-            next_day = datetime.datetime(year=next_day.year,
-                                         month=next_day.month+1,
-                                         day=1)
-        except ValueError:
-            next_day = datetime.datetime(year=next_day.year+1,
-                                         month=1,
-                                         day=1)
-date_boundaries.append(dt_maxtime)
+        elif args.timeinterval == 'monthly': # monthly mode
+            try:
+                next_day = datetime.datetime(year=next_day.year,
+                                             month=next_day.month+1,
+                                             day=1)
+            except ValueError:
+                next_day = datetime.datetime(year=next_day.year+1,
+                                             month=1,
+                                             day=1)
+    date_boundaries.append(dt_maxtime)
+else:
+    date_boundaries = [dt_mintime, dt_maxtime]
 
 
 # SKIM MODE
@@ -263,7 +266,7 @@ elif args.mode == 'plot':
     if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
         timeinterval_stub = args.timeinterval
     else: # checked arguments at top so we know this is castable to float
-        timeinterval_stub = 'last_{}'.format(float(args.timeinterval))
+        timeinterval_stub = 'last_{}days'.format(int(args.timeinterval))
 
     plotsdir = os.path.join(args.outdir, 'plots')
     plotstimedir = os.path.join(args.outdir, 'plots', timeinterval_stub)
@@ -289,9 +292,11 @@ elif args.mode == 'plot':
         if args.timeinterval == 'weekly':
             outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
                                   mindate.strftime('%Y%m%d'))
-        if args.timeinterval == 'monthly':
+        elif args.timeinterval == 'monthly':
             outdir = os.path.join(args.outdir, 'plots', timeinterval_stub,
                                   mindate.strftime('%Y%m'))
+        else:
+            outdir = os.path.join(args.outdir, 'plots', timeinterval_stub)
         os.makedirs(outdir, exist_ok=True)
 
         # load data from this date range
@@ -392,5 +397,8 @@ elif args.mode == 'plot':
             os.unlink(symlinkname)
         dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
         latest_dirname = dirnames[-1]
-        os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
+        if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
+            os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
+        else:
+            os.symlink(plotstimedir, '{}/temp'.format(plotstimedir))
         os.rename('{}/temp'.format(plotstimedir), '{}/current'.format(plotstimedir))
