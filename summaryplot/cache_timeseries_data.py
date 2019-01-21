@@ -118,7 +118,8 @@ if args.timeinterval == 'weekly' or args.timeinterval == 'monthly':
                                              day=1)
     date_boundaries.append(dt_maxtime)
 else:
-    date_boundaries = [dt_mintime, dt_maxtime]
+    date_boundaries = [dt_maxtime - datetime.timedelta(days=int(args.timeinterval)),
+                       dt_maxtime]
 
 
 # SKIM MODE
