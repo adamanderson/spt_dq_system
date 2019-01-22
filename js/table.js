@@ -90,7 +90,8 @@ function make_t_table(select, baseUrl) {
           formatter:"tickCross"},
       {title:"Date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-    ]
+    ],
+	initialSort:[{column:"date", dir:"desc"}]
   });
 }
 
@@ -117,7 +118,8 @@ function make_aux_table(select) {
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
       {title:"Date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
-    ]
+	],
+	initialSort:[{column:"date", dir:"desc"}]
   });
 }
 
@@ -153,7 +155,8 @@ function make_autoproc_table(select) {
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
       {title:"Observation date (UTC)", field:"date", sorter:"date",
           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-    ]
+    ],
+	initialSort:[{column:"date", dir:"desc"}]
   });
 }
 
