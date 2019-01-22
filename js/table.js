@@ -69,7 +69,6 @@ function make_t_table(select, baseUrl) {
 			  max: $("#obsid-to").val()}},
 		  dbname: "scanify"},
     ajaxConfig:'GET',
-    ajaxSorting: true,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
@@ -105,7 +104,6 @@ function make_aux_table(select) {
 		      type: $("#auxtype-search").val()},
 		  dbname: "aux_transfer"},
     ajaxConfig:'GET',
-    ajaxSorting: true,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
@@ -136,7 +134,6 @@ function make_autoproc_table(select) {
 		      source: $("#obstype-search").val()},
 		  dbname: "autoproc"},
     ajaxConfig:'GET',
-    ajaxSorting: true,
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
