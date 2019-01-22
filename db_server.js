@@ -80,18 +80,21 @@ app.use('/staticimg', express.static(config.static_plot_dir));
 app.get('/oldstaticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	filelist = fs.readdirSync(config.static_plot_dir);
+	filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
+							  req.query.interval + '/');
 	dirlist = [];
 	
 	// get the list of directories that contain plots
-	for (jfile=0; jfile<filelist.length; jfile++) {
-	    if (filelist[jfile].indexOf('cached_dq_plots') != -1) {
-		dirlist.push(filelist[jfile]);
-	    }
+	if(req.query.interval == 'monthly' || req.query.interval == 'weekly') {
+		for (jfile=0; jfile<filelist.length; jfile++) {
+			dirlist.push('plots/' + req.query.interval + '/' + filelist[jfile]);
+		}
 	}
-	
+	else {
+		dirlist.push('plots/' + req.query.interval + '/current');
+	}
 	res.send(dirlist);
-    });
+});
 
 
 // logs messages along with a timestamp. keeps writesteam open
@@ -325,34 +328,31 @@ function parseSearch(query, searchJSON, tab) {
     return query;
 }
 
-
 app.listen(parseInt(config.port))
-
 
 
 // static timeseries plots update
 is_update_running = false;
 var child;
 function updateStaticPlots() {
-    args = ['-B',
-	    'cache_timeseries_data.py',
-	    'update',
-	    config.calib_data_dir,
-	    config.bolo_data_dir,
-	    config.static_plot_dir,
-	    '--min-time',
-	    config.min_time_static_plots];
+	args = ['-B', 'update_summary.py',
+			config.static_plot_dir,
+			config.calib_data_dir,
+			config.bolo_data_dir,
+			config.min_time_static_plots]
+
     if(is_update_running == false) {
-	is_update_running = true;
-	child = execFile(config.python_location, args, function(err) {
-		console.log(err);
-		console.log('Finished updating plots.');
-		is_update_running = false;
+		is_update_running = true;
+		// update data skims
+		child = execFile(config.python_location, args, function(err) {
+			console.log(err);
+			console.log('Finished updating data skims and plots.');
+			is_update_running = false;
 	    });
-	console.log('Updating plots...');
+		console.log('Updating plots...');
     }
     else {
-	console.log('Plot updater already running, so not spawning again!');
+		console.log('Plot updater already running, so not spawning again!');
     }
 }
 

@@ -82,8 +82,41 @@ function set_variable(variable, newVal)
 <table>
   <tr>
     <td valign="top">
-      <div id="datalist">
-      </div>
+	  <table>
+		<tr>
+		  <td>
+			<b>Last 3 days</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<div id="datalist_last_3days">
+			</div>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<b>Weekly</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<div id="datalist_weekly">
+			</div>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<b>Monthly</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<div id="datalist_monthly">
+			</div>
+		  </td>
+		</tr>
+	  </table>
     </td>
 
 <td>
@@ -96,17 +129,17 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_'+wafer+'.png'">
-        <img style="display:block;" width="100%" name='ts_median_cal_response' src='staticimg/current/median_cal_response_4Hz_all.png'>
+        <img style="display:block;" width="100%" name='ts_median_cal_response' src='staticimg/plots/weekly/current/median_cal_response_4Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_cal_sn' src='staticimg/current/median_cal_sn_4Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_cal_sn' src='staticimg/plots/weekly/current/median_cal_sn_4Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_alive_bolos_cal' src='staticimg/current/alive_bolos_cal_4Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_alive_bolos_cal' src='staticimg/plots/weekly/current/alive_bolos_cal_4Hz_all.png'>
       </a>
     </td>
   </tr>
@@ -121,17 +154,17 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_elnod_sn' src='staticimg/current/median_elnod_sn_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_elnod_sn' src='staticimg/plots/weekly/current/median_elnod_sn_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_elnod_iq' src='staticimg/current/median_elnod_iq_phase_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_elnod_iq' src='staticimg/plots/weekly/current/median_elnod_iq_phase_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_alive_bolos_elnod' src='staticimg/current/alive_bolos_elnod_all.png'>
+	<img style="display:block;" width="100%" name='ts_alive_bolos_elnod' src='staticimg/plots/weekly/current/alive_bolos_elnod_all.png'>
       </a>
     </td>
   </tr>
@@ -146,12 +179,12 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal' src='staticimg/current/median_rcw38_fluxcal_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal' src='staticimg/plots/weekly/current/median_rcw38_fluxcal_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_rcw38_intflux' src='staticimg/current/median_rcw38_intflux_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_rcw38_intflux' src='staticimg/plots/weekly/current/median_rcw38_intflux_all.png'>
       </a>
     </td>
     <td>
@@ -167,7 +200,7 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' src='staticimg/current/rcw38_sky_transmission_all.png'>
+	<img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' src='staticimg/plots/weekly/current/rcw38_sky_transmission_all.png'>
       </a>
     </td>
     <td>
@@ -186,12 +219,12 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal' src='staticimg/current/median_mat5a_fluxcal_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal' src='staticimg/plots/weekly/current/median_mat5a_fluxcal_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_mat5a_intflux' src='staticimg/current/median_mat5a_intflux_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_mat5a_intflux' src='staticimg/plots/weekly/current/median_mat5a_intflux_all.png'>
       </a>
     </td>
     <td>
@@ -207,7 +240,7 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' src='staticimg/current/mat5a_sky_transmission_all.png'>
+	<img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' src='staticimg/plots/weekly/current/mat5a_sky_transmission_all.png'>
       </a>
     </td>
     <td>
@@ -226,22 +259,22 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_net_01Hz_to_05Hz' src='staticimg/current/median_NET_0.1Hz_to_0.5Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_net_01Hz_to_05Hz' src='staticimg/plots/weekly/current/median_NET_0.1Hz_to_0.5Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_net_1Hz_to_2Hz' src='staticimg/current/median_NET_1.0Hz_to_2.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_net_1Hz_to_2Hz' src='staticimg/plots/weekly/current/median_NET_1.0Hz_to_2.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_net_3Hz_to_5Hz' src='staticimg/current/median_NET_3.0Hz_to_5.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_net_3Hz_to_5Hz' src='staticimg/plots/weekly/current/median_NET_3.0Hz_to_5.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_net_10Hz_to_15Hz' src='staticimg/current/median_NET_10.0Hz_to_15.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_net_10Hz_to_15Hz' src='staticimg/plots/weekly/current/median_NET_10.0Hz_to_15.0Hz_all.png'>
       </a>
     </td>
   </tr>
@@ -256,22 +289,22 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nep_01Hz_to_05Hz' src='staticimg/current/median_NEP_0.1Hz_to_0.5Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nep_01Hz_to_05Hz' src='staticimg/plots/weekly/current/median_NEP_0.1Hz_to_0.5Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nep_1Hz_to_2Hz' src='staticimg/current/median_NEP_1.0Hz_to_2.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nep_1Hz_to_2Hz' src='staticimg/plots/weekly/current/median_NEP_1.0Hz_to_2.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nep_3Hz_to_5Hz' src='staticimg/current/median_NEP_3.0Hz_to_5.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nep_3Hz_to_5Hz' src='staticimg/plots/weekly/current/median_NEP_3.0Hz_to_5.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nep_10Hz_to_15Hz' src='staticimg/current/median_NEP_10.0Hz_to_15.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nep_10Hz_to_15Hz' src='staticimg/plots/weekly/current/median_NEP_10.0Hz_to_15.0Hz_all.png'>
       </a>
     </td>
   </tr>
@@ -286,22 +319,22 @@ function set_variable(variable, newVal)
   <tr>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nei_01Hz_to_05Hz' src='staticimg/current/median_NEI_0.1Hz_to_0.5Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nei_01Hz_to_05Hz' src='staticimg/plots/weekly/current/median_NEI_0.1Hz_to_0.5Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nei_1Hz_to_2Hz' src='staticimg/current/median_NEI_1.0Hz_to_2.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nei_1Hz_to_2Hz' src='staticimg/plots/weekly/current/median_NEI_1.0Hz_to_2.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nei_3Hz_to_5Hz' src='staticimg/current/median_NEI_3.0Hz_to_5.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nei_3Hz_to_5Hz' src='staticimg/plots/weekly/current/median_NEI_3.0Hz_to_5.0Hz_all.png'>
       </a>
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_nei_10Hz_to_15Hz' src='staticimg/current/median_NEI_10.0Hz_to_15.0Hz_all.png'>
+	<img style="display:block;" width="100%" name='ts_median_nei_10Hz_to_15Hz' src='staticimg/plots/weekly/current/median_NEI_10.0Hz_to_15.0Hz_all.png'>
       </a>
     </td>
   </tr>

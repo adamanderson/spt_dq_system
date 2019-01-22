@@ -3,7 +3,9 @@ function open_table(table) {
     $('#lastobs').hide();
     $('#'+table).show();
 
-    get_old_timeseries_plotdirs();
+    get_old_timeseries_plotdirs('weekly');
+    get_old_timeseries_plotdirs('monthly');
+    get_old_timeseries_plotdirs('last_3days');
     
     if (table == "lastobs") {
 	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
@@ -15,17 +17,16 @@ function open_table(table) {
 }
 
 
-function get_old_timeseries_plotdirs() {
+function get_old_timeseries_plotdirs(interval) {
     // clear contents of the datalist div before we rebuild
-    $('#datalist').empty()
+    $('#datalist_'+interval).empty()
 
     // now rebuild the div
-    $.get('/oldstaticdirs', [], function(data, status) {
+    $.get('/oldstaticdirs', {interval:interval}, function(data, status) {
 	    data.reverse();
-		$('#datalist').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[0] + "')\";>current</button>");
 	    for (jdir=0; jdir<data.length; jdir++) {
-		datestring = data[jdir].split('_')[0];
-		$('#datalist').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
+			datestring = data[jdir].split('/')[2];
+			$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 	    }
 	});
 }
