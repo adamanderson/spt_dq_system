@@ -347,6 +347,7 @@ function updateStaticPlots() {
 		child = execFile(config.python_location, args, function(err) {
 			console.log(err);
 			console.log('Finished updating data skims and plots.');
+			is_update_running = false;
 	    });
 		console.log('Updating plots...');
     }
