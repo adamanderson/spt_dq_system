@@ -27,11 +27,11 @@ cd ..
 if [ "$1" == "pole" ];
 then
 	git clone sptviewer@anal:sptRepos/spt3g_software
-	eval `/software/clustertools/py3-v1/setup.sh`
+	eval `/software/clustertools/py3-v3/setup.sh`
 elif [ "$1" == "north" ];
 then
 	git clone https://github.com/SouthPoleTelescope/spt3g_software.git
-	eval `/cvmfs/spt.opensciencegrid.org/py3-v1/RHEL_7_x86_64/setup.sh`
+	eval `/cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/setup.sh`
 else
 	echo "Did not specify site argument of 'pole' or 'north'. "\
 	"Cannot clone spt3g_software."
