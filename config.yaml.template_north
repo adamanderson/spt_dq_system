@@ -17,6 +17,6 @@ static_plot_dir: /var/www/spt_dq_system/static_plots/
 calib_data_dir: /spt/user/production/
 bolo_data_dir: /spt/data/bolodata/downsampled/
 
-port: 8080
+port: 80
 
 min_time_static_plots: 20181220
