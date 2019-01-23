@@ -1,0 +1,12 @@
+[Unit]
+Description=SPT data quality website
+
+[Service]
+ExecStart=/bin/bash -c 'unset SPT3G_SOFTWARE_PATH; unset SPT3G_SOFTWARE_BUILD_PATH; unset SPT3G_BUILD_ROOT; unset PATH; unset LD_LIBRARY_PATH; unset PYTHONPATH; eval `/cvmfs/spt.opensciencegrid.org/py3-v3/setup.sh` /var/www/spt_dq_system/spt3g_software/build/env-shell.sh /var/www/spt_dq_system/db_server.js'
+Restart=always
+User=centos
+# Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
+WorkingDirectory=/var/www/spt_dq_system
+
+[Install]
+WantedBy=multi-user.target
