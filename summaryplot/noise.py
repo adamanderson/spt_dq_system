@@ -118,6 +118,7 @@ def plot_median_noise(data, noise_type, wafers, outdir):
             plt.xticks(rotation=25)
             plt.ylim(limits[nex_name])
             plt.legend()
+        plt.grid()
         plt.xlabel('observation time')
         plt.ylabel(labels[nex_name])
         plt.title('{} ({})'.format(noise_type.replace('_', ' '), wafer))
