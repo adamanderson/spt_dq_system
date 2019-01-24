@@ -26,7 +26,12 @@ function get_old_timeseries_plotdirs(interval) {
 	    data.reverse();
 	    for (jdir=0; jdir<data.length; jdir++) {
 			datestring = data[jdir].split('/')[2];
-			$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
+			if (interval == 'last_3days') {
+				$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>last 3 days</button>");
+			}
+			else if (datestring != 'current') {
+				$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
+			}
 	    }
 	});
 }
