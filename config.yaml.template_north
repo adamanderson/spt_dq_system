@@ -1,5 +1,8 @@
 site: north
 
+ld_library_path: /cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib:/cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib64:/cvmfs/spt.opensciencegrid.org/py3-v3/../distrib/OpenCL_RHEL_7_x86_64/lib/RHEL_7_x86_64
+pythonpath: /home/centos/spt_dq_system/spt3g_software/build/:/cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib/python3.7/site-packages
+
 scanify_db_path: /spt/data/transfer_database/scanify.db
 auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
 autoproc_db_path: /spt/user/production/autoproc.db
@@ -11,12 +14,12 @@ python_location: /cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/bin/python
 key_file:
 cert_file:
 
-plot_dir: /tmp/data_quality/
-static_plot_dir: /var/www/spt_dq_system/static_plots/
+plot_dir: /tmp/data_quality_dev/
+static_plot_dir: /home/centos/spt_dq_system/static_plots/
 
 calib_data_dir: /spt/user/production/
 bolo_data_dir: /spt/data/bolodata/downsampled/
 
-port: 80
+port: 8080
 
 min_time_static_plots: 20181220

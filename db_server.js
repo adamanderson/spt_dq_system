@@ -22,6 +22,17 @@ var serveIndex = require('serve-index')
 // load configuration info from yaml file
 config = yaml.load('config.yaml')
 
+// Hack environment variables if needed, in case they aren't pulled from the
+// parent bash shell. Seems to be due to a bug in node.js as far as I can tell,
+// although it would be nice to understand this better. It only seems to be a
+// problem on spt3g-dq.grid.uchicago.edu.
+if(config.ld_library_path != null) {
+	process.env.LD_LIBRARY_PATH = config.ld_library_path
+}
+if(config.pythonpath != null) {
+	process.env.PYTHONPATH = config.pythonpath
+}
+
 // setup express
 var app = express();
 app.use(bodyParser.json());
