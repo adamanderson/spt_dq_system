@@ -267,6 +267,10 @@ app.get('/sourcelist', function(req, res) {
 		    });
     });
 
+// get the site location: north/pole
+app.get('/site', function(req, res) {
+	res.send(config.site)
+});
 
 function parseSearch(query, searchJSON, tab) {
     // special option to just get the single most recent obserrvation

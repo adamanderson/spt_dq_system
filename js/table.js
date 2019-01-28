@@ -58,10 +58,32 @@ function open_tab(evt, tab) {
 }
 
 
-function make_t_table(select) {
-  //create Tabulator on DOM element with id "transfer_table"
+function make_t_table(select, site) {
+  // create Tabulator on DOM element with id "transfer_table"
+  var site, obsid_col;
+
+  jQuery.ajax({
+	url: '/site',
+    success: function(data) {
+	  site = data;
+	},
+    async: false
+  });
+
+  if(site == 'north') {
+	obsid_col = {title:"Observation ID", field:"observation", sorter:"number"};
+  }
+  else if(site == 'pole') {
+    obsid_col = {title:"Observation ID", field:"observation", sorter:"number",
+    			 formatter:"link",
+				 formatterParams:{labelField:"observation", target:"_blank",
+								  url:function(cell) {
+									  return window.location.href + cell.getData().log_file;
+								  }}};
+  }
+
   $("#scanify_table").tabulator({
-    ajaxURL:"/dbpage", //set the ajax URL
+    ajaxURL:"/dbpage", // set the ajax URL
 	      ajaxParams: {search: {source: $("#obstype-search").val(),
 		      date:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
@@ -73,13 +95,8 @@ function make_t_table(select) {
     index:"_id",
     height:"400px", // set height of table (optional)
 	layout:"fitColumns",
-    columns:[ //Define Table Columns
-	  {title:"Observation ID", field:"observation", sorter:"number",
-	   formatter:"link",
-	   formatterParams:{labelField:"observation", target:"_blank",
-						url:function(cell) {
-							return window.location.href + cell.getData().log_file;
-						}}},
+    columns:[ // define table columns
+	  obsid_col,
       {title:"Source", field:"source"},
 	  {title:"Scanify status", field:"status_scanify"},
       {title:"Transfer status<br>(fullrate)", field:"status_fullrate"},
@@ -98,7 +115,7 @@ function make_t_table(select) {
 function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
-    ajaxURL:"/dbpage", //set the ajax URL
+    ajaxURL:"/dbpage", // set the ajax URL
 	      ajaxParams: {search: {date:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
 		      filename: $("#file-search").val(),
@@ -109,7 +126,7 @@ function make_aux_table(select) {
     index:"_id",
     height:"400px", // set height of table (optional)
 	layout:"fitColumns",
-    columns:[ //Define Table Columns
+    columns:[ // define table columns
       {title:"Filename", field:"filename"},
       {title:"Type", field:"type"},
       {title:"Size", field:"size", sorter:"number"},
@@ -126,7 +143,7 @@ function make_aux_table(select) {
 function make_autoproc_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#autoproc_table").tabulator({
-    ajaxURL:"/dbpage", //set the ajax URL
+    ajaxURL:"/dbpage", // set the ajax URL
 	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
 			  max: $("#date-to").val()},
 		      date:  {min: $("#date-from").val(),
@@ -140,7 +157,7 @@ function make_autoproc_table(select) {
     index:"_id",
     height:"400px", // set height of table (optional)
 	layout:"fitColumns",
-    columns:[ //Define Table Columns
+    columns:[ // define table columns
 	  {title:"Source", field:"source", sorter:"number",
 	   formatter:function(cell, formatterParams, onRendered) {
 		   logFileName = cell.getData().log_file
