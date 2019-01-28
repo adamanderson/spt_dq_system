@@ -53,18 +53,19 @@ function set_variable(variable, newVal)
   window[variable]=newVal;
   update_figs();
 }
+
+function load_plots()
+{
+    get_old_timeseries_plotdirs('weekly');
+    get_old_timeseries_plotdirs('monthly');
+    get_old_timeseries_plotdirs('last_3days');
+}
 </script>
 
-
-<body onload="open_table('recent')">
-<div class="tab">
-  <button class="tablinks" onclick="open_table('recent')" id="recent-tab">Recent Data</button>
-  <!--<button class="tablinks" onclick="open_table('lastobs')" id="lastobs-tab">Last Observation</button>-->
-</div>
+<body onload="load_plots();">
 
 
-<div id='recent'>
-<h1>Data from Last Week</h1>
+<h1>Recent Data</h1>
 <button class="btn" onclick="set_variable('wafer','w172')">w172</button>
 <button class="btn" onclick="set_variable('wafer','w174')">w174</button>
 <button class="btn" onclick="set_variable('wafer','w176')">w176</button>
@@ -467,12 +468,8 @@ function set_variable(variable, newVal)
 </table>
 
 
-
 </td>
 </tr>
-</div>
-
-
 
 
 </body>

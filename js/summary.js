@@ -1,22 +1,3 @@
-function open_table(table) {
-    $('#recent').hide();
-    $('#lastobs').hide();
-    $('#'+table).show();
-
-    get_old_timeseries_plotdirs('weekly');
-    get_old_timeseries_plotdirs('monthly');
-    get_old_timeseries_plotdirs('last_3days');
-    
-    if (table == "lastobs") {
-	sources = {'calibrator': ['CalHistogram', 'CalSNHistogram', 'CalSNCDF'],
-		   'RCW38-pixelraster': ['OfflinePointingOffsets', 'RCW38FluxCalibration', 'RCW38IntegralFlux'],
-		   'RCW38': ['RCW38SkyTransmission'],
-		   'elnod': ['ElnodSNSlopesHistogram', 'ElnodIQPhaseAngle']};
-	load_db_for_latestobs(sources, load_plots, 'lastobs');
-    }
-}
-
-
 function get_old_timeseries_plotdirs(interval) {
     // clear contents of the datalist div before we rebuild
     $('#datalist_'+interval).empty()
