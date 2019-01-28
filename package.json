@@ -25,7 +25,6 @@
   },
   "homepage": "https://github.com/adamanderson/spt_dq_system#readme",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "express-basic-auth": "^1.1.1",
