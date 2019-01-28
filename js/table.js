@@ -58,7 +58,7 @@ function open_tab(evt, tab) {
 }
 
 
-function make_t_table(select, baseUrl) {
+function make_t_table(select) {
   //create Tabulator on DOM element with id "transfer_table"
   $("#scanify_table").tabulator({
     ajaxURL:"/dbpage", //set the ajax URL
