@@ -67,10 +67,12 @@ app.use('/js',express.static(__dirname + '/js'));
 app.use('/css',express.static(__dirname + '/css'));
 
 // file browser for log files
-app.use('/scanify_logs', express.static('/data/autoproc/logs/scanify/'),
-		serveIndex('/data/autoproc/logs/scanify/', {'icons': true}))
-app.use('/autoproc_logs', express.static('/poleanalysis/sptdaq/calresult/logs/'),
-		serveIndex('/poleanalysis/sptdaq/calresult/logs/', {'icons': true}))
+if(config.site == 'pole') {
+  app.use('/scanify_logs', express.static(config.scanify_log_path),
+  		  serveIndex(config.scanify_log_path, {'icons': true}));
+}
+app.use('/autoproc_logs', express.static(config.autoproc_log_path),
+		serveIndex(config.autoproc_log_path, {'icons': true}));
 
 // create directory in /tmp to store plots
 // TODO: don't cache every plot. Remove old plots from time to time
