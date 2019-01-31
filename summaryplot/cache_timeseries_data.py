@@ -261,12 +261,13 @@ if args.mode == 'skim':
                         if func_result:
                             data[source][obsid][quantity_name] = func_result
 
-                    rawpath = os.path.join(args.bolodatapath, source,
-                                           obsid, '0000.g3')
-                    for quantity_name in function_dict_raw[source]:
-                        func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
-                        if func_result:
-                            data[source][obsid][quantity_name] = func_result
+                    if source in function_dict_raw:
+                        rawpath = os.path.join(args.bolodatapath, source,
+                                               obsid, '0000.g3')
+                        for quantity_name in function_dict_raw[source]:
+                            func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
+                            if func_result:
+                                data[source][obsid][quantity_name] = func_result
 
         with open(datafile, 'wb') as f:
             pickle.dump(data, f)
