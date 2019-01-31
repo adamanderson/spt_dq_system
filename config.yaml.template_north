@@ -18,7 +18,7 @@ plot_dir: /tmp/data_quality_dev/
 static_plot_dir: /var/www/spt_dq_system/static_plots/
 
 calib_data_dir: /spt/user/production/
-bolo_data_dir: /spt/data/bolodata/downsampled/
+bolo_data_dir: /spt/data/bolodata/fullrate/
 
 port: 80
 
