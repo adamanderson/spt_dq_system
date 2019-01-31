@@ -5,6 +5,7 @@ from spt3g.std_processing import obsid_to_g3time
 from spt3g import core
 import datetime
 import matplotlib.dates as mdates
+import numpy as np
 
 
 def median_cal_sn_4Hz(frame, boloprops, selector_dict):
@@ -27,6 +28,21 @@ def alive_bolos_cal_4Hz(frame, boloprops, selector_dict):
     elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
     return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20)
+
+def mean_cal_elevation(rawpath, boloprops):
+    mean_el = np.nan
+    def get_el(frame):
+        if frame.type == core.G3FrameType.Scan and \
+           "OnlineBoresightEl" in frame.keys():
+            global mean_el
+            mean_el = np.mean(frame["OnlineBoresightEl"])
+
+    pipe = core.G3Pipeline()
+    pipe.Add(core.G3Reader, filename=rawpath)
+    pipe.Add(get_el)
+    pipe.Run()
+
+    return mean_el
 
 
 def plot_median_cal_sn_4Hz(data, wafers, outdir):

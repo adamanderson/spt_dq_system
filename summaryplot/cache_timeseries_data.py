@@ -216,6 +216,7 @@ if args.mode == 'skim':
                                            'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                            'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                            'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
+    function_dict_raw = {'calibrator':    {'elevation': mean_cal_elevation}}
 
     # loop over weeks
     for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
@@ -257,6 +258,13 @@ if args.mode == 'skim':
 
                     for quantity_name in function_dict[source]:
                         func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
+                        if func_result:
+                            data[source][obsid][quantity_name] = func_result
+
+                    rawpath = os.path.join(args.bolodatapath, source,
+                                           obsid, '0000.g3')
+                    for quantity_name in function_dict_raw[source]:
+                        func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
                         if func_result:
                             data[source][obsid][quantity_name] = func_result
 
