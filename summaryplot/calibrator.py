@@ -35,7 +35,7 @@ def mean_cal_elevation(rawpath, boloprops):
         if frame.type == core.G3FrameType.Scan and \
            "OnlineBoresightEl" in frame.keys():
             global mean_el
-            mean_el = np.mean(frame["OnlineBoresightEl"])
+            mean_el = np.mean(frame["OnlineBoresightEl"]) / core.G3Units.degree
 
     pipe = core.G3Pipeline()
     pipe.Add(core.G3Reader, filename=rawpath)
