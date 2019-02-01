@@ -14,9 +14,13 @@ wafer='all';
 weekdir='current'
 function update_figs()
 {
-  document["ts_median_cal_sn"].src                ='staticimg/'+weekdir+'/median_cal_sn_4Hz_'+wafer+'.png';
-  document["ts_median_cal_response"].src          ='staticimg/'+weekdir+'/median_cal_response_4Hz_'+wafer+'.png';
-  document["ts_alive_bolos_cal"].src              ='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_'+wafer+'.png';
+  document["ts_median_cal_sn_highel"].src         ='staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
+  document["ts_median_cal_response_highel"].src   ='staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
+  document["ts_alive_bolos_cal_highel"].src       ='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png';
+
+  document["ts_median_cal_sn_lowel"].src          ='staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png';
+  document["ts_median_cal_response_lowel"].src    ='staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
+  document["ts_alive_bolos_cal_lowel"].src        ='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
 
   document["ts_median_elnod_sn"].src              ='staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
   document["ts_median_elnod_iq"].src              ='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
@@ -124,23 +128,48 @@ function load_plots()
 <table style="table-layout:fixed">
   <tr>
     <td>
-      <h2>Calibrator</h2>
+      <h2>Calibrator (low elevation)</h2>
     </td>
   </tr>
   <tr>
     <td>
-      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_'+wafer+'.png'">
-        <img style="display:block;" width="100%" name='ts_median_cal_response' src='staticimg/plots/weekly/current/median_cal_response_4Hz_all.png'>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png'">
+        <img style="display:block;" width="100%" name='ts_median_cal_response_lowel' src='staticimg/plots/weekly/current/median_cal_response_4Hz_lowel_all.png'>
       </a>
     </td>
     <td>
-      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_median_cal_sn' src='staticimg/plots/weekly/current/median_cal_sn_4Hz_all.png'>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_median_cal_sn_lowel' src='staticimg/plots/weekly/current/median_cal_sn_4Hz_lowel_all.png'>
       </a>
     </td>
     <td>
-      <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_alive_bolos_cal' src='staticimg/plots/weekly/current/alive_bolos_cal_4Hz_all.png'>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_alive_bolos_cal_lowel' src='staticimg/plots/weekly/current/alive_bolos_cal_4Hz_lowel_all.png'>
+      </a>
+    </td>
+  </tr>
+</table>
+<br>
+<table style="table-layout:fixed">
+  <tr>
+    <td>
+      <h2>Calibrator (high elevation)</h2>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png'">
+        <img style="display:block;" width="100%" name='ts_median_cal_response_highel' src='staticimg/plots/weekly/current/median_cal_response_4Hz_highel_all.png'>
+      </a>
+    </td>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_median_cal_sn_highel' src='staticimg/plots/weekly/current/median_cal_sn_4Hz_highel_all.png'>
+      </a>
+    </td>
+    <td>
+      <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png'">
+	<img style="display:block;" width="100%" name='ts_alive_bolos_cal_highel' src='staticimg/plots/weekly/current/alive_bolos_cal_4Hz_highel_all.png'>
       </a>
     </td>
   </tr>
