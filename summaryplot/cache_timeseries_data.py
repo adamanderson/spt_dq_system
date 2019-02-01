@@ -260,7 +260,7 @@ if args.mode == 'skim':
                         func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
                         if func_result:
                             data[source][obsid][quantity_name] = func_result
-
+                    
                     if source in function_dict_raw:
                         rawpath = os.path.join(args.bolodatapath, source,
                                                obsid, '0000.g3')
@@ -366,9 +366,12 @@ elif args.mode == 'plot':
                        if int(obsid) >= min_obsid and int(obsid) <= max_obsid]
         if any([plot_obsid < oid for oid in data_obsids]):
             # create the plots
-            plot_median_cal_sn_4Hz(data, wafer_list, outdir)
-            plot_median_cal_response_4Hz(data, wafer_list, outdir)
-            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir)
+            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'low')
+            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'low')
+            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'low')
+            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'high')
+            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'high')
+            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'high')
             plot_median_elnod_sn(data, wafer_list, outdir)
             plot_median_elnod_iq_phase(data, wafer_list, outdir)
             plot_alive_bolos_elnod(data, wafer_list, outdir)
