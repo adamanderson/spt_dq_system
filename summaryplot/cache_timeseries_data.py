@@ -131,9 +131,9 @@ if args.mode == 'skim':
                      exist_ok=True)
 
     # delete the full output directory tree if we are in rebuild mode
-    if args.mode == 'rebuild' and os.path.exists(datadir):
-        shutil.rmtree(datadir)        
     datadir = os.path.join(args.outdir, 'data')
+    if args.action == 'rebuild' and os.path.exists(datadir):
+        shutil.rmtree(datadir)        
     os.makedirs(datadir, exist_ok=True)
 
     # functions that define splits
