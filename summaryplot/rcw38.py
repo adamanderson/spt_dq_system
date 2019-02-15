@@ -46,7 +46,14 @@ def rcw38_sky_transmission(frame, boloprops, selector_dict):
 
 
 def plot_median_rcw38_fluxcal(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = -100
+    ymax = 0
+    lines = {}
+    
     for wafer in wafers:
+        l_nan = None
+
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -62,19 +69,30 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_rcw38)],
-                     median_rcw38[np.isfinite(median_rcw38)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(median_rcw38)],
+                                    median_rcw38[np.isfinite(median_rcw38)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(median_rcw38[np.isfinite(median_rcw38)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(median_rcw38)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(median_rcw38)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([-100, 0])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median RCW38 flux calibration')
@@ -85,7 +103,14 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir):
 
 
 def plot_median_rcw38_intflux(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 2e-7
+    ymax = 7e-7
+    lines = {}
+    
     for wafer in wafers:   
+        l_nan = None
+
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -101,19 +126,30 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_rcw38)],
-                     median_rcw38[np.isfinite(median_rcw38)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(median_rcw38)],
+                                    median_rcw38[np.isfinite(median_rcw38)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(median_rcw38[np.isfinite(median_rcw38)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(median_rcw38)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(median_rcw38)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([2e-7, 7e-7])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median RCW38 integral flux')
@@ -124,7 +160,14 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
 
 
 def plot_rcw38_sky_transmission(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 0.85
+    ymax = 1.25
+    lines = {}
+    
     for wafer in wafers:   
+        l_nan = None
+
         obsids = [obsid for obsid in data['RCW38']]
         f = plt.figure(figsize=(8,6))
 
@@ -139,19 +182,30 @@ def plot_rcw38_sky_transmission(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(rcw38_skytrans)],
+            lines[band], = plt.plot(datenums[np.isfinite(rcw38_skytrans)],
                      rcw38_skytrans[np.isfinite(rcw38_skytrans)],
                      'o', label='{} GHz'.format(band))
 
-            if len(rcw38_skytrans[np.isfinite(rcw38_skytrans)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(rcw38_skytrans)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(rcw38_skytrans)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([0.85, 1.25])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('RCW38 sky transmission')

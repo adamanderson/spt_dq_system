@@ -39,7 +39,14 @@ def alive_bolos_elnod(frame, boloprops, selector_dict):
 
 
 def plot_median_elnod_sn(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 0
+    ymax = 2000
+    lines = {}
+
     for wafer in wafers:
+        l_nan = None
+    
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -52,19 +59,30 @@ def plot_median_elnod_sn(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_elnodSN)],
-                     median_elnodSN[np.isfinite(median_elnodSN)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(median_elnodSN)],
+                                    median_elnodSN[np.isfinite(median_elnodSN)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(median_elnodSN[np.isfinite(median_elnodSN)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(median_elnodSN)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(median_elnodSN)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([0, 2000])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median elnod S/N')
@@ -75,7 +93,14 @@ def plot_median_elnod_sn(data, wafers, outdir):
 
 
 def plot_median_elnod_iq_phase(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = -20
+    ymax = 20
+    lines = {}
+    
     for wafer in wafers:
+        l_nan = None
+
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -93,19 +118,30 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_elnod_iq)],
-                     median_elnod_iq[np.isfinite(median_elnod_iq)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(median_elnod_iq)],
+                                    median_elnod_iq[np.isfinite(median_elnod_iq)],
+                                    'o', label='{} GHz'.format(band))
+            
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(median_elnod_iq)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
 
-            if len(median_elnod_iq[np.isfinite(median_elnod_iq)])>0:
+            if len(median_elnod_iq)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([-20, 20])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median elnod IQ phase [deg]')
@@ -116,7 +152,15 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
 
 
 def plot_alive_bolos_elnod(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 0
+    ymax = 600
+    ymax_all = 6000
+    lines = {}
+
     for wafer in wafers:
+        l_nan = None
+
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -129,11 +173,20 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(alive_bolos_elnod)],
-                     alive_bolos_elnod[np.isfinite(alive_bolos_elnod)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(alive_bolos_elnod)],
+                                    alive_bolos_elnod[np.isfinite(alive_bolos_elnod)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(alive_bolos_elnod[np.isfinite(alive_bolos_elnod)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(alive_bolos_elnod)]
+            if wafer == 'all':
+                for date in nan_dates:
+                    l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            else:
+                for date in nan_dates:
+                    l_nan, = plt.plot([date, date], [ymin, ymax_all], 'r--', linewidth=0.5)
+
+            if len(alive_bolos_elnod)>0:
                 is_empty = False
 
         if is_empty == False:
@@ -141,10 +194,15 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
             if wafer == 'all':
-                plt.ylim([0, 6000])
+                plt.ylim([ymin, ymax_all])
             else:
-                plt.ylim([0, 600])
-            plt.legend()
+                plt.ylim([ymin, ymax_all])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('number of alive bolos')

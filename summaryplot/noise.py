@@ -79,6 +79,9 @@ def median_net_10Hz_to_15Hz(frame, boloprops, selector_dict):
 
 
 def plot_median_noise(data, noise_type, wafers, outdir):
+    # min/max for plotting purposes
+    lines = {}
+    
     nex_name = noise_type.split('_')[0]
     labels = {'NEI': 'NEI [pA / sqrt(Hz)]',
               'NET': 'NET [uK rtsec]',
@@ -91,6 +94,8 @@ def plot_median_noise(data, noise_type, wafers, outdir):
               'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
 
     for wafer in wafers: 
+        l_nan = None
+
         obsids = [obsid for obsid in data['noise']]
         f = plt.figure(figsize=(8,6))
 
@@ -105,11 +110,18 @@ def plot_median_noise(data, noise_type, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(noise)],
-                     noise[np.isfinite(noise)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(noise)],
+                                    noise[np.isfinite(noise)],
+                                    'o', label='{} GHz'.format(band))
+            
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(noise)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date],
+                                  limits[nex_name],
+                                  'r--', linewidth=0.5)
 
-            if len(noise[np.isfinite(noise)])>0:
+            if len(noise)>0:
                 is_empty = False
 
         if is_empty == False:
@@ -117,7 +129,13 @@ def plot_median_noise(data, noise_type, wafers, outdir):
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
             plt.ylim(limits[nex_name])
-            plt.legend()
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel(labels[nex_name])

@@ -46,7 +46,14 @@ def mat5a_sky_transmission(frame, boloprops, selector_dict):
 
 
 def plot_median_mat5a_fluxcal(data, wafers, outdir):
+    # min/max for plotting purposes 
+    ymin = -100
+    ymax = 0
+    lines = {}
+    
     for wafer in wafers:
+        l_nan = None
+
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -62,19 +69,30 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_mat5a)],
-                     median_mat5a[np.isfinite(median_mat5a)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(median_mat5a)],
+                                    median_mat5a[np.isfinite(median_mat5a)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(median_mat5a[np.isfinite(median_mat5a)])>0:
+            # plot light dashed lines for NaNs                                         
+            nan_dates = datenums[~np.isfinite(median_mat5a)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            
+            if len(median_mat5a)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([-100, 0])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median MAT5A flux calibration')
@@ -84,7 +102,14 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir):
         plt.close()
 
 def plot_median_mat5a_intflux(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 2e-7
+    ymax = 7e-7
+    lines = {}
+    
     for wafer in wafers:   
+        l_nan = None
+
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -100,19 +125,30 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(median_mat5a)],
+            lines[band], = plt.plot(datenums[np.isfinite(median_mat5a)],
                      median_mat5a[np.isfinite(median_mat5a)],
                      'o', label='{} GHz'.format(band))
 
-            if len(median_mat5a[np.isfinite(median_mat5a)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(median_mat5a)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(median_mat5a)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([2e-7, 7e-7])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median MAT5A integral flux')
@@ -122,7 +158,14 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
         plt.close()
 
 def plot_mat5a_sky_transmission(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 0.85
+    ymax = 1.25
+    lines = {}
+    
     for wafer in wafers:   
+        l_nan = None
+
         obsids = [obsid for obsid in data['MAT5A']]
         f = plt.figure(figsize=(8,6))
 
@@ -137,19 +180,29 @@ def plot_mat5a_sky_transmission(data, wafers, outdir):
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             datenums = mdates.date2num(dts)
 
-            plt.plot(datenums[np.isfinite(mat5a_skytrans)],
-                     mat5a_skytrans[np.isfinite(mat5a_skytrans)],
-                     'o', label='{} GHz'.format(band))
+            lines[band], = plt.plot(datenums[np.isfinite(mat5a_skytrans)],
+                                    mat5a_skytrans[np.isfinite(mat5a_skytrans)],
+                                    'o', label='{} GHz'.format(band))
 
-            if len(mat5a_skytrans[np.isfinite(mat5a_skytrans)])>0:
+            # plot light dashed lines for NaNs
+            nan_dates = datenums[~np.isfinite(mat5a_skytrans)]
+            for date in nan_dates:
+                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+
+            if len(mat5a_skytrans)>0:
                 is_empty = False
 
         if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([0.85, 1.25])
-            plt.legend()
+            plt.ylim([ymin, ymax])
+            if l_nan != None:
+                plt.legend((lines[90], lines[150], lines[220], l_nan),
+                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
+            else:
+                plt.legend((lines[90], lines[150], lines[220]),
+                           ('90 GHz', '150 GHz', '220 GHz'))
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('MAT5A sky transmission')
