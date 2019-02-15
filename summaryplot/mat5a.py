@@ -159,8 +159,8 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
 
 def plot_mat5a_sky_transmission(data, wafers, outdir):
     # min/max for plotting purposes
-    ymin = 0.85
-    ymax = 1.25
+    ymin = 0.80
+    ymax = 1.10
     lines = {}
     
     for wafer in wafers:   

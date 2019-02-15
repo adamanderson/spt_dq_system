@@ -161,8 +161,8 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
 
 def plot_rcw38_sky_transmission(data, wafers, outdir):
     # min/max for plotting purposes
-    ymin = 0.85
-    ymax = 1.25
+    ymin = 0.80
+    ymax = 1.10
     lines = {}
     
     for wafer in wafers:   
