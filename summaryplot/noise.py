@@ -5,6 +5,8 @@ from spt3g import core
 from spt3g.std_processing import obsid_to_g3time
 import matplotlib.dates as mdates
 import datetime
+from plot_util import plot_timeseries
+
 
 def median_nei_01Hz_to_05Hz(frame, boloprops, selector_dict):
     if 'NEI_0.1Hz_to_0.5Hz' not in frame.keys():
@@ -108,18 +110,7 @@ def plot_median_noise(data, noise_type, wafers, outdir):
                           for obsid in obsids
                           if noise_type in data['noise'][obsid].keys()]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(noise)],
-                                    noise[np.isfinite(noise)],
-                                    'o', label='{} GHz'.format(band))
-            
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(noise)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date],
-                                  limits[nex_name],
-                                  'r--', linewidth=0.5)
+            plot_timeseries(dts, noise, limits[nex_name], band)
 
             if len(noise)>0:
                 is_empty = False
@@ -128,18 +119,12 @@ def plot_median_noise(data, noise_type, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim(limits[nex_name])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel(labels[nex_name])
         plt.title('{} ({})'.format(noise_type.replace('_', ' '), wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_{}_{}.png'.format(outdir, noise_type, wafer))
         plt.close()

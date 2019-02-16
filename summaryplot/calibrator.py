@@ -6,6 +6,7 @@ from spt3g import core
 import datetime
 import matplotlib.dates as mdates
 import numpy as np
+from plot_util import plot_timeseries
 
 
 def median_cal_sn_4Hz(frame, boloprops, selector_dict):
@@ -52,6 +53,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
     ymin = 0
     ymax = 400
     lines = {}
+    colors = {90: 'C0', 150: 'C1', 220: 'C2'}
     
     for wafer in wafers:
         l_nan = None
@@ -86,16 +88,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<72]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(median_calSN)],
-                                    median_calSN[np.isfinite(median_calSN)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(median_calSN)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, median_calSN, [ymin, ymax], band)
 
             if len(median_calSN)>0:
                 is_empty = False
@@ -104,13 +97,6 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
@@ -121,6 +107,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
             el_title = '56 < el < 72'
         plt.title('4.0 Hz calibrator S/N ({})\n{}'
                   .format(wafer, el_title))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_cal_sn_4Hz_{}el_{}.png'.format(outdir, el, wafer))
         plt.close()
@@ -132,6 +119,8 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
     ymax = 5
     lines = {}
     
+    colors = {90: 'C0', 150: 'C1', 220: 'C2'}
+
     for wafer in wafers:
         l_nan = None
 
@@ -165,19 +154,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<72]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(median_cal)],
-                                    1e15*median_cal[np.isfinite(median_cal)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(median_cal)]
-            if len(nan_dates) > 0:
-                print(wafer)
-                print(nan_dates)
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, median_cal, [ymin, ymax], band)
 
             if len(median_cal)>0:
                 is_empty = False
@@ -187,12 +164,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
             plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median calibrator response [fW]')
@@ -202,6 +174,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
             el_title = '56 < el < 72'
         plt.title('4.0 Hz calibrator response ({})\n{}'.
                   format(wafer, el_title))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_cal_response_4Hz_{}el_{}.png'.format(outdir, el, wafer))
         plt.close()
@@ -246,20 +219,10 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']>56 and \
                               data['calibrator'][obsid]['elevation']<72]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(n_alive_bolos)],
-                                    n_alive_bolos[np.isfinite(n_alive_bolos)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(n_alive_bolos)]
             if wafer == 'all':
-                for date in nan_dates:
-                    l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+                plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
             else:
-                for date in nan_dates:
-                    l_nan, = plt.plot([date, date], [ymin, ymax_all], 'r--', linewidth=0.5)
+                plot_timeseries(dts, n_alive_bolos, [ymin, ymax], band)
 
             if len(n_alive_bolos)>0:
                 is_empty = False
@@ -268,16 +231,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            if wafer == 'all':
-                plt.ylim([0, ymax_all])
-            else:
-                plt.ylim([0, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
+            
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('number of alive bolos')
@@ -287,6 +241,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
             el_title = '56 < el < 72'
         plt.title('Number of bolos with calibrator S/N > 20 at 4.0 Hz ({})\n{}'
                   .format(wafer, el_title))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/alive_bolos_cal_4Hz_{}el_{}.png'.format(outdir, el, wafer))
         plt.close()

@@ -7,6 +7,7 @@ from spt3g import core
 from spt3g.std_processing import obsid_to_g3time
 import datetime
 import matplotlib.dates as mdates
+from plot_util import plot_timeseries
 
 
 def median_mat5a_fluxcal(frame, boloprops, selector_dict):
@@ -67,17 +68,8 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir):
                           for obsid in obsids
                           if 'MedianMAT5AFluxCalibration' in data['MAT5A-pixelraster'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
+            plot_timeseries(dts, median_mat5a, [ymin, ymax], band)
 
-            lines[band], = plt.plot(datenums[np.isfinite(median_mat5a)],
-                                    median_mat5a[np.isfinite(median_mat5a)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs                                         
-            nan_dates = datenums[~np.isfinite(median_mat5a)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
-            
             if len(median_mat5a)>0:
                 is_empty = False
 
@@ -85,18 +77,12 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median MAT5A flux calibration')
         plt.title('MAT5A Flux Calibration ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_mat5a_fluxcal_{}.png'.format(outdir, wafer))
         plt.close()
@@ -123,16 +109,7 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
                           for obsid in obsids
                           if 'MedianMAT5AIntegralFlux' in data['MAT5A-pixelraster'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(median_mat5a)],
-                     median_mat5a[np.isfinite(median_mat5a)],
-                     'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(median_mat5a)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, median_mat5a, [ymin, ymax], band)
 
             if len(median_mat5a)>0:
                 is_empty = False
@@ -141,21 +118,16 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median MAT5A integral flux')
         plt.title('MAT5A Integral Flux ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_mat5a_intflux_{}.png'.format(outdir, wafer))
         plt.close()
+
 
 def plot_mat5a_sky_transmission(data, wafers, outdir):
     # min/max for plotting purposes
@@ -178,16 +150,7 @@ def plot_mat5a_sky_transmission(data, wafers, outdir):
                           for obsid in obsids
                           if 'MAT5ASkyTransmission' in data['MAT5A'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(mat5a_skytrans)],
-                                    mat5a_skytrans[np.isfinite(mat5a_skytrans)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(mat5a_skytrans)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, mat5a_skytrans, [ymin, ymax], band)
 
             if len(mat5a_skytrans)>0:
                 is_empty = False
@@ -196,17 +159,12 @@ def plot_mat5a_sky_transmission(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('MAT5A sky transmission')
         plt.title('MAT5A Sky Transmission ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/mat5a_sky_transmission_{}.png'.format(outdir, wafer))
         plt.close()

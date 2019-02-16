@@ -6,6 +6,7 @@ from spt3g import core
 from spt3g.std_processing import obsid_to_g3time
 import datetime
 import matplotlib.dates as mdates
+from plot_util import plot_timeseries
 
 
 def median_elnod_sn_slope(frame, boloprops, selector_dict):
@@ -57,16 +58,7 @@ def plot_median_elnod_sn(data, wafers, outdir):
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(median_elnodSN)],
-                                    median_elnodSN[np.isfinite(median_elnodSN)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(median_elnodSN)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, median_elnodSN, [ymin, ymax], band)
 
             if len(median_elnodSN)>0:
                 is_empty = False
@@ -75,18 +67,12 @@ def plot_median_elnod_sn(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median elnod S/N')
         plt.title('Elnod S/N ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_elnod_sn_{}.png'.format(outdir, wafer))
         plt.close()
@@ -116,16 +102,7 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
                           if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
                           data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(median_elnod_iq)],
-                                    median_elnod_iq[np.isfinite(median_elnod_iq)],
-                                    'o', label='{} GHz'.format(band))
-            
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(median_elnod_iq)]
-            for date in nan_dates:
-                l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+            plot_timeseries(dts, median_elnod_iq, [ymin, ymax], band)
 
             if len(median_elnod_iq)>0:
                 is_empty = False
@@ -135,17 +112,12 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
             plt.ylim([ymin, ymax])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
 
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('median elnod IQ phase [deg]')
         plt.title('Elnod IQ phase angle ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/median_elnod_iq_phase_{}.png'.format(outdir, wafer))
         plt.close()
@@ -171,20 +143,10 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            datenums = mdates.date2num(dts)
-
-            lines[band], = plt.plot(datenums[np.isfinite(alive_bolos_elnod)],
-                                    alive_bolos_elnod[np.isfinite(alive_bolos_elnod)],
-                                    'o', label='{} GHz'.format(band))
-
-            # plot light dashed lines for NaNs
-            nan_dates = datenums[~np.isfinite(alive_bolos_elnod)]
             if wafer == 'all':
-                for date in nan_dates:
-                    l_nan, = plt.plot([date, date], [ymin, ymax], 'r--', linewidth=0.5)
+                plot_timeseries(dts, alive_bolos_elnod, [ymin, ymax_all], band)
             else:
-                for date in nan_dates:
-                    l_nan, = plt.plot([date, date], [ymin, ymax_all], 'r--', linewidth=0.5)
+                plot_timeseries(dts, alive_bolos_elnod, [ymin, ymax], band)
 
             if len(alive_bolos_elnod)>0:
                 is_empty = False
@@ -193,20 +155,12 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            if wafer == 'all':
-                plt.ylim([ymin, ymax_all])
-            else:
-                plt.ylim([ymin, ymax_all])
-            if l_nan != None:
-                plt.legend((lines[90], lines[150], lines[220], l_nan),
-                           ('90 GHz', '150 GHz', '220 GHz', 'NaNs'))
-            else:
-                plt.legend((lines[90], lines[150], lines[220]),
-                           ('90 GHz', '150 GHz', '220 GHz'))
+
         plt.grid()
         plt.xlabel('observation time')
         plt.ylabel('number of alive bolos')
         plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
+        plt.legend()
         plt.tight_layout()
         plt.savefig('{}/alive_bolos_elnod_{}.png'.format(outdir, wafer))
         plt.close()
