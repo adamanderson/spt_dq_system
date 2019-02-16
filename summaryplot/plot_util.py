@@ -30,7 +30,8 @@ def plot_timeseries(datetimes, data, ylims, band):
               (data[np.isfinite(data)] <= ylims[1])
     plt.plot(datenums[np.isfinite(data)][inrange],
              data[np.isfinite(data)][inrange],
-             'o', label='{} GHz'.format(band), color=colors[band])
+             'o', label='{} GHz'.format(band), color=colors[band],
+             alpha=0.35)
     
     # plot out-of-range data                                                                                           
     above_range = (data[np.isfinite(data)] > ylims[1])
