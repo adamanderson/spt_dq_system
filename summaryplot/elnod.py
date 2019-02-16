@@ -111,7 +111,6 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
 
         plt.grid()
         plt.xlabel('observation time')

@@ -163,7 +163,6 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
-            plt.ylim([ymin, ymax])
 
         plt.grid()
         plt.xlabel('observation time')
