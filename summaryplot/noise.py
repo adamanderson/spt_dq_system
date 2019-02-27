@@ -96,8 +96,6 @@ def plot_median_noise(data, noise_type, wafers, outdir):
               'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
 
     for wafer in wafers: 
-        l_nan = None
-
         obsids = [obsid for obsid in data['noise']]
         f = plt.figure(figsize=(8,6))
 

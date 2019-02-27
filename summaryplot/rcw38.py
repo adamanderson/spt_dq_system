@@ -53,8 +53,6 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -95,8 +93,6 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:   
-        l_nan = None
-
         obsids = [obsid for obsid in data['RCW38-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -137,8 +133,6 @@ def plot_rcw38_sky_transmission(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:   
-        l_nan = None
-
         obsids = [obsid for obsid in data['RCW38']]
         f = plt.figure(figsize=(8,6))
 

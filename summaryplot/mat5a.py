@@ -53,8 +53,6 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -94,8 +92,6 @@ def plot_median_mat5a_intflux(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:   
-        l_nan = None
-
         obsids = [obsid for obsid in data['MAT5A-pixelraster']]
         f = plt.figure(figsize=(8,6))
 
@@ -136,8 +132,6 @@ def plot_mat5a_sky_transmission(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:   
-        l_nan = None
-
         obsids = [obsid for obsid in data['MAT5A']]
         f = plt.figure(figsize=(8,6))
 

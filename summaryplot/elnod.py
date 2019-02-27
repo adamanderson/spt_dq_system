@@ -46,8 +46,6 @@ def plot_median_elnod_sn(data, wafers, outdir):
     lines = {}
 
     for wafer in wafers:
-        l_nan = None
-    
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -85,8 +83,6 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
     lines = {}
     
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 
@@ -130,8 +126,6 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
     lines = {}
 
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['elnod']]
         f = plt.figure(figsize=(8,6))
 

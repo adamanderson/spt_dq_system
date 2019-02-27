@@ -56,8 +56,6 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
     colors = {90: 'C0', 150: 'C1', 220: 'C2'}
     
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['calibrator']
                   if 'MedianCalSN_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
@@ -122,8 +120,6 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
     colors = {90: 'C0', 150: 'C1', 220: 'C2'}
 
     for wafer in wafers:
-        l_nan = None
-
         obsids = [obsid for obsid in data['calibrator']
                   if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
@@ -187,8 +183,6 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
     lines = {}
     
     for wafer in wafers:
-        l_nan = None
-        
         obsids = [obsid for obsid in data['calibrator']
                   if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
