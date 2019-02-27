@@ -57,14 +57,15 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
     
     for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
-                  if 'MedianCalSN_4Hz' in data['calibrator'][obsid]]
+                  if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
+                  'elevation' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
 
         is_empty = True
         for band in [90, 150, 220]:
             if el == 'low':
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
-                                         for obsid in data['calibrator']
+                                         for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
                                          data['calibrator'][obsid]['elevation']>40 and \
                                          data['calibrator'][obsid]['elevation']<56])                
@@ -75,7 +76,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
-                                         for obsid in data['calibrator']
+                                         for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
                                          data['calibrator'][obsid]['elevation']>56 and \
                                          data['calibrator'][obsid]['elevation']<72])                
@@ -121,14 +122,15 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
 
     for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
-                  if 'MedianCalResponse_4Hz' in data['calibrator'][obsid]]
+                  if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
+                  'elevation' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
 
         is_empty = True
         for band in [90, 150, 220]:
             if el == 'low':
                 median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
-                                       for obsid in data['calibrator']
+                                       for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
                                        data['calibrator'][obsid]['elevation']>40 and \
                                        data['calibrator'][obsid]['elevation']<56])                
@@ -139,7 +141,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
-                                       for obsid in data['calibrator']
+                                       for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
                                        data['calibrator'][obsid]['elevation']>56 and \
                                        data['calibrator'][obsid]['elevation']<72])                
@@ -184,14 +186,15 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
     
     for wafer in wafers:
         obsids = [obsid for obsid in data['calibrator']
-                  if 'AliveBolosCal_4Hz' in data['calibrator'][obsid]]
+                  if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
+                  'elevation' in data['calibrator'][obsid]]
         f = plt.figure(figsize=(8,6))
 
         is_empty = True
         for band in [90, 150, 220]:
             if el == 'low':
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
-                                          for obsid in data['calibrator']
+                                          for obsid in obsids
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
                                           data['calibrator'][obsid]['elevation']>40 and \
                                           data['calibrator'][obsid]['elevation']<56])
@@ -202,7 +205,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
-                                          for obsid in data['calibrator']
+                                          for obsid in obsids
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
                                           data['calibrator'][obsid]['elevation']>56 and \
                                           data['calibrator'][obsid]['elevation']<72])
