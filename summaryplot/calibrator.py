@@ -68,7 +68,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
                                          for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
                                          data['calibrator'][obsid]['elevation']>40 and \
-                                         data['calibrator'][obsid]['elevation']<56])                
+                                         data['calibrator'][obsid]['elevation']<56])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
@@ -129,7 +129,8 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
         is_empty = True
         for band in [90, 150, 220]:
             if el == 'low':
-                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
+                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band] / \
+                                       (core.G3Units.watt*1e-15)  
                                        for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
                                        data['calibrator'][obsid]['elevation']>40 and \
@@ -140,7 +141,8 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']>40 and \
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
-                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band]
+                median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band] / \
+                                       (core.G3Units.watt*1e-15)
                                        for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
                                        data['calibrator'][obsid]['elevation']>56 and \
