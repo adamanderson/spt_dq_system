@@ -168,3 +168,49 @@ def plot_mat5a_sky_transmission(data, wafers, outdir):
         plt.tight_layout()
         plt.savefig('{}/mat5a_sky_transmission_{}.png'.format(outdir, wafer))
         plt.close()
+
+
+def plot_alive_bolos_mat5a(data, wafers, outdir):
+    # min/max for plotting purposes
+    ymin = 0
+    ymax = 600
+    ymax_all = 6000
+    lines = {}
+
+    for wafer in wafers:
+        obsids = [obsid for obsid in data['MAT5A']
+                  if 'AliveBolosMAT5A' in data['MAT5A'][obsid]]
+        f = plt.figure(figsize=(8,6))
+
+        is_empty = True
+        for band in [90, 150, 220]:
+            n_alive_bolos = np.array([data['MAT5A'][obsid]['AliveBolosMAT5A'][wafer][band]
+                                      for obsid in obsids
+                                      if 'AliveBolosMAT5A' in data['MAT5A'][obsid]])
+            timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
+                          for obsid in obsids
+                          if 'AliveBolosMAT5A' in data['MAT5A'][obsid]]
+
+            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            if wafer == 'all':
+            plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
+            else:
+                plot_timeseries(dts, n_alive_bolos, [ymin, ymax], band)
+
+            if len(n_alive_bolos)>0:
+                is_empty = False
+
+                if is_empty == False:
+            xfmt = mdates.DateFormatter('%m-%d %H:%M')
+            plt.gca().xaxis.set_major_formatter(xfmt)
+            plt.xticks(rotation=25)
+
+        plt.grid()
+        plt.xlabel('observation time')
+        plt.ylabel('number of alive bolos')
+        plt.title('Number of bolos with MAT5A flux calibration < 0 ({})'
+                  .format(wafer))
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('{}/alive_bolos_mat5a_{}.png'.format(outdir, wafer))
+        plt.close()
