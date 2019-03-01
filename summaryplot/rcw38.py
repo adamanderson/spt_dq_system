@@ -180,18 +180,18 @@ def plot_alive_bolos_rcw38(data, wafers, outdir):
     lines = {}
 
     for wafer in wafers:
-        obsids = [obsid for obsid in data['RCW38']
-                  if 'AliveBolosRCW38' in data['RCW38'][obsid]]
+        obsids = [obsid for obsid in data['RCW38-pixelraster']
+                  if 'AliveBolosRCW38' in data['RCW38-pixelraster'][obsid]]
         f = plt.figure(figsize=(8,6))
 
         is_empty = True
         for band in [90, 150, 220]:
-            n_alive_bolos = np.array([data['RCW38'][obsid]['AliveBolosRCW38'][wafer][band]
+            n_alive_bolos = np.array([data['RCW38-pixelraster'][obsid]['AliveBolosRCW38'][wafer][band]
                                       for obsid in obsids
-                                      if 'AliveBolosRCW38' in data['RCW38'][obsid]])
+                                      if 'AliveBolosRCW38' in data['RCW38-pixelraster'][obsid]])
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
-                          if 'AliveBolosRCW38' in data['RCW38'][obsid]]
+                          if 'AliveBolosRCW38' in data['RCW38-pixelraster'][obsid]]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':

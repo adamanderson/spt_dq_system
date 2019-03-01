@@ -178,29 +178,29 @@ def plot_alive_bolos_mat5a(data, wafers, outdir):
     lines = {}
 
     for wafer in wafers:
-        obsids = [obsid for obsid in data['MAT5A']
-                  if 'AliveBolosMAT5A' in data['MAT5A'][obsid]]
+        obsids = [obsid for obsid in data['MAT5A-pixelraster']
+                  if 'AliveBolosMAT5A' in data['MAT5A-pixelraster'][obsid]]
         f = plt.figure(figsize=(8,6))
 
         is_empty = True
         for band in [90, 150, 220]:
-            n_alive_bolos = np.array([data['MAT5A'][obsid]['AliveBolosMAT5A'][wafer][band]
+            n_alive_bolos = np.array([data['MAT5A-pixelraster'][obsid]['AliveBolosMAT5A'][wafer][band]
                                       for obsid in obsids
-                                      if 'AliveBolosMAT5A' in data['MAT5A'][obsid]])
+                                      if 'AliveBolosMAT5A' in data['MAT5A-pixelraster'][obsid]])
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
-                          if 'AliveBolosMAT5A' in data['MAT5A'][obsid]]
+                          if 'AliveBolosMAT5A' in data['MAT5A-pixelraster'][obsid]]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
-            plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
+                plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
             else:
                 plot_timeseries(dts, n_alive_bolos, [ymin, ymax], band)
 
             if len(n_alive_bolos)>0:
                 is_empty = False
 
-                if is_empty == False:
+        if is_empty == False:
             xfmt = mdates.DateFormatter('%m-%d %H:%M')
             plt.gca().xaxis.set_major_formatter(xfmt)
             plt.xticks(rotation=25)
