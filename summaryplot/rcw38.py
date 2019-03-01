@@ -8,6 +8,13 @@ from spt3g.std_processing import obsid_to_g3time
 import datetime
 import matplotlib.dates as mdates
 from plot_util import plot_timeseries
+import operator
+
+
+def alive_bolos_rcw38_fluxcal(frame, boloprops, selector_dict):
+    if 'RCW38FluxCalibration' not in frame.keys():
+        return None
+    return compute_nalive(frame, 'RCW38FluxCalibration', boloprops, selector_dict, 0, operator.lt)
 
 
 def median_rcw38_fluxcal(frame, boloprops, selector_dict):

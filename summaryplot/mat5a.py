@@ -10,6 +10,12 @@ import matplotlib.dates as mdates
 from plot_util import plot_timeseries
 
 
+def alive_bolos_mat5a_fluxcal(frame, boloprops, selector_dict):
+    if 'MAT5AFluxCalibration' not in frame.keys():
+        return None
+    return compute_nalive(frame, 'MAT5AFluxCalibration', boloprops, selector_dict, 0, operator.lt)
+
+
 def median_mat5a_fluxcal(frame, boloprops, selector_dict):
     if 'MAT5AFluxCalibration' not in frame.keys():
         return None

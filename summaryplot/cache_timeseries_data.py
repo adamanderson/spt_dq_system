@@ -68,11 +68,6 @@ parser_plot.add_argument('--max-time', action='store',
                          default=timenow.strftime('%Y%m%d'),
                          help='Maximum time of observations to skim. Format: '
                          'YYYYMMDD')
-
-
-
-
-
 args = P0.parse_args()
 
 # check timeinterval argument
@@ -194,10 +189,12 @@ if args.mode == 'skim':
 
     function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmission},
                      'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
-                                           'MedianRCW38IntegralFlux': median_rcw38_intflux},
+                                           'MedianRCW38IntegralFlux': median_rcw38_intflux,
+                                           'AliveBolosRCW38': alive_bolos_rcw38_fluxcal},
                      'MAT5A':             {'MAT5ASkyTransmission': mat5a_sky_transmission},
                      'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_mat5a_fluxcal,
-                                           'MedianMAT5AIntegralFlux': median_mat5a_intflux},
+                                           'MedianMAT5AIntegralFlux': median_mat5a_intflux,
+                                           'AliveBolosMAT5A': alive_bolos_mat5a_fluxcal},
                      'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                            'MedianCalResponse_4Hz': median_cal_response_4Hz,
                                            'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
