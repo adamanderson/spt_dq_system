@@ -7,7 +7,7 @@ from spt3g.std_processing import obsid_to_g3time
 import datetime
 import matplotlib.dates as mdates
 from plot_util import plot_timeseries
-
+import operator
 
 def median_elnod_sn_slope(frame, boloprops, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
@@ -36,7 +36,7 @@ def median_elnod_iq_phase_angle(frame, boloprops, selector_dict):
 def alive_bolos_elnod(frame, boloprops, selector_dict):
     if 'ElnodSNSlopes' not in frame.keys():
         return None
-    return compute_nalive(frame, 'ElnodSNSlopes', boloprops, selector_dict, 20)
+    return compute_nalive(frame, 'ElnodSNSlopes', boloprops, selector_dict, 20, operator.gt)
 
 
 def plot_median_elnod_sn(data, wafers, outdir):

@@ -34,10 +34,13 @@ def compute_median(frame, datakey, boloprops, selector_dict):
     return data_on_selection
 
 
-def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold):
+def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold, operation):
     data_list = np.array([frame[datakey][bolo] 
                           for bolo in frame[datakey].keys()])
     nalive_on_selection = {}
+
+    if len(frame[datakey]) == 0:
+        return np.array([])
 
     for select_values, f_select_list in selector_dict.items():
         selection = np.array([True for bolo in frame[datakey].keys()])
@@ -57,6 +60,6 @@ def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold):
         # get data that satisfies the selection and compute # alive bolos
         data_on_selection = data_list[selection][np.isfinite(data_list[selection])]
         reduce(operator.getitem, select_values[:-1], nalive_on_selection)[select_values[-1]] = \
-            len(data_on_selection[data_on_selection>sn_threshold])
+            len(data_on_selection[operation(data_on_selection, sn_threshold)])
 
     return nalive_on_selection

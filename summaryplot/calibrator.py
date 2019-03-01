@@ -7,6 +7,7 @@ import datetime
 import matplotlib.dates as mdates
 import numpy as np
 from plot_util import plot_timeseries
+import operator
 
 
 def median_cal_sn_4Hz(frame, boloprops, selector_dict):
@@ -28,7 +29,7 @@ def alive_bolos_cal_4Hz(frame, boloprops, selector_dict):
         return None
     elif round(frame["CalibratorResponseFrequency"] / core.G3Units.Hz, 2) != 4.0:
         return None
-    return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20)
+    return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20, operator.gt)
 
 def mean_cal_elevation(rawpath, boloprops):
     class ElExtractor(object):
