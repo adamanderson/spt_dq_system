@@ -30,13 +30,13 @@ function update_figs()
 
   document["ts_median_rcw38_fluxcal"].src         ='staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
   document["ts_median_rcw38_intflux"].src         ='staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
-  document["ts_nalive_rcw38"].src                 ='staticimg/'+weekdir+'/nalive_rcw38_'+wafer+'.png';
+  document["ts_alive_bolos_rcw38"].src            ='staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
 
   document["ts_mat5a_sky_transmission"].src       ='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
 
   document["ts_median_mat5a_fluxcal"].src         ='staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
   document["ts_median_mat5a_intflux"].src         ='staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
-  document["ts_nalive_mat5a"].src                 ='staticimg/'+weekdir+'/nalive_mat5a_'+wafer+'.png';
+  document["ts_alive_bolos_mat5a"].src            ='staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
 
   document["ts_median_net_01Hz_to_05Hz"].src      ='staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
   document["ts_median_net_1Hz_to_2Hz"].src        ='staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
@@ -221,7 +221,7 @@ function load_plots()
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_nalive_rcw38' src='staticimg/plots/weekly/current/alive_bolos_rcw38_all.png'>
+	<img style="display:block;" width="100%" name='ts_alive_bolos_rcw38' src='staticimg/plots/weekly/current/alive_bolos_rcw38_all.png'>
       </a>
     </td>
   </tr>
@@ -264,7 +264,7 @@ function load_plots()
     </td>
     <td>
       <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png'">
-	<img style="display:block;" width="100%" name='ts_nalive_mat5a' src='staticimg/plots/weekly/current/alive_bolos_mat5a_all.png'>
+	<img style="display:block;" width="100%" name='ts_alive_bolos_mat5a' src='staticimg/plots/weekly/current/alive_bolos_mat5a_all.png'>
       </a>
     </td>
   </tr>
