@@ -1,4 +1,4 @@
-from statistics import compute_median
+from statistics import compute_median, compute_nalive
 from functools import reduce
 import operator
 import numpy as np

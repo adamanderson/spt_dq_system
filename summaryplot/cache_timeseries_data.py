@@ -248,25 +248,23 @@ if args.mode == 'skim':
                     data[source][obsid]['timestamp'] != os.path.getctime(fname)) and \
                     os.path.exists(fname) and os.path.exists(cal_fname):
                     data[source][obsid] = {'timestamp': os.path.getctime(fname)}
-                    try:
-                        d = [fr for fr in core.G3File(fname)]
 
-                        boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
+                    d = [fr for fr in core.G3File(fname)]
 
-                        for quantity_name in function_dict[source]:
-                            func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
+                    boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
+
+                    for quantity_name in function_dict[source]:
+                        func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
+                        if func_result:
+                            data[source][obsid][quantity_name] = func_result
+
+                    if source in function_dict_raw:
+                        rawpath = os.path.join(args.bolodatapath, source,
+                                               obsid, '0000.g3')
+                        for quantity_name in function_dict_raw[source]:
+                            func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
                             if func_result:
                                 data[source][obsid][quantity_name] = func_result
-
-                        if source in function_dict_raw:
-                            rawpath = os.path.join(args.bolodatapath, source,
-                                                   obsid, '0000.g3')
-                            for quantity_name in function_dict_raw[source]:
-                                func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
-                                if func_result:
-                                    data[source][obsid][quantity_name] = func_result
-                    except Exception as ex:
-                        print(ex)
 
         with open(datafile, 'wb') as f:
             pickle.dump(data, f)
