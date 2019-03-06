@@ -80,7 +80,8 @@ def median_net_10Hz_to_15Hz(frame, boloprops, selector_dict):
     return compute_median(frame, 'NET_10.0Hz_to_15.0Hz', boloprops, selector_dict)    
 
 
-def plot_median_noise(data, noise_type, wafers, outdir):
+def plot_median_noise(data, noise_type, wafers, outdir, xlims=None,
+                      ylims={'NEI': [0, 100], 'NET': [0, 5000], 'NEP': [0, 200]}):
     # min/max for plotting purposes
     lines = {}
     
@@ -88,9 +89,6 @@ def plot_median_noise(data, noise_type, wafers, outdir):
     labels = {'NEI': 'NEI [pA / sqrt(Hz)]',
               'NET': 'NET [uK rtsec]',
               'NEP': 'NEP [aW / sqrt(Hz)]'}
-    limits = {'NEI': [0, 100],
-              'NET': [0, 5000],
-              'NEP': [0, 200]}
     units  = {'NEI': core.G3Units.amp*1e-12 / np.sqrt(core.G3Units.Hz),
               'NET': core.G3Units.microkelvin * np.sqrt(core.G3Units.sec),
               'NEP': core.G3Units.attowatt / np.sqrt(core.G3Units.Hz)}
@@ -108,7 +106,7 @@ def plot_median_noise(data, noise_type, wafers, outdir):
                           for obsid in obsids
                           if noise_type in data['noise'][obsid].keys()]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, noise, limits[nex_name], band)
+            plot_timeseries(dts, noise, band, xlims=xlims, ylims=ylims[nex_name])
 
             if len(noise)>0:
                 is_empty = False

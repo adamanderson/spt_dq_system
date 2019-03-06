@@ -39,10 +39,7 @@ def alive_bolos_elnod(frame, boloprops, selector_dict):
     return compute_nalive(frame, 'ElnodSNSlopes', boloprops, selector_dict, 20, operator.gt)
 
 
-def plot_median_elnod_sn(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 2000
+def plot_median_elnod_sn(data, wafers, outdir, xlims=None, ylims=[0, 4000]):
     lines = {}
 
     for wafer in wafers:
@@ -56,7 +53,7 @@ def plot_median_elnod_sn(data, wafers, outdir):
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_elnodSN, [ymin, ymax], band)
+            plot_timeseries(dts, median_elnodSN, band, xlims=xlims, ylims=ylims)
 
             if len(median_elnodSN)>0:
                 is_empty = False
@@ -76,10 +73,7 @@ def plot_median_elnod_sn(data, wafers, outdir):
         plt.close()
 
 
-def plot_median_elnod_iq_phase(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = -20
-    ymax = 20
+def plot_median_elnod_iq_phase(data, wafers, outdir, xlims=None, ylims=[-20, 20]):
     lines = {}
     
     for wafer in wafers:
@@ -98,7 +92,7 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
                           if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
                           data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_elnod_iq, [ymin, ymax], band)
+            plot_timeseries(dts, median_elnod_iq, band, xlims=xlims, ylims=ylims)
 
             if len(median_elnod_iq)>0:
                 is_empty = False
@@ -118,11 +112,7 @@ def plot_median_elnod_iq_phase(data, wafers, outdir):
         plt.close()
 
 
-def plot_alive_bolos_elnod(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 600
-    ymax_all = 6000
+def plot_alive_bolos_elnod(data, wafers, outdir, xlims=None, ylims=[0, 600], ylims_all=[0, 6000]):
     lines = {}
 
     for wafer in wafers:
@@ -137,9 +127,9 @@ def plot_alive_bolos_elnod(data, wafers, outdir):
                           for obsid in obsids]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
-                plot_timeseries(dts, alive_bolos_elnod, [ymin, ymax_all], band)
+                plot_timeseries(dts, alive_bolos_elnod, band, xlims=xlims, ylims=ylims_all)
             else:
-                plot_timeseries(dts, alive_bolos_elnod, [ymin, ymax], band)
+                plot_timeseries(dts, alive_bolos_elnod, band, xlims=xlims, ylims=ylims)
 
             if len(alive_bolos_elnod)>0:
                 is_empty = False

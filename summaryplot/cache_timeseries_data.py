@@ -363,35 +363,64 @@ elif args.mode == 'plot':
                        if int(obsid) >= min_obsid and int(obsid) <= max_obsid]
         if any([plot_obsid < oid for oid in data_obsids]):
             # create the plots
-            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'low')
-            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'low')
-            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'low')
-            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'high')
-            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'high')
-            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'high')
-            plot_median_elnod_sn(data, wafer_list, outdir)
-            plot_median_elnod_iq_phase(data, wafer_list, outdir)
-            plot_alive_bolos_elnod(data, wafer_list, outdir)
-            plot_median_rcw38_fluxcal(data, wafer_list, outdir)
-            plot_median_rcw38_intflux(data, wafer_list, outdir)
-            plot_rcw38_sky_transmission(data, wafer_list, outdir)
-            plot_alive_bolos_rcw38(data, wafer_list, outdir)
-            plot_median_mat5a_fluxcal(data, wafer_list, outdir)
-            plot_median_mat5a_intflux(data, wafer_list, outdir)
-            plot_mat5a_sky_transmission(data, wafer_list, outdir)
-            plot_alive_bolos_mat5a(data, wafer_list, outdir)
-            plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, outdir)
-            plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, outdir)
+            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'low',
+                                   xlims=[mindate, maxdate])
+            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'low',
+                                         xlims=[mindate, maxdate])
+            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'low',
+                                     xlims=[mindate, maxdate])
+            plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'high',
+                                   xlims=[mindate, maxdate])
+            plot_median_cal_response_4Hz(data, wafer_list, outdir, 'high',
+                                         xlims=[mindate, maxdate])
+            plot_alive_bolos_cal_4Hz(data, wafer_list, outdir, 'high',
+                                     xlims=[mindate, maxdate])
+            plot_median_elnod_sn(data, wafer_list, outdir,
+                                 xlims=[mindate, maxdate])
+            plot_median_elnod_iq_phase(data, wafer_list, outdir,
+                                       xlims=[mindate, maxdate])
+            plot_alive_bolos_elnod(data, wafer_list, outdir,
+                                   xlims=[mindate, maxdate])
+            plot_median_rcw38_fluxcal(data, wafer_list, outdir,
+                                      xlims=[mindate, maxdate])
+            plot_median_rcw38_intflux(data, wafer_list, outdir,
+                                      xlims=[mindate, maxdate])
+            plot_rcw38_sky_transmission(data, wafer_list, outdir,
+                                        xlims=[mindate, maxdate])
+            plot_alive_bolos_rcw38(data, wafer_list, outdir,
+                                   xlims=[mindate, maxdate])
+            plot_median_mat5a_fluxcal(data, wafer_list, outdir,
+                                      xlims=[mindate, maxdate])
+            plot_median_mat5a_intflux(data, wafer_list, outdir,
+                                      xlims=[mindate, maxdate])
+            plot_mat5a_sky_transmission(data, wafer_list, outdir,
+                                        xlims=[mindate, maxdate])
+            plot_alive_bolos_mat5a(data, wafer_list, outdir,
+                                   xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, outdir, 
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
+            plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, outdir,
+                              xlims=[mindate, maxdate])
 
             # Get maximum obsid of data and save it to a file so that we can
             # detect when plots need to be updated.

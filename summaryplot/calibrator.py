@@ -49,10 +49,7 @@ def mean_cal_elevation(rawpath, boloprops):
     return el_extractor.mean_el
 
 
-def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 400
+def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400]):
     lines = {}
     colors = {90: 'C0', 150: 'C1', 220: 'C2'}
     
@@ -88,7 +85,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<72]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_calSN, [ymin, ymax], band)
+            plot_timeseries(dts, median_calSN, band, xlims=xlims, ylims=ylims)
 
             if len(median_calSN)>0:
                 is_empty = False
@@ -113,10 +110,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el):
         plt.close()
 
 
-def plot_median_cal_response_4Hz(data, wafers, outdir, el):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 5
+def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 5]):
     lines = {}
     
     colors = {90: 'C0', 150: 'C1', 220: 'C2'}
@@ -155,7 +149,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<72]
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_cal, [ymin, ymax], band)
+            plot_timeseries(dts, median_cal, band, xlims=xlims, ylims=ylims)
 
             if len(median_cal)>0:
                 is_empty = False
@@ -180,11 +174,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el):
         plt.close()
 
 
-def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 600
-    ymax_all = 6000
+def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600], ylims_all=[0, 6000]):
     lines = {}
     
     for wafer in wafers:
@@ -219,9 +209,9 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el):
                               data['calibrator'][obsid]['elevation']<72]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
-                plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
+                plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
             else:
-                plot_timeseries(dts, n_alive_bolos, [ymin, ymax], band)
+                plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims)
 
             if len(n_alive_bolos)>0:
                 is_empty = False

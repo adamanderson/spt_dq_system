@@ -53,10 +53,7 @@ def rcw38_sky_transmission(frame, boloprops, selector_dict):
     return data_on_selection
 
 
-def plot_median_rcw38_fluxcal(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = -100
-    ymax = 0
+def plot_median_rcw38_fluxcal(data, wafers, outdir, xlims=None, ylims=[-100, 0]):
     lines = {}
     
     for wafer in wafers:
@@ -73,7 +70,7 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir):
                           for obsid in obsids
                           if 'MedianRCW38FluxCalibration' in data['RCW38-pixelraster'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_rcw38, [ymin, ymax], band)
+            plot_timeseries(dts, median_rcw38, band, xlims=xlims, ylims=ylims)
 
             if len(median_rcw38)>0:
                 is_empty = False
@@ -93,10 +90,7 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir):
         plt.close()
 
 
-def plot_median_rcw38_intflux(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = 2e-7
-    ymax = 7e-7
+def plot_median_rcw38_intflux(data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-7]):
     lines = {}
     
     for wafer in wafers:   
@@ -113,7 +107,7 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
                           for obsid in obsids
                           if 'MedianRCW38IntegralFlux' in data['RCW38-pixelraster'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, median_rcw38, [ymin, ymax], band)
+            plot_timeseries(dts, median_rcw38, band, xlims=xlims, ylims=ylims)
 
             if len(median_rcw38)>0:
                 is_empty = False
@@ -133,10 +127,7 @@ def plot_median_rcw38_intflux(data, wafers, outdir):
         plt.close()
 
 
-def plot_rcw38_sky_transmission(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = 0.80
-    ymax = 1.10
+def plot_rcw38_sky_transmission(data, wafers, outdir, xlims=None, ylims=[0.80, 1.10]):
     lines = {}
     
     for wafer in wafers:   
@@ -152,7 +143,7 @@ def plot_rcw38_sky_transmission(data, wafers, outdir):
                           for obsid in obsids
                           if 'RCW38SkyTransmission' in data['RCW38'][obsid]]
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
-            plot_timeseries(dts, rcw38_skytrans, [ymin, ymax], band)
+            plot_timeseries(dts, rcw38_skytrans, band, xlims=xlims, ylims=ylims)
 
             if len(rcw38_skytrans)>0:
                 is_empty = False
@@ -172,11 +163,7 @@ def plot_rcw38_sky_transmission(data, wafers, outdir):
         plt.close()
 
 
-def plot_alive_bolos_rcw38(data, wafers, outdir):
-    # min/max for plotting purposes
-    ymin = 0
-    ymax = 600
-    ymax_all = 6000
+def plot_alive_bolos_rcw38(data, wafers, outdir, xlims=None, ylims=[0, 600], ylims_all=[0, 6000]):
     lines = {}
 
     for wafer in wafers:
@@ -195,9 +182,9 @@ def plot_alive_bolos_rcw38(data, wafers, outdir):
 
             dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
-                plot_timeseries(dts, n_alive_bolos, [ymin, ymax_all], band)
+                plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
             else:
-                plot_timeseries(dts, n_alive_bolos, [ymin, ymax], band)
+                plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims)
 
             if len(n_alive_bolos)>0:
                 is_empty = False
