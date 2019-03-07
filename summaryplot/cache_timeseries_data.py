@@ -16,7 +16,7 @@ from mat5a import *
 from noise import *
 from rcw38 import *
 
-timenow = datetime.datetime.now()
+timenow = datetime.datetime.utcnow()
 dt = datetime.timedelta(-1*(timenow.weekday()+1))
 default_mintime = timenow + dt
 
@@ -42,11 +42,12 @@ parser_skim.add_argument('bolodatapath', default=None,
 parser_skim.add_argument('--min-time', action='store',
                          default=default_mintime.strftime('%Y%m%d'),
                          help='Minimum time of observations to skim. Format: '
-                         'YYYYMMDD')
+                         'YYYYMMDD (starts at beginning of day)')
 parser_skim.add_argument('--max-time', action='store',
-                         default=timenow.strftime('%Y%m%d'),
+                         default=(timenow + \
+                                  datetime.timedelta(days=1)).strftime('%Y%m%d'),
                          help='Maximum time of observations to skim. Format: '
-                         'YYYYMMDD')
+                         'YYYYMMDD (ends at end of day)')
 
 # plot data mode
 parser_plot = S.add_parser('plot',
@@ -63,11 +64,12 @@ parser_plot.add_argument('outdir', action='store', default=None,
 parser_plot.add_argument('--min-time', action='store',
                          default=default_mintime.strftime('%Y%m%d'),
                          help='Minimum time of observations to skim. Format: '
-                         'YYYYMMDD')
+                         'YYYYMMDD (starts at beginning of day)')
 parser_plot.add_argument('--max-time', action='store',
-                         default=timenow.strftime('%Y%m%d'),
+                         default=(timenow + \
+                                  datetime.timedelta(days=1)).strftime('%Y%m%d'),
                          help='Maximum time of observations to skim. Format: '
-                         'YYYYMMDD')
+                         'YYYYMMDD (ends at end of day)')
 args = P0.parse_args()
 
 # check timeinterval argument

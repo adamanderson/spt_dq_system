@@ -69,7 +69,7 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir, xlims=None, ylims=[-100, 0])
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
                           if 'MedianRCW38FluxCalibration' in data['RCW38-pixelraster'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_rcw38, band, xlims=xlims, ylims=ylims)
 
             if len(median_rcw38)>0:
@@ -106,7 +106,7 @@ def plot_median_rcw38_intflux(data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
                           if 'MedianRCW38IntegralFlux' in data['RCW38-pixelraster'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_rcw38, band, xlims=xlims, ylims=ylims)
 
             if len(median_rcw38)>0:
@@ -142,7 +142,7 @@ def plot_rcw38_sky_transmission(data, wafers, outdir, xlims=None, ylims=[0.80, 1
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
                           for obsid in obsids
                           if 'RCW38SkyTransmission' in data['RCW38'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, rcw38_skytrans, band, xlims=xlims, ylims=ylims)
 
             if len(rcw38_skytrans)>0:
@@ -180,7 +180,7 @@ def plot_alive_bolos_rcw38(data, wafers, outdir, xlims=None, ylims=[0, 600], yli
                           for obsid in obsids
                           if 'AliveBolosRCW38' in data['RCW38-pixelraster'][obsid]]
 
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
                 plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
             else:

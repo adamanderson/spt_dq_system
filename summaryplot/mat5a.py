@@ -68,7 +68,7 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir, xlims=None, ylims=[-100, 0])
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
                           if 'MedianMAT5AFluxCalibration' in data['MAT5A-pixelraster'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_mat5a, band, xlims=xlims, ylims=ylims)
 
             if len(median_mat5a)>0:
@@ -104,7 +104,7 @@ def plot_median_mat5a_intflux(data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids
                           if 'MedianMAT5AIntegralFlux' in data['MAT5A-pixelraster'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_mat5a, band, xlims=xlims, ylims=ylims)
 
             if len(median_mat5a)>0:
@@ -140,7 +140,7 @@ def plot_mat5a_sky_transmission(data, wafers, outdir, xlims=None, ylims=[0.80, 1
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
                           for obsid in obsids
                           if 'MAT5ASkyTransmission' in data['MAT5A'][obsid]]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, mat5a_skytrans, band, xlims=xlims, ylims=ylims)
 
             if len(mat5a_skytrans)>0:
@@ -178,7 +178,7 @@ def plot_alive_bolos_mat5a(data, wafers, outdir, xlims=None, ylims=[0,600], ylim
                           for obsid in obsids
                           if 'AliveBolosMAT5A' in data['MAT5A-pixelraster'][obsid]]
 
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
                 plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
             else:

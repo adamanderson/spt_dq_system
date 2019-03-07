@@ -105,7 +105,7 @@ def plot_median_noise(data, noise_type, wafers, outdir, xlims=None,
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds
                           for obsid in obsids
                           if noise_type in data['noise'][obsid].keys()]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, noise, band, xlims=xlims, ylims=ylims[nex_name])
 
             if len(noise)>0:

@@ -84,7 +84,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
                               data['calibrator'][obsid]['elevation']>56 and \
                               data['calibrator'][obsid]['elevation']<72]
 
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_calSN, band, xlims=xlims, ylims=ylims)
 
             if len(median_calSN)>0:
@@ -148,7 +148,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
                               data['calibrator'][obsid]['elevation']>56 and \
                               data['calibrator'][obsid]['elevation']<72]
 
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_cal, band, xlims=xlims, ylims=ylims)
 
             if len(median_cal)>0:
@@ -207,7 +207,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
                               if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
                               data['calibrator'][obsid]['elevation']>56 and \
                               data['calibrator'][obsid]['elevation']<72]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
                 plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
             else:

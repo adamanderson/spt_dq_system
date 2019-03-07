@@ -52,7 +52,7 @@ def plot_median_elnod_sn(data, wafers, outdir, xlims=None, ylims=[0, 4000]):
 
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_elnodSN, band, xlims=xlims, ylims=ylims)
 
             if len(median_elnodSN)>0:
@@ -91,7 +91,7 @@ def plot_median_elnod_iq_phase(data, wafers, outdir, xlims=None, ylims=[-20, 20]
                           for obsid in obsids
                           if 'MedianElnodIQPhaseAngle' in data['elnod'][obsid].keys() and \
                           data['elnod'][obsid]['MedianElnodIQPhaseAngle'][wafer][band] != None]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_elnod_iq, band, xlims=xlims, ylims=ylims)
 
             if len(median_elnod_iq)>0:
@@ -125,7 +125,7 @@ def plot_alive_bolos_elnod(data, wafers, outdir, xlims=None, ylims=[0, 600], yli
 
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                           for obsid in obsids]
-            dts = np.array([datetime.datetime.fromtimestamp(ts) for ts in timestamps])
+            dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
                 plot_timeseries(dts, alive_bolos_elnod, band, xlims=xlims, ylims=ylims_all)
             else:
