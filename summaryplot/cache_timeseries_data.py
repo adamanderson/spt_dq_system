@@ -1,6 +1,8 @@
 import matplotlib
 matplotlib.use('Agg')
 
+import pdb
+
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
 import numpy as np
@@ -363,7 +365,8 @@ elif args.mode == 'plot':
         data_obsids = [int(obsid) for source in data.keys()
                        for obsid in data[source].keys()
                        if int(obsid) >= min_obsid and int(obsid) <= max_obsid]
-        if any([plot_obsid < oid for oid in data_obsids]):
+        if any([plot_obsid < oid for oid in data_obsids]) or \
+           args.action == 'rebuild':
             # create the plots
             plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'low',
                                    xlims=[mindate, maxdate])
@@ -426,8 +429,13 @@ elif args.mode == 'plot':
 
             # Get maximum obsid of data and save it to a file so that we can
             # detect when plots need to be updated.
-            max_obsids = np.max([int(obsid) for source in data.keys()
-                                 for obsid in data[source].keys()])
+            plot_obsids = [int(obsid) for source in data.keys()
+                           for obsid in data[source].keys()]
+            if len(plot_obsids) == 0:
+                max_obsids = 0
+            else:
+                max_obsids = np.max(plot_obsids)
+
             with open(os.path.join(outdir, 'max_obsid.dat'), 'w') as f:
                 f.write(str(max_obsid))
 
@@ -440,9 +448,9 @@ elif args.mode == 'plot':
         symlinkname = '{}/current'.format(plotstimedir)
         if os.path.exists(symlinkname):
             os.unlink(symlinkname)
-        dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
-        latest_dirname = dirnames[-1]
         if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
+            dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
+            latest_dirname = dirnames[-1]
             os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
         else:
             os.symlink(plotstimedir, '{}/temp'.format(plotstimedir))
