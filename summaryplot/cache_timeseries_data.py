@@ -445,13 +445,14 @@ elif args.mode == 'plot':
         # latest value of timestamp in its filename. Based on the naming scheme
         # for directories, an alphanumeric sort should also produce
         # chronological ordering, so we'll rely on this assumption.
-        symlinkname = '{}/current'.format(plotstimedir)
+        symlinkname = os.path.join(plotstimedir, 'current')
         if os.path.exists(symlinkname):
             os.unlink(symlinkname)
         if args.timeinterval == 'monthly' or args.timeinterval == 'weekly':
             dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
+            dirnames = dirnames[dirnames != symlinkname] # just in case unlinking failed above
             latest_dirname = dirnames[-1]
-            os.symlink(latest_dirname, '{}/temp'.format(plotstimedir))
+            os.symlink(latest_dirname, os.path.join(plotstimedir, 'temp'))
         else:
-            os.symlink(plotstimedir, '{}/temp'.format(plotstimedir))
+            os.symlink(plotstimedir, os.path.join(plotstimedir, 'temp'))
         os.rename('{}/temp'.format(plotstimedir), '{}/current'.format(plotstimedir))
