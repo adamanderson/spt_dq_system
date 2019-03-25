@@ -1,8 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import pdb
-
 from spt3g import core
 from spt3g.std_processing.utils import time_to_obsid
 import numpy as np
@@ -17,6 +15,33 @@ from elnod import *
 from mat5a import *
 from noise import *
 from rcw38 import *
+import hashlib
+
+def file_hash(filelist):
+    '''
+    Utility function for computing md5 checksum hash of a list of files. Useful
+    for keeping track of whether data files have changed when generating plots.
+
+    Parameters
+    ----------
+    filelist : list
+        List of files for which to compute md5 sum hash
+
+    Returns
+    -------
+    hash : str
+        Hex hash
+    '''
+    md5 = hashlib.md5()
+    for fname in filelist:
+        with open(fname, 'rb') as f:
+            while True:
+                data = f.read(65536) # read data in 64kB chunks
+                if not data:
+                    break
+                md5.update(data)
+    return md5.hexdigest()
+
 
 timenow = datetime.datetime.utcnow()
 dt = datetime.timedelta(-1*(timenow.weekday()+1))
@@ -334,39 +359,40 @@ elif args.mode == 'plot':
             if np.min(dt_ind_inrange) > 0:
                 dt_ind_inrange = np.append(dt_ind_inrange,
                                            np.min(dt_ind_inrange) - 1)
-        data = {}
-        for ind in dt_ind_inrange:
-            fname = weekly_filenames[ind]
-            with open(fname, 'rb') as f:
-                nextdata = pickle.load(f)
-            for source in nextdata:
-                if source in data:
-                    data[source] = {**data[source], **nextdata[source]}
-                else:
-                    data[source] = nextdata[source]
 
-        # restrict data to time range
-        sourcelist = list(data.keys())
-        for source in sourcelist:
-            obsidlist = list(data[source].keys())
-            for obsid in obsidlist:
-                if int(obsid) <= min_obsid or int(obsid) >= max_obsid:
-                    data[source].pop(obsid)
-
-        # get maximum obsid that went into existing plots
-        if os.path.exists(os.path.join(outdir, 'max_obsid.dat')):
-            with open(os.path.join(outdir, 'max_obsid.dat'), 'r') as f:
-                plot_obsid = int(f.readline())
+        # compute hash of data files to check whether plots need updating
+        filelist = np.sort([weekly_filenames[ind] for ind in dt_ind_inrange])
+        new_pkl_hash = file_hash(filelist)
+        hash_filename = os.path.join(outdir, 'data_hash.dat')
+        if os.path.exists(hash_filename):
+            with open(hash_filename, 'r') as f:
+                old_pkl_hash = f.readline()
         else:
-            plot_obsid = 0
+            # if hash file doesn't exist, set to empty string to force rebuild
+            old_pkl_hash = ''
 
-        # check whether data contains newer obsids than the plot, and if so,
-        # remake the plots
-        data_obsids = [int(obsid) for source in data.keys()
-                       for obsid in data[source].keys()
-                       if int(obsid) >= min_obsid and int(obsid) <= max_obsid]
-        if any([plot_obsid < oid for oid in data_obsids]) or \
-           args.action == 'rebuild':
+        # rebuild the data if the new and old hashes differ or if a rebuild
+        # is requested
+        if new_pkl_hash != old_pkl_hash or args.action == 'rebuild':
+            # load all the data
+            data = {}
+            for fname in filelist:
+                with open(fname, 'rb') as f:
+                    nextdata = pickle.load(f)
+                for source in nextdata:
+                    if source in data:
+                        data[source] = {**data[source], **nextdata[source]}
+                    else:
+                        data[source] = nextdata[source]
+
+            # restrict data to time range
+            sourcelist = list(data.keys())
+            for source in sourcelist:
+                obsidlist = list(data[source].keys())
+                for obsid in obsidlist:
+                    if int(obsid) <= min_obsid or int(obsid) >= max_obsid:
+                        data[source].pop(obsid)
+
             # create the plots
             plot_median_cal_sn_4Hz(data, wafer_list, outdir, 'low',
                                    xlims=[mindate, maxdate])
@@ -427,17 +453,10 @@ elif args.mode == 'plot':
             plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, outdir,
                               xlims=[mindate, maxdate])
 
-            # Get maximum obsid of data and save it to a file so that we can
-            # detect when plots need to be updated.
-            plot_obsids = [int(obsid) for source in data.keys()
-                           for obsid in data[source].keys()]
-            if len(plot_obsids) == 0:
-                max_obsids = 0
-            else:
-                max_obsids = np.max(plot_obsids)
+            # update the hash
+            with open(os.path.join(outdir, 'data_hash.dat'), 'w') as f:
+                f.write(new_pkl_hash)
 
-            with open(os.path.join(outdir, 'max_obsid.dat'), 'w') as f:
-                f.write(str(max_obsid))
 
         # Create symlink from latest data directory to current
         # The latest data directory is not necessarily reliably identified by
