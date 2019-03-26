@@ -64,7 +64,7 @@ def plot_median_elnod_sn(data, wafers, outdir, xlims=None, ylims=[0, 4000]):
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median elnod S/N')
         plt.title('Elnod S/N ({})'.format(wafer))
         plt.legend()
@@ -103,7 +103,7 @@ def plot_median_elnod_iq_phase(data, wafers, outdir, xlims=None, ylims=[-20, 20]
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median elnod IQ phase [deg]')
         plt.title('Elnod IQ phase angle ({})'.format(wafer))
         plt.legend()
@@ -140,7 +140,7 @@ def plot_alive_bolos_elnod(data, wafers, outdir, xlims=None, ylims=[0, 600], yli
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         plt.title('Number of bolos with elnod S/N>20 ({})'.format(wafer))
         plt.legend()

@@ -96,7 +96,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator S/N')
         if el == 'low':
             el_title = '40 < el < 56'
@@ -160,7 +160,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator response [fW]')
         if el == 'low':
             el_title = '40 < el < 56'
@@ -222,7 +222,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
             plt.xticks(rotation=25)
             
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         if el == 'low':
             el_title = '40 < el < 56'

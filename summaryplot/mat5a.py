@@ -80,7 +80,7 @@ def plot_median_mat5a_fluxcal(data, wafers, outdir, xlims=None, ylims=[-100, 0])
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median MAT5A flux calibration')
         plt.title('MAT5A Flux Calibration ({})'.format(wafer))
         plt.legend()
@@ -116,7 +116,7 @@ def plot_median_mat5a_intflux(data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median MAT5A integral flux')
         plt.title('MAT5A Integral Flux ({})'.format(wafer))
         plt.legend()
@@ -152,7 +152,7 @@ def plot_mat5a_sky_transmission(data, wafers, outdir, xlims=None, ylims=[0.80, 1
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('MAT5A sky transmission')
         plt.title('MAT5A Sky Transmission ({})'.format(wafer))
         plt.legend()
@@ -193,7 +193,7 @@ def plot_alive_bolos_mat5a(data, wafers, outdir, xlims=None, ylims=[0,600], ylim
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         plt.title('Number of bolos with MAT5A flux calibration < 0 ({})'
                   .format(wafer))

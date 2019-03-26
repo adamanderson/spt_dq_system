@@ -81,7 +81,7 @@ def plot_median_rcw38_fluxcal(data, wafers, outdir, xlims=None, ylims=[-100, 0])
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median RCW38 flux calibration')
         plt.title('RCW38 Flux Calibration ({})'.format(wafer))
         plt.legend()
@@ -118,7 +118,7 @@ def plot_median_rcw38_intflux(data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('median RCW38 integral flux')
         plt.title('RCW38 Integral Flux ({})'.format(wafer))
         plt.legend()
@@ -154,7 +154,7 @@ def plot_rcw38_sky_transmission(data, wafers, outdir, xlims=None, ylims=[0.80, 1
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('RCW38 sky transmission')
         plt.title('RCW38 Sky Transmission ({})'.format(wafer))
         plt.legend()
@@ -195,7 +195,7 @@ def plot_alive_bolos_rcw38(data, wafers, outdir, xlims=None, ylims=[0, 600], yli
             plt.xticks(rotation=25)
 
         plt.grid()
-        plt.xlabel('observation time')
+        plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         plt.title('Number of bolos with RCW38 flux calibration < 0 ({})'
                   .format(wafer))
