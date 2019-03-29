@@ -93,8 +93,7 @@ parser_plot.add_argument('--min-time', action='store',
                          help='Minimum time of observations to skim. Format: '
                          'YYYYMMDD (starts at beginning of day)')
 parser_plot.add_argument('--max-time', action='store',
-                         default=(timenow + \
-                                  datetime.timedelta(days=1)).strftime('%Y%m%d'),
+                         default=None,
                          help='Maximum time of observations to skim. Format: '
                          'YYYYMMDD (ends at end of day)')
 args = P0.parse_args()
@@ -109,6 +108,15 @@ if args.mode == 'plot' and \
         raise ValueError('Argument `timeinterval` is none of `monthly`, '
                          '`weekly` or a number of days.')
 
+# check --max-time argument
+if args.max_time == None:
+    if args.timeinterval == 'monthly':
+        max_time = timenow.replace(month=timenow.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif args.timeinterval == 'weekly':
+        max_time = (timenow + datetime.timedelta(days=7-timenow.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    else:
+        max_time = (timenow + datetime.timedelta(days=1))
+    args.max_time = max_time.strftime('%Y%m%d')
 
 wafer_list = ['w172', 'w174', 'w176', 'w177', 'w180',
               'w181', 'w187', 'w188', 'w201', 'w203',
