@@ -11,14 +11,17 @@ parser.add_argument('bolodatadir',
                     help='Path to raw bolometer data.')
 parser.add_argument('mintime',
                     help='Time from which to start plots.')
+parser.add_argument('--no-data-update', action='store_true',
+                    help='Do not update the skimmed data.')
 args = parser.parse_args()
 
 # update data skims
-os.system('python summaryplot/cache_timeseries_data.py skim update '
-          '{} {} {} --min-time {}'.format(args.staticplotdir,
-                                          args.caldatadir,
-                                          args.bolodatadir,
-                                          args.mintime))
+if args.no_data_update == False:
+    os.system('python summaryplot/cache_timeseries_data.py skim update '
+              '{} {} {} --min-time {}'.format(args.staticplotdir,
+                                              args.caldatadir,
+                                              args.bolodatadir,
+                                              args.mintime))
 
 # update weekly plots
 os.system('python summaryplot/cache_timeseries_data.py plot update weekly '

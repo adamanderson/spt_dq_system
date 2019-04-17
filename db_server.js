@@ -358,6 +358,10 @@ function updateStaticPlots() {
 			config.bolo_data_dir,
 			config.min_time_static_plots]
 
+	if(config.no_data_update) {
+		args.push('--no-data-update')
+	}
+	
     if(is_update_running == false) {
 		is_update_running = true;
 		// update data skims
@@ -373,4 +377,4 @@ function updateStaticPlots() {
     }
 }
 
-setInterval(updateStaticPlots, 600000); // update static plots every 10 minutes
+setInterval(updateStaticPlots, 60000); // update static plots every 10 minutes
