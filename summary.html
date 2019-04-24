@@ -66,12 +66,28 @@ function load_plots()
     get_old_timeseries_plotdirs('monthly');
     get_old_timeseries_plotdirs('last_3days');
 }
+
+function open_tab(tabId)
+{
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+    }
+	document.getElementById(tabId).style.display = "block";
+}
 </script>
 
 <body onload="load_plots();">
 
+<div class="tab">
+  <button class="tablink" onclick="open_tab('summarystats')">Summary Stats</button>
+  <button class="tablink" onclick="open_tab('maps')">Maps</button>
+</div>
 
-<h1>Recent Data</h1>
+<div id="summarystats" class="tabcontent">
+
+<h2>Summary Stats</h2>
 <button class="btn" onclick="set_variable('wafer','w172')">w172</button>
 <button class="btn" onclick="set_variable('wafer','w174')">w174</button>
 <button class="btn" onclick="set_variable('wafer','w176')">w176</button>
@@ -129,7 +145,7 @@ function load_plots()
 <td>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>Calibrator (low elevation)</h2>
     </td>
   </tr>
@@ -154,7 +170,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>Calibrator (high elevation)</h2>
     </td>
   </tr>
@@ -179,7 +195,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>Elnod</h2>
     </td>
   </tr>
@@ -204,7 +220,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed" width="66%">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>RCW38 Fast Point</h2>
     </td>
   </tr>
@@ -228,7 +244,7 @@ function load_plots()
 </table>
 <table style="table-layout:fixed" width="33%">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>RCW38 Very Fast Point</h2>
     </td>
   </tr>
@@ -247,7 +263,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed" width="66%">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>MAT5A Fast Point</h2>
     </td>
   </tr>
@@ -271,7 +287,7 @@ function load_plots()
 </table>
 <table style="table-layout:fixed" width="33%">
   <tr>
-    <td>
+    <td colspan=3>
       <h2>MAT5A Very Fast Point</h2>
     </td>
   </tr>
@@ -290,7 +306,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=4>
       <h2>Noise - NET</h2>
     </td>
   </tr>
@@ -320,7 +336,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=4>
       <h2>Noise - NEP</h2>
     </td>
   </tr>
@@ -350,7 +366,7 @@ function load_plots()
 <br>
 <table style="table-layout:fixed">
   <tr>
-    <td>
+    <td colspan=4>
       <h2>Noise - NEI</h2>
     </td>
   </tr>
@@ -380,134 +396,10 @@ function load_plots()
 
 </div>
 
-<div id='lastobs' style='display:none'>
-<h1>Data from Last Observation</h1>
-<table width=800>
-  <tr>
-    <td colspan=3>
-      <h2>Calibrator</h2>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='CalHistogram'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='CalSNHistogram'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='CalSNCDF'>
-    </td>
-  </tr>
-</table>
-<br>
-<table width=800>
-  <tr>
-    <td colspan=3>
-      <h2>Elnod</h2>
-    </td>
-  </tr>
-  <tr>
-    <td width="33%">
-      <img style="display:block;" width="100%" height="100%" id='ElnodSNSlopesHistogram'>
-    </td>
-    <td width="33%">
-      <img style="display:block;" width="100%" height="100%" id='ElnodIQPhaseAngle'>
-    </td>
-    <td>
-    </td>
-  </tr>
-</table>
-<br>
-<table width=800>
-  <tr>
-    <td colspan=3>
-      <h2>RCW38 Fast Point</h2>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='OfflinePointingOffsets'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='RCW38FluxCalibration'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='RCW38IntegralFlux'>
-    </td>
-  </tr>
-</table>
-<br>
-<table width=800>
-  <tr>
-    <td colspan=4>
-      <h2>Noise - NET</h2>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NET_0.1Hz_to_0.5Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NET_1.0Hz_to_2.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NET_3.0Hz_to_5.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NET_10.0Hz_to_15.0Hz'>
-    </td>
-  </tr>
-</table>
-<br>
-<table width=800>
-  <tr>
-    <td colspan=4>
-      <h2>Noise - NEP</h2>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEP_0.1Hz_to_0.5Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEP_1.0Hz_to_2.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEP_3.0Hz_to_5.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEP_10.0Hz_to_15.0Hz'>
-    </td>
-  </tr>
-</table>
-<br>
-<table width=800>
-  <tr>
-    <td colspan=4>
-      <h2>Noise - NEI</h2>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEI_0.1Hz_to_0.5Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEI_1.0Hz_to_2.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEI_3.0Hz_to_5.0Hz'>
-    </td>
-    <td>
-      <img style="display:block;" width="100%" height="100%" id='NEI_10.0Hz_to_15.0Hz'>
-    </td>
-  </tr>
-</table>
 
-
-</td>
-</tr>
-
+<div id="maps" class="tabcontent">
+<h2>Maps</h2>
+</div>
 
 </body>
 </html>
