@@ -64,6 +64,12 @@ parser.add_argument("-w", "--make_figures_for_weights",
                     help="Whether figures of weight maps are desired. "+\
                          "The default is False.")
 
+parser.add_argument("-F", "--make_figures_for_flagging_statistics",
+                    action="store_true", default=False,
+                    help="Whether figures showing number of flagged "+\
+                         "detectors over time are desired. The default "+\
+                         "is False.")
+
 parser.add_argument("-n", "--make_figures_for_noise_levels",
                     action="store_true", default=False,
                     help="Whether figures showing noise levels over time "+\
@@ -396,7 +402,6 @@ def make_figure_for_noise_levels(
             "\nTime (UTC)", fontsize=10)
     plot_for_noise.set_title(fig_title, fontsize=11)
     
-    
     if not save_fig:
         pyplot.show(figure_for_noise)
     else:
@@ -413,6 +418,12 @@ def make_figure_for_pointing_discrepancies(
     figure_for_discrepancies = pyplot.figure(figsize=(12, 6))
     plot_for_discrepancies   = figure_for_discrepancies.add_subplot(1, 1, 1)
     
+    el_dict = \
+        {"ra0hdec-44.75": "el0",
+         "ra0hdec-52.25": "el1",
+         "ra0hdec-59.95": "el2",
+         "ra0hdec-67.25": "el3"}
+    
     cl_dict = \
         {"ra0hdec-44.75": {"1": "blue", "2": "royalblue", "3": "staleblue"},
          "ra0hdec-52.25": {"1": "orange", "2": "bisque", "3": "gold"},
@@ -423,17 +434,13 @@ def make_figure_for_pointing_discrepancies(
         for source_ranking, deltas in sources_and_deltas.items():
             plot_for_discrepancies.plot(
                 deltas["obs_ids"], deltas["delta_"+ra_or_dec+"s"],
-                label=sub_field+" "+"source"+" "+source_ranking,
+                label=el_dict[sub_field]+" "+"src"+" "+source_ranking,
                 linestyle="dotted", linewidth=0.4,
                 marker=".", markersize=8.0,
-                color=cl_dict[sub_field][source_ranking], alpha=0.5)
-
+                color=cl_dict[sub_field][source_ranking], alpha=0.9)
+    
     plot_for_discrepancies.set_ylim(bottom=-60, top=60)
-    if (xlim_left is not None) and (xlim_right is not None):
-        margin = (xlim_right - xlim_left) * 0.05
-        plot_for_discrepancies.set_xlim(
-            left=xlim_left-margin, right=xlim_right+margin)
-
+    
     if (xlim_left is None) or (xlim_right is None):
         xtick_locs   = plot_for_noise.get_xticks()
         xtick_labels = ["/".join(
@@ -442,6 +449,9 @@ def make_figure_for_pointing_discrepancies(
                         for obs_id in xtick_locs]
         plot_for_discrepancies.set_xticklabels(xtick_labels)
     else:
+        x_margin = (xlim_right - xlim_left) * 0.05
+        plot_for_discrepancies.set_xlim(
+            left=xlim_left-x_margin, right=xlim_right+x_margin)
         xtick_locs, xtick_labels = \
             decide_on_xticks_from_obs_id_range(xlim_left, xlim_right)
         plot_for_discrepancies.set_xticks(xtick_locs)
@@ -452,7 +462,7 @@ def make_figure_for_pointing_discrepancies(
     plot_for_discrepancies.grid(
         which="both", linestyle="dotted", linewidth=0.2)
     plot_for_discrepancies.legend(
-        loc="upper right", fontsize=9, framealpha=0.0)
+        loc="upper right", fontsize=9, framealpha=0.9)
     
     if ra_or_dec == "ra":
         plot_for_discrepancies.set_ylabel(
@@ -469,6 +479,95 @@ def make_figure_for_pointing_discrepancies(
         pyplot.show(figure_for_discrepancies)
     else:
         pyplot.savefig(file_name, bbox_inches="tight")
+
+
+
+
+def make_figure_for_flagging_statistics(
+        statistics,
+        xlim_left, xlim_right,
+        fig_title, save_fig, file_name):
+    
+    figure_for_statistics = pyplot.figure(figsize=(12, 6))
+    plot_for_statistics   = figure_for_statistics.add_subplot(1, 1, 1)
+    
+    cl_dict = {"BadHk"                 : "#1f77b4",
+               "NegativeDAN"           : "#ff7f0e",
+               "Latched"               : "#2ca02c",
+               "Overbiased"            : "#d62728",
+               "Oscillating"           : "#9467bd",
+               "Glitchy"               : "#8c564b",
+               "BadCalSn"              : "#e377c2",
+               "MissingFluxCalibration": "#7f7f7f",
+               "UnphysicalLowVariance" : "#bcbd22",
+               "BadWeight"             : "#1fbecf",
+               "Others"                : "#000000"}
+    
+    label_dict = {"BadHk"                 : "Bad HK",
+                  "NegativeDAN"           : "Neg. DAN",
+                  "Latched"               : "Latched",
+                  "Overbiased"            : "Saturated",
+                  "Oscillating"           : "Oscillating",
+                  "Glitchy"               : "Glitchy",
+                  "BadCalSn"              : "Bad CalSN",
+                  "MissingFluxCalibration": "No Fluxcal",
+                  "UnphysicalLowVariance" : "Low Var.",
+                  "BadWeight"             : "Bad Weight",
+                  "Others"                : "Others"}
+    
+    for flag_reason in ["BadHk", "NegativeDAN", "Latched", "Overbiased",
+                        "Oscillating", "Glitchy", "BadCalSn",
+                        "MissingFluxCalibration", "UnphysicalLowVariance",
+                        "BadWeight", "Others"]:
+        average_over_time = statistics[flag_reason]
+        obs_ids  = sorted([int(obs_id) for obs_id in average_over_time.keys()])
+        times    = []
+        averages = []
+        for obs_id in obs_ids:
+            times.append(obs_id)
+            averages.append(average_over_time[str(obs_id)])
+            
+        plot_for_statistics.plot(times, averages,
+                                 label=label_dict[flag_reason],
+                                 linestyle="dotted", linewidth=0.4,
+                                 marker=".", markersize=8.0,
+                                 color=cl_dict[flag_reason], alpha=0.9)
+    
+    plot_for_statistics.set_yscale("log")
+    plot_for_statistics.set_ylim(bottom=5e-1, top=1.5e3)
+    
+    if (xlim_left is None) or (xlim_right is None):
+        xtick_locs   = plot_for_statistics.get_xticks()
+        xtick_labels = ["/".join(
+                            str(std_processing.obsid_to_g3time(obs_id)).\
+                            split(":")[0].split("-")[0:2]) \
+                        for obs_id in xtick_locs]
+        plot_for_statistics.set_xticklabels(xtick_labels)
+    else:
+        x_margin = (xlim_right - xlim_left) * 0.05
+        plot_for_statistics.set_xlim(
+            left=xlim_left-x_margin, right=xlim_right+x_margin)
+        xtick_locs, xtick_labels = \
+            decide_on_xticks_from_obs_id_range(xlim_left, xlim_right)
+        plot_for_statistics.set_xticks(xtick_locs)
+        plot_for_statistics.set_xticklabels(xtick_labels)
+    
+    plot_for_statistics.grid(
+        which="both", linestyle="dotted", linewidth=0.2)
+    plot_for_statistics.tick_params(
+        labelsize=9, direction="in", which="both")
+    plot_for_statistics.legend(
+        loc="upper right", fontsize=9, framealpha=0.9)
+    
+    plot_for_statistics.set_ylabel("Avg. (over all scans) number", fontsize=10)
+    plot_for_statistics.set_xlabel("\nTime (UTC)", fontsize=10)
+    plot_for_statistics.set_title(fig_title, fontsize=11)
+    
+    if not save_fig:
+        pyplot.show(figure_for_statistics)
+    else:
+        pyplot.savefig(file_name, bbox_inches="tight")
+
 
 
 # ==============================================================================
@@ -781,7 +880,6 @@ for g3_file in arguments.input_files:
             # - Make a figure for pointing discrepancies
             
             if arguments.make_figures_for_pointing_discrepancies:
-            
                 reorganized_data = {}
                 for sub_field in map_frame["DeltaRasFromSources1"].keys():
                     reorganized_data[sub_field] = \
@@ -818,7 +916,24 @@ for g3_file in arguments.input_files:
                             fig_title=fig_title,
                             save_fig=(not arguments.only_show_figures),
                             file_name=arguments.directory_to_save_figures+\
-                                      "/"+file_name)                    
+                                      "/"+file_name)
+            
+            
+            # - Make a figure for flagging statistics
+            
+            if arguments.make_figures_for_flagging_statistics:
+                file_name = "numbers_of_flagged_detectors.png"
+                fig_title = "Average number of flagged detectors " +\
+                            "for each reason during each observation"
+                
+                make_figure_for_flagging_statistics(
+                    map_frame["FlaggingStatistics"],
+                    xlim_left=arguments.left_xlimit_for_figures,
+                    xlim_right=arguments.right_xlimit_for_figures,
+                    fig_title=fig_title,
+                    save_fig=(not arguments.only_show_figures),
+                    file_name=arguments.directory_to_save_figures+\
+                              "/"+file_name)
             
             
             del sky_map

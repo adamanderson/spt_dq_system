@@ -475,7 +475,7 @@ class CoaddMapsAndCalculateNoises(object):
         self.dict_thresh = too_big_map_vals
         
         
-        # - Initialize variables storing maps and relevant info
+        # - Initialize variables storing maps and some relevant info
 
         self.coadded_obs_ids = {map_id: core.G3MapVectorInt()    \
                                 for map_id in self.map_ids}
@@ -485,6 +485,16 @@ class CoaddMapsAndCalculateNoises(object):
         self.coadded_map_frames = {map_id: None for map_id in self.map_ids}
         
         self.obs_frame = None
+        
+        self.flagging_reasons = ["BadCalSn", "BadWeight",
+                                 "Glitchy", "Oscillating",
+                                 "Latched", "Overbiased",
+                                 "BadHk", "NegativeDAN",
+                                 "UnphysicalLowVariance",
+                                 "MissingFluxCalibration"]
+        self.flagging_stats   = {"DummyKey": core.G3MapMapDouble()}
+        for flag_reason in self.flagging_reasons + ["Others"]:
+            self.flagging_stats["DummyKey"][flag_reason] = core.G3MapDouble()
         
         
         # - Initialize variables related to noise and pointing calculations
@@ -539,7 +549,6 @@ class CoaddMapsAndCalculateNoises(object):
                 {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
 
         
-        
         if self.calculate_pointing_discrepancies:
             self.delta_ras_from_1st_sources = \
                 {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
@@ -574,6 +583,36 @@ class CoaddMapsAndCalculateNoises(object):
             print()
             self.obs_frame = frame
         
+        if frame.type == core.G3FrameType.PipelineInfo:
+            print()
+            print("* Extracting information on detector flagging")
+            print("* from a PipelineInfo frame...")
+            print("\n")
+            obs_id = str(self.obs_frame["ObservationID"])
+            for reason in self.flagging_reasons:
+                if reason in frame["DroppedBoloStats"].keys():
+                    average = \
+                        numpy.mean(frame["DroppedBoloStats"][reason])
+                    self.flagging_stats["DummyKey"]\
+                        [reason][obs_id] = numpy.round(average)
+                elif reason != "Others":
+                    self.flagging_stats["DummyKey"]\
+                        [reason][obs_id] = 0.0
+            
+            occurrences_for_other_reasons = []
+            for reason, occurrences in frame["DroppedBoloStats"].items():
+                if reason not in self.flagging_stats["DummyKey"].keys():
+                    average = numpy.mean(occurrences)
+                    occurrences_for_other_reasons.append(average)
+            sum_of_averages = numpy.sum(occurrences_for_other_reasons)
+            self.flagging_stats["DummyKey"]\
+                ["Others"][obs_id] = numpy.round(sum_of_averages)
+            
+            if obs_id not in \
+            self.flagging_stats["DummyKey"]["Others"].keys():
+                self.flagging_stats["DummyKey"]["Others"][obs_id] = 0.0
+        
+        
         if frame.type == core.G3FrameType.Map:
             
             # - Load a map frame
@@ -589,6 +628,12 @@ class CoaddMapsAndCalculateNoises(object):
                         {mapped_id: frame["CoaddedObservationIDs"]}
                     map_ids_from_this_frame = \
                         {mapped_id: frame["CoaddedMapIDs"]}
+                    if "FlaggingStatistics" in frame.keys():
+                        self.flagging_stats = \
+                            combine_mapmapdoubles(
+                                self.flagging_stats,
+                                {"DummyKey": frame["FlaggingStatistics"]})
+                    
                     if "NoiseFromIndividualMaps" in frame.keys():
                         existing_noise_data = \
                             {mapped_id: frame["NoiseFromIndividualMaps"]}
@@ -616,6 +661,7 @@ class CoaddMapsAndCalculateNoises(object):
                             combine_mapmapdoubles(
                                 self.noise_data,
                                 existing_noise_data)
+                    
                     if "DeltaDecsFromSources1" in frame.keys():
                         for rank in ["1", "2", "3"]:
                             for coordinate in ["Ra", "Dec"]:
@@ -630,7 +676,6 @@ class CoaddMapsAndCalculateNoises(object):
                                     combine_mapmapdoubles(
                                         relevant_dict,
                                         existing_pointing_data)
-                
                 else:
                     print()
                     print("* Skipping the map frame above")
@@ -870,6 +915,9 @@ class CoaddMapsAndCalculateNoises(object):
                     self.coadded_obs_ids[map_id]
                 map_frame["CoaddedMapIDs"]         = \
                     self.coadded_map_ids[map_id]
+                map_frame["FlaggingStatistics"]    = \
+                    self.flagging_stats["DummyKey"]
+                
                 if self.calculate_noise_from_individual_maps:
                     map_frame["NoiseFromIndividualMaps"] = \
                         self.noise_from_individual_maps[map_id]
@@ -905,6 +953,14 @@ class CoaddMapsAndCalculateNoises(object):
                     print(list(map_ids))
                 print()
                 
+                print("These are the flagging statistics:")
+                for flag_reason, averages_over_time \
+                in  map_frame["FlaggingStatistics"].items():
+                    print(" - ", flag_reason)
+                    for obs_id, average in averages_over_time.items():
+                        print("    ", obs_id, average)
+                print()
+                
                 if self.calculate_noise_from_individual_maps:
                     noise_dict = map_frame["NoiseFromIndividualMaps"]
                 elif self.calculate_noise_from_coadded_maps:
@@ -921,7 +977,7 @@ class CoaddMapsAndCalculateNoises(object):
                         for obs_id, noise in sub_noise_dict.items():
                             print("   ", obs_id,
                                   noise/(core.G3Units.uK*core.G3Units.arcmin))
-                    print("\n")
+                    print()
                 
                 if self.calculate_pointing_discrepancies:
                     print("These are the pointing discrepancies:")
@@ -952,7 +1008,7 @@ class CoaddMapsAndCalculateNoises(object):
                         for obs_id, delta_dec in \
                         map_frame["DeltaDecsFromSources3"][sub_field].items():
                             print("     ", obs_id, delta_dec)   
-                    print("\n")
+                    print()
                 
                 
                 print("Here is what the frame looks like:")

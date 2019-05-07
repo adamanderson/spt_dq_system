@@ -1,5 +1,6 @@
 import os
 import argparse as ap
+import datetime
 
 parser = ap.ArgumentParser(description='Wrapper for updating data and plots.',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -20,6 +21,10 @@ parser.add_argument('coaddsdatadir',
                     help='Path to coadded maps.')
 parser.add_argument('coaddsfigsdir',
                     help='Path to figures related to coadded maps.')
+parser.add_argument('coaddslogsdir',
+                    help='Path to the log files.')
+
+
 
 args = parser.parse_args()
 
@@ -50,7 +55,23 @@ os.system('python summaryplot/cache_timeseries_data.py plot update 3 '
 
 
 # update coadded maps
+current_time = datetime.datetime.utcnow()
+logfile = args.coaddslogsdir + current_time.strftime('20%y%m%d_%H%M%S')
 
+for mode in ['coadding', 'plotting']:
+    for interval in ['last_n', 'weekly', 'monthly', 'yearly']:
+        os.system('python summaryplot/cache_field_maps.py '
+                  '-m {} -a update -t {} '
+                  '-o {} -d {} -D {} -F {} &> {}'.format(mode,
+                                                        interval,
+                                                        args.mintime,
+                                                        args.mapsdatadir
+                                                        args.coaddsdatadir
+                                                        args.coaddsfigsdir,
+                                                        logfile))
+
+
+"""
 os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t last_n -n 3'
           '-o {} -d {} -D {} -F {}'.format(args.mintime,
                                            args.mapsdatadir
@@ -77,6 +98,8 @@ os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t yearl
 
 # update figures related to maps
 
+
+
 os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t last_n -n 3'
           '-o {} -d {} -D {} -F {}'.format(args.mintime,
                                            args.mapsdatadir
@@ -100,6 +123,6 @@ os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t yearl
                                            args.mapsdatadir
                                            args.coaddsdatadir
                                            args.coaddsfigsdir))
-
+"""
 
 

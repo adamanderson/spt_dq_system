@@ -1,6 +1,7 @@
 # ---- Always need to import modules! ---- #
 
 import os
+import sys
 import argparse
 import datetime
 import numpy
@@ -142,8 +143,8 @@ desired_obs_id_ranges   = []
 desired_time_ranges     = []
 desired_dir_names       = []
 
-script_coadding_maps = "fields_coadding.py"
-script_plotting_data = "fields_plotting.py"
+script_coadding_maps = "summaryplot/fields_coadding.py"
+script_plotting_data = "summaryplot/fields_plotting.py"
 
 sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
               "ra0hdec-59.75", "ra0hdec-67.25"] 
@@ -430,8 +431,8 @@ for i in range(n_ranges):
                 "python" + " " + script + " " + input_files + " " + flags)
             if os.path.isfile(g3_file_for_coadded_maps):
                 cmds.append("rm" + " " + g3_file_for_coadded_maps)
-            cmds.append(
-                "mv" + " " + output_file + " " + g3_file_for_coadded_maps)
+            cmds.append("mv" + " " + output_file + " " + \
+                        g3_file_for_coadded_maps)
         
         
         else:
@@ -489,13 +490,13 @@ for i in range(n_ranges):
                 flags.append("-l " + str(desired_obs_id_ranges[i][1]))
                 flags.append("-N")
                 flags = " ".join(flags)
-                
                 cmds.append(
                     "python" + " " + script + " " + input_files + " " + flags)
                 if os.path.isfile(g3_file_for_coadded_maps):
                     cmds.append("rm" + " " + g3_file_for_coadded_maps)
                 cmds.append(
-                    "mv" + " " + output_file + " " + g3_file_for_coadded_maps)
+                    "mv" + " " + output_file + " " + \
+                    g3_file_for_coadded_maps)
             
             four_g3_files = \
                 " ".join([desired_dir_names[i]+"coadded_maps_from_"+sf+".g3"
@@ -506,8 +507,7 @@ for i in range(n_ranges):
             flags.append("-o " + final_out_file)
             flags.append("-i " + map_ids)
             flags.append("-c ")
-            flags = " ".join(flags)
-            
+            flags = " ".join(" ")
             cmd_final = \
                 "python" + " " + script + " " + four_g3_files + " " + flags
             cmds.append(cmd_final)
