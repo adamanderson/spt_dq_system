@@ -1,17 +1,38 @@
 function get_old_timeseries_plotdirs(interval) {
     // clear contents of the datalist div before we rebuild
-    $('#datalist_'+interval).empty()
+    $('#datalist_'+interval+'_stats').empty()
 
     // now rebuild the div
-    $.get('/oldstaticdirs', {interval:interval}, function(data, status) {
+    $.get('/oldstaticdirs', {subdirectory:"plots", interval:interval}, function(data, status) {
 	    data.reverse();
 	    for (jdir=0; jdir<data.length; jdir++) {
 			datestring = data[jdir].split('/')[2];
 			if (interval == 'last_3days') {
-				$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>last 3 days</button>");
+				$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>last 3 days</button>");
 			}
 			else if (datestring != 'current') {
-				$('#datalist_'+interval).append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
+				$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
+			}
+	    }
+	});
+}
+
+function get_old_map_plotdirs(interval) {
+    // clear contents of the datalist div before we rebuild
+    $('#datalist_'+interval+'_maps').empty()
+
+    // now rebuild the div
+    $.get('/oldstaticdirs', {subdirectory:"maps", interval:interval}, function(data, status) {
+	    data.reverse();
+	    for (jdir=0; jdir<data.length; jdir++) {
+			datestring = data[jdir].split('/')[2];
+			console.log(datestring);
+			if (interval == 'last_3days') {
+				$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>last 3 days</button>");
+			}
+			else if (datestring != 'current') {
+				console.log('test');
+				$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 			}
 	    }
 	});
