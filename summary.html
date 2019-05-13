@@ -65,6 +65,10 @@ function update_figs()
   document["map_noise_t_90"].src           ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
   document["map_noise_t_150"].src          ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
   document["map_noise_t_220"].src          ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+
+  document["flagging_90"].src           ='staticimg/'+mapweekdir+'/90GHz-numbers_of_flagged_detectors.png'
+  document["flagging_150"].src          ='staticimg/'+mapweekdir+'/150GHz-numbers_of_flagged_detectors.png'
+  document["flagging_220"].src          ='staticimg/'+mapweekdir+'/220GHz-numbers_of_flagged_detectors.png'
 }
 
 function set_variable(variable, newVal)
@@ -530,11 +534,32 @@ function open_tab(tabId)
 			</a>
 		  </td>
 		</tr>
+				<tr>
+		  <td colspan=3>
+			<h2>Flagging Statistics</h2>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-numbers_of_flagged_detectors.png">
+			  <img style="display:block;" width="100%" name='flagging_90' src='staticimg/maps/weekly/current/90GHz-numbers_of_flagged_detectors.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-numbers_of_flagged_detectors.png'">
+			  <img style="display:block;" width="100%" name='flagging_150' src='staticimg/maps/weekly/current/150GHz-numbers_of_flagged_detectors.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-numbers_of_flagged_detectors.png'">
+			  <img style="display:block;" width="100%" name='flagging_220' src='staticimg/maps/weekly/current/220GHz-numbers_of_flagged_detectors.png'>
+			</a>
+		  </td>
+		</tr>
 	  </table>
 	</td>
   </tr>
 </table>
-
 </div>
 
 </body>
