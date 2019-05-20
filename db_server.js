@@ -90,21 +90,23 @@ if (!fs.existsSync(config.static_plot_dir)) {
 app.use('/staticimg', express.static(config.static_plot_dir));
 
 // get subdirectory information for previous plots
-app.get('/oldstaticdirs', function(req, res) {
+app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
-							  req.query.interval + '/');
-	dirlist = [];
-	
-	// get the list of directories that contain plots
-	if(req.query.interval == 'monthly' || req.query.interval == 'weekly') {
+	var intervalList = ['weekly', 'monthly'];
+	var jInterval;
+	var dirlist = [];
+    for(jInterval=0; jInterval<intervalList.length; jInterval++)
+    {
+		filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
+								  intervalList[jInterval] + '/');
+
+		// get the list of directories that contain plots
 		for (jfile=0; jfile<filelist.length; jfile++) {
-			dirlist.push('plots/' + req.query.interval + '/' + filelist[jfile]);
+			dirlist.push('plots/' + 
+						 intervalList[jInterval] + '/' + 
+						 filelist[jfile]);
 		}
-	}
-	else {
-		dirlist.push('plots/' + req.query.interval + '/current');
 	}
 	res.send(dirlist);
 });
