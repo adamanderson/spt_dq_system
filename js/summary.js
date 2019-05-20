@@ -1,5 +1,18 @@
-wafer='all';
-weekdir='plots/last_3days/current'
+// Check if there are cookies already defined for the wafer and time interval,
+// and use them if available.
+if(typeof Cookies.get('wafer') !== undefined)
+	wafer = Cookies.get('wafer', {expires: 1});
+else
+	wafer='all';
+if(typeof Cookies.get('weekdir') !== undefined)
+	weekdir = Cookies.get('weekdir', {expires: 1});
+else
+	weekdir='plots/last_3days/current';
+
+
+/**
+ * Updates the source of all images defined on the summary page.
+ */
 function update_figs()
 {
   document["ts_median_cal_sn_highel"].src         ='staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
@@ -42,21 +55,33 @@ function update_figs()
   document["ts_median_nei_10Hz_to_15Hz"].src      ='staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
 }
 
+/**
+ * Sets a global variable to records its value as a cookie for retrieval later.
+ */
 function set_variable(variable, newVal)
 {
   window[variable] = newVal;
-  document.cookie = variable + " = " + newVal;
+  Cookies.set(variable, newVal, { expires: 1 });
   update_figs();
 }
 
-function add_date_buttons(interval) {
+/**
+ * Builds the buttons on the summary page that select different time intervals
+ * of data to display. These are constructed by appending the DOM directly.
+ * Note also that this function also initializes the jQuery UI "controlgroup"
+ * and binds the click event to it after appending all the buttons.
+ */
+function add_date_buttons(interval)
+{
     // now rebuild the div
 	$.get('/staticdirs', {},
 		  function(data, status) {
 			  //data.reverse();
-			  for (jdir=0; jdir<data.length; jdir++) {
+			  for (jdir=0; jdir<data.length; jdir++)
+			  {
 				  datestring = data[jdir].split('/')[2];
-				  if (datestring != 'current') {
+				  if (datestring != 'current')
+				  {
 					  $('#datalist').append("<input type='radio' id='dates-"+datestring+"' name='dates' value='" +
 											data[jdir] + "'>\n" + 
 											"<label for='dates-"+datestring+"'>"+datestring+"</label>");
@@ -69,12 +94,21 @@ function add_date_buttons(interval) {
 		  });
 }
 
-$( document ).ready(function() {
-  $("#tabs").tabs();
-  $("#waferlist").controlgroup();
-  add_date_buttons();
+// Page initialization
+$( document ).ready(function()
+{
+	// Initialize jQuery UI elements and make dynamic modifications to the DOM
+	$("#tabs").tabs();
+	$("#waferlist").controlgroup();
+	add_date_buttons();
+	
+	// Bind the click event to the wafer buttons
+	$("[id^=wafers-]").click(function(event) {
+		set_variable("wafer", event.target.value);
+	});
 
-  $("[id^=wafers-]").click(function(event) {
-      set_variable("wafer", event.target.value);
-  }); 
+	// Update all the figures. Need to call this on load because the values of
+	// wafer and weekdir might be pulled from a cookie, which probably differs
+	// from the default values.
+	update_figs();
 });
