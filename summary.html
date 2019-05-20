@@ -63,19 +63,9 @@ function set_variable(variable, newVal)
 
 function load_plots()
 {
-    get_old_timeseries_plotdirs('weekly');
-    get_old_timeseries_plotdirs('monthly');
-    get_old_timeseries_plotdirs('last_3days');
-}
-
-function open_tab(tabId)
-{
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-		tabcontent[i].style.display = "none";
-    }
-	document.getElementById(tabId).style.display = "block";
+    get_timeseries_plotdirs('weekly');
+    get_timeseries_plotdirs('monthly');
+    get_timeseries_plotdirs('last_3days');
 }
 </script>
 

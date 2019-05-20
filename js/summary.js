@@ -1,4 +1,4 @@
-function get_old_timeseries_plotdirs(interval) {
+function get_timeseries_plotdirs(interval) {
     // clear contents of the datalist div before we rebuild
     $('#datalist_'+interval).empty()
 
