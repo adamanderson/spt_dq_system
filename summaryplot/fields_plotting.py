@@ -1,4 +1,4 @@
-# ---- Always need to import modules! ---- #
+## ******* Always need to import modules! ******* ##
 
 import  matplotlib
 matplotlib.use("Agg")
@@ -11,7 +11,7 @@ import  glob
 import  numpy 
 import  scipy
 import  argparse
-
+from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
 from    spt3g       import  std_processing
@@ -54,6 +54,16 @@ parser.add_argument("-y", "--map_type",
                          "under development and ignores options other than "+\
                          "'T'.")
 
+parser.add_argument("-U", "--map_values_upper_limit",
+                    type=float, action="store", default=None,
+                    help="The upper limit of the values that will be used "+\
+                         "in the colorbar for showing a map.")
+
+parser.add_argument("-L", "--map_values_lower_limit",
+                    type=float, action="store", default=None,
+                    help="The lower limit of the values that will be used "+\
+                         "in the colorbar for showing a map.")
+
 parser.add_argument("-i", "--map_ids",
                     type=str, action="store", nargs="+", default=["90GHz"],
                     help="What ID a map needs to have in order for "+\
@@ -66,9 +76,14 @@ parser.add_argument("-w", "--make_figures_for_weights",
 
 parser.add_argument("-F", "--make_figures_for_flagging_statistics",
                     action="store_true", default=False,
-                    help="Whether figures showing number of flagged "+\
+                    help="Whether figures showing average number of flagged "+\
                          "detectors over time are desired. The default "+\
                          "is False.")
+
+parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
+                    action="store_true", default=False,
+                    help="Whether figures showing pointing discrepancies "+\
+                         "over time are desired. The default is False.")
 
 parser.add_argument("-n", "--make_figures_for_noise_levels",
                     action="store_true", default=False,
@@ -79,11 +94,6 @@ parser.add_argument("-N", "--integrated_noise",
                     action="store_true", default=False,
                     help="Whether the noise data correspond to integrated "+\
                          "noise over time. The default is False.")
-
-parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
-                    action="store_true", default=False,
-                    help="Whether figures showing pointing discrepancies "+\
-                         "over time are desired. The default is False.")
 
 parser.add_argument("-l", "--left_xlimit_for_figures",
                     type=int, action="store", default=None,
@@ -96,6 +106,12 @@ parser.add_argument("-r", "--right_xlimit_for_figures",
                     help="The observation ID that will be used as the "+\
                          "upper limit of the x-axis of a figure that shows "+\
                          "time variations of certain quantity such as noise.")
+
+parser.add_argument("-z", "--figure_title_font_size",
+                    type=float, action="store", default=11,
+                    help="The font size to be used for figure titles. "+\
+                         "The font size of axis labels, etc. will be "+\
+                         "determined based on this value.")
 
 parser.add_argument("-j", "--make_figures_for_one_frame_only",
                     action="store_true", default=False,
@@ -124,7 +140,14 @@ arguments = parser.parse_args()
 
 
 print()
+print("# ======================= #")
+print("#  Start making figures!  #")
+print("# ======================= #")
+print()
+
+print()
 print("These are the input files:")
+print()
 for input_file in arguments.input_files:
     print(input_file.split("/")[-1])
 print()
@@ -154,6 +177,12 @@ if arguments.directory_to_save_figures[-1] == "/":
 # -----------------------------------------------------------------------------
 
 valid_map_ids = arguments.map_ids
+ttl_fs = arguments.figure_title_font_size
+lbl_fs = ttl_fs - 1.0
+tck_fs = ttl_fs - 1.0
+lgd_fs = ttl_fs - 2.0
+fig_wd = 12
+fig_ht = 7.5
 
 
 # ==============================================================================
@@ -167,37 +196,40 @@ valid_map_ids = arguments.map_ids
 # ------------------------------------------------------------------------------
 
 def visualize_a_field_map(
-        twod_array, x_res, y_res, fig_w, fig_h, cmap, aspect, 
-        cbar_label, title,
-        vmin=None, vmax=None,
+        twod_array, x_res, y_res, fig_w, fig_h, aspect,
+        cmap, vmin=None, vmax=None,
+        cbar_label="", title="",
         no_xy_labels=True, image_xlabel="", image_ylabel="",
         save_fig=False, filename=None):
-        
+    
     figure_for_2d_array = pyplot.figure(figsize=(fig_w, fig_h))
     image_of_2d_array   = figure_for_2d_array.add_subplot(1, 1, 1)
     
-    if vmin is None or vmax is None:
-        cax = image_of_2d_array.imshow(numpy.asarray(twod_array), cmap=cmap,
+    if (vmin == None) or (vmax == None):
+        cax = image_of_2d_array.imshow(numpy.asarray(twod_array),
                                        origin="lower", aspect=aspect,
-                                       interpolation="none")
+                                       interpolation="none",
+                                       cmap=cmap,)
     else:
-        cax = image_of_2d_array.imshow(numpy.asarray(twod_array), cmap=cmap,
+        cax = image_of_2d_array.imshow(numpy.asarray(twod_array),
                                        origin="lower", aspect=aspect,
-                                       vmin=vmin, vmax=vmax,
-                                       interpolation="none")
+                                       interpolation="none",
+                                       cmap=cmap, vmin=vmin, vmax=vmax)
     
     cbar = figure_for_2d_array.colorbar(
                cax, ax=image_of_2d_array, pad=0.01, shrink=0.9, aspect=30)
     
-    cbar.ax.set_ylabel(cbar_label, fontsize=10)
+    cbar.ax.set_ylabel(cbar_label, fontsize=lbl_fs)
     
     if not no_xy_labels:
         image_of_2d_array.set_xticklabels(
-            numpy.round(image_of_2d_array.get_xticks()*x_res/core.G3Units.deg))
+            numpy.round(image_of_2d_array.get_xticks()*x_res/core.G3Units.deg),
+            fontsize=lbl_fs)
         image_of_2d_array.set_yticklabels(
-            numpy.round(image_of_2d_array.get_yticks()*y_res/core.G3Units.deg))
-        image_of_2d_array.set_xlabel(image_xlabel)
-        image_of_2d_array.set_ylabel(image_ylabel)
+            numpy.round(image_of_2d_array.get_yticks()*y_res/core.G3Units.deg),
+            fontsize=lbl_fs)
+        image_of_2d_array.set_xlabel(image_xlabel, fontsize=lbl_fs)
+        image_of_2d_array.set_ylabel(image_ylabel, fontsize=lbl_fs)
     else:
         image_of_2d_array.tick_params(axis="x", which="both",
                                       bottom=False, top=False, 
@@ -206,7 +238,8 @@ def visualize_a_field_map(
                                       left=False, right=False, 
                                       labelleft=False, labelright=False)
     
-    image_of_2d_array.set_title(title, fontsize=11)
+    image_of_2d_array.set_title(title, fontsize=ttl_fs)
+    
     figure_for_2d_array.tight_layout()
     
     if not save_fig:
@@ -225,23 +258,21 @@ def make_histogram_and_cross_section_plot_of_a_field_map(
         cr_sec_xlabel="", cr_sec_title="", fig_title="",
         save_fig=False, filename=""):
     
-    figure_for_the_array = pyplot.figure(figsize=(12, 6))
+    figure_for_the_array = pyplot.figure(figsize=(12, 9))
     if also_histogram:
         plot_for_histogram   = figure_for_the_array.add_subplot(1, 2, 1)
         plot_for_cr_sec_view = figure_for_the_array.add_subplot(1, 2, 2)
     else:
         plot_for_cr_sec_view = figure_for_the_array.add_subplot(1, 1, 1)
     
-    
     if also_histogram:
         if is_a_weight_map:
             values_for_histogram = numpy.asarray(twod_array)\
                                    [numpy.where(numpy.asarray(twod_array)!=0.0)]
+            values_for_histogram = \
+                values_for_histogram / numpy.max(values_for_histogram)
         else:
             values_for_histogram = numpy.asarray(twod_array).flatten()
-        
-        values_for_histogram = \
-            values_for_histogram / numpy.max(values_for_histogram)
         
         plot_for_histogram.hist(
             values_for_histogram,
@@ -250,16 +281,17 @@ def make_histogram_and_cross_section_plot_of_a_field_map(
             axis="y", which="both",
             left=False, labelleft=False)
         plot_for_histogram.tick_params(
-            axis="x", labelsize=9)
-        plot_for_histogram.set_xlabel("\n"+hist_xlabel, fontsize=10)
-        plot_for_histogram.set_title(hist_title, fontsize=11)
-        
+            axis="x", labelsize=tck_fs)
+        plot_for_histogram.set_xlabel("\n"+hist_xlabel, fontsize=lbl_fs)
+        plot_for_histogram.set_title(hist_title, fontsize=ttl_fs)
     
-    vertical_cross_section_values = \
+    
+    vertical_cr_sec_values = \
         numpy.asarray(twod_array).transpose()[twod_array.shape[-1]//2]
     
-    vertical_cross_section_values = \
-        vertical_cross_section_values / numpy.max(vertical_cross_section_values)
+    if is_a_weight_map:
+        vertical_cr_sec_values = \
+            vertical_cr_sec_values / numpy.max(vertical_cr_sec_values)
     
     ind_diff_for_n_deg = (cr_sec_xticks[0] - cr_sec_xticks[1]) * \
                          1 / (cr_sec_xticklabels[0] - cr_sec_xticklabels[1]) * \
@@ -270,22 +302,27 @@ def make_histogram_and_cross_section_plot_of_a_field_map(
     cr_sec_xticklabels = [str(label) for label in cr_sec_xticklabels]
     
     plot_for_cr_sec_view.plot(
-        vertical_cross_section_values, linewidth=0.3,
+        vertical_cr_sec_values, linewidth=0.3,
         color="black")
     plot_for_cr_sec_view.tick_params(
-        axis="both", labelsize=9)
+        axis="both", labelsize=tck_fs)
+    
     plot_for_cr_sec_view.set_xlim(left=xlim_left, right=xlim_right)
     plot_for_cr_sec_view.set_ylim(top=1.05, bottom=-0.025)
+    
     plot_for_cr_sec_view.grid(linestyle="dotted", linewidth=0.3)
+    
     plot_for_cr_sec_view.set_xticks(cr_sec_xticks)
-    plot_for_cr_sec_view.set_xticklabels(cr_sec_xticklabels)
-    plot_for_cr_sec_view.set_xlabel("\n"+cr_sec_xlabel, fontsize=10)
-    plot_for_cr_sec_view.set_ylabel(hist_xlabel+"\n", fontsize=10)
-    plot_for_cr_sec_view.set_title(cr_sec_title, fontsize=11)
+    plot_for_cr_sec_view.set_xticklabels(cr_sec_xticklabels, fontsize=tck_fs)
+    
+    plot_for_cr_sec_view.set_xlabel("\n"+cr_sec_xlabel, fontsize=lbl_fs)
+    plot_for_cr_sec_view.set_ylabel(hist_xlabel+"\n", fontsize=lbl_fs)
+    plot_for_cr_sec_view.set_title(cr_sec_title, fontsize=ttl_fs)
     
     if also_histogram:
-        figure_for_the_array.suptitle(fig_title, fontsize=12, y=0.99)
-        figure_for_the_array.tight_layout(pad=3.0, w_pad=2.0)
+        figure_for_the_array.suptitle(fig_title, fontsize=ttl_fs, y=0.99)
+    
+    figure_for_the_array.tight_layout(pad=3.0, w_pad=2.0)
     
     if not save_fig:
         pyplot.show(figure_for_the_array)
@@ -329,15 +366,17 @@ def make_figure_for_noise_levels(
         xlim_left=None, xlim_right=None,
         fig_title="", save_fig=False, file_name=None):
     
-    figure_for_noise = pyplot.figure(figsize=(12, 6))
+    figure_for_noise = pyplot.figure(figsize=(fig_wd, fig_ht))
     plot_for_noise   = figure_for_noise.add_subplot(1, 1, 1)
     
-    max_n_obss = 0
+    max_n_obss   = 0
+    median_noise = []
     for source, noise_dict in noise_data.items():
         obs_ids = sorted(noise_dict.keys())
         units   = core.G3Units
         noise_levels = [noise_dict[obs_id] / (units.uK*units.arcmin) \
-                        for obs_id in obs_ids] 
+                        for obs_id in obs_ids]
+        median_noise.append(numpy.nanmedian(noise_levels))
         obs_ids = [int(obs_id) for obs_id in obs_ids]
         if len(obs_ids) > max_n_obss:
             max_n_obss = len(obs_ids)
@@ -346,7 +385,7 @@ def make_figure_for_noise_levels(
                    "ra0hdec-59.75": "El 2", "ra0hdec-67.25": "El 3"}
         cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
                    "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728"}
-        label   = source + " (" + el_dict[source] + ")"
+        label = el_dict[source]
         
         if is_integrated_noise:
             plot_for_noise.plot(
@@ -359,19 +398,27 @@ def make_figure_for_noise_levels(
                 linestyle="dotted", linewidth=0.4,
                 marker=".", markersize=8.0,
                 color=cl_dict[source], alpha=0.5)
+    median_noise = numpy.median(median_noise)
     
     if is_integrated_noise:
         plot_for_noise.set_xscale("log")
         plot_for_noise.set_yscale("log")
-        plot_for_noise.set_ylim(bottom=8e0, top=1.2e3)
+        if median_noise > 300:
+            plot_for_noise.set_ylim(bottom=5e0, top=1e3)
+        else:
+            plot_for_noise.set_ylim(bottom=5e0, top=1e3)
         plot_for_noise.set_xlim(
             left=0.9, right=10**numpy.ceil(numpy.log10(max_n_obss)))
     else:
-        plot_for_noise.set_ylim(bottom=40, top=410)
+        plot_for_noise.set_yscale("log")
+        if median_noise > 300:
+            plot_for_noise.set_ylim(bottom=8e1, top=1e3)
+        else:
+            plot_for_noise.set_ylim(bottom=8e1, top=1e3)
         if (xlim_left is not None) and (xlim_right is not None):
             margin = (xlim_right - xlim_left) * 0.05
             plot_for_noise.set_xlim(
-                left=xlim_left-margin, right=xlim_right+margin)
+                left=xlim_left-margin, right=xlim_right+6.0*margin)
     
     if not is_integrated_noise:
         if (xlim_left is None) or (xlim_right is None):
@@ -387,20 +434,22 @@ def make_figure_for_noise_levels(
             plot_for_noise.set_xticks(xtick_locs)
             plot_for_noise.set_xticklabels(xtick_labels)
     
-    plot_for_noise.tick_params(labelsize=9, direction="in", which="both")
+    plot_for_noise.tick_params(direction="in", which="both", labelsize=tck_fs)
     plot_for_noise.grid(which="both", linestyle="dotted", linewidth=0.2)
-    plot_for_noise.legend(loc="upper right", fontsize=9, framealpha=0.0)
+    plot_for_noise.legend(loc="upper right", fontsize=tck_fs, framealpha=0.0)
         
     plot_for_noise.set_ylabel("Average  "+r"$\sqrt{C_l}$"+"  "+\
-                              "in the "+r"$l$"+" range [3000, 5000]   "+\
-                              r"$[{\mu}K \cdot arcmin]$"+"\n", fontsize=10)
+                              "in the "+"\n"+"ell range [3000, 5000]  "+\
+                              r"$[{\mu}K \cdot arcmin]$"+"\n", fontsize=lbl_fs)
     if is_integrated_noise:
         plot_for_noise.set_xlabel(
-            "\nNumber of observations", fontsize=10)
+            "\nNumber of observations", fontsize=lbl_fs)
     else:
         plot_for_noise.set_xlabel(
-            "\nTime (UTC)", fontsize=10)
-    plot_for_noise.set_title(fig_title, fontsize=11)
+            "\nTime (UTC)", fontsize=lbl_fs)
+    plot_for_noise.set_title(fig_title, fontsize=ttl_fs)
+    
+    figure_for_noise.tight_layout()
     
     if not save_fig:
         pyplot.show(figure_for_noise)
@@ -415,20 +464,20 @@ def make_figure_for_pointing_discrepancies(
         xlim_left=None, xlim_right=None,
         fig_title="", save_fig=False, file_name=None):
     
-    figure_for_discrepancies = pyplot.figure(figsize=(12, 6))
+    figure_for_discrepancies = pyplot.figure(figsize=(fig_wd, fig_ht))
     plot_for_discrepancies   = figure_for_discrepancies.add_subplot(1, 1, 1)
     
     el_dict = \
         {"ra0hdec-44.75": "el0",
          "ra0hdec-52.25": "el1",
-         "ra0hdec-59.95": "el2",
+         "ra0hdec-59.75": "el2",
          "ra0hdec-67.25": "el3"}
     
     cl_dict = \
-        {"ra0hdec-44.75": {"1": "blue", "2": "royalblue", "3": "staleblue"},
-         "ra0hdec-52.25": {"1": "orange", "2": "bisque", "3": "gold"},
-         "ra0hdec-59.75": {"1": "lime", "2": "aquamarine", "3": "forestgreen"},
-         "ra0hdec-67.25": {"1": "red",  "2": "lightsalmon", "3": "maroon"}}
+        {"ra0hdec-44.75": {"1": "aqua",   "2": "deepskyblue", "3": "darkturquoise"},
+         "ra0hdec-52.25": {"1": "orange", "2": "gold",        "3": "khaki"},
+         "ra0hdec-59.75": {"1": "lime",   "2": "greenyellow", "3": "forestgreen"},
+         "ra0hdec-67.25": {"1": "red",    "2": "lightsalmon", "3": "maroon"}}
     
     for sub_field, sources_and_deltas in discrepancy_data.items():
         for source_ranking, deltas in sources_and_deltas.items():
@@ -439,7 +488,7 @@ def make_figure_for_pointing_discrepancies(
                 marker=".", markersize=8.0,
                 color=cl_dict[sub_field][source_ranking], alpha=0.9)
     
-    plot_for_discrepancies.set_ylim(bottom=-60, top=60)
+    plot_for_discrepancies.set_ylim(bottom=-45, top=45)
     
     if (xlim_left is None) or (xlim_right is None):
         xtick_locs   = plot_for_noise.get_xticks()
@@ -451,29 +500,32 @@ def make_figure_for_pointing_discrepancies(
     else:
         x_margin = (xlim_right - xlim_left) * 0.05
         plot_for_discrepancies.set_xlim(
-            left=xlim_left-x_margin, right=xlim_right+x_margin)
+            left=xlim_left-x_margin, right=xlim_right+6.0*x_margin)
         xtick_locs, xtick_labels = \
             decide_on_xticks_from_obs_id_range(xlim_left, xlim_right)
         plot_for_discrepancies.set_xticks(xtick_locs)
         plot_for_discrepancies.set_xticklabels(xtick_labels)
 
     plot_for_discrepancies.tick_params(
-        labelsize=9, direction="in", which="both")
+        labelsize=tck_fs, direction="in", which="both")
     plot_for_discrepancies.grid(
         which="both", linestyle="dotted", linewidth=0.2)
     plot_for_discrepancies.legend(
-        loc="upper right", fontsize=9, framealpha=0.9)
+        loc="upper right", fontsize=tck_fs, framealpha=0.9)
     
     if ra_or_dec == "ra":
         plot_for_discrepancies.set_ylabel(
-            "(Measured R.A. - True R.A.) "+r"$\times$"+" cos(True Dec.)"+\
-            " [arc second]\n", fontsize=10)
-    if ra_or_dec == "dec":
+            "(Measured R.A. - True R.A.) "+"\n"+r"$\times$"+" cos(True Dec.)"+\
+            " [arc second]\n", fontsize=lbl_fs)
+    else:
         plot_for_discrepancies.set_ylabel(
-            "(Measured Dec. - True Dec.) [arc second]\n", fontsize=10)    
-    plot_for_discrepancies.set_xlabel("\nTime (UTC)", fontsize=10)
+            "(Measured Dec. - True Dec.) [arc second]\n", fontsize=lbl_fs)
     
-    plot_for_discrepancies.set_title(fig_title, fontsize=11)
+    plot_for_discrepancies.set_xlabel("\nTime (UTC)", fontsize=lbl_fs)
+    
+    plot_for_discrepancies.set_title(fig_title, fontsize=ttl_fs)
+    
+    figure_for_discrepancies.tight_layout()
     
     if not save_fig:
         pyplot.show(figure_for_discrepancies)
@@ -484,57 +536,85 @@ def make_figure_for_pointing_discrepancies(
 
 
 def make_figure_for_flagging_statistics(
-        statistics,
+        map_frame,
         xlim_left, xlim_right,
         fig_title, save_fig, file_name):
     
-    figure_for_statistics = pyplot.figure(figsize=(12, 6))
+    figure_for_statistics = pyplot.figure(figsize=(fig_wd, fig_ht))
     plot_for_statistics   = figure_for_statistics.add_subplot(1, 1, 1)
     
-    cl_dict = {"BadHk"                 : "#1f77b4",
-               "NegativeDAN"           : "#ff7f0e",
-               "Latched"               : "#2ca02c",
-               "Overbiased"            : "#d62728",
-               "Oscillating"           : "#9467bd",
-               "Glitchy"               : "#8c564b",
-               "BadCalSn"              : "#e377c2",
-               "MissingFluxCalibration": "#7f7f7f",
-               "UnphysicalLowVariance" : "#bcbd22",
-               "BadWeight"             : "#1fbecf",
-               "Others"                : "#000000"}
+    cl_dict  = {"BadHk"                  : "#1f77b4",
+                "PostCalibrationNaNs"    : "#ff7f0e",
+                "Latched"                : "#2ca02c",
+                "Overbiased"             : "#d62728",
+                "Oscillating"            : "#9467bd",
+                "Glitchy"                : "#8c564b",
+                "BadCalSn"               : "#e377c2",
+                "MissingFluxCalibration" : "#7f7f7f",
+                "UnphysicalLowVariance"  : "#bcbd22",
+                "BadWeight"              : "#1fbecf",
+                "Others"                 : "#000000",
+                "TotalNotFlagged"        : "black",
+                "TotalRemoved"           : "black"}
     
-    label_dict = {"BadHk"                 : "Bad HK",
-                  "NegativeDAN"           : "Neg. DAN",
-                  "Latched"               : "Latched",
-                  "Overbiased"            : "Saturated",
-                  "Oscillating"           : "Oscillating",
-                  "Glitchy"               : "Glitchy",
-                  "BadCalSn"              : "Bad CalSN",
-                  "MissingFluxCalibration": "No Fluxcal",
-                  "UnphysicalLowVariance" : "Low Var.",
-                  "BadWeight"             : "Bad Weight",
-                  "Others"                : "Others"}
+    lbl_dict = {"BadHk"                  : "Bad HK"     ,
+                "PostCalibrationNaNs"    : "NaNs"       ,
+                "Latched"                : "Latched"    ,
+                "Overbiased"             : "Saturated"  ,
+                "Oscillating"            : "Oscillating",
+                "Glitchy"                : "Glitchy"    ,
+                "BadCalSn"               : "Bad CalSN"  ,
+                "MissingFluxCalibration" : "No Fluxcal" ,
+                "UnphysicalLowVariance"  : "Low Var."   ,
+                "BadWeight"              : "Bad Weight" ,
+                "Others"                 : "Others"     ,
+                "TotalNotFlagged"        : "Survived"   ,
+                "TotalRemoved"           : "Removed"}
     
-    for flag_reason in ["BadHk", "NegativeDAN", "Latched", "Overbiased",
-                        "Oscillating", "Glitchy", "BadCalSn",
-                        "MissingFluxCalibration", "UnphysicalLowVariance",
-                        "BadWeight", "Others"]:
-        average_over_time = statistics[flag_reason]
-        obs_ids  = sorted([int(obs_id) for obs_id in average_over_time.keys()])
-        times    = []
-        averages = []
-        for obs_id in obs_ids:
-            times.append(obs_id)
-            averages.append(average_over_time[str(obs_id)])
-            
+    mkr_dict = {"TotalNotFlagged"        : "$\u266B$",
+                "TotalRemoved"           : "x"}
+    
+    
+    for flag_reason in ["BadHk",
+                        "PostCalibrationNaNs",
+                        "Latched",
+                        "Overbiased",
+                        "Oscillating",
+                        "Glitchy",
+                        "BadCalSn",
+                        "MissingFluxCalibration",
+                        "UnphysicalLowVariance",
+                        "BadWeight",
+                        "Others",
+                        "TotalNotFlagged",
+                        "TotalRemoved"]:
+        
+        key_name = "FlaggingStatisticsAverageNumberOf"+flag_reason
+        averages = map_frame[key_name]
+        
+        times_and_averages = []
+        for sub_field, oids_and_avgs in averages.items():
+            for oid, avg in oids_and_avgs.items():
+                times_and_averages.append((int(oid), avg))
+        
+        times_and_averages = sorted(times_and_averages, key=itemgetter(0))
+        times    = [entry[0] for entry in times_and_averages]
+        averages = [entry[1] for entry in times_and_averages]
+        
+        if flag_reason in mkr_dict.keys():
+            marker = mkr_dict[flag_reason]
+        else:
+            marker = "."
+        
         plot_for_statistics.plot(times, averages,
-                                 label=label_dict[flag_reason],
+                                 label=lbl_dict[flag_reason],
                                  linestyle="dotted", linewidth=0.4,
-                                 marker=".", markersize=8.0,
+                                 marker=marker, markersize=5.0,
                                  color=cl_dict[flag_reason], alpha=0.9)
     
-    plot_for_statistics.set_yscale("log")
-    plot_for_statistics.set_ylim(bottom=5e-1, top=1.5e3)
+    plot_for_statistics.set_yscale("symlog", linthreshy=50,
+                                   subsy=[2, 3, 4, 5, 6, 7, 8, 9])
+    plot_for_statistics.set_ylim(bottom=-2, top=5e3)
     
     if (xlim_left is None) or (xlim_right is None):
         xtick_locs   = plot_for_statistics.get_xticks()
@@ -546,28 +626,34 @@ def make_figure_for_flagging_statistics(
     else:
         x_margin = (xlim_right - xlim_left) * 0.05
         plot_for_statistics.set_xlim(
-            left=xlim_left-x_margin, right=xlim_right+x_margin)
+            left=xlim_left-x_margin, right=xlim_right+6.0*x_margin)
         xtick_locs, xtick_labels = \
             decide_on_xticks_from_obs_id_range(xlim_left, xlim_right)
         plot_for_statistics.set_xticks(xtick_locs)
         plot_for_statistics.set_xticklabels(xtick_labels)
     
     plot_for_statistics.grid(
-        which="both", linestyle="dotted", linewidth=0.2)
+        axis="x", which="major", linestyle="dotted", linewidth=0.2)
+    plot_for_statistics.grid(
+        axis="y", which="both", linestyle="dotted", linewidth=0.2)
     plot_for_statistics.tick_params(
-        labelsize=9, direction="in", which="both")
+        labelsize=tck_fs, direction="in", which="both")
     plot_for_statistics.legend(
-        loc="upper right", fontsize=9, framealpha=0.9)
+        loc="upper right", fontsize=tck_fs, framealpha=0.9)
     
-    plot_for_statistics.set_ylabel("Avg. (over all scans) number", fontsize=10)
-    plot_for_statistics.set_xlabel("\nTime (UTC)", fontsize=10)
-    plot_for_statistics.set_title(fig_title, fontsize=11)
+    plot_for_statistics.set_ylabel(
+        "Avg. (over all scans) number"+"\n", fontsize=lbl_fs)
+    plot_for_statistics.set_xlabel(
+        "\nTime (UTC)", fontsize=lbl_fs)
+    plot_for_statistics.set_title(
+        fig_title, fontsize=ttl_fs)
+    
+    figure_for_statistics.tight_layout()
     
     if not save_fig:
         pyplot.show(figure_for_statistics)
     else:
         pyplot.savefig(file_name, bbox_inches="tight")
-
 
 
 # ==============================================================================
@@ -604,27 +690,24 @@ for g3_file in arguments.input_files:
     print()
     
     
-    if not arguments.coadded_data:
-    
+    if not arguments.coadded_data:    
         for frame in frames:
             if frame.type == core.G3FrameType.Observation:
-                observation_frame = frame
+                obs_frame = frame
     
         
     for frame in frames:
-        
         if frame.type != core.G3FrameType.Map:
             continue
         elif frame["Id"] not in valid_map_ids:
             continue
-        
         else:
             map_frame = frame
             map_id    = frame["Id"]
             print()
             print("----------------------------------------------------------")
-            print("Found a Map frame with ID", map_id+"!")
-            print("Figures will be made for this frame.")
+            print(" Found a Map frame with ID", map_id+"!")
+            print(" Figures will be made for this frame.")
             print("----------------------------------------------------------")
             print()
             
@@ -650,14 +733,12 @@ for g3_file in arguments.input_files:
             # - Prepare the first (and maybe also the second) line of the title
             
             if not arguments.coadded_data:
-                source   = observation_frame["SourceName"]
-                obs_id   = str(observation_frame["ObservationID"])
-                date     = str(observation_frame["ObservationStart"]).\
-                           split(".")[0]
-                resoluti = str(cmb_map_mK.x_res/core.G3Units.arcmin)+\
-                           "' resolution"
-                title_a  = source+"  "+obs_id+" ("+date+") "+"   "+map_id+\
-                           " "+map_type_str+" ("+resoluti+")"
+                source = obs_frame["SourceName"]
+                obs_id = str(obs_frame["ObservationID"])
+                date   = str(obs_frame["ObservationStart"]).split(".")[0]
+                res    = str(cmb_map_mK.x_res/core.G3Units.arcmin)+"' resolution"
+                title_a = source+"  "+obs_id+" ("+date+") "+"   "+map_id+\
+                          " "+map_type_str+" ("+resoluti+")"
                 if arguments.make_figures_for_weights:
                     ttl_a_w  = source+"  "+obs_id+" ("+date+") "+"   "+map_id+\
                                " "+weight_type_str+" ("+resoluti+")"
@@ -680,17 +761,17 @@ for g3_file in arguments.input_files:
                             for source, obss \
                             in  map_frame["CoaddedObservationIDs"].items()]
                 n_obss   = " ".join(n_obss)
-                resoluti = str(cmb_map_mK.x_res/core.G3Units.arcmin)+"' res."
+                resolu   = str(cmb_map_mK.x_res/core.G3Units.arcmin)+"' res."
                 title_a  = source+"   "+map_id+" coadded "+map_type_str+"s  "+\
-                           "("+resoluti+")"+"\n"+\
+                           "("+resolu+")"+"\n"+\
                            "(data from observations taken "+\
-                           "between "+start_dt+" and "+end_dt+": "+n_obss+")"
+                           "between "+start_dt+" and "+end_dt+":"+"\n"+n_obss+")"
                 if arguments.make_figures_for_weights:
                     ttl_a_w  = source+"   "+map_id+" coadded "+\
                                weight_type_str+"  "+\
-                               "("+resoluti+")"+"\n"+\
+                               "("+resolu+")"+"\n"+\
                                "(data from observations taken "+\
-                               "between "+start_dt+" and "+end_dt+": "+n_obss+")"
+                               "between "+start_dt+" and "+end_dt+":"+"\n"+n_obss+")"
             
             
             # - Prepare the last line in the title
@@ -715,9 +796,9 @@ for g3_file in arguments.input_files:
             
             # - Assemble the pieces for the title
             
-            fig_title = title_a + "\n" + title_b
+            fig_title = title_a + "\n" + title_b + "\n"
             if arguments.make_figures_for_weights:
-                fig_ttl_w = ttl_a_w + "\n" + ttl_b_w
+                fig_ttl_w = ttl_a_w + "\n" + ttl_b_w + "\n"
             
             
             # - Prepare the colorbar label
@@ -764,21 +845,30 @@ for g3_file in arguments.input_files:
             
             if arguments.simpler_file_names:
                 filename = map_id+"-"+map_type_str.replace(" ", "_")+".png"
-                fina_wts = map_id+"-"+"weights_of_"+\
-                           map_type_str.replace(" ", "_")+".png"
+                fina_wts = map_id+"-"+map_type_str.replace(" ", "_")+\
+                           "_weights.png"           
                 filename = arguments.directory_to_save_figures+"/"+filename
                 fina_wts = arguments.directory_to_save_figures+"/"+fina_wts
             
             
+            # - Finally make figures
+            
             print("Now actually making figures...")
             print()
             
+            if (arguments.map_values_upper_limit != None) and \
+               (arguments.map_values_lower_limit != None):
+                vmin_for_map = arguments.map_values_lower_limit
+                vmax_for_map = arguments.map_values_upper_limit
+            else:
+                vmin_for_map = -1.0 * larger_abs
+                vmax_for_map =  1.0 * larger_abs
             
             visualize_a_field_map(
                 cmb_map_mK,
-                cmb_map_mK.x_res, cmb_map_mK.y_res, 14, 7, "gray", "auto",
-                cbar_title, fig_title,
-                vmin=-1.0*larger_abs, vmax=1.0*larger_abs,
+                cmb_map_mK.x_res, cmb_map_mK.y_res, fig_wd, fig_ht, "auto",
+                "gray", cbar_label=cbar_title, title=fig_title,
+                vmin=vmin_for_map, vmax=vmax_for_map,
                 no_xy_labels=True,
                 save_fig=(not arguments.only_show_figures),
                 filename=filename)
@@ -786,9 +876,9 @@ for g3_file in arguments.input_files:
             if arguments.make_figures_for_weights:
                 visualize_a_field_map(
                     weight_map,
-                    cmb_map_mK.x_res, cmb_map_mK.y_res, 14, 7, "gray", "auto",
-                    cbar_ttl_w, fig_ttl_w,
-                    vmin=0.0, vmax=1.0*lar_abs_w,
+                    cmb_map_mK.x_res, cmb_map_mK.y_res, fig_wd, fig_ht, "auto",
+                    "gray", vmin=0.0, vmax=1.0*lar_abs_w,
+                    cbar_label=cbar_ttl_w, title=fig_ttl_w,
                     no_xy_labels=True,
                     save_fig=(not arguments.only_show_figures),
                     filename=fina_wts)
@@ -810,26 +900,21 @@ for g3_file in arguments.input_files:
                     cr_sec_xticklabels=dec_labels,
                     cr_sec_xlabel="Declination [degree]",
                     cr_sec_title=\
-                        map_id+"  Cross section view of the weight map "+\
-                        "along the RA=0h contour",
+                        map_id+" "+map_type_str+\
+                        "   Cross section view of the weight map "+\
+                        "along the RA=0h contour"+"\n",
                     fig_title="More plots for the weight map",
                     save_fig=(not arguments.only_show_figures),
                     filename=fina_wts[0:-4]+"_cross_sectional_view.png")
             
             
-            # - Make a figure for noise levels
+            # - Also make a figure for noise levels
             
             if arguments.make_figures_for_noise_levels:
                 if arguments.integrated_noise:
-                    try:
-                        noise_data = map_frame["NoiseFromCoaddedMaps"]
-                    except KeyError:
-                        noise_data = map_frame["NoiseData"]
+                    noise_data = map_frame["NoiseFromCoaddedMaps"]
                 else:
-                    try:
-                        noise_data = map_frame["NoiseFromIndividualMaps"]
-                    except KeyError:
-                        noise_data = map_frame["NoiseData"]
+                    noise_data = map_frame["NoiseFromIndividualMaps"]
                 
                 file_name  = map_id+"-"+map_type_str.replace(" ", "_")
                 if arguments.integrated_noise:
@@ -844,20 +929,7 @@ for g3_file in arguments.input_files:
                            in  map_frame["CoaddedObservationIDs"].items()]
                 n_obss  = " ".join(n_obss)
                 
-                obs_ids = []
-                for obs_ids_one_field \
-                in  map_frame["CoaddedObservationIDs"].values():
-                    for obs_id in obs_ids_one_field:
-                        obs_ids.append(obs_id)
-                start_dt = str(std_processing.obsid_to_g3time(
-                               numpy.min(obs_ids))).split(":")[0]
-                end_dt   = str(std_processing.obsid_to_g3time(
-                               numpy.max(obs_ids))).split(":")[0]
-                
-                fig_title_prefix = map_id + "  "
-                fig_title_suffix = "# of observations between " +  \
-                                   start_dt + " and " + end_dt + ": " + \
-                                   n_obss + "\n"
+                fig_title_prefix = map_id + " " + map_type_str
                 
                 if arguments.integrated_noise:
                     fig_title_mid = "Noise levels of running coadded maps"
@@ -865,7 +937,7 @@ for g3_file in arguments.input_files:
                     fig_title_mid = "Noise levels from individual observations"
                 
                 fig_title = \
-                    fig_title_prefix + fig_title_mid + "\n" + fig_title_suffix
+                    fig_title_prefix + "   " + fig_title_mid + "\n"
                 
                 make_figure_for_noise_levels(
                     noise_data,
@@ -877,7 +949,7 @@ for g3_file in arguments.input_files:
                     file_name=arguments.directory_to_save_figures+"/"+file_name)
             
             
-            # - Make a figure for pointing discrepancies
+            # - Also make a figure for pointing discrepancies
             
             if arguments.make_figures_for_pointing_discrepancies:
                 reorganized_data = {}
@@ -896,6 +968,7 @@ for g3_file in arguments.input_files:
                                 if coordinate == "Ra":
                                     reorganized_data[sub_field][ranking]\
                                                     ["obs_ids"].append(obs_id)
+                                delta /= core.G3Units.arcsec
                                 reorganized_data[sub_field][ranking]\
                                                 [new_key].append(delta)
                     
@@ -904,9 +977,10 @@ for g3_file in arguments.input_files:
                                      map_type_str.replace(" ", "_")
                         file_name += "_delta_" + coordinate + \
                                      "s_from_point_sources.png"
-                        fig_title  = map_id + " " + "Difference between " + \
+                        fig_title  = map_id+" "+map_type_str + " " + \
+                                     "Difference between " + \
                                      "measured and true "+ coordinate + \
-                                     " for several point sources"
+                                     " for several point sources" + "\n"
                     
                         make_figure_for_pointing_discrepancies(
                             reorganized_data,
@@ -919,15 +993,18 @@ for g3_file in arguments.input_files:
                                       "/"+file_name)
             
             
-            # - Make a figure for flagging statistics
+            # - Also make a figure for flagging statistics
             
             if arguments.make_figures_for_flagging_statistics:
-                file_name = "numbers_of_flagged_detectors.png"
-                fig_title = "Average number of flagged detectors " +\
-                            "for each reason during each observation"
+                file_name  = map_id + "-" + \
+                             map_type_str.replace(" ", "_")
+                file_name += "_average_numbers_of_flagged_detectors.png"
+                fig_title  = map_id + " " + map_type_str + "   " + \
+                             "Average number of flagged detectors " +\
+                             "for each reason during each observation" + "\n"
                 
                 make_figure_for_flagging_statistics(
-                    map_frame["FlaggingStatistics"],
+                    map_frame,
                     xlim_left=arguments.left_xlimit_for_figures,
                     xlim_right=arguments.right_xlimit_for_figures,
                     fig_title=fig_title,
