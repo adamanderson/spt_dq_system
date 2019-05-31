@@ -93,18 +93,18 @@ app.use('/staticimg', express.static(config.static_plot_dir));
 app.get('/oldstaticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
+	filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
 							  req.query.interval + '/');
 	dirlist = [];
 	
 	// get the list of directories that contain plots
 	if(req.query.interval == 'monthly' || req.query.interval == 'weekly') {
 		for (jfile=0; jfile<filelist.length; jfile++) {
-			dirlist.push('plots/' + req.query.interval + '/' + filelist[jfile]);
+			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 		}
 	}
 	else {
-		dirlist.push('plots/' + req.query.interval + '/current');
+		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/current');
 	}
 	res.send(dirlist);
 });
