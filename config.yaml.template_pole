@@ -18,6 +18,10 @@ static_plot_dir: /var/www/spt_dq_system/static_plot_cache/
 calib_data_dir: /poleanalysis/sptdaq/calresult/
 bolo_data_dir: /spt_data/bolodata/fullrate/
 
+maps_data_dir: 
+coadds_data_dir: 
+coadds_figs_dir: 
+coadds_logs_dir:
 
 port: 3000
 

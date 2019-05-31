@@ -350,9 +350,13 @@ app.listen(parseInt(config.port))
 
 // static timeseries plots update
 is_update_running = false;
+is_map_update_running = false;
 var child;
-function updateStaticPlots() {
+var child_maps;
+
+function updateSummaryPlots() {
 	args = ['-B', 'update_summary.py',
+			'summarystats',
 			config.static_plot_dir,
 			config.calib_data_dir,
 			config.bolo_data_dir,
@@ -370,11 +374,38 @@ function updateStaticPlots() {
 			console.log('Finished updating data skims and plots.');
 			is_update_running = false;
 	    });
-		console.log('Updating plots...');
+		console.log('Updating summary plots...');
     }
     else {
-		console.log('Plot updater already running, so not spawning again!');
+		console.log('Summary plot updater already running, so not spawning again!');
     }
 }
 
-setInterval(updateStaticPlots, 60000); // update static plots every 10 minutes
+function updateMapPlots() {
+	args = ['-B', 'update_summary.py',
+			'maps',
+			config.maps_data_dir,
+			config.coadds_data_dir,
+			config.coadds_figs_dir,
+			config.coadds_logs_dir]
+
+    if(is_map_update_running == false) {
+		is_map_update_running = true;
+		// update data skims
+		child = execFile(config.python_location, args, function(err) {
+			console.log(err);
+			console.log('Finished map coadds and plots.');
+			is_map_update_running = false;
+	    });
+		console.log('Updating maps...');
+    }
+    else {
+		console.log('Map updater already running, so not spawning again!');
+    }
+}
+
+// update both types of plots in parallel every 10 minutes
+setInterval(updateSummaryPlots, 6000);
+if(config.site == 'pole') // only update map plots at pole
+	setInterval(updateMapPlots, 60000);
+
