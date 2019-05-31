@@ -34,8 +34,6 @@ parser_maps.add_argument('coaddslogsdir',
 parser_maps.add_argument('mintime',
                          help='Time from which to start plots.')
 
-
-
 args = parser.parse_args()
 
 
@@ -65,74 +63,36 @@ if args.mode == 'summarystats':
 
 if args.mode == 'maps':
     # update coadded maps
-    current_time = datetime.datetime.utcnow()
-    logfile = args.coaddslogsdir + current_time.strftime('20%y%m%d_%H%M%S')
 
-    for mode in ['coadding', 'plotting']:
-        for interval in ['last_n', 'weekly', 'monthly', 'yearly']:
+    """current_day = "20190519"
+
+    print()
+    for n in ['7']:
+        for mode in ['coadding', 'plotting']:
+            current_time = datetime.datetime.utcnow()
+            logfile = args.coaddslogsdir + current_time.strftime('20%y%m%d_%H%M%S') + "_last_" + n + "_" + mode
+            print("Running commands for last_n and", mode, "with n =", n)
+            print("starting from", current_time, "...")
+            print()
+            os.system('python summaryplot/cache_field_maps.py '
+                      '-m {} -a update -t last_n -n {} '
+                      '-o {} -c {} -d {} -D {} -F {} &> {}'.\
+                      format(mode, n,
+                             args.mintime, current_day,
+                             args.mapsdatadir, args.coaddsdatadir, args.coaddsfigsdir, logfile))
+
+
+    for interval in ['weekly', 'monthly', 'yearly']:
+        for mode in ['coadding', 'plotting']:
+            current_time = datetime.datetime.utcnow()
+            logfile = args.coaddslogsdir + current_time.strftime('20%y%m%d_%H%M%S') + "_" + interval + "_" + mode
+            print("Running commands for", interval, "and", mode)
+            print("starting from", current_time, "...")
+            print()
             os.system('python summaryplot/cache_field_maps.py '
                       '-m {} -a update -t {} '
-                      '-o {} -d {} -D {} -F {} &> {}'.format(mode,
-                                                            interval,
-                                                            args.mintime,
-                                                            args.mapsdatadir,
-                                                            args.coaddsdatadir,
-                                                            args.coaddsfigsdir,
-                                                            logfile))
-
-
-    """
-    os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t last_n -n 3'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t weekly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t monthly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m coadding -a update -t yearly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    # update figures related to maps
-
-
-
-    os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t last_n -n 3'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t weekly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t monthly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-
-    os.system('python summaryplot/cache_field_maps.py -m plotting -a update -t yearly'
-              '-o {} -d {} -D {} -F {}'.format(args.mintime,
-                                               args.mapsdatadir
-                                               args.coaddsdatadir
-                                               args.coaddsfigsdir))
-    """
-
+                      '-o {} -c {} -d {} -D {} -F {} &> {}'.\
+                      format(mode, interval,
+                             args.mintime, current_day,
+                             args.mapsdatadir, args.coaddsdatadir, args.coaddsfigsdir, logfile))"""
 
