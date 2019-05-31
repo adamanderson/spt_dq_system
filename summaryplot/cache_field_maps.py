@@ -126,9 +126,9 @@ arguments = parser.parse_args()
 # ------------------------------------------------------------------------------
 
 print()
-print("# ---------------------------------------- #")
-print("# The script update_coadds.py was invoked! #")
-print("# ---------------------------------------- #")
+print("# --------------------------------------------- #")
+print("#  The script cache_field_maps.py was invoked!  #")
+print("# --------------------------------------------- #")
 print()
 
 if arguments.current_time is None:
@@ -148,7 +148,8 @@ script_plotting_data = "summaryplot/fields_plotting.py"
 
 sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
               "ra0hdec-59.75", "ra0hdec-67.25"] 
-map_ids    = "90GHz 150GHz 220GHz"
+map_ids    = ["90GHz", "150GHz", "220GHz"]
+# map_ids    = ["90GHz"]
 
 
 if arguments.original_maps_dir[-1] != "/":
@@ -211,20 +212,24 @@ else:
     
     if arguments.mode == "plotting":
         if arguments.time_interval == "yearly":
-            end_time_at_start_of_loop = current_time
+            end_time_at_start_of_loop = current_time.replace(microsecond=0)
         elif arguments.time_interval == "monthly":
             beginning_of_next_month = \
-                current_time.replace(month=current_time.month+1,
-                                     day=1, hour=0, minute=0, second=0)
+                current_time.replace(
+                    month=current_time.month+1, day=1,
+                    hour=0, minute=0, second=0, microsecond=0)
             end_of_this_month = \
-                beginning_of_next_month + datetime.timedelta(seconds=-1)
+                beginning_of_next_month + \
+                datetime.timedelta(seconds=-1)
             end_time_at_start_of_loop = \
                 end_of_this_month
         elif arguments.time_interval == "weekly":
             end_day_of_this_week = \
-                current_time + datetime.timedelta(days=(6-current_time.weekday()))
+                current_time + \
+                datetime.timedelta(days=(6-current_time.weekday()))
             end_time_this_week = \
-                end_day_of_this_week.replace(hour=23, minute=59, second=59)
+                end_day_of_this_week.replace(
+                    hour=23, minute=59, second=59, microsecond=0)
             end_time_at_start_of_loop = \
                 end_time_this_week
     elif arguments.mode == "coadding":
@@ -264,9 +269,9 @@ elif arguments.action == "rebuild":
 # ------------------------------------------------------------------------------
 
 print()
-print("----------------------------------------------------------------------")
-print("Making sure the directory structure is valid by making some changes...")
-print("----------------------------------------------------------------------")
+print("-------------------------------------------------")
+print(" Making sure the directory structure is valid... ")
+print("-------------------------------------------------")
 print()
 
 """
@@ -290,9 +295,7 @@ if (arguments.action == "rebuild") or (arguments.time_interval == "last_n"):
     os.system(del_cmd)
 """
 
-
-print()
-print("* Checking whether relevant directories exist or not...")
+print("* Checking whether relevant directories exist or not.")
 print("  If not, they will be created.")
 
 
@@ -312,7 +315,8 @@ for root_directory in [arguments.coadds_dir, arguments.figs_dir]:
     
     for time_range in desired_time_ranges:
         if arguments.time_interval == "last_n":
-            subdir_name = ""
+            subdir_name = arguments.time_interval[:-1] + \
+                          str(arguments.last_how_many_days) + "/"
         else:
             subdir_name = convert_time_intervals_to_dir_names(
                               arguments.time_interval, time_range[0]) + "/"
@@ -341,17 +345,18 @@ print()
 # ------------------------------------------------------------------------------
 
 print()
-print("--------------------------------------------------------")
-print("The mode, action, and time interval that were specified:")
-print("--------------------------------------------------------")
+print("----------------------------------------------------------")
+print(" The mode, action, and time interval that were specified: ")
+print("----------------------------------------------------------")
+print()
 print("  "+arguments.mode+", "+arguments.action+", "+arguments.time_interval)
 print()
 
 
 print()
-print("--------------------------------------------")
-print("Relevant obs_id range(s) to take actions on:")
-print("--------------------------------------------")
+print("----------------------------------------------")
+print(" Relevant obs_id range(s) to take actions on :")
+print("----------------------------------------------")
 print()
 
 for counter, interval in enumerate(desired_obs_id_ranges, 0):
@@ -365,7 +370,7 @@ for counter, interval in enumerate(desired_obs_id_ranges, 0):
 print()
 
 
-print()
+print("\n")
 print("-------------------------")
 print("Relevant commands to run:")
 print("-------------------------")
@@ -380,73 +385,21 @@ for i in range(n_ranges):
         
         if arguments.time_interval != "yearly":
             
-            g3_files_for_individual_observations = \
-                " ".join([arguments.original_maps_dir+sub_field+"/*.g3" \
-                          for sub_field in sub_fields])
-            g3_file_for_coadded_maps = \
-                desired_dir_names[i] + "coadded_maps.g3"
-            
-            flags = []
-            
-            if (arguments.action == "update") and \
-               (os.path.isfile(g3_file_for_coadded_maps)):
-                map_frames   = core.G3File(g3_file_for_coadded_maps)
-                existing_ids = [] 
-                while True:
-                    try:
-                        map_frame = map_frames.next()
-                        if "CoaddedObservationIDs" in map_frame.keys():
-                            for sub_field, obs_ids \
-                            in  map_frame["CoaddedObservationIDs"].items():
-                                for obs_id in obs_ids:
-                                    if obs_id not in existing_ids:
-                                        existing_ids.append(obs_id)
-                    except StopIteration:
-                        break
-                
-                if (numpy.min(existing_ids) < desired_obs_id_ranges[i][0]) or \
-                   (numpy.max(existing_ids) > desired_obs_id_ranges[i][1]):
-                    input_files = g3_files_for_individual_observations
-                else:
-                    input_files = g3_file_for_coadded_maps + " " +\
-                                  g3_files_for_individual_observations
-                    existing_ids = " ".join([str(obs_id) \
-                                             for obs_id in existing_ids])
-                    flags.append("-b " + existing_ids)
-            
-            else:
-                input_files = g3_files_for_individual_observations
-    
-            output_file = g3_file_for_coadded_maps[:-3] + ".g4"
-            flags.append("-o " + output_file)
-            
-            flags.append("-i " + map_ids)
-            flags.append("-s " + str(desired_obs_id_ranges[i][0]))
-            flags.append("-l " + str(desired_obs_id_ranges[i][1]))
-            flags.append("-c -n")
-            flags = " ".join(flags)
-            
-            cmds = []
-            cmds.append(
-                "python" + " " + script + " " + input_files + " " + flags)
-            if os.path.isfile(g3_file_for_coadded_maps):
-                cmds.append("rm" + " " + g3_file_for_coadded_maps)
-            cmds.append("mv" + " " + output_file + " " + \
-                        g3_file_for_coadded_maps)
-        
-        
-        else:
             cmds = []
             
-            for sub_field in sub_fields:
+            for map_id in map_ids:
                 g3_files_for_individual_observations = \
-                    arguments.original_maps_dir+sub_field+"/*.g3"
+                    arguments.original_maps_dir + "ra0hdec*/" + \
+                    "*" + map_id + "_tonly.g3.gz"
                 g3_file_for_coadded_maps = \
-                    desired_dir_names[i] + "coadded_maps_from_" + \
-                    sub_field + ".g3"
+                    desired_dir_names[i] + "coadded_maps_"+map_id+".g3"
+                
+                output_file = g3_file_for_coadded_maps[:-3] + ".g4"
                 
                 flags = []
-                
+                flags.append("-o " + output_file)
+                flags.append("-i " + map_id)
+
                 if (arguments.action == "update") and \
                    (os.path.isfile(g3_file_for_coadded_maps)):
                     map_frames   = core.G3File(g3_file_for_coadded_maps)
@@ -455,84 +408,151 @@ for i in range(n_ranges):
                         try:
                             map_frame = map_frames.next()
                             if "CoaddedObservationIDs" in map_frame.keys():
-                                for source, obs_ids \
+                                for sub_field, obs_ids \
                                 in  map_frame["CoaddedObservationIDs"].items():
-                                    if source != sub_field:
-                                        continue
                                     for obs_id in obs_ids:
                                         if obs_id not in existing_ids:
                                             existing_ids.append(obs_id)
                         except StopIteration:
                             break
                     
-                    if (numpy.min(existing_ids) < desired_obs_id_ranges[i][0]) \
-                    or (numpy.max(existing_ids) > desired_obs_id_ranges[i][1]):
-                        input_files = g3_files_for_individual_observations
+                    if numpy.min(existing_ids) < desired_obs_id_ranges[i][0]:
+                        ids_to_exclude = [obs_id for obs_id in existing_ids \
+                                          if obs_id >= desired_obs_id_ranges[i][0]]
+                        flags.append("-u")
+                        flags.append("-s " + str(numpy.min(existing_ids)))
                     else:
-                        input_files = g3_file_for_coadded_maps + " " +\
-                                      g3_files_for_individual_observations
-                        existing_ids = " ".join([str(obs_id) \
-                                                 for obs_id in existing_ids])
-                        flags.append("-b " + existing_ids)
+                        ids_to_exclude = existing_ids
+                        flags.append("-s " + str(desired_obs_id_ranges[i][0]))
+                    
+                    input_files = g3_file_for_coadded_maps + " " +\
+                                  g3_files_for_individual_observations
+                    ids_to_exclude = " ".join([str(obs_id) \
+                                               for obs_id in ids_to_exclude])
+                    flags.append("-b " + ids_to_exclude)
                 
                 else:
                     input_files = g3_files_for_individual_observations
-
-                output_file = g3_file_for_coadded_maps[:-3] + ".g4"
-                flags.append("-o " + output_file)
+                    flags.append("-s " + str(desired_obs_id_ranges[i][0]))
                 
-                map_ids_split_in_directions = \
-                    " ".join(["Left" + map_id + " " + "Right" + map_id
-                              for map_id in map_ids.split(" ")])
-                flags.append("-i " + map_ids_split_in_directions)
-                flags.append("-S " + sub_field)
-                flags.append("-s " + str(desired_obs_id_ranges[i][0]))
                 flags.append("-l " + str(desired_obs_id_ranges[i][1]))
-                flags.append("-N")
+                flags.append("-t -a -p -n")
                 flags = " ".join(flags)
+                
                 cmds.append(
                     "python" + " " + script + " " + input_files + " " + flags)
                 if os.path.isfile(g3_file_for_coadded_maps):
                     cmds.append("rm" + " " + g3_file_for_coadded_maps)
-                cmds.append(
-                    "mv" + " " + output_file + " " + \
-                    g3_file_for_coadded_maps)
+                cmds.append("mv" + " " + output_file + " " + \
+                            g3_file_for_coadded_maps)
+        
+        
+        else:
+            cmds = []
             
-            four_g3_files = \
-                " ".join([desired_dir_names[i]+"coadded_maps_from_"+sf+".g3"
-                          for sf in sub_fields])
-            final_out_file = desired_dir_names[i] + "coadded_maps.g3"
-            
-            flags = []
-            flags.append("-o " + final_out_file)
-            flags.append("-i " + map_ids)
-            flags.append("-c ")
-            flags = " ".join(" ")
-            cmd_final = \
-                "python" + " " + script + " " + four_g3_files + " " + flags
-            cmds.append(cmd_final)
-                         
+            for map_id in map_ids:        
+                for sub_field in sub_fields:
+                    g3_files_for_individual_observations = \
+                        arguments.original_maps_dir+sub_field+ \
+                        "/" + "*" + map_id + "_tonly.g3.gz"
+                    g3_file_for_coadded_maps = \
+                        desired_dir_names[i] + "coadded_maps_from_" + \
+                        sub_field + "_" + map_id + ".g3"
+                    
+                    flags = []
+                    
+                    if (arguments.action == "update") and \
+                       (os.path.isfile(g3_file_for_coadded_maps)):
+                        map_frames   = core.G3File(g3_file_for_coadded_maps)
+                        existing_ids = [] 
+                        while True:
+                            try:
+                                map_frame = map_frames.next()
+                                if "CoaddedObservationIDs" in map_frame.keys():
+                                    for source, obs_ids \
+                                    in  map_frame["CoaddedObservationIDs"].items():
+                                        if source != sub_field:
+                                            continue
+                                        for obs_id in obs_ids:
+                                            if obs_id not in existing_ids:
+                                                existing_ids.append(obs_id)
+                            except StopIteration:
+                                break
+                        
+                        if (numpy.min(existing_ids) < desired_obs_id_ranges[i][0]) \
+                        or (numpy.max(existing_ids) > desired_obs_id_ranges[i][1]):
+                            input_files = g3_files_for_individual_observations
+                        else:
+                            input_files = g3_file_for_coadded_maps + " " +\
+                                          g3_files_for_individual_observations
+                            existing_ids = " ".join([str(obs_id) \
+                                                     for obs_id in existing_ids])
+                            flags.append("-b " + existing_ids)
+                    
+                    else:
+                        input_files = g3_files_for_individual_observations
+                    
+                    output_file = g3_file_for_coadded_maps[:-3] + ".g4"
+                    flags.append("-o " + output_file)
+                    
+                    """
+                    map_ids_split_in_directions = \
+                        " ".join(["Left" + map_id + " " + "Right" + map_id
+                                  for map_id in map_ids.split(" ")])
+                    """
+                    flags.append("-i " + map_id)
+                    flags.append("-S " + sub_field)
+                    flags.append("-s " + str(desired_obs_id_ranges[i][0]))
+                    flags.append("-l " + str(desired_obs_id_ranges[i][1]))
+                    flags.append("-t -N")
+                    flags = " ".join(flags)
+                    cmds.append(
+                        "python" + " " + script + " " + input_files + " " + flags)
+                    if os.path.isfile(g3_file_for_coadded_maps):
+                        cmds.append("rm" + " " + g3_file_for_coadded_maps)
+                    cmds.append(
+                        "mv" + " " + output_file + " " + \
+                         g3_file_for_coadded_maps)
+                
+                four_g3_files = \
+                    " ".join([desired_dir_names[i]+"coadded_maps_from_"+\
+                              sf+"_"+map_id+".g3" \
+                              for sf in sub_fields])
+                final_out_file = desired_dir_names[i] + "coadded_maps_"+map_id+".g3"
+                
+                flags = []
+                flags.append("-o " + final_out_file)
+                flags.append("-i " + map_id)
+                flags.append("-t -N")
+                flags = " ".join(flags)
+                cmd_final = \
+                    "python" + " " + script + " " + four_g3_files + " " + flags
+                cmds.append(cmd_final)
+             
     
     elif arguments.mode == "plotting":
         script = script_plotting_data
         cmds   = []
         
-        input_file = desired_dir_names[i] + "coadded_maps.g3"
-        output_dir = desired_dir_names[i+n_ranges]
-        
-        flags = []
-        flags.append("-d " + output_dir)
-        flags.append("-i " + map_ids)
-        flags.append("-f -c -w -n")
-        if arguments.time_interval != "yearly":
-            flags.append("-l " + str(desired_obs_id_ranges[i][0]))
-            flags.append("-r " + str(desired_obs_id_ranges[i][1]))
-        else:
-            flags.append("-N ")
-        flags = " ".join(flags)
-        
-        cmd = "python" + " " + script + " " + input_file + " " + flags
-        cmds.append(cmd)
+        for map_id in map_ids:
+            input_file = desired_dir_names[i] + "coadded_maps_" + map_id + ".g3"
+            output_dir = desired_dir_names[i+n_ranges]
+            
+            flags = []
+            flags.append("-d " + output_dir)
+            flags.append("-i " + map_id)
+            flags.append("-f -c -w -n")
+            if arguments.time_interval != "yearly":
+                flags.append("-F -p")
+                flags.append("-l " + str(desired_obs_id_ranges[i][0]))
+                flags.append("-r " + str(desired_obs_id_ranges[i][1]))
+            else:
+                flags.append("-N")
+            flags.append("-z 15")
+            flags = " ".join(flags)
+            
+            cmd = "python" + " " + script + " " + input_file + " " + flags
+            cmds.append(cmd)
     
     
     if i+1 < 10:
@@ -541,15 +561,15 @@ for i in range(n_ranges):
         n_cmd_set = "0"  + str(i+1)
     else:
         n_cmd_set = str(i+1)
-    print("\n")
+    
     print("# Command set", n_cmd_set, "to run:")
-    print("# ---------------------------", "\n")
+    print("# ---------------------------")
     print()
     for cmd in cmds:
         print(cmd, "\n")
         if not arguments.just_see_commands:
             os.system(cmd)
-
+    print("\n")
 
 print()
 

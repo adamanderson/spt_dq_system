@@ -22,6 +22,11 @@ bolo_data_dir: /spt/data/bolodata/fullrate/
 
 no_data_update: true
 
+maps_data_dir:
+coadds_data_dir:
+coadds_figs_dir:
+coadds_logs_dir:
+
 port: 80
 
 min_time_static_plots: 20181220
