@@ -1,4 +1,4 @@
-# ---- Always need to import modules! ---- #
+# ******* Always need to import modules! ******* #
 
 import os
 import sys
@@ -151,7 +151,6 @@ sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
 map_ids    = ["90GHz", "150GHz", "220GHz"]
 # map_ids    = ["90GHz"]
 
-
 if arguments.original_maps_dir[-1] != "/":
     arguments.original_maps_dir += "/"
 if arguments.coadds_dir[-1] != "/":
@@ -235,10 +234,14 @@ else:
     elif arguments.mode == "coadding":
         end_time_at_start_of_loop = current_time
     
-    while end_time_at_start_of_loop >= beginning_of_the_record:
+    while end_time_at_start_of_loop > beginning_of_the_record:
         beginning_of_the_interval = \
             get_the_beginning_of_the_interval(arguments.time_interval,
                                               end_time_at_start_of_loop)
+        if arguments.mode == "coadding":
+            if beginning_of_the_interval < beginning_of_the_record:
+                beginning_of_the_interval = beginning_of_the_record
+        
         start_obs_id_of_the_interval = \
             convert_to_obs_id(beginning_of_the_interval)
         end_obs_id_of_the_interval = \
@@ -253,12 +256,14 @@ else:
                                         datetime.timedelta(seconds=-1)
 
 
-if arguments.action == "update":
+"""if arguments.action == "update":
     desired_obs_id_ranges = [desired_obs_id_ranges[0]]
     desired_time_ranges   = [desired_time_ranges[0]]
 elif arguments.action == "rebuild":
     desired_obs_id_ranges = desired_obs_id_ranges
-    desired_time_ranges   = desired_time_ranges
+    desired_time_ranges   = desired_time_ranges"""
+# ** The update mode ahould check all time intervals, too,
+# ** because maps may not appear on disk chronologically.
 
 
 # ------------------------------------------------------------------------------
@@ -376,8 +381,74 @@ print("Relevant commands to run:")
 print("-------------------------")
 print()
 
-n_ranges = len(desired_obs_id_ranges)
 
+def decide_what_ids_to_use_and_not(existing_ids, desired_id_range):
+
+    if len(existing_ids) == 0:
+        raise RuntimeError("It appears that coadded maps were not made "
+                           "successfully last time!")
+    
+    max_eid = numpy.max(existing_ids)
+    min_eid = numpy.min(existing_ids)
+    max_gid = desired_id_range[1]  # gid = good ids!
+    min_gid = desired_id_range[0]
+    
+    if max_eid < min_gid:
+        ignore_coadds  = True
+        ids_to_exclude = []
+        subtract_maps  = False
+        id_lower_bound = min_gid
+        id_upper_bound = max_gid
+    
+    elif (min_eid < min_gid) and (max_eid > min_gid) and (max_eid < max_gid):
+        ignore_coadds  = False
+        ids_to_exclude = \
+            [obs_id for obs_id in existing_ids \
+             if obs_id >= min_gid]
+        subtract_maps  = True
+        id_lower_bound = min_eid
+        id_upper_bound = max_gid
+                    
+    elif (min_eid < min_gid) and (max_eid > max_gid):
+        ignore_coadds  = False
+        ids_to_exclude = \
+            [obs_id for obs_id in existing_ids \
+             if (obs_id >= min_gid) and (obs_id <= max_gid)]
+        subtract_maps  = True
+        id_lower_bound = min_eid
+        id_upper_bound = max_eid
+                    
+    elif (min_eid >= min_gid) and (max_eid <= max_gid):
+        ignore_coadds  = False
+        ids_to_exclude = existing_ids
+        subtract_maps  = False
+        id_lower_bound = min_gid
+        id_upper_bound = max_gid
+    
+    elif (min_eid >= min_gid) and (min_eid < max_gid) and (max_eid > max_gid):
+        ignore_coadds  = False
+        ids_to_exclude = \
+            [obs_id for obs_id in existing_ids \
+             if obs_id <= max_gid]
+        subtract_maps  = True
+        id_lower_bound = min_gid
+        id_upper_bound = max_eid
+     
+    elif min_eid > max_gid:
+        ignore_coadds  = True
+        ids_to_exclude = []
+        subtract_maps  = False
+        id_lower_bound = min_gid
+        id_upper_bound = max_gid
+    
+    else:
+        raise RuntimeError("There seems to be a forgotten scenario!")
+    
+    return ignore_coadds,  subtract_maps, \
+           ids_to_exclude, id_lower_bound, id_upper_bound
+
+    
+n_ranges = len(desired_obs_id_ranges)
 for i in range(n_ranges):
 
     if arguments.mode == "coadding":
@@ -413,39 +484,48 @@ for i in range(n_ranges):
                                     for obs_id in obs_ids:
                                         if obs_id not in existing_ids:
                                             existing_ids.append(obs_id)
+                                break
                         except StopIteration:
                             break
                     
-                    if numpy.min(existing_ids) < desired_obs_id_ranges[i][0]:
-                        ids_to_exclude = [obs_id for obs_id in existing_ids \
-                                          if obs_id >= desired_obs_id_ranges[i][0]]
-                        flags.append("-u")
-                        flags.append("-s " + str(numpy.min(existing_ids)))
-                    else:
-                        ids_to_exclude = existing_ids
-                        flags.append("-s " + str(desired_obs_id_ranges[i][0]))
+                    ignore_coadds,  subtract_maps,
+                    ids_to_exclude, id_lower_bound, id_upper_bound = \
+                        decide_what_ids_to_use_and_not(
+                            existing_ids, desired_obs_id_ranges[i])
                     
-                    input_files = g3_file_for_coadded_maps + " " +\
-                                  g3_files_for_individual_observations
-                    ids_to_exclude = " ".join([str(obs_id) \
-                                               for obs_id in ids_to_exclude])
-                    flags.append("-b " + ids_to_exclude)
-                
+                    if ignore_coadds:
+                        input_files = g3_files_for_individual_observations
+                    else:
+                        input_files = g3_file_for_coadded_maps + " " + \
+                                      g3_files_for_individual_observations
+                    
+                    flags.append("-s " + str(id_lower_bound))
+                    flags.append("-l " + str(id_upper_bound))
+                    
+                    if len(ids_to_exclude) > 0:
+                        ids_to_exclude = \
+                            " ".join([str(oid) \
+                                      for oid in ids_to_exclude])
+                        flags.append("-b " + ids_to_exclude)
+                    
+                    if subtract_maps:
+                        flags.append("-u")
+                                
                 else:
                     input_files = g3_files_for_individual_observations
                     flags.append("-s " + str(desired_obs_id_ranges[i][0]))
+                    flags.append("-l " + str(desired_obs_id_ranges[i][1]))
                 
-                flags.append("-l " + str(desired_obs_id_ranges[i][1]))
                 flags.append("-t -a -p -n")
                 flags = " ".join(flags)
                 
                 cmds.append(
                     "python" + " " + script + " " + input_files + " " + flags)
                 if os.path.isfile(g3_file_for_coadded_maps):
-                    cmds.append("rm" + " " + g3_file_for_coadded_maps)
+                    cmds.append("cp" + " " + g3_file_for_coadded_maps + " " + \
+                                g3_file_for_coadded_maps[:-3] + "_backup.g3")
                 cmds.append("mv" + " " + output_file + " " + \
                             g3_file_for_coadded_maps)
-        
         
         else:
             cmds = []
@@ -453,72 +533,85 @@ for i in range(n_ranges):
             for map_id in map_ids:        
                 for sub_field in sub_fields:
                     g3_files_for_individual_observations = \
-                        arguments.original_maps_dir+sub_field+ \
+                        arguments.original_maps_dir + sub_field+ \
                         "/" + "*" + map_id + "_tonly.g3.gz"
                     g3_file_for_coadded_maps = \
                         desired_dir_names[i] + "coadded_maps_from_" + \
                         sub_field + "_" + map_id + ".g3"
                     
-                    flags = []
+                    output_file = g3_file_for_coadded_maps[:-3] + ".g4"
                     
+                    flags = []
+                    flags.append("-o " + output_file)
+                    flags.append("-i " + map_id)
+                    flags.append("-S " + sub_field)
+
                     if (arguments.action == "update") and \
                        (os.path.isfile(g3_file_for_coadded_maps)):
                         map_frames   = core.G3File(g3_file_for_coadded_maps)
                         existing_ids = [] 
                         while True:
                             try:
-                                map_frame = map_frames.next()
-                                if "CoaddedObservationIDs" in map_frame.keys():
+                                mp_fr = map_frames.next()
+                                if "CoaddedObservationIDs" in mp_fr.keys():
                                     for source, obs_ids \
-                                    in  map_frame["CoaddedObservationIDs"].items():
+                                    in  mp_fr["CoaddedObservationIDs"].items():
                                         if source != sub_field:
                                             continue
                                         for obs_id in obs_ids:
                                             if obs_id not in existing_ids:
                                                 existing_ids.append(obs_id)
+                                    break
                             except StopIteration:
                                 break
                         
-                        if (numpy.min(existing_ids) < desired_obs_id_ranges[i][0]) \
-                        or (numpy.max(existing_ids) > desired_obs_id_ranges[i][1]):
+                        ignore_coadds,  subtract_maps,
+                        ids_to_exclude, id_lower_bound, id_upper_bound = \
+                            decide_what_ids_to_use_and_not(
+                                existing_ids, desired_obs_id_ranges[i])
+                        
+                        if ignore_coadds:
                             input_files = g3_files_for_individual_observations
                         else:
-                            input_files = g3_file_for_coadded_maps + " " +\
+                            input_files = g3_file_for_coadded_maps + " " + \
                                           g3_files_for_individual_observations
-                            existing_ids = " ".join([str(obs_id) \
-                                                     for obs_id in existing_ids])
-                            flags.append("-b " + existing_ids)
+                        
+                        flags.append("-s " + str(id_lower_bound))
+                        flags.append("-l " + str(id_upper_bound))
+                        
+                        if len(ids_to_exclude) > 0:
+                            ids_to_exclude = \
+                                " ".join([str(oid) \
+                                          for oid in ids_to_exclude])
+                            flags.append("-b " + ids_to_exclude)
+                        
+                        if subtract_maps:
+                            flags.append("-u")
                     
                     else:
                         input_files = g3_files_for_individual_observations
+                        flags.append("-s " + str(desired_obs_id_ranges[i][0]))
+                        flags.append("-l " + str(desired_obs_id_ranges[i][1]))
                     
-                    output_file = g3_file_for_coadded_maps[:-3] + ".g4"
-                    flags.append("-o " + output_file)
                     
-                    """
-                    map_ids_split_in_directions = \
-                        " ".join(["Left" + map_id + " " + "Right" + map_id
-                                  for map_id in map_ids.split(" ")])
-                    """
-                    flags.append("-i " + map_id)
-                    flags.append("-S " + sub_field)
-                    flags.append("-s " + str(desired_obs_id_ranges[i][0]))
-                    flags.append("-l " + str(desired_obs_id_ranges[i][1]))
                     flags.append("-t -N")
                     flags = " ".join(flags)
+                    
                     cmds.append(
-                        "python" + " " + script + " " + input_files + " " + flags)
+                        "python"+" "+script + " " + input_files+" "+flags)
                     if os.path.isfile(g3_file_for_coadded_maps):
-                        cmds.append("rm" + " " + g3_file_for_coadded_maps)
+                        cmds.append("cp"+" "+ g3_file_for_coadded_maps + " "+\
+                                    g3_file_for_coadded_maps[:-3]+"_backup.g3")
                     cmds.append(
                         "mv" + " " + output_file + " " + \
                          g3_file_for_coadded_maps)
                 
+                
                 four_g3_files = \
-                    " ".join([desired_dir_names[i]+"coadded_maps_from_"+\
-                              sf+"_"+map_id+".g3" \
-                              for sf in sub_fields])
-                final_out_file = desired_dir_names[i] + "coadded_maps_"+map_id+".g3"
+                    " ".join([desired_dir_names[i] + "coadded_maps_from_" + \
+                              sf + "_" + map_id + ".g3" for sf in sub_fields])
+                final_out_file = \
+                    desired_dir_names[i] + "coadded_maps_"+map_id+".g3"
                 
                 flags = []
                 flags.append("-o " + final_out_file)
@@ -530,7 +623,7 @@ for i in range(n_ranges):
                 cmds.append(cmd_final)
              
     
-    elif arguments.mode == "plotting":
+    else:
         script = script_plotting_data
         cmds   = []
         
