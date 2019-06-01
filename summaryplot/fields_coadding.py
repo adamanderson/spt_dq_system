@@ -197,7 +197,7 @@ for g3_file in arguments.input_files:
         all_good_g3_files.append(g3_file)
 
 
-if (len(all_good_g3_files) == 0):
+if (len(all_good_g3_files) <= 1):
     print()
     print("No applicable input files, so nothing to do!")
     print("\n\n")
@@ -214,7 +214,7 @@ print("#  Start making coadded maps!  #")
 print("# ============================ #")
 print()
 
-print("- Input files to check:")
+print("- Input files to supply:")
 print()
 for input_file in all_good_g3_files:
     print(input_file)
@@ -230,7 +230,8 @@ print()
 print("from", arguments.min_obs_id, "to", arguments.max_obs_id)
 print("\n")
 
-print("- Observation IDs to definitely exclude:")
+print("- Observation IDs that were originally on the list")
+print("  but then excluded:")
 print()
 print(arguments.bad_obs_ids)
 print()
@@ -382,9 +383,9 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
         if fr_two != None:
             total_weight = fr_one["Wunpol"].TT + fr_two["Wunpol"].TT
             sum_map      = fr_one["T"] + fr_two["T"]
-            map_to_use   = (sum_map / total_weight) / u.mK
+            map_to_use   = sum_map
         else:
-            map_to_use = (fr_one["T"] / fr_one["Wunpol"].TT) / u.mK
+            map_to_use = fr_one["T"] / fr_one["Wunpol"].TT
     
     some_brightest_sources = \
         {"ra0hdec-44.75": {"1": numpy.array([352.32358, -47.50531, 1408.089]),
@@ -441,6 +442,11 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
         mini_map = numpy.asarray(map_to_use)\
                    [mini_map_y_bottom:mini_map_y_top+1,
                     mini_map_x_left:mini_map_x_right+1]
+        
+        if len(numpy.where(numpy.isnan(mini_map))[0]) > 0:
+            discrep_dict[point_source_number]["delta_ra"]  = numpy.nan
+            discrep_dict[point_source_number]["delta_dec"] = numpy.nan
+            continue
         
         fit_parameters = util.fitting.fit_gaussian2d(mini_map)
         gaussian_center_x = fit_parameters[1]
@@ -507,7 +513,7 @@ def calculate_noise_level(
             coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
             coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)
             
-            new_mp_fr["T"]  = smaller_sky_map
+            new_mp_fr["T"] = smaller_sky_map
             new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
             new_mp_fr["Wunpol"].TT = smaller_wght_map
         
@@ -542,14 +548,17 @@ def combine_ids(old_dict, new_dict):
             if source not in old_dict[map_id].keys():
                 old_dict[map_id][source] = new_ids
             else:
-                common_ids = set(new_ids) & \
-                             set(old_dict[map_id][source])
+                old_ids    = old_dict[map_id][source]
+                common_ids = set(new_ids) & set(old_ids)
                 if len(common_ids) > 0:
                     this_frame_already_added = True
                 else:
-                    old_dict[map_id][source] = \
-                        type(new_ids)(sorted(
-                            set(old_dict[map_id][source]) | set(new_ids)))
+                    for new_id in new_ids:
+                        old_dict[map_id][source].append(new_id)
+                    """old_dict[map_id][source] = \
+                    type(new_ids)(sorted(
+                    set(old_dict[map_id][source]) | set(new_ids)))"""
+                    # ** The order of the IDs may be important.
     
     return old_dict, this_frame_already_added
 
@@ -651,7 +660,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         self.map_sources = map_sources
         self.temp_only   = temperature_only
         
-        self.coadded_map_frames = {map_id: None for map_id in self.map_ids}
+        self.coadded_map_frames = {map_id: core.G3Frame(core.G3FrameType.Map) \
+                                   for map_id in self.map_ids}
         self.coadded_obs_ids    = {map_id: core.G3MapVectorInt()    \
                                    for map_id in self.map_ids}
         self.coadded_map_ids    = {map_id: core.G3MapVectorString() \
@@ -746,6 +756,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
     
     def __call__(self, frame):
         
+        if ("CoaddedMapsContained" in frame.keys()) and \
+           (frame["CoaddedMapsContained"] == False):
+            return []   # Some clean-up of non-useful data created previously
+        
         if frame.type == core.G3FrameType.Calibration:
             try:
                 self.bolo_props = frame["BolometerProperties"]
@@ -764,8 +778,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             return
         
         if frame.type == core.G3FrameType.PipelineInfo:
-            if ("DroppedBolos"   in frame.keys()) and \
-               ("SurvivingBolos" in frame.keys()):
+            if ["DroppedBolos", "SurvivingBolos"] <= frame.keys():
                 self.pipe_info = frame
             return
         
@@ -865,9 +878,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             
             if not subtract_maps_in_this_frame:
                 
-                if self.coadded_map_frames[id_for_coadds] is None:
-                    self.coadded_map_frames[id_for_coadds] = \
-                        core.G3Frame(core.G3FrameType.Map)
+                if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
                     print()
                     print("* A map frame with ID", frame["Id"], "is here!")
                     print("* Both the sky map and weight map are added to the ")
@@ -1223,11 +1234,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             print("\n")
             print("* It's time to combine all the data gathered so far!")
             print("\n")
+            
+            meta_info_frames_to_return = []
+            
             for map_id in self.map_ids:
                 mp_fr = self.coadded_map_frames[map_id]
-                
-                if mp_fr == None:
-                    self.coadded_map_frames.pop(map_id)
+                if len(mp_fr.keys()) == 0:
                     continue
                 
                 print()
@@ -1337,17 +1349,26 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         print()
                     print("\n")
                 
+                meta_info_frame = core.G3Frame()
+                for k in mp_fr.keys():
+                    if k not in ["T", "Q", "U", "Wunpol", "Wpol",
+                                 "CoaddedMapsContained"]:
+                        meta_info_frame[k] = mp_fr[k]
+                meta_info_frame["CoaddedMapsContained"] = False
+                meta_info_frames_to_return.append(meta_info_frame)
                 
                 print("# Here is what the frame looks like:")
                 print()
                 print(mp_fr)
                 print()
-            
-            
+                
+                
                 print("# --------------------------- #")
             print("\n")
             
-            return list(self.coadded_map_frames.values()) + [frame]
+            return meta_info_frames_to_return + \
+                   list(self.coadded_map_frames.values()) + \
+                   [frame]
 
 
 # ==============================================================================
