@@ -259,11 +259,13 @@ if args.mode == 'skim':
         max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
 
         datafile = os.path.join(datadir, '{}_data_cache.pkl'.format(mindate.strftime('%Y%m%d')))
+        updated = False
         if os.path.exists(datafile):
             with open(datafile, 'rb') as f:
                 data = pickle.load(f)
         else:
             data = {}
+            updated = True
 
         # update the data skim
         for source, quantities in function_dict.items():
@@ -284,10 +286,10 @@ if args.mode == 'skim':
                 if (obsid not in data[source].keys() or \
                     data[source][obsid]['timestamp'] != os.path.getctime(fname)) and \
                     os.path.exists(fname) and os.path.exists(cal_fname):
+                    updated = True
+
                     data[source][obsid] = {'timestamp': os.path.getctime(fname)}
-
                     d = [fr for fr in core.G3File(fname)]
-
                     boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
 
                     for quantity_name in function_dict[source]:
@@ -303,8 +305,9 @@ if args.mode == 'skim':
                             if func_result:
                                 data[source][obsid][quantity_name] = func_result
 
-        with open(datafile, 'wb') as f:
-            pickle.dump(data, f)
+        if updated:
+            with open(datafile, 'wb') as f:
+                pickle.dump(data, f)
 
 
 # PLOT MODE

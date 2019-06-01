@@ -146,13 +146,28 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
-			   // append log file information to database results
 			   if(req.query.dbname == 'scanify') {
+				   // append log file information to database results
 				   for(var jrow in rows) {
 					   rows[jrow]['log_file'] = 'scanify_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
+				   
+				   // interpret transfer_fullrate and transfer_downsampled
+				   // integer flags as booleans for simpler parsing by the 
+				   // transfer status table
+				   for(var jrow in rows) {
+					   if(rows[jrow]['transfer_fullrate'] > 0)
+						   rows[jrow]['transfer_fullrate'] = true;
+					   else
+						   rows[jrow]['transfer_fullrate'] = false;
+					   if(rows[jrow]['transfer_downsampled'] > 0)
+						   rows[jrow]['transfer_downsampled'] = true;
+					   else
+						   rows[jrow]['transfer_downsampled'] = false;
+				   }
 			   }
 			   if(req.query.dbname == 'autoproc') {
+				   // append log file information to database results
 				   for(var jrow in rows) {
 					   rows[jrow]['log_file'] = 'autoproc_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
