@@ -488,7 +488,7 @@ for i in range(n_ranges):
                         except StopIteration:
                             break
                     
-                    ignore_coadds,  subtract_maps,
+                    ignore_coadds,  subtract_maps,                   \
                     ids_to_exclude, id_lower_bound, id_upper_bound = \
                         decide_what_ids_to_use_and_not(
                             existing_ids, desired_obs_id_ranges[i])
@@ -565,7 +565,7 @@ for i in range(n_ranges):
                             except StopIteration:
                                 break
                         
-                        ignore_coadds,  subtract_maps,
+                        ignore_coadds,  subtract_maps,                   \
                         ids_to_exclude, id_lower_bound, id_upper_bound = \
                             decide_what_ids_to_use_and_not(
                                 existing_ids, desired_obs_id_ranges[i])
