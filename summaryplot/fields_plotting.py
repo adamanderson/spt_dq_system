@@ -671,7 +671,7 @@ for g3_file in arguments.input_files:
     
     print()
     print("# ------------------------------------------------- ")
-    print("# Loading data from", g3_file.split("/")[-1], "..."  )
+    print("# Loading data from", g3_file, "..."  )
     print("# ------------------------------------------------- ")
     print()
     
