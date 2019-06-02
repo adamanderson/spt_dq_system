@@ -42,7 +42,7 @@ parser_maps.add_argument('-c', '--nocoadding',
 parser_maps.add_argument('-p', '--noplotting',
                          action='store_true', default=False,
                          help='Skip the plotting part.')
-parser_maps.add_argument('-l', '--createlogfiles',
+parser_maps.add_argument('-l', '--nologfiles',
                          action='store_true', default=False,
                          help='Whether to redirect stdout/err to txt files.')
 parser_maps.add_argument('-j', '--justseecommands',
@@ -104,13 +104,13 @@ if args.mode == 'maps':
             print('Running commands for last_n and', mode, 'with n =', n)
             print('starting from', current_time, '(UTC) ...')
             print()
-            if args.createlogfiles:
+            if args.nologfiles:
+                log_file_flag = ''
+            else:
                 log_file = args.coaddslogsdir + \
                            current_time.strftime('20%y%m%d_%H%M%S') + \
                            '_last_' + n + '_' + mode
                 log_file_flag = '&>' + ' ' + log_file
-            else:
-                log_file_flag = ''
             
             os.system('python summaryplot/cache_field_maps.py '
                       '-m {} -a update -t last_n -n {} '
@@ -128,13 +128,13 @@ if args.mode == 'maps':
             print("Running commands for", interval, "and", mode)
             print("starting from", current_time, "(UTC) ...")
             print()
-            if args.createlogfiles:
+            if args.nologfiles:
+                log_file_flag = ''
+            else:
                 log_file = args.coaddslogsdir + \
                            current_time.strftime('20%y%m%d_%H%M%S') + \
                            "_" + interval + "_" + mode
                 log_file_flag = '&>' + ' ' + log_file
-            else:
-                log_file_flag = ''
             
             os.system('python summaryplot/cache_field_maps.py '
                       '-m {} -a update -t {} '
