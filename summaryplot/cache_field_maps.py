@@ -238,15 +238,16 @@ else:
         beginning_of_the_interval = \
             get_the_beginning_of_the_interval(arguments.time_interval,
                                               end_time_at_start_of_loop)
-        if arguments.mode == "coadding":
-            if beginning_of_the_interval < beginning_of_the_record:
-                beginning_of_the_interval = beginning_of_the_record
-        
-        start_obs_id_of_the_interval = \
-            convert_to_obs_id(beginning_of_the_interval)
+        if (arguments.mode == "coadding") and \
+           (beginning_of_the_interval < beginning_of_the_record):
+            start_obs_id_of_the_interval = \
+                convert_to_obs_id(beginning_of_the_record)
+        else:
+            start_obs_id_of_the_interval = \
+                convert_to_obs_id(beginning_of_the_interval)
         end_obs_id_of_the_interval = \
             convert_to_obs_id(end_time_at_start_of_loop)
-
+        
         desired_obs_id_ranges.append((start_obs_id_of_the_interval,
                                       end_obs_id_of_the_interval))
         desired_time_ranges.append((beginning_of_the_interval,
