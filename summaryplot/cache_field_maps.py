@@ -475,7 +475,7 @@ for i in range(n_ranges):
                 if (arguments.action == "update") and \
                    (os.path.isfile(g3_file_for_coadded_maps)):
                     map_frames   = core.G3File(g3_file_for_coadded_maps)
-                    existing_ids = [] 
+                    existing_ids = []
                     while True:
                         try:
                             map_frame = map_frames.next()
