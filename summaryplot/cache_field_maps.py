@@ -634,15 +634,19 @@ for i in range(n_ranges):
             
             flags = []
             flags.append("-d " + output_dir)
-            flags.append("-i " + map_id)
-            flags.append("-f -c -w -n")
-            if arguments.time_interval != "yearly":
-                flags.append("-F -p")
-                flags.append("-l " + str(desired_obs_id_ranges[i][0]))
-                flags.append("-r " + str(desired_obs_id_ranges[i][1]))
-            else:
-                flags.append("-N")
+            flags.append("-f")
             flags.append("-z 15")
+            flags.append("-i " + map_id)
+            flags.append("-y T")
+            flags.append("-c")
+            if arguments.time_interval != "yearly":
+                flags.append("-m -F -p -n")
+                flags.append("-L " + str(desired_obs_id_ranges[i][0]))
+                flags.append("-R " + str(desired_obs_id_ranges[i][1]))
+            else:
+                flags.append("-m -w -W -n")
+            if arguments.action == "update":
+                flags.append("-D")
             flags = " ".join(flags)
             
             cmd = "python" + " " + script + " " + input_file + " " + flags
@@ -659,7 +663,10 @@ for i in range(n_ranges):
     print("# Command set", n_cmd_set, "to run:")
     print("# ---------------------------")
     print()
-    for cmd in cmds:
+    for ctr, cmd in enumerate(cmds, 1):
+        print("# Command", ctr)
+        print("# ------------------")
+        print()
         print(cmd, "\n")
         if not arguments.just_see_commands:
             os.system(cmd)
