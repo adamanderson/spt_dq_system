@@ -80,6 +80,12 @@ if args.mode == 'summarystats':
 if args.mode == 'maps':
     # update coadded maps
     
+    current_time = datetime.datetime.utcnow()
+    print('\n')
+    print('Starting to update coadded maps and figures at')
+    print(current_time, '(UTC) ...')
+    print()
+    
     modes = ['coadding', 'plotting']
     if args.nocoadding:
         modes.remove('coadding')
@@ -97,7 +103,6 @@ if args.mode == 'maps':
     else:
         cmds_exec_flag = ''
     
-    print()
     for n in ['7', '30']:
         for mode in modes:
             current_time = datetime.datetime.utcnow()
@@ -145,4 +150,8 @@ if args.mode == 'maps':
                              args.mintime, current_day_flag,
                              args.mapsdatadir, args.coaddsdatadir,
                              args.coaddsfigsdir, log_file_flag, cmds_exec_flag))
+
+    current_time = datetime.datetime.utcnow()
+    print('All done at', current_time, "(UTC)!")
+    print()
 

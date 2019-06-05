@@ -884,11 +884,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     print("* Both the sky map and weight map are added to the ")
                     print("* empty coadded maps as", id_for_coadds, "...")
                     if self.temp_only:
-                        self.coadded_map_frames[id_for_coadds]["T"] = frame["T"]
-                        self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
-                            core.G3SkyMapWeights()
-                        self.coadded_map_frames[id_for_coadds]["Wunpol"].TT = \
-                            frame["Wunpol"].TT
+                        self.coadded_map_frames \
+                            [id_for_coadds]["T"] = frame["T"]
+                        self.coadded_map_frames \
+                            [id_for_coadds]["Wunpol"] = frame["Wunpol"]
                     print("* Done.")
                     print()
                 else:
@@ -899,10 +898,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     if self.temp_only:
                         existing_t_map = \
                             self.coadded_map_frames[id_for_coadds].pop("T")
-                        self.coadded_map_frames[id_for_coadds]["T"] = \
-                            existing_t_map + frame["T"]
                         existing_w_map = \
                             self.coadded_map_frames[id_for_coadds].pop("Wunpol")
+                        self.coadded_map_frames[id_for_coadds]["T"] = \
+                            existing_t_map + frame["T"]
                         self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
                             existing_w_map + frame["Wunpol"]
                     print("* Done.")
@@ -920,9 +919,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     existing_t_map = \
                         self.coadded_map_frames[id_for_coadds].pop("T")
                     self.coadded_map_frames[id_for_coadds]["T"] = \
-                        existing_t_map - frame["T"]
-                    self.coadded_map_frames[id_for_coadds]["Wunpol"].TT -= \
-                        frame["Wunpol"].TT
+                        existing_t_map + (frame["T"] * (-1))
+                    self.coadded_map_frames[id_for_coadds]["Wunpol"].TT += \
+                        (frame["Wunpol"].TT * (-1))
                 print("* Done.")
                 print()
             
@@ -1438,7 +1437,9 @@ print("\n")
 
 pipeline.Run(profile=True)
 
-print("\n\n")
+print("\n")
+print("# ============================ #")
+print("\n\n\n")
 
 
 # ==============================================================================
