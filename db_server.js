@@ -402,7 +402,8 @@ function updateMapPlots() {
 			config.maps_data_dir,
 			config.coadds_data_dir,
 			config.coadds_figs_dir,
-			config.coadds_logs_dir]
+			config.coadds_logs_dir,
+			config.min_time_static_plots]
 
     if(is_map_update_running == false) {
 		is_map_update_running = true;
