@@ -1,6 +1,7 @@
 import os
 import argparse as ap
 import datetime
+from summaryplot import cache_timeseries_data
 
 parser = ap.ArgumentParser(description='Wrapper for updating data and plots.',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -56,26 +57,29 @@ args = parser.parse_args()
 if args.mode == 'summarystats':
     # update data skims
     if args.no_data_update == False:
-        os.system('python summaryplot/cache_timeseries_data.py skim update '
-                  '{} {} {} --min-time {}'.format(args.staticplotdir,
-                                                  args.caldatadir,
-                                                  args.bolodatadir,
-                                                  args.mintime))
+        cache_timeseries_data.update(mode='skim', action='update',
+                                     outdir=args.staticplotdir,
+                                     caldatapath=args.caldatadir,
+                                     bolodatapath=args.bolodatadir,
+                                     min_time=args.mintime)
 
     # update weekly plots
-    os.system('python summaryplot/cache_timeseries_data.py plot update weekly '
-              '{} --min-time {}'.format(args.staticplotdir,
-                                        args.mintime))
+    cache_timeseries_data.update(mode='plot', action='update',
+                                 timeinterval='weekly',
+                                 outdir=args.staticplotdir,
+                                 min_time=args.mintime)
 
     # update monthly plots
-    os.system('python summaryplot/cache_timeseries_data.py plot update monthly '
-              '{} --min-time {}'.format(args.staticplotdir,
-                                        args.mintime))
+    cache_timeseries_data.update(mode='plot', action='update',
+                                 timeinterval='weekly',
+                                 outdir=args.staticplotdir,
+                                 min_time=args.mintime)
 
     # update "last 3 days" plots
-    os.system('python summaryplot/cache_timeseries_data.py plot update 3 '
-              '{} --min-time {}'.format(args.staticplotdir,
-                                        args.mintime))
+    cache_timeseries_data.update(mode='plot', action='update',
+                                 timeinterval='3',
+                                 outdir=args.staticplotdir,
+                                 min_time=args.mintime)
 
 if args.mode == 'maps':
     # update coadded maps
