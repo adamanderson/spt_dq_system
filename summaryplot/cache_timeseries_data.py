@@ -356,13 +356,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             data[source].pop(obsid)
 
                 # create the plots
-                print(mindate)
-                print(maxdate)
-                print(plotsdir)
-                print('cal sn')
                 plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
                                        xlims=[mindate, maxdate])
-                print('cal response')
                 plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
                                              xlims=[mindate, maxdate])
                 plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'low',
@@ -494,3 +489,19 @@ if __name__ == '__main__':
                              help='Maximum time of observations to skim. Format: '
                              'YYYYMMDD (ends at end of day)')
     args = P0.parse_args()
+
+    if args.mode == 'plot':
+        def update(mode=args.mode,
+                   action=args.action,
+                   timeinterval=args.timeinterval,
+                   outdir=args.outdir,
+                   min_time=args.min_time,
+                   max_time=args.max_time)
+    elif args.mode == 'skim':
+        def update(mode=args.mode,
+                   action=args.action,
+                   outdir=args.outdir,
+                   caldatapath=args.caldatapath,
+                   bolodatapath=args.bolodatapath,
+                   min_time=args.min_time,
+                   max_time=args.max_time)
