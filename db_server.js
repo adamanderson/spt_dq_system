@@ -422,7 +422,7 @@ function updateMapPlots() {
 }
 
 // update both types of plots in parallel every 10 minutes
-setInterval(updateSummaryPlots, 6000);
-if(config.site == 'pole') // only update map plots at pole
-	setInterval(updateMapPlots, 60000);
+setInterval(updateSummaryPlots, 60000);
+// if(config.site == 'pole') // only update map plots at pole
+// 	setInterval(updateMapPlots, 60000);
 
