@@ -14,166 +14,10 @@ import  argparse
 
 
 
-
-# ==============================================================================
-# Define global variables, gather input files, and so on
-# ------------------------------------------------------------------------------
-
-
-# Parse arguments
-# ------------------------------------------------------------------------------
-
-parser = argparse.ArgumentParser(
-             description="This script makes coadded maps of the "+\
-                         "1500 sq. deg. field and can also perform some "+\
-                         "analysis on the maps such as calculating noise.",
-             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-parser.add_argument("input_files",
-                    type=str, action="store", nargs="+",
-                    help="The paths to the g3 files "+\
-                         "that contain map frames. ")
-
-parser.add_argument("-o", "--output_file",
-                    type=str, action="store", default="./coadded_maps.g3",
-                    help="The location and name of the output g3 file "+\
-                         "that will contain the coadded maps.")
-
-parser.add_argument("-i", "--map_ids",
-                    type=str, action="store", nargs="+", default=["90GHz"],
-                    help="The relevant map IDs for which corresponding "+\
-                         "map data will be added. ")
-
-parser.add_argument("-t", "--temperature_maps_only",
-                    action="store_true", default=False,
-                    help="Whether the maps stored in the data frames contain "+\
-                         "temperature-only maps or not.")
-
-parser.add_argument("-r", "--maps_split_by_scan_direction",
-                    action="store_true", default=False,
-                    help="Whether the maps stored in the data frames are "+\
-                         "split by the scan direction.")
-
-parser.add_argument("-c", "--combine_left_right",
-                    action="store_true", default=False,
-                    help="Whether to add maps made from left-going scans and "+\
-                         "those made from right-going scans together. "+\
-                         "If True, a map whose 'Id' is 'Left'+map_id and "+\
-                         "one whose 'Id' is 'Right'+map_id will be added, "+\
-                         "where map_id is an ID specified in the argument "+\
-                         "map_ids above.")
-
-parser.add_argument("-C", "--combine_different_wafers",
-                    action="store_true", default=False,
-                    help="Whether to add maps made from different wafers "+\
-                         "together. If True, maps whose 'Id's look like "+\
-                         "map_id+a_wafer_name will be added, "+\
-                         "where map_id is an ID specified in the argument "+\
-                         "map_ids above.")
-
-parser.add_argument("-u", "--subtract_existing_maps",
-                    action="store_true", default=False,
-                    help="Whether to subtract certain observation's data "+\
-                         "contained in an input file from the coadded maps "+\
-                         "if the data already exist in the coadded maps.")
-
-parser.add_argument("-a", "--collect_averages_from_flagging_statistics",
-                    action="store_true", default=False,
-                    help="Whether to calculate average number of bolometers "+\
-                         "that were not flagged over all scans of "+\
-                         "an observation, average number of bolometers that "+\
-                         "were removed, and so on.")
-
-parser.add_argument("-n", "--calculate_noise_from_individual_maps",
-                    action="store_true", default=False,
-                    help="Whether to calculate map noise levels from "+\
-                         "each map that goes into the coadded maps.")
-
-parser.add_argument("-N", "--calculate_noise_from_coadded_maps",
-                    action="store_true", default=False,
-                    help="Whether to calculate map noise levels for the "+\
-                         "running coadded maps. In other words, the noise "+\
-                         "will be calculated from the coadded maps "+\
-                         "every time a new map is added.")
-
-parser.add_argument("-p", "--calculate_pointing_discrepancies",
-                    action="store_true", default=False,
-                    help="Whether to calculate the difference between the "+\
-                         "true positions of some point sources and the "+\
-                         "measured positions")
-
-parser.add_argument("-S", "--sources",
-                    type=str, action="store", nargs="+",
-                    default=["ra0hdec-44.75", "ra0hdec-52.25",
-                             "ra0hdec-59.75", "ra0hdec-67.25"],
-                    help="The sub-field(s) that will be included "+\
-                         "in the coadded maps.")
-
-parser.add_argument("-s", "--min_obs_id",
-                    type=int, action="store", default=0,
-                    help="The smallest observation ID that will be "+\
-                         "considered to be used in the coadded map. "+\
-                         "The default is 00000000.")
-
-parser.add_argument("-l", "--max_obs_id",
-                    type=int, action="store", default=99999999,
-                    help="The largest observation ID that will be "+\
-                         "considered to be used in the coadded map. "+\
-                         "The default is 99999999.")
-
-parser.add_argument("-b", "--bad_obs_ids",
-                    type=int, action="store", nargs="+", default=[],
-                    help="The observation IDs that will be excluded from "+\
-                         "making the coadded map. The script has some "+\
-                         "simple criteria to decide whether to include "+\
-                         "certain observations, but one can manually specify "+\
-                         "bad observations, too.")
-
-parser.add_argument("-m", "--min_file_size",
-                    type=float, action="store", default=0.01,
-                    help="The minimum size (in GB) a g3 file needs "+\
-                         "to have for it to be considered as a good file. "+\
-                         "This is to reduce the occurrence of a situation "+\
-                         "where the script crashes due to reading a "+\
-                         "problematic file.")
-
-arguments = parser.parse_args()
-
-
-
-# Check consistencies among some options that are supposed to be used
-# -----------------------------------------------------------------------------
-
-if arguments.calculate_noise_from_coadded_maps:
-    """if len(arguments.sources) > 1:
-        print()
-        print("If noise is to be calculated from running coadds,")
-        print("then only one observation type can be specified!")
-        print()
-        sys.exit()"""
-    if arguments.combine_left_right:
-        print()
-        print("If noise is to be calculated from running coadds,")
-        print("then the combine_left_right option needs to be False")
-        print("so that the coadded left-going and right-going maps")
-        print("can be used later as well!")
-        print()
-        sys.exit()
-
-if arguments.calculate_noise_from_individual_maps and \
-   arguments.calculate_noise_from_coadded_maps:
-    print()
-    print("Currently, calculating noise from both individual maps")
-    print("and coadded maps does not work...")
-    print()
-    sys.exit()
-
-
-
 # Gather input files
 # -----------------------------------------------------------------------------
 
-def is_a_good_obs_id(g3_file):
+def is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids=[]):
     meaningful_part_of_path = g3_file.split('/')[-1].split('.')[0]
     try:
         obs_id = int(meaningful_part_of_path.split('_')[0])
@@ -181,65 +25,12 @@ def is_a_good_obs_id(g3_file):
         # Probably a g3 file that contains coadded maps is encountered
         # if the name cannot be converted to an integer.
         return True
-    if (obs_id >= arguments.min_obs_id) and \
-       (obs_id <= arguments.max_obs_id) and \
-       (obs_id not in arguments.bad_obs_ids):
+    if (obs_id >= min_obs_id) and \
+       (obs_id <= max_obs_id) and \
+       (obs_id not in bad_obs_ids):
         return True
     else:
         return False
-
-
-all_good_g3_files = []
-for g3_file in arguments.input_files:
-    if os.path.isfile(g3_file)   and \
-       is_a_good_obs_id(g3_file) and \
-       (os.path.getsize(g3_file) > arguments.min_file_size*2**30):
-        all_good_g3_files.append(g3_file)
-
-
-if (len(all_good_g3_files) <= 1):
-    print()
-    print("No applicable input files, so nothing to do!")
-    print("\n\n")
-    sys.exit()
-
-
-
-# Show settings related to I/O
-# -----------------------------------------------------------------------------
-
-print()
-print("# ============================ #")
-print("#  Start making coadded maps!  #")
-print("# ============================ #")
-print()
-
-print("- Input files to supply:")
-print()
-for input_file in all_good_g3_files:
-    print(input_file)
-print("\n")
-
-print("- File to which the coadded maps will be saved:")
-print()
-print(arguments.output_file)
-print("\n")
-
-print("- The range of observation ID of interest:")
-print()
-print("from", arguments.min_obs_id, "to", arguments.max_obs_id)
-print("\n")
-
-print("- Observation IDs that were originally on the list")
-print("  but then excluded:")
-print()
-print(arguments.bad_obs_ids)
-print()
-
-
-# ==============================================================================
-
-
 
 
 
@@ -1374,73 +1165,284 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
 
 
 
+def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
+        temperature_maps_only=False, maps_split_by_scan_direction=False,
+        combine_left_right=False, combine_different_wafers=False,
+        subtract_existing_maps=False, 
+        collect_averages_from_flagging_statistics=False,
+        calculate_noise_from_individual_maps=False,
+        calculate_noise_from_coadded_maps=False,
+        calculate_pointing_discrepancies=False,
+        sources=["ra0hdec-44.75", "ra0hdec-52.25",
+                 "ra0hdec-59.75", "ra0hdec-67.25"],
+        min_obs_id=0, max_obs_id=99999999,
+        bad_obs_ids=[], min_file_size=0.01):
+    # Check consistencies among some options that are supposed to be used
+    # -----------------------------------------------------------------------------
+
+    if calculate_noise_from_coadded_maps:
+        """if len(sources) > 1:
+            print()
+            print("If noise is to be calculated from running coadds,")
+            print("then only one observation type can be specified!")
+            print()
+            sys.exit()"""
+        if combine_left_right:
+            print()
+            print("If noise is to be calculated from running coadds,")
+            print("then the combine_left_right option needs to be False")
+            print("so that the coadded left-going and right-going maps")
+            print("can be used later as well!")
+            print()
+            sys.exit()
+
+    if calculate_noise_from_individual_maps and \
+       calculate_noise_from_coadded_maps:
+        print()
+        print("Currently, calculating noise from both individual maps")
+        print("and coadded maps does not work...")
+        print()
+        sys.exit()
 
 
-# ==============================================================================
-# Construct a pipeline that makes a coadded map
-# ------------------------------------------------------------------------------
-
-pipeline = core.G3Pipeline()
-
-pipeline.Add(core.G3Reader,
-             filename=all_good_g3_files)
-
-pipeline.Add(core.Dump)
-
-pipeline.Add(CoaddMapsAndDoSomeMapAnalysis,
-             map_ids=\
-                 arguments.map_ids,
-             map_sources=\
-                 arguments.sources,
-             temperature_only=\
-                 arguments.temperature_maps_only,
-             maps_split_by_scan_direction=\
-                 arguments.maps_split_by_scan_direction,
-             combine_left_right=\
-                 arguments.combine_left_right,
-             combine_different_wafers=\
-                 arguments.combine_different_wafers,
-             allow_subtraction=\
-                 arguments.subtract_existing_maps,
-             collect_averages_from_flagging_stats=\
-                 arguments.collect_averages_from_flagging_statistics,
-             calculate_noise_from_individual_maps=\
-                 arguments.calculate_noise_from_individual_maps,
-             calculate_noise_from_coadded_maps=\
-                 arguments.calculate_noise_from_coadded_maps,
-             calculate_pointing_discrepancies=\
-                 arguments.calculate_pointing_discrepancies)
-
-pipeline.Add(lambda frame: "CoaddedMapsContained" in frame)
-
-pipeline.Add(core.G3Writer,
-             filename=arguments.output_file)
+    all_good_g3_files = []
+    for g3_file in input_files:
+        if os.path.isfile(g3_file)   and \
+           is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids) and \
+           (os.path.getsize(g3_file) > min_file_size*2**30):
+            all_good_g3_files.append(g3_file)
 
 
-# ==============================================================================
+    if (len(all_good_g3_files) <= 1):
+        print()
+        print("No applicable input files, so nothing to do!")
+        print("\n\n")
+        return
 
 
 
+    # Show settings related to I/O
+    # -----------------------------------------------------------------------------
+
+    print()
+    print("# ============================ #")
+    print("#  Start making coadded maps!  #")
+    print("# ============================ #")
+    print()
+
+    print("- Input files to supply:")
+    print()
+    for input_file in all_good_g3_files:
+        print(input_file)
+    print("\n")
+
+    print("- File to which the coadded maps will be saved:")
+    print()
+    print(output_file)
+    print("\n")
+
+    print("- The range of observation ID of interest:")
+    print()
+    print("from", min_obs_id, "to", max_obs_id)
+    print("\n")
+
+    print("- Observation IDs that were originally on the list")
+    print("  but then excluded:")
+    print()
+    print(bad_obs_ids)
+    print()
 
 
-# ==============================================================================
-# Time to start!
-# ------------------------------------------------------------------------------
+    # ==============================================================================
 
-print("\n")
-print("# -------------------------- #")
-print("#  Starting the pipeline...  #")
-print("# -------------------------- #")
-print("\n")
-print("Every frame passed to the pipeline will be printed.")
-print("\n")
+    
+    # ==============================================================================
+    # Construct a pipeline that makes a coadded map
+    # ------------------------------------------------------------------------------
 
-pipeline.Run(profile=True)
+    pipeline = core.G3Pipeline()
 
-print("\n")
-print("# ============================ #")
-print("\n\n\n")
+    pipeline.Add(core.G3Reader,
+                 filename=all_good_g3_files)
+
+    pipeline.Add(core.Dump)
+
+    pipeline.Add(CoaddMapsAndDoSomeMapAnalysis,
+                 map_ids=\
+                     map_ids,
+                 map_sources=\
+                     sources,
+                 temperature_only=\
+                     temperature_maps_only,
+                 maps_split_by_scan_direction=\
+                     maps_split_by_scan_direction,
+                 combine_left_right=\
+                     combine_left_right,
+                 combine_different_wafers=\
+                     combine_different_wafers,
+                 allow_subtraction=\
+                     subtract_existing_maps,
+                 collect_averages_from_flagging_stats=\
+                     collect_averages_from_flagging_statistics,
+                 calculate_noise_from_individual_maps=\
+                     calculate_noise_from_individual_maps,
+                 calculate_noise_from_coadded_maps=\
+                     calculate_noise_from_coadded_maps,
+                 calculate_pointing_discrepancies=\
+                     calculate_pointing_discrepancies)
+
+    pipeline.Add(lambda frame: "CoaddedMapsContained" in frame)
+
+    pipeline.Add(core.G3Writer,
+                 filename=output_file)
 
 
-# ==============================================================================
+    # ==============================================================================
 
+
+
+
+
+    # ==============================================================================
+    # Time to start!
+    # ------------------------------------------------------------------------------
+
+    print("\n")
+    print("# -------------------------- #")
+    print("#  Starting the pipeline...  #")
+    print("# -------------------------- #")
+    print("\n")
+    print("Every frame passed to the pipeline will be printed.")
+    print("\n")
+
+    pipeline.Run(profile=True)
+
+    print("\n")
+    print("# ============================ #")
+    print("\n\n\n")
+
+
+    # ==============================================================================
+
+
+if __name__ == '__main__':
+    # Parse arguments
+    # ------------------------------------------------------------------------------
+
+    parser = argparse.ArgumentParser(
+                 description="This script makes coadded maps of the "+\
+                             "1500 sq. deg. field and can also perform some "+\
+                             "analysis on the maps such as calculating noise.",
+                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument("input_files",
+                        type=str, action="store", nargs="+",
+                        help="The paths to the g3 files "+\
+                             "that contain map frames. ")
+
+    parser.add_argument("-o", "--output_file",
+                        type=str, action="store", default="./coadded_maps.g3",
+                        help="The location and name of the output g3 file "+\
+                             "that will contain the coadded maps.")
+
+    parser.add_argument("-i", "--map_ids",
+                        type=str, action="store", nargs="+", default=["90GHz"],
+                        help="The relevant map IDs for which corresponding "+\
+                             "map data will be added. ")
+
+    parser.add_argument("-t", "--temperature_maps_only",
+                        action="store_true", default=False,
+                        help="Whether the maps stored in the data frames contain "+\
+                             "temperature-only maps or not.")
+
+    parser.add_argument("-r", "--maps_split_by_scan_direction",
+                        action="store_true", default=False,
+                        help="Whether the maps stored in the data frames are "+\
+                             "split by the scan direction.")
+
+    parser.add_argument("-c", "--combine_left_right",
+                        action="store_true", default=False,
+                        help="Whether to add maps made from left-going scans and "+\
+                             "those made from right-going scans together. "+\
+                             "If True, a map whose 'Id' is 'Left'+map_id and "+\
+                             "one whose 'Id' is 'Right'+map_id will be added, "+\
+                             "where map_id is an ID specified in the argument "+\
+                             "map_ids above.")
+
+    parser.add_argument("-C", "--combine_different_wafers",
+                        action="store_true", default=False,
+                        help="Whether to add maps made from different wafers "+\
+                             "together. If True, maps whose 'Id's look like "+\
+                             "map_id+a_wafer_name will be added, "+\
+                             "where map_id is an ID specified in the argument "+\
+                             "map_ids above.")
+
+    parser.add_argument("-u", "--subtract_existing_maps",
+                        action="store_true", default=False,
+                        help="Whether to subtract certain observation's data "+\
+                             "contained in an input file from the coadded maps "+\
+                             "if the data already exist in the coadded maps.")
+
+    parser.add_argument("-a", "--collect_averages_from_flagging_statistics",
+                        action="store_true", default=False,
+                        help="Whether to calculate average number of bolometers "+\
+                             "that were not flagged over all scans of "+\
+                             "an observation, average number of bolometers that "+\
+                             "were removed, and so on.")
+
+    parser.add_argument("-n", "--calculate_noise_from_individual_maps",
+                        action="store_true", default=False,
+                        help="Whether to calculate map noise levels from "+\
+                             "each map that goes into the coadded maps.")
+
+    parser.add_argument("-N", "--calculate_noise_from_coadded_maps",
+                        action="store_true", default=False,
+                        help="Whether to calculate map noise levels for the "+\
+                             "running coadded maps. In other words, the noise "+\
+                             "will be calculated from the coadded maps "+\
+                             "every time a new map is added.")
+
+    parser.add_argument("-p", "--calculate_pointing_discrepancies",
+                        action="store_true", default=False,
+                        help="Whether to calculate the difference between the "+\
+                             "true positions of some point sources and the "+\
+                             "measured positions")
+
+    parser.add_argument("-S", "--sources",
+                        type=str, action="store", nargs="+",
+                        default=["ra0hdec-44.75", "ra0hdec-52.25",
+                                 "ra0hdec-59.75", "ra0hdec-67.25"],
+                        help="The sub-field(s) that will be included "+\
+                             "in the coadded maps.")
+
+    parser.add_argument("-s", "--min_obs_id",
+                        type=int, action="store", default=0,
+                        help="The smallest observation ID that will be "+\
+                             "considered to be used in the coadded map. "+\
+                             "The default is 00000000.")
+
+    parser.add_argument("-l", "--max_obs_id",
+                        type=int, action="store", default=99999999,
+                        help="The largest observation ID that will be "+\
+                             "considered to be used in the coadded map. "+\
+                             "The default is 99999999.")
+
+    parser.add_argument("-b", "--bad_obs_ids",
+                        type=int, action="store", nargs="+", default=[],
+                        help="The observation IDs that will be excluded from "+\
+                             "making the coadded map. The script has some "+\
+                             "simple criteria to decide whether to include "+\
+                             "certain observations, but one can manually specify "+\
+                             "bad observations, too.")
+
+    parser.add_argument("-m", "--min_file_size",
+                        type=float, action="store", default=0.01,
+                        help="The minimum size (in GB) a g3 file needs "+\
+                             "to have for it to be considered as a good file. "+\
+                             "This is to reduce the occurrence of a situation "+\
+                             "where the script crashes due to reading a "+\
+                             "problematic file.")
+
+    arguments = parser.parse_args()
+
+    run(**vars(arguments))

@@ -18,152 +18,19 @@ from    spt3g       import  std_processing
 
 
 
-
 # ==============================================================================
-# Process command line arguments and define global variables
-# ------------------------------------------------------------------------------
 
 
-# Process command line arguments
-# ------------------------------------------------------------------------------
-
-parser = argparse.ArgumentParser(
-             description="This script makes figures for maps made from "
-                         "field observations. It can handle both a map from "
-                         "a single field observation and a map from "
-                         "the coaddition of mutltple observations.",
-             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-             epilog="Hopefully you will like the figures generated!")
-
-parser.add_argument("input_files",
-                    action="store", type=str, nargs="+",
-                    help="G3 files that contain Map frames. The data stored "
-                         "in these frames will be plotted in the figures.")
-
-parser.add_argument("-D", "--decide_whether_to_make_figures_at_all",
-                    action="store_true", default=False,
-                    help="Whether to check if it is actually necessary to "
-                         "make any figures at all. If figures of coadded maps "
-                         "are to be made, if the corresponding g3 file that "
-                         "contains the data also records what observations "
-                         "were used to make the coadded maps, and if there is "
-                         "another g3 file that records what observations were "
-                         "contained in the coadded maps when figures were "
-                         "made last time, then this check can be made.")
-
-parser.add_argument("-m", "--make_figures_for_field_maps",
-                    action="store_true", default=False,
-                    help="Whether figures showing field maps are to be made.")
-
-parser.add_argument("-i", "--map_id",
-                    action="store", type=str, default="90GHz",
-                    help="The ID a map frame needs to have in order for "
-                         "a figure of the maps  stored to be made.")
-
-parser.add_argument("-y", "--map_type",
-                    action="store", type=str, choices=["T"], default="T",
-                    help="Whether figures of T, Q, or U maps are desired. "
-                         "Currently, the script is still under development "
-                         "and ignores options other than 'T'.")
-
-parser.add_argument("-c", "--coadded_data",
-                    action="store_true", default=False,
-                    help="Whether the frames contain maps resulting from "
-                         "the coaddition of multiple observations. "
-                         "The script uses different titles and file names "
-                         "for the figures depending on whether this option "
-                         "is True or False. The default is False.")
-
-parser.add_argument("-u", "--color_bar_upper_limit",
-                    action="store", type=float, default=None,
-                    help="The upper limit of the values that will be used "
-                         "in the colorbar for showing a field map.")
-
-parser.add_argument("-l", "--color_bar_lower_limit",
-                    action="store", type=float, default=None,
-                    help="The lower limit of the values that will be used "
-                         "in the colorbar for showing a field map.")
-
-parser.add_argument("-w", "--make_figures_for_entire_weight_maps",
-                    action="store_true", default=False,
-                    help="Whether to make figures for entire weight maps, "
-                         "i.e. color maps showing weights at every location "
-                         "of the field.")
-
-parser.add_argument("-W", "--make_figures_for_weight_maps_cross_section",
-                    action="store_true", default=False,
-                    help="Whether to make figures only showing the cross "
-                         "section of a weight map along certain RA contour.")
-
-parser.add_argument("-F", "--make_figures_for_flagging_statistics",
-                    action="store_true", default=False,
-                    help="Whether to make figures showing average number of "
-                         "flagged detectors over time.")
-
-parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
-                    action="store_true", default=False,
-                    help="Whether to make figures showing pointing "
-                         "discrepancies over time.")
-
-parser.add_argument("-n", "--make_figures_for_noise_levels",
-                    action="store_true", default=False,
-                    help="Whether to make figures showing noise levels "
-                         "over time.")
-
-parser.add_argument("-L", "--left_xlimit_for_time_variations",
-                    action="store", type=int, default=None,
-                    help="The observation ID that will be used as the "
-                         "lower limit of the x-axis of a figure that shows "
-                         "time variations of certain quantity.")
-
-parser.add_argument("-R", "--right_xlimit_for_time_variations",
-                    action="store", type=int, default=None,
-                    help="The observation ID that will be used as the "
-                         "upper limit of the x-axis of a figure that shows "
-                         "time variations of certain quantity.")
-
-parser.add_argument("-z", "--figure_title_font_size",
-                    action="store", type=float, default=11,
-                    help="The font size to be used for figure titles. "
-                         "Then, the font sizes of other things such as "
-                         "axis labels will be determined based on this value.")
-
-parser.add_argument("-d", "--directory_to_save_figures",
-                    action="store", type=str, default=".",
-                    help="The directory where generated figures will be saved.")
-
-parser.add_argument("-f", "--simpler_file_names",
-                    action="store_true", default=False,
-                    help="Whether to omit infomration on source, obs. ID, "
-                         "and so on in the names of the PNG files that show "
-                         "field maps and weight maps.")
-
-arguments = parser.parse_args()
-
-
-
-
-# Define global variables
-# ------------------------------------------------------------------------------
-
-good_input_files = [input_file for input_file in arguments.input_files 
-                    if os.path.isfile(input_file)]
-
+# consider changing these global variables to arguments to the constituent
+# functions below
 gd_wdth = 0.20
-ttl_fs  = arguments.figure_title_font_size
+ttl_fs  = 11
 lbl_fs  = ttl_fs - 1.0   # font size for axis labels
 tck_fs  = ttl_fs - 1.0   # font size for tick labels
 lgd_fs  = ttl_fs - 2.0   # font size for legend
 fig_wd  = 12.0
 fig_ht  =  7.5
-fig_dir = arguments.directory_to_save_figures
-
-
-
-# ==============================================================================
-
-
-
+fig_dir = '.'
 
 
 # ==============================================================================
@@ -876,106 +743,253 @@ class RecordIDsUsedForPlotting(object):
 
 
 
+def run(input_files, decide_whether_to_make_figures_at_all=False,
+        make_figures_for_field_maps=False, map_id="90GHz", map_type='T',
+        coadded_data=False, color_bar_upper_limit=None,
+        color_bar_lower_limit=None, make_figures_for_entire_weight_maps=False,
+        make_figures_for_weight_maps_cross_section=False,
+        make_figures_for_flagging_statistics=False,
+        make_figures_for_pointing_discrepancies=False,
+        make_figures_for_noise_levels=False,
+        left_xlimit_for_time_variations=None,
+        right_xlimit_for_time_variations=None,
+        figure_title_font_size=11,
+        directory_to_save_figures='.',
+        simpler_file_names=False):
+    # Define global variables
+    # ------------------------------------------------------------------------------
 
-# ==============================================================================
-# Time to start!
-# ------------------------------------------------------------------------------
+    good_input_files = [input_file for input_file in input_files 
+                        if os.path.isfile(input_file)]
 
-print()
-print("# ======================= #")
-print("#  Start making figures!  #")
-print("# ======================= #")
-print()
+    # Update some global variables. This is bad form; should fix in further
+    # refactoring.
+    global ttl_fs, lbl_fs, tck_fs, lgd_fs, fig_dir
+    ttl_fs  = figure_title_font_size
+    lbl_fs  = ttl_fs - 1.0   # font size for axis labels
+    tck_fs  = ttl_fs - 1.0   # font size for tick labels
+    lgd_fs  = ttl_fs - 2.0   # font size for legend
+    fig_dir = directory_to_save_figures
 
 
-if len(good_input_files) == 0:
-    print("Actually, no applicable input files!")
+    # ==============================================================================
+    # Time to start!
+    # ------------------------------------------------------------------------------
+
     print()
-    sys.exit()
-else:
+    print("# ======================= #")
+    print("#  Start making figures!  #")
+    print("# ======================= #")
     print()
-    print("- These are the input files to be used:")
-    print()
+
+
+    if len(good_input_files) == 0:
+        print("Actually, no applicable input files!")
+        print()
+        return
+    else:
+        print()
+        print("- These are the input files to be used:")
+        print()
+        for input_file in good_input_files:
+            print(input_file.split("/")[-1])
+        print()
+        print()
+
+
     for input_file in good_input_files:
-        print(input_file.split("/")[-1])
-    print()
-    print()
+
+        print("-------------------------------------")
+        print(" Taking actions on", input_file, "...")
+        print("-------------------------------------")
+
+        if decide_whether_to_make_figures_at_all:
+
+            bookkeeping_file = "bookkeeping_for_plotting_" + \
+                               os.path.basename(input_file)
+            bookkeeping_file = os.path.join(directory_to_save_figures,
+                                            bookkeeping_file)
+
+            if os.path.isfile(bookkeeping_file):
+                try:
+                    previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
+                                        ["IDsUsedForMakingFiguresLastTime"])
+                except:
+                    previous_ids = []
+                iterator  = core.G3File(input_file)
+                frame     = iterator.next()
+                newer_ids = []
+                for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
+                    for obs_id in obs_ids:
+                        newer_ids.append(obs_id)
+
+                common_ids = set(list(previous_ids)) & set(list(newer_ids))
+                if len(common_ids) == len(newer_ids):
+                    print()
+                    print("* This input file does not seem to contain any")
+                    print("* new information, so the same set of figures")
+                    print("* will not be generated again!")
+                    print()
+                    continue
 
 
-for input_file in good_input_files:
-    
-    print("-------------------------------------")
-    print(" Taking actions on", input_file, "...")
-    print("-------------------------------------")
-    
-    if arguments.decide_whether_to_make_figures_at_all:
-        
-        bookkeeping_file = "bookkeeping_for_plotting_" + \
-                           os.path.basename(input_file)
-        bookkeeping_file = os.path.join(arguments.directory_to_save_figures,
-                                        bookkeeping_file)
-        
-        if os.path.isfile(bookkeeping_file):
-            try:
-                previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
-                                    ["IDsUsedForMakingFiguresLastTime"])
-            except:
-                previous_ids = []
-            iterator  = core.G3File(input_file)
-            frame     = iterator.next()
-            newer_ids = []
-            for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
-                for obs_id in obs_ids:
-                    newer_ids.append(obs_id)
-            
-            common_ids = set(list(previous_ids)) & set(list(newer_ids))
-            if len(common_ids) == len(newer_ids):
-                print()
-                print("* This input file does not seem to contain any")
-                print("* new information, so the same set of figures")
-                print("* will not be generated again!")
-                print()
-                continue
-    
-    
-    
-    pipeline = core.G3Pipeline()
-    
-    pipeline.Add(core.G3Reader,
-                 filename=input_file)
-    
-    pipeline.Add(PossiblyMakeFiguresForFieldMapsAndWeightMaps,
-                 fig_f=arguments.make_figures_for_field_maps,
-                 fig_w=arguments.make_figures_for_entire_weight_maps,
-                 fig_cr=arguments.make_figures_for_weight_maps_cross_section,
-                 map_type=arguments.map_type,
-                 map_id=arguments.map_id,
-                 coadded_data=arguments.coadded_data,
-                 custom_vmin_field_map=arguments.color_bar_lower_limit,
-                 custom_vmax_field_map=arguments.color_bar_upper_limit,
-                 simpler_file_names=arguments.simpler_file_names)
-    
-    pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
-                 fig_fs=arguments.make_figures_for_flagging_statistics,
-                 fig_pt=arguments.make_figures_for_pointing_discrepancies,
-                 fig_ns=arguments.make_figures_for_noise_levels,
-                 map_id=arguments.map_id,
-                 map_type=arguments.map_type,
-                 xlim_left=arguments.left_xlimit_for_time_variations,
-                 xlim_right=arguments.right_xlimit_for_time_variations)
-    
-    pipeline.Add(RecordIDsUsedForPlotting)
-    pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
-    pipeline.Add(core.G3Writer,
-                 filename=bookkeeping_file)
-    
-    pipeline.Run(profile=True)
 
-print("\n")
-print("# ======================= #")
-print("\n\n\n")
+        pipeline = core.G3Pipeline()
+
+        pipeline.Add(core.G3Reader,
+                     filename=input_file)
+
+        pipeline.Add(PossiblyMakeFiguresForFieldMapsAndWeightMaps,
+                     fig_f=make_figures_for_field_maps,
+                     fig_w=make_figures_for_entire_weight_maps,
+                     fig_cr=make_figures_for_weight_maps_cross_section,
+                     map_type=map_type,
+                     map_id=map_id,
+                     coadded_data=coadded_data,
+                     custom_vmin_field_map=color_bar_lower_limit,
+                     custom_vmax_field_map=color_bar_upper_limit,
+                     simpler_file_names=simpler_file_names)
+
+        pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
+                     fig_fs=make_figures_for_flagging_statistics,
+                     fig_pt=make_figures_for_pointing_discrepancies,
+                     fig_ns=make_figures_for_noise_levels,
+                     map_id=map_id,
+                     map_type=map_type,
+                     xlim_left=left_xlimit_for_time_variations,
+                     xlim_right=right_xlimit_for_time_variations)
+
+        pipeline.Add(RecordIDsUsedForPlotting)
+        pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
+        pipeline.Add(core.G3Writer,
+                     filename=bookkeeping_file)
+
+        pipeline.Run(profile=True)
+
+    print("\n")
+    print("# ======================= #")
+    print("\n\n\n")
 
 
-# ==============================================================================
+    # ==============================================================================
 
 
+
+if __name__ == '__main__':
+    # Process command line arguments
+    # ------------------------------------------------------------------------------
+
+    parser = argparse.ArgumentParser(
+                 description="This script makes figures for maps made from "
+                             "field observations. It can handle both a map from "
+                             "a single field observation and a map from "
+                             "the coaddition of mutltple observations.",
+                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                 epilog="Hopefully you will like the figures generated!")
+
+    parser.add_argument("input_files",
+                        action="store", type=str, nargs="+",
+                        help="G3 files that contain Map frames. The data stored "
+                             "in these frames will be plotted in the figures.")
+
+    parser.add_argument("-D", "--decide_whether_to_make_figures_at_all",
+                        action="store_true", default=False,
+                        help="Whether to check if it is actually necessary to "
+                             "make any figures at all. If figures of coadded maps "
+                             "are to be made, if the corresponding g3 file that "
+                             "contains the data also records what observations "
+                             "were used to make the coadded maps, and if there is "
+                             "another g3 file that records what observations were "
+                             "contained in the coadded maps when figures were "
+                             "made last time, then this check can be made.")
+
+    parser.add_argument("-m", "--make_figures_for_field_maps",
+                        action="store_true", default=False,
+                        help="Whether figures showing field maps are to be made.")
+
+    parser.add_argument("-i", "--map_id",
+                        action="store", type=str, default="90GHz",
+                        help="The ID a map frame needs to have in order for "
+                             "a figure of the maps  stored to be made.")
+
+    parser.add_argument("-y", "--map_type",
+                        action="store", type=str, choices=["T"], default="T",
+                        help="Whether figures of T, Q, or U maps are desired. "
+                             "Currently, the script is still under development "
+                             "and ignores options other than 'T'.")
+
+    parser.add_argument("-c", "--coadded_data",
+                        action="store_true", default=False,
+                        help="Whether the frames contain maps resulting from "
+                             "the coaddition of multiple observations. "
+                             "The script uses different titles and file names "
+                             "for the figures depending on whether this option "
+                             "is True or False. The default is False.")
+
+    parser.add_argument("-u", "--color_bar_upper_limit",
+                        action="store", type=float, default=None,
+                        help="The upper limit of the values that will be used "
+                             "in the colorbar for showing a field map.")
+
+    parser.add_argument("-l", "--color_bar_lower_limit",
+                        action="store", type=float, default=None,
+                        help="The lower limit of the values that will be used "
+                             "in the colorbar for showing a field map.")
+
+    parser.add_argument("-w", "--make_figures_for_entire_weight_maps",
+                        action="store_true", default=False,
+                        help="Whether to make figures for entire weight maps, "
+                             "i.e. color maps showing weights at every location "
+                             "of the field.")
+
+    parser.add_argument("-W", "--make_figures_for_weight_maps_cross_section",
+                        action="store_true", default=False,
+                        help="Whether to make figures only showing the cross "
+                             "section of a weight map along certain RA contour.")
+
+    parser.add_argument("-F", "--make_figures_for_flagging_statistics",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing average number of "
+                             "flagged detectors over time.")
+
+    parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing pointing "
+                             "discrepancies over time.")
+
+    parser.add_argument("-n", "--make_figures_for_noise_levels",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing noise levels "
+                             "over time.")
+
+    parser.add_argument("-L", "--left_xlimit_for_time_variations",
+                        action="store", type=int, default=None,
+                        help="The observation ID that will be used as the "
+                             "lower limit of the x-axis of a figure that shows "
+                             "time variations of certain quantity.")
+
+    parser.add_argument("-R", "--right_xlimit_for_time_variations",
+                        action="store", type=int, default=None,
+                        help="The observation ID that will be used as the "
+                             "upper limit of the x-axis of a figure that shows "
+                             "time variations of certain quantity.")
+
+    parser.add_argument("-z", "--figure_title_font_size",
+                        action="store", type=float, default=11,
+                        help="The font size to be used for figure titles. "
+                             "Then, the font sizes of other things such as "
+                             "axis labels will be determined based on this value.")
+
+    parser.add_argument("-d", "--directory_to_save_figures",
+                        action="store", type=str, default=".",
+                        help="The directory where generated figures will be saved.")
+
+    parser.add_argument("-f", "--simpler_file_names",
+                        action="store_true", default=False,
+                        help="Whether to omit infomration on source, obs. ID, "
+                             "and so on in the names of the PNG files that show "
+                             "field maps and weight maps.")
+
+    arguments = parser.parse_args()
+
+    run(**vars(arguments))

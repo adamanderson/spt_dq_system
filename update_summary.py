@@ -2,6 +2,7 @@ import os
 import argparse as ap
 import datetime
 from summaryplot import cache_timeseries_data
+from summaryplot import cache_field_maps
 
 parser = ap.ArgumentParser(description='Wrapper for updating data and plots.',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -97,17 +98,8 @@ if args.mode == 'maps':
         modes.remove('plotting')
     
     current_day = args.maxtime
-    if current_day == None:
-        current_day_flag = ""
-    else:
-        current_day_flag = "-c " + current_day
-    
-    if args.justseecommands:
-        cmds_exec_flag = '-j'
-    else:
-        cmds_exec_flag = ''
-    
-    for n in ['7', '30']:
+        
+    for n in [7, 30]:
         for mode in modes:
             current_time = datetime.datetime.utcnow()
             print('Running commands for last_n and', mode, 'with n =', n)
@@ -116,20 +108,21 @@ if args.mode == 'maps':
             if args.nologfiles:
                 log_file_flag = ''
             else:
-                log_file = args.coaddslogsdir + \
-                           current_time.strftime('20%y%m%d_%H%M%S') + \
-                           '_last_' + n + '_' + mode
+                log_file = os.path.join(args.coaddslogsdir, \
+                                        '{}_last_{}_{}' \
+                                        .format(current_time.strftime('20%y%m%d_%H%M%S'),
+                                                n, mode))
                 log_file_flag = '&>' + ' ' + log_file
-            
-            os.system('python summaryplot/cache_field_maps.py '
-                      '-m {} -a update -t last_n -n {} '
-                      '-o {} {} '
-                      '-d {} -D {} '
-                      '-F {} {} {}'.\
-                      format(mode, n,
-                             args.mintime, current_day_flag,
-                             args.mapsdatadir, args.coaddsdatadir,
-                             args.coaddsfigsdir, log_file_flag, cmds_exec_flag))
+
+            # figure out how to save log file
+            cache_field_maps.update(mode, 'update', time_interval='last_n',
+                                    last_how_many_days=n,
+                                    oldest_time_to_consider=args.mintime,
+                                    current_time=current_day,
+                                    original_maps_dir=args.mapsdatadir,
+                                    coadds_dir=args.coaddsdatadir,
+                                    figs_dir=args.coaddsfigsdir,
+                                    just_see_commands=args.justseecommands)
     
     for interval in ['yearly', 'monthly', 'weekly']:
         for mode in modes:
@@ -144,17 +137,15 @@ if args.mode == 'maps':
                            current_time.strftime('20%y%m%d_%H%M%S') + \
                            "_" + interval + "_" + mode
                 log_file_flag = '&>' + ' ' + log_file
-            
-            os.system('python summaryplot/cache_field_maps.py '
-                      '-m {} -a update -t {} '
-                      '-o {} {} '
-                      '-d {} -D {} '
-                      '-F {} {} {}'.\
-                      format(mode, interval,
-                             args.mintime, current_day_flag,
-                             args.mapsdatadir, args.coaddsdatadir,
-                             args.coaddsfigsdir, log_file_flag, cmds_exec_flag))
 
+            cache_field_maps.update(mode, 'update', time_interval=interval,
+                                    oldest_time_to_consider=args.mintime,
+                                    current_time=current_day,
+                                    original_maps_dir=args.mapsdatadir,
+                                    coadds_dir=args.coaddsdatadir,
+                                    figs_dir=args.coaddsfigsdir,
+                                    just_see_commands=args.justseecommands)
+            
     current_time = datetime.datetime.utcnow()
     print('All done at', current_time, "(UTC)!")
     print()
