@@ -484,20 +484,23 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                             fields_coadding.run(**coadd_args)
 
                         # copy backup file
-                        g3_file_for_coadded_maps_backup = \
-                            '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
-                        print('Copying {} to {}'.format(g3_file_for_coadded_maps,
-                                                        g3_file_for_coadded_maps_backup))
-                        if not just_see_commands:
-                            if os.path.isfile(g3_file_for_coadded_maps):
+                        if os.path.isfile(g3_file_for_coadded_maps):
+                            g3_file_for_coadded_maps_backup = \
+                                '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
+                            print('Copying {} to {}'.format(g3_file_for_coadded_maps,
+                                                            g3_file_for_coadded_maps_backup))
+                            if not just_see_commands:
                                 shutil.copy(g3_file_for_coadded_maps,
                                             g3_file_for_coadded_maps_backup)
 
-                        # move output file
-                        print('Moving {} to {}'.format(coadd_args['output_file'],
-                                                       g3_file_for_coadded_maps))
-                        if not just_see_commands:
-                            shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
+                        # move output file (check existence because output file
+                        # might not exist if the list of input files was empty)
+                        if os.path.isfile(coadd_args['output_file']):
+                            print('Moving {} to {}'.format(coadd_args['output_file'],
+                                                           g3_file_for_coadded_maps))
+                            if not just_see_commands:
+                                shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
+
 
                     # combine all subfield coadds
                     coadd_all_fields_args = {}
