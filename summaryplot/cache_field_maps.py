@@ -504,7 +504,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
                     # combine all subfield coadds
                     coadd_all_fields_args = {}
-                    coadd_all_fields_args['input_file'] = \
+                    coadd_all_fields_args['input_files'] = \
                         [os.path.join(desired_dir_names[i],
                                       'coadded_maps_from_{}_{}.g3'.format(sf, map_id))\
                          for sf in sub_fields]
