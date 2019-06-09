@@ -89,6 +89,11 @@ if (!fs.existsSync(config.static_plot_dir)) {
 }
 app.use('/staticimg', express.static(config.static_plot_dir));
 
+// make directory for log files if it doesn't already exist
+if (!fs.existsSync(config.coadds_logs_dir)) {
+    fs.mkdirSync(config.coadds_logs_dir);
+}
+
 // get subdirectory information for previous plots
 app.get('/oldstaticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
@@ -421,7 +426,7 @@ function updateMapPlots() {
 }
 
 // update both types of plots in parallel every 10 minutes
-setInterval(updateSummaryPlots, 6000);
+setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') // only update map plots at pole
-	setInterval(updateMapPlots, 60000);
+	setInterval(updateMapPlots, 600000);
 
