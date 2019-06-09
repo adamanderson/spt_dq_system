@@ -491,17 +491,17 @@ if __name__ == '__main__':
     args = P0.parse_args()
 
     if args.mode == 'plot':
-        def update(mode=args.mode,
-                   action=args.action,
-                   timeinterval=args.timeinterval,
-                   outdir=args.outdir,
-                   min_time=args.min_time,
-                   max_time=args.max_time)
+        update(mode=args.mode,
+               action=args.action,
+               timeinterval=args.timeinterval,
+               outdir=args.outdir,
+               min_time=args.min_time,
+               max_time=args.max_time)
     elif args.mode == 'skim':
-        def update(mode=args.mode,
-                   action=args.action,
-                   outdir=args.outdir,
-                   caldatapath=args.caldatapath,
-                   bolodatapath=args.bolodatapath,
-                   min_time=args.min_time,
-                   max_time=args.max_time)
+        update(mode=args.mode,
+               action=args.action,
+               outdir=args.outdir,
+               caldatapath=args.caldatapath,
+               bolodatapath=args.bolodatapath,
+               min_time=args.min_time,
+               max_time=args.max_time)
