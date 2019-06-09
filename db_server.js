@@ -384,7 +384,8 @@ function updateSummaryPlots() {
     if(is_update_running == false) {
 		is_update_running = true;
 		// update data skims
-		child = execFile(config.python_location, args, function(err) {
+		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
+						 function(err) {
 			console.log(err);
 			console.log('Finished updating data skims and plots.');
 			is_update_running = false;
@@ -407,7 +408,8 @@ function updateMapPlots() {
     if(is_map_update_running == false) {
 		is_map_update_running = true;
 		// update data skims
-		child = execFile(config.python_location, args, function(err) {
+		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
+						 function(err) {
 			console.log(err);
 			console.log('Finished map coadds and plots.');
 			is_map_update_running = false;
