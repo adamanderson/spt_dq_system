@@ -253,14 +253,14 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
 
 def create_new_map_frame_with_smaller_map_region(
         map_frame, temperature_only,
-        center_ra, center_dec, divisive_factor):
+        center_ra, center_dec,
+        look_for_noise_map=False, divisive_factor=1.0):
 
     new_mp_fr = core.G3Frame(core.G3FrameType.Map)
 
     if temperature_only:
-        if "T_Noise" in map_frame.keys():
-            if divisive_factor is None:
-                divisive_factor = 1.0
+        if look_for_noise_map and \
+           ("T_Noise" in map_frame.keys()):
             original_sky_map = map_frame["T_Noise"] / divisive_factor
         else:
             original_sky_map = map_frame["T"]
@@ -328,40 +328,6 @@ def create_apodization_mask(map_frame, point_source_file):
 
 
 
-def calculate_noise_level(
-        fr_one, fr_two, ptsrc_lst, temp_only=False,
-        smaller_region=False, center_ra=None, center_dec=None,
-        divisive_factor=None):
-
-    if fr_two != None:
-        mp_fr = map_analysis.subtract_two_maps(
-                    fr_one, fr_two, divide_by_two=True, in_place=False)
-    else:
-        mp_fr = fr_one
-    
-    if smaller_region:
-        mp_fr = create_new_map_frame_with_smaller_map_region(
-                    mp_fr, temp_only,
-                    center_ra, center_dec, divisive_factor)
-    
-    mask = create_apodization_mask(mp_fr, ptsrc_lst)
-    
-    cls = map_analysis.calculateCls(
-              mp_fr, cross_map=None, t_only=temp_only,
-              apod_mask=mask, kspace_filt=None, tf_2d=None,
-              ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
-              return_2d=False, in_place=False)
-    
-    idx = numpy.where((cls["ell"]>3000) & (cls["ell"]<5000))[0]
-        
-    if temp_only:
-        noise = numpy.sqrt(numpy.mean(cls["TT"][idx]))
-    
-    return noise
-
-
-
-
 def decide_operation_to_do_with_new_map(
         frame, past_operations, past_oids,
         temp_only, center_ra, center_dec):
@@ -387,6 +353,72 @@ def decide_operation_to_do_with_new_map(
         else:
             return "Add"
 
+
+
+
+def calculate_noise_level(
+        fr_one, fr_two, ptsrc_lst, temp_only=False,
+        smaller_region=False, center_ra=None, center_dec=None,
+        look_for_noise_map=False, divisive_factor=None):
+
+    if fr_two != None:
+        mp_fr = map_analysis.subtract_two_maps(
+                    fr_one, fr_two, divide_by_two=True, in_place=False)
+    else:
+        mp_fr = fr_one
+    
+    if smaller_region:
+        mp_fr = create_new_map_frame_with_smaller_map_region(
+                    mp_fr, temp_only,
+                    center_ra, center_dec,
+                    look_for_noise_map=look_for_noise_map,
+                    divisive_factor=divisive_factor)
+    
+    mask = create_apodization_mask(mp_fr, ptsrc_lst)
+    
+    cls = map_analysis.calculateCls(
+              mp_fr, cross_map=None, t_only=temp_only,
+              apod_mask=mask, kspace_filt=None, tf_2d=None,
+              ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
+              return_2d=False, realimag="real", in_place=False)
+    
+    idx = numpy.where((cls["ell"]>3000) & (cls["ell"]<5000))[0]
+        
+    if temp_only:
+        noise = numpy.sqrt(numpy.mean(cls["TT"][idx]))
+    
+    return noise
+
+
+
+
+def calculate_average_cl_of_cross_spectrum(
+        frame_one, frame_two, ptsrc_lst, temp_only=False,
+        smaller_region=False, center_ra=None, center_dec=None):
+    
+    if smaller_region:
+        frame_one = create_new_map_frame_with_smaller_map_region(
+                        frame_one, temp_only,
+                        center_ra, center_dec)
+        frame_two = create_new_map_frame_with_smaller_map_region(
+                        frame_two, temp_only,
+                        center_ra, center_dec)
+    
+    mask = create_apodization_mask(frame_one, ptsrc_lst)
+
+    cls = map_analysis.calculateCls(
+              frame_one, cross_map=frame_two, t_only=temp_only,
+              apod_mask=mask, kspace_filt=None, tf_2d=None,
+              ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
+              return_2d=False, realimag="real", in_place=False)
+    
+    idx = numpy.where((cls["ell"]>3000) & (cls["ell"]<5000))[0]
+        
+    if temp_only:
+        rtcl = numpy.sqrt(numpy.mean(cls["TT"][idx]))
+    
+    return rtcl
+    
 
 
 
@@ -472,6 +504,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  collect_averages_from_flagging_stats=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
+                 calculate_xspec_with_coadded_maps=False,
                  point_source_file=None,
                  calculate_pointing_discrepancies=False):
         
@@ -544,7 +577,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         
         
         # - Initialize variables related to pointing dicrepancy calculations
-        # - but not noise calculations
+        # - but not noise nor cross spectra calculations
         
         self.calc_pointing_discrepancies = calculate_pointing_discrepancies
         
@@ -556,11 +589,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  for rank in ["1", "2", "3"]}
         
         
-        # - Initialize variables related to noise calculations
-        # - but not pointing discrepancy calculations
+        # - Initialize variables related to noise and croass spectra 
+        # - calculations but not pointing discrepancy calculations
         
         self.calc_noise_from_individ_maps = calculate_noise_from_individual_maps
         self.calc_noise_from_coadded_maps = calculate_noise_from_coadded_maps
+        self.calc_xspec_with_coadded_maps = calculate_xspec_with_coadded_maps
         self.point_source_file            = point_source_file
         self.maps_split_by_scan_direction = maps_split_by_scan_direction
         
@@ -573,10 +607,13 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             if not self.maps_split_by_scan_direction:
                 self.operations_done_to_maps = \
                     {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
+        if self.calc_xspec_with_coadded_maps:
+            self.xspec_cls_with_coadds = \
+                {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
         
         
-        # - Initialize variables related to both
-        # - noise and pointing discrepancy calculations
+        # - Initialize variables related to
+        # - noise, cross spectra, and pointing discrepancy calculations
                 
         if (self.maps_split_by_scan_direction and \
             (self.calc_noise_from_individ_maps or \
@@ -724,42 +761,91 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 print("* so, it will be skipped...")
                 print("\n")
                 return []
-                            
+            
+            
+            # - Calculate cross spectrum between coadded maps and
+            # - one observation's map
+            
+            if self.calc_xspec_with_coadded_maps:
+                if frame_has_coadds:
+                    print()
+                    print("* Gathering avg.(sqrt(Cl)) of cross spectra")
+                    print("* that were calculated previously ...")
+                    cl_key = "ClsFromCrossSpectraBetweenCoaddsAndIndividuals"
+                    xspec_sqrt_cls_this_fr = {id_for_coadds: frame[cl_key]}
+                elif len(self.coadded_obs_ids[id_for_coadds][src]) <= 1:
+                    print()
+                    print("* Currently, the maps in the cache")
+                    print("* (or maps to be added to the cache) are the same as")
+                    print("* the maps in this frame, so the cross spectrum")
+                    print("* calculation will be skipped for this frame.")
+                    xspec_sqrt_cls = core.G3MapMapDouble()
+                    xspec_sqrt_cls[src] = core.G3MapDouble()
+                    xspec_sqrt_cls[src][str(oid)] = numpy.nan
+                    xspec_sqrt_cls_this_fr = {id_for_coadds: xspec_sqrt_cls}
+                else:
+                    print()
+                    print("* Calculating avg.(sqrt(Cl)) of the cross spectrum")
+                    print("* between the coadded maps and the map from")
+                    print("* this observation ...")
+                    center_ra  = 0.0 * core.G3Units.deg
+                    center_dec = float(src[-6:]) * core.G3Units.deg
+                    xspec_sqrt_cl = calculate_average_cl_of_cross_spectrum(
+                                        self.coadded_map_frames[id_for_coadds],
+                                        frame,
+                                        self.point_source_file,
+                                        temp_only=self.temp_only,
+                                        smaller_region=True,
+                                        center_ra=center_ra,
+                                        center_dec=center_dec)
+                    xsc = xspec_sqrt_cl/(core.G3Units.uK*core.G3Units.arcmin)
+                    print("* ... the average was calculated to be")
+                    print("*", xsc, "uK.arcmin.")
+                    xspec_sqrt_cls = core.G3MapMapDouble()
+                    xspec_sqrt_cls[src] = core.G3MapDouble()
+                    xspec_sqrt_cls[src][str(oid)] = xspec_sqrt_cl
+                    xspec_sqrt_cls_this_fr = {id_for_coadds: xspec_sqrt_cls}
+                print("* Done.")
+                print()
+                
+                self.xspec_cls_with_coadds = \
+                    combine_mapmapdoubles(
+                        self.xspec_cls_with_coadds,
+                        xspec_sqrt_cls_this_fr)
+            
             
             # - Add (including -1 of) maps together
             
             subtract_maps_in_this_frame = this_frame_already_added
             
-            if not subtract_maps_in_this_frame:
-                
-                if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
-                    print()
-                    print("* A map frame with ID", frame["Id"], "is here!")
-                    print("* Both the sky map and weight map are added to the ")
-                    print("* empty coadded maps as", id_for_coadds, "...")
-                    if self.temp_only:
-                        self.coadded_map_frames \
-                            [id_for_coadds]["T"] = frame["T"]
-                        self.coadded_map_frames \
-                            [id_for_coadds]["Wunpol"] = frame["Wunpol"]
-                    print("* Done.")
-                    print()
-                else:
-                    print()
-                    print("* Adding another set of sky map and weight map",
-                          "("+frame["Id"]+")")
-                    print("* to the coadded maps for", id_for_coadds, "...")
-                    if self.temp_only:
-                        existing_t_map = \
-                            self.coadded_map_frames[id_for_coadds].pop("T")
-                        existing_w_map = \
-                            self.coadded_map_frames[id_for_coadds].pop("Wunpol")
-                        self.coadded_map_frames[id_for_coadds]["T"] = \
-                            existing_t_map + frame["T"]
-                        self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
-                            existing_w_map + frame["Wunpol"]
-                    print("* Done.")
-                    print()
+            if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
+                print()
+                print("* A map frame with ID", frame["Id"], "is here!")
+                print("* Both the sky map and weight map are added to the ")
+                print("* empty coadded maps as", id_for_coadds, "...")
+                if self.temp_only:
+                    self.coadded_map_frames \
+                        [id_for_coadds]["T"] = frame["T"]
+                    self.coadded_map_frames \
+                        [id_for_coadds]["Wunpol"] = frame["Wunpol"]
+                print("* Done.")
+                print()
+            elif not subtract_maps_in_this_frame:
+                print()
+                print("* Adding another set of sky map and weight map",
+                      "("+frame["Id"]+")")
+                print("* to the coadded maps for", id_for_coadds, "...")
+                if self.temp_only:
+                    existing_t_map = \
+                        self.coadded_map_frames[id_for_coadds].pop("T")
+                    existing_w_map = \
+                        self.coadded_map_frames[id_for_coadds].pop("Wunpol")
+                    self.coadded_map_frames[id_for_coadds]["T"] = \
+                        existing_t_map + frame["T"]
+                    self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
+                        existing_w_map + frame["Wunpol"]
+                print("* Done.")
+                print()
             else:
                 self.coadded_obs_ids = \
                     remove_ids(self.coadded_obs_ids, obs_ids_from_this_frame)
@@ -847,7 +933,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         remove_partial_mapmapdouble(
                             self.noise_from_individual_maps,
                             obs_ids_from_this_frame)
-                elif self.calc_noise_from_coadded_maps:
+                """elif self.calc_noise_from_coadded_maps:
                     self.noise_from_coadded_maps = \
                         remove_partial_mapmapdouble(
                             self.noise_from_coadded_maps,
@@ -872,7 +958,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.operations_done_to_maps = \
                             remove_partial_mapmapdouble(
                                 self.operations_done_to_maps,
-                                obs_ids_from_this_frame)
+                                obs_ids_from_this_frame)"""
                 
                 time_to_calculate_pointing_and_noise = False
             
@@ -943,7 +1029,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         print("* are about to start because both")
                         print("*", id_l_ver, "and", id_r_ver)
                         print("* of obs.", oid)
-                        print("* have passed the pipeline...")
+                        print("* have passed the pipeline ...")
                         
                         pt_offsets_to_be_reorganized = \
                             calculate_pointing_discrepancies(
@@ -1138,12 +1224,13 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                             smaller_region=True,
                                             center_ra=center_ra,
                                             center_dec=center_dec,
+                                            look_for_noise_map=True,
                                             divisive_factor=divide_map_by)
                             else:
                                 print("* (Since the current",
                                       "coadded 'noise' maps don't")
                                 print("*  contain a non-zero integer number",
-                                      "of pairs of difference map,")
+                                      "of pair(s) of difference map,")
                                 print("*  now is not a good time to",
                                       "calculate the noise level.)")
                                 noise = numpy.nan
@@ -1288,6 +1375,25 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     print("\n")
                 
                 
+                if self.calc_xspec_with_coadded_maps:
+                    mp_fr["ClsFromCrossSpectraContained"] = True
+                    print("# Cls from cross spectra:")
+                    print()
+                    
+                    cl_key = "ClsFromCrossSpectraBetweenCoaddsAndIndividuals"
+                    mp_fr[cl_key] = self.xspec_cls_with_coadds[map_id]
+                    
+                    for sub_field, data in mp_fr[cl_key].items():
+                        print("-", sub_field)
+                        print()
+                        for obs_id in mp_fr["CoaddedObservationIDs"][sub_field]:
+                            sqrt_cl  = data[str(obs_id)]
+                            sqrt_cl /= (core.G3Units.uK*core.G3Units.arcmin)
+                            print(" "*3, obs_id, sqrt_cl, "uK.arcmin")
+                        print()
+                    print("\n")
+                
+                
                 if self.calc_noise_from_individ_maps or \
                    self.calc_noise_from_coadded_maps:
                     mp_fr["NoiseLevelsContained"] = True
@@ -1384,6 +1490,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         collect_averages_from_flagging_statistics=False,
         calculate_noise_from_individual_maps=False,
         calculate_noise_from_coadded_maps=False,
+        calculate_cross_spectrum_with_coadded_maps=False,
         point_source_file='',
         calculate_pointing_discrepancies=False,
         sources=["ra0hdec-44.75", "ra0hdec-52.25",
@@ -1413,14 +1520,34 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
        calculate_noise_from_coadded_maps:
         print()
         print("Currently, calculating noise from both individual maps")
-        print("and coadded maps does not work...")
+        print("and coadded maps is not supported...")
         print()
         sys.exit()
+    
+    if calculate_noise_from_coadded_maps and \
+       subtract_existing_maps:
+        print()
+        print("If noise is to be calculated from running coadded maps,")
+        print("then subtracting some maps that were previously used in")
+        print("the coadded maps is not allowed because it seems that")
+        print("this would make the results of previous noise level")
+        print("calculations not meaningful.")
+        print()
+        sys.exit()
+    
+    if calculate_cross_spectrum_with_coadded_maps and \
+       maps_split_by_scan_direction:
+        print()
+        print("Currently, calculating cross spectra between")
+        print("individual observations' maps and running coadded maps")
+        print("in the case when the maps are split by scan direction")
+        print("is not supported...")
+        print()
 
 
     all_good_g3_files = []
     for g3_file in input_files:
-        if os.path.isfile(g3_file)   and \
+        if os.path.isfile(g3_file) and \
            is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids) and \
            (os.path.getsize(g3_file) > min_file_size*2**30):
             all_good_g3_files.append(g3_file)
@@ -1491,6 +1618,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                      calculate_noise_from_individual_maps,
                  calculate_noise_from_coadded_maps=\
                      calculate_noise_from_coadded_maps,
+                 calculate_xspec_with_coadded_maps=\
+                     calculate_cross_spectrum_with_coadded_maps,
                  point_source_file=\
                      point_source_file,
                  calculate_pointing_discrepancies=\
@@ -1604,11 +1733,17 @@ if __name__ == '__main__':
                              "running coadded maps. In other words, the noise "+\
                              "will be calculated from the coadded maps "+\
                              "every time a new map is added.")
+    
+    parser.add_argument("-x", "--calculate_cross_spectrum_with_coadded_maps",
+                        action="store_true", default=False,
+                        help="Whether to calculate the cross spectrum between "+\
+                             "each observation's map and the running "+\
+                             "coadded maps.")
 
     parser.add_argument("-M", "--point_source_file",
                         type=str, action="store", default="",
                         help="Path to a point source list, which will be used "+\
-                             "when making a mask for calcuting noise (Cls).")
+                             "when making a mask for calcuting Cls.")
 
     parser.add_argument("-p", "--calculate_pointing_discrepancies",
                         action="store_true", default=False,
