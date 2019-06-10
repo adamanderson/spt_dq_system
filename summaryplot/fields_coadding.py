@@ -156,6 +156,66 @@ def collect_averages_from_flagging_info(
 
 
 
+def collect_averages_of_pw_to_K_factors(wafers, calframe):
+    
+    bpm = calframe["BolometerProperties"]
+    flu = core.G3Units.K * core.G3Units.rad * core.G3Units.rad
+    flx = {"RCW38": { "90": 4.0549662e-07*flu,
+                     "150": 2.5601153e-07*flu,
+                     "220": 2.8025804e-07*flu},
+           "MAT5A": { "90": 2.5738063e-07*flu,
+                     "150": 1.7319235e-07*flu,
+                     "220": 2.1451640e-07*flu}}
+    
+    values_by_band_and_wafer = \
+        {band: {wafer: [] for wafer in wafers} for band in ["90", "150", "220"]}
+    
+    for key in calframe.keys():
+        if "FluxCalibration" in key:
+            flux_calibration_key = key
+            if "RCW38" in flux_calibration_key:
+                source = "RCW38"
+            if "MAT5A" in flux_calibration_key:
+                source = "MAT5A"
+        if "IntegralFlux" in key:
+            integral_flux_key = key
+        if "SkyTransmission" in key:
+            sky_transmission_key = key
+    
+    available_bolos = set(calframe["BolometerProperties"].keys()) & \
+                      set(calframe["CalibratorResponse"].keys())  & \
+                      set(calframe[flux_calibration_key].keys())  & \
+                      set(calframe[integral_flux_key].keys())
+    
+    for bolo in available_bolos:
+        band  = bpm[bolo].band / core.G3Units.GHz
+        if not numpy.isfinite(band):
+            continue
+        band  = str(int(band))
+        wafer = bpm[bolo].wafer_id.upper() 
+        if (band  not in values_by_band_and_wafer.keys()) or \
+           (wafer not in wafers):
+            continue
+        pw_k  = calframe["CalibratorResponse"][bolo]
+        pw_k *= calframe[flux_calibration_key][bolo]
+        pw_k *= calframe[integral_flux_key][bolo]
+        pw_k *= calframe[sky_transmission_key][band]
+        pw_k /= flx[source][band]
+        values_by_band_and_wafer[band][wafer].append(pw_k)
+    
+    for band in values_by_band_and_wafer.keys():
+        for wafer in wafers:
+            vals = values_by_band_and_wafer[band][wafer]
+            if True not in numpy.isfinite(vals):
+                values_by_band_and_wafer[band][wafer] = numpy.nan
+            else:
+                values_by_band_and_wafer[band][wafer] = numpy.nanmean(vals)
+    
+    return values_by_band_and_wafer
+
+
+
+
 def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
 
     u = core.G3Units
@@ -502,6 +562,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  combine_different_wafers=False,
                  allow_subtraction=False,
                  collect_averages_from_flagging_stats=False,
+                 calculate_pW_to_K_conversion_factors=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
                  calculate_xspec_with_coadded_maps=False,
@@ -552,6 +613,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                    for map_id in self.map_ids}
         self.allow_subtraction  = allow_subtraction
         self.obs_info = None
+        self.calframe = None
         
         
         # - Initialize variables related to collecting average numbers
@@ -574,6 +636,19 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 {flagging_related_name: \
                 {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
                  for flagging_related_name in self.flagging_reasons}
+        
+        
+        # - Initialize variables related to calculating the median value of
+        # - the pW/K conversion factors for each band of each wafer
+        
+        self.calc_mean_pW_to_K = calculate_pW_to_K_conversion_factors
+        
+        if self.calc_mean_pW_to_K:
+            self.wafers = ["W172", "W174", "W176", "W177", "W180",
+                           "W181", "W188", "W203", "W204", "W206"]
+            self.means_of_temp_cal_factors = \
+                {wafer: {mid: core.G3MapMapDouble() \
+                         for mid in self.map_ids} for wafer in self.wafers}
         
         
         # - Initialize variables related to pointing dicrepancy calculations
@@ -654,6 +729,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         if frame.type == core.G3FrameType.Calibration:
             try:
                 self.bolo_props = frame["BolometerProperties"]
+                self.calframe   = frame
             except KeyError:
                 pass
             return
@@ -762,6 +838,58 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 print("\n")
                 return []
             
+            subtract_maps_in_this_frame = this_frame_already_added
+
+            
+            # - Calculate mean value of the pW/K conversion factors
+            # - for each band of each wafer
+            
+            if subtract_maps_in_this_frame:
+                if self.calc_mean_pW_to_K:
+                    for wafer in self.means_of_temp_cal_factors.keys():
+                        self.means_of_temp_cal_factors[wafer] = \
+                            remove_partial_mapmapdouble(
+                                self.means_of_temp_cal_factors[wafer],
+                                obs_ids_from_this_frame)
+            
+            elif self.calc_mean_pW_to_K:
+                if frame_has_coadds:
+                    print()
+                    print("* Gathering the mean values of the pW/K")
+                    print("* coversion factors calculated previously ...")
+                    prefix = "MeansOfTemperatureCalibrationFactors"
+                    means_of_convs_from_this_fr = {}
+                    for key in frame.keys():
+                        if prefix in key:
+                            wafer = key.replace(prefix, "")
+                            means_of_convs_from_this_fr[wafer] = \
+                                {id_for_coadds: frame[key]}
+                else:
+                    print()
+                    print("* Gathering the mean values of the pW/K")
+                    print("* conversion factors ...")
+                    means_of_convs_from_this_fr = {}
+                    avgs_to_be_reorganized = \
+                        collect_averages_of_pw_to_K_factors(
+                            self.wafers,
+                            self.calframe)
+                    for band, wfs_and_avgs in avgs_to_be_reorganized.items():
+                        if (band+"GHz") in id_for_coadds:
+                            for wafer, avg in wfs_and_avgs.items():
+                                mmd = core.G3MapMapDouble()
+                                mmd[src] = core.G3MapDouble()
+                                mmd[src][str(oid)] = avg
+                                means_of_convs_from_this_fr[wafer] = \
+                                    {id_for_coadds: mmd}
+                            break
+                print("* Done.")
+                print()
+                for wafer in means_of_convs_from_this_fr.keys():
+                    self.means_of_temp_cal_factors[wafer] = \
+                        combine_mapmapdoubles(
+                            self.means_of_temp_cal_factors[wafer],
+                            means_of_convs_from_this_fr[wafer])
+            
             
             # - Calculate cross spectrum between coadded maps and
             # - one observation's map
@@ -815,9 +943,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             
             
             # - Add (including -1 of) maps together
-            
-            subtract_maps_in_this_frame = this_frame_already_added
-            
+                        
             if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
                 print()
                 print("* A map frame with ID", frame["Id"], "is here!")
@@ -1346,6 +1472,28 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     print("\n")
                 
                 
+                if self.calc_mean_pW_to_K:
+                    mp_fr["MeansOfTempCalibrationFactorsContained"] = True
+                    print("# Averages of pW/K conversion factors:")
+                    print()
+                    
+                    prefix = "MeansOfTemperatureCalibrationFactors"
+                    uni    = core.G3Units.pW / core.G3Units.K
+                    for wafer in self.means_of_temp_cal_factors.keys():
+                        mp_fr[prefix+wafer] = \
+                            self.means_of_temp_cal_factors[wafer][map_id]
+                        
+                        print("-", wafer)
+                        print()
+                        for sub_fld, data in mp_fr[prefix+wafer].items():
+                            print(" "*3, "-", sub_fld)
+                            print()
+                            print(" "*6, data.keys())
+                            print(" "*6, [cf/uni for cf in data.values()])
+                            print()
+                    print("\n")
+                
+                
                 if self.calc_pointing_discrepancies:
                     mp_fr["DeltaRasAndDecsContained"] = True
                     print("# Pointing discrepancies:")
@@ -1488,6 +1636,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         combine_left_right=False, combine_different_wafers=False,
         subtract_existing_maps=False, 
         collect_averages_from_flagging_statistics=False,
+        calculate_pW_to_K_conversion_factors=False,
         calculate_noise_from_individual_maps=False,
         calculate_noise_from_coadded_maps=False,
         calculate_cross_spectrum_with_coadded_maps=False,
@@ -1614,6 +1763,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                      subtract_existing_maps,
                  collect_averages_from_flagging_stats=\
                      collect_averages_from_flagging_statistics,
+                 calculate_pW_to_K_conversion_factors=\
+                     calculate_pW_to_K_conversion_factors,
                  calculate_noise_from_individual_maps=\
                      calculate_noise_from_individual_maps,
                  calculate_noise_from_coadded_maps=\
@@ -1721,6 +1872,12 @@ if __name__ == '__main__':
                              "that were not flagged over all scans of "+\
                              "an observation, average number of bolometers that "+\
                              "were removed, and so on.")
+    
+    parser.add_argument("-k", "--calculate_pW_to_K_conversion_factors",
+                        action="store_true", default=False,
+                        help="Whether to calculate the mean value of the "+\
+                             "pW/K absolute calibration factors for each band "+\
+                             "of each wafer.")
 
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
