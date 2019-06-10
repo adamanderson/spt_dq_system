@@ -4,33 +4,15 @@ from    spt3g              import  core
 from    spt3g              import  mapmaker
 from    spt3g              import  util
 from    spt3g              import  coordinateutils
+from    spt3g              import  mapspectra
 from    spt3g.mapspectra   import  map_analysis
+from    scipy              import  signal
 import  os
 import  gc
 import  sys
 import  glob
 import  numpy
 import  argparse
-
-
-
-# Gather input files
-# -----------------------------------------------------------------------------
-
-def is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids=[]):
-    meaningful_part_of_path = g3_file.split('/')[-1].split('.')[0]
-    try:
-        obs_id = int(meaningful_part_of_path.split('_')[0])
-    except ValueError:
-        # Probably a g3 file that contains coadded maps is encountered
-        # if the name cannot be converted to an integer.
-        return True
-    if (obs_id >= min_obs_id) and \
-       (obs_id <= max_obs_id) and \
-       (obs_id not in bad_obs_ids):
-        return True
-    else:
-        return False
 
 
 
@@ -76,39 +58,47 @@ def map_seems_fine(map_frame):
 
 
 
+def get_band_average(bolo_names_from_each_scan, bolo_props_map):
+
+    n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
+
+    for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
+        n_bolos_from_one_scan = {"90": 0, "150": 0, "220": 0}
+        for bn in bolo_names_from_one_scan:
+            band = bolo_props_map[bn].band / core.G3Units.GHz
+            if not numpy.isfinite(band):
+                continue
+            band = str(int(band))
+            if band in n_bolos_from_one_scan.keys():
+                n_bolos_from_one_scan[band] = \
+                    n_bolos_from_one_scan.get(band) + 1
+
+        for band, n_bolos in n_bolos_from_one_scan.items():
+            n_bolos_from_each_scan[band].append(n_bolos)
+
+    # print(n_bolos_from_each_scan)
+    return {band: numpy.mean(ns_bolos) \
+            for band, ns_bolos in n_bolos_from_each_scan.items()}
+
+
+
 
 def collect_averages_from_flagging_info(
-        pipe_info_frame, bolo_props_map, recognized_reasons):
-    
-    def get_band_average(bolo_names_from_each_scan, bolo_props_map):
-        
-        n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
-        
-        for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
-            
-            n_bolos_from_one_scan = {"90": 0, "150": 0, "220": 0}
-            for bn in bolo_names_from_one_scan:
-                band = bolo_props_map[bn].band / core.G3Units.GHz
-                if not numpy.isfinite(band):
-                    continue
-                band = str(int(band))
-                if band in n_bolos_from_one_scan.keys():
-                    n_bolos_from_one_scan[band] = \
-                        n_bolos_from_one_scan.get(band) + 1
-            
-            for band, n_bolos in n_bolos_from_one_scan.items():
-                n_bolos_from_each_scan[band].append(n_bolos)
-        
-        # print(n_bolos_from_each_scan)
-        return {band: numpy.mean(ns_bolos) \
-                for band, ns_bolos in n_bolos_from_each_scan.items()}
-    
+        pipe_info_frame, bolo_props_map, recognized_reasons):    
     
     averages = {"90": {}, "150": {}, "220": {}}
     
     # - Collect average numbers of bolos not flagged
-    
+        
     bolos_not_flagged_each_scan = pipe_info_frame["SurvivingBolos"]
+    max_n_scans = numpy.max([len(scans) for reason, scans \
+                             in pipe_info_frame["DroppedBolos"].items()])
+    n_success_scans = len(bolos_not_flagged_each_scan.keys())
+    
+    diff_n_scans = max_n_scans - n_success_scans
+    for i in range(diff_n_scans):
+        bolos_not_flagged_each_scan["Dummy"+str(i)] = core.G3VectorString()
+    
     avg_n_okay_bolos_each_band = \
         get_band_average(bolos_not_flagged_each_scan, bolo_props_map)
     for band, average in avg_n_okay_bolos_each_band.items():
@@ -261,63 +251,96 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
 
 
 
+def create_new_map_frame_with_smaller_map_region(
+        map_frame, temperature_only, center_ra, center_dec):
+
+    new_mp_fr = core.G3Frame(core.G3FrameType.Map)
+
+    if temperature_only:
+        original_sky_map  = map_frame["T"]
+        original_wght_map = map_frame["Wunpol"].TT
+
+        smaller_sky_map = \
+            coordinateutils.FlatSkyMap(
+                x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
+                y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
+                res=original_sky_map.res,
+                proj=original_sky_map.proj,
+                alpha_center=center_ra,
+                delta_center=center_dec,
+                pol_type=original_sky_map.pol_type,
+                coord_ref=original_sky_map.coord_ref)
+        smaller_wght_map = coordinateutils.FlatSkyMap(
+                x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
+                y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
+                res=original_sky_map.res,
+                proj=original_sky_map.proj,
+                alpha_center=center_ra,
+                delta_center=center_dec,
+                pol_type=original_sky_map.pol_type,
+                coord_ref=original_sky_map.coord_ref)
+
+        coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
+        coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)
+
+        new_mp_fr["T"] = smaller_sky_map
+        new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
+        new_mp_fr["Wunpol"].TT = smaller_wght_map
+
+    return new_mp_fr
+
+
+
+
+def create_apodization_mask(map_frame, point_source_file):
+
+    new_mp_fr = core.G3Frame(core.G3FrameType.Map)
+
+    ptsrc_msk = mapspectra.apodmask.makeApodizedPointSourceMask(
+                    map_frame, arguments.point_source_file)
+
+    t_map     = map_frame["T"]
+    brdr_msk  = coordinateutils.FlatSkyMap(
+                    x_len=t_map.shape[1], y_len=t_map.shape[0],
+                    res=t_map.res, proj=t_map.proj,
+                    alpha_center=t_map.alpha_center,
+                    delta_center=t_map.delta_center,
+                    pol_type=t_map.pol_type,
+                    coord_ref=t_map.coord_ref, units=None)
+
+    twod_window  = numpy.ones(brdr_msk.shape)
+    twod_window *= signal.tukey(brdr_msk.shape[1], alpha=0.2)
+    twod_window  = (twod_window.transpose() *\
+                    signal.tukey(brdr_msk.shape[0], alpha=0.2)).\
+                   transpose()
+    numpy.asarray(brdr_msk)[:,:] = twod_window
+
+    full_mask = ptsrc_msk * brdr_msk
+
+    return full_mask
+
+
+
+
 def calculate_noise_level(
-        fr_one, fr_two, temp_only=False,
-        smaller_region=False, center_ra=None, center_dec=None):    
-    
+        fr_one, fr_two, ptsrc_lst, temp_only=False,
+        smaller_region=False, center_ra=None, center_dec=None,):
+
     if fr_two != None:
         mp_fr = map_analysis.subtract_two_maps(
                     fr_one, fr_two, divide_by_two=True, in_place=False)
     else:
-        mp_fr = fr_one
-    
-    
-    def create_new_map_frame_with_smaller_map_region(
-            map_frame, temperature_only, center_ra, center_dec):
-        
-        new_mp_fr = core.G3Frame(core.G3FrameType.Map)
-        
-        if temperature_only:
-            original_sky_map  = map_frame["T"]
-            original_wght_map = map_frame["Wunpol"].TT
-            
-            smaller_sky_map = \
-                coordinateutils.FlatSkyMap(
-                    x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                    y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                    res=original_sky_map.res,
-                    proj=original_sky_map.proj,
-                    alpha_center=center_ra,
-                    delta_center=center_dec,
-                    pol_type=original_sky_map.pol_type,
-                    coord_ref=original_sky_map.coord_ref)
-            smaller_wght_map = coordinateutils.FlatSkyMap(
-                    x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                    y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                    res=original_sky_map.res,
-                    proj=original_sky_map.proj,
-                    alpha_center=center_ra,
-                    delta_center=center_dec,
-                    pol_type=original_sky_map.pol_type,
-                    coord_ref=original_sky_map.coord_ref)
-            
-            coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
-            coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)
-            
-            new_mp_fr["T"] = smaller_sky_map
-            new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
-            new_mp_fr["Wunpol"].TT = smaller_wght_map
-        
-        return new_mp_fr    
-    
+        mp_fr = fr_one    
     
     if smaller_region:
         mp_fr = create_new_map_frame_with_smaller_map_region(
                     mp_fr, temp_only, center_ra, center_dec)
+        
+    mask = create_apodization_mask(mp_fr, ptsrc_lst)
     
     cls = map_analysis.calculateCls(
               mp_fr, cross_map=None, t_only=temp_only,
-              apod_mask="default", kspace_filt=None, tf_2d=None,
+              apod_mask=mask, kspace_filt=None, tf_2d=None,
               ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
               return_2d=False, in_place=False)
     
@@ -413,6 +436,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  collect_averages_from_flagging_stats=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
+                 point_source_file=None,
                  calculate_pointing_discrepancies=False):
         
         
@@ -501,6 +525,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         
         self.calc_noise_from_individ_maps = calculate_noise_from_individual_maps
         self.calc_noise_from_coadded_maps = calculate_noise_from_coadded_maps
+        self.point_source_file            = point_source_file
         
         if self.calc_noise_from_individ_maps:
             self.noise_from_individual_maps = \
@@ -941,6 +966,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             noise = calculate_noise_level(
                                         self.map_frame_cache[id_r_ver],
                                         self.map_frame_cashe[id_l_ver],
+                                        self.point_source_file,
                                         temp_only=self.temp_only,
                                         smaller_region=True,
                                         center_ra=center_ra,
@@ -949,6 +975,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             noise = calculate_noise_level(
                                         self.coadded_map_frames[id_r_ver],
                                         self.coadded_map_frames[id_l_ver],
+                                        self.point_source_file,
                                         temp_only=self.temp_only,
                                         smaller_region=True,
                                         center_ra=center_ra,
@@ -962,6 +989,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             noise = calculate_noise_level(
                                         frame,
                                         None,
+                                        self.point_source_file,
                                         temp_only=self.temp_only,
                                         smaller_region=True,
                                         center_ra=center_ra,
@@ -970,6 +998,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             noise = calculate_noise_level(
                                         self.coadded_map_frames[id_for_coadds],
                                         None,
+                                        self.point_source_file,
                                         temp_only=self.temp_only,
                                         smaller_region=True,
                                         center_ra=center_ra,
@@ -1165,6 +1194,32 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
 
 
 
+
+
+# ==============================================================================
+# Define functions needed to start the pipeline
+# ------------------------------------------------------------------------------
+
+
+def is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids=[]):
+    
+    meaningful_part_of_path = g3_file.split('/')[-1].split('.')[0]
+    try:
+        obs_id = int(meaningful_part_of_path.split('_')[0])
+    except ValueError:
+        # Probably a g3 file that contains coadded maps is encountered
+        # if the name cannot be converted to an integer.
+        return True
+    
+    if (obs_id >= min_obs_id) and \
+       (obs_id <= max_obs_id) and \
+       (obs_id not in bad_obs_ids):
+        return True
+    else:
+        return False
+
+
+
 def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         temperature_maps_only=False, maps_split_by_scan_direction=False,
         combine_left_right=False, combine_different_wafers=False,
@@ -1172,13 +1227,14 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         collect_averages_from_flagging_statistics=False,
         calculate_noise_from_individual_maps=False,
         calculate_noise_from_coadded_maps=False,
+        point_source_file='',
         calculate_pointing_discrepancies=False,
         sources=["ra0hdec-44.75", "ra0hdec-52.25",
                  "ra0hdec-59.75", "ra0hdec-67.25"],
         min_obs_id=0, max_obs_id=99999999,
         bad_obs_ids=[], min_file_size=0.01):
-    # Check consistencies among some options that are supposed to be used
-    # -----------------------------------------------------------------------------
+    
+    # - Check consistencies among some options that are supposed to be used
 
     if calculate_noise_from_coadded_maps:
         """if len(sources) > 1:
@@ -1220,10 +1276,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         return
 
 
-
-    # Show settings related to I/O
-    # -----------------------------------------------------------------------------
-
+    # - Show settings related to I/O
+    
     print()
     print("# ============================ #")
     print("#  Start making coadded maps!  #")
@@ -1253,13 +1307,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     print()
 
 
-    # ==============================================================================
-
+    # - Construct a pipeline that makes a coadded map
     
-    # ==============================================================================
-    # Construct a pipeline that makes a coadded map
-    # ------------------------------------------------------------------------------
-
     pipeline = core.G3Pipeline()
 
     pipeline.Add(core.G3Reader,
@@ -1268,12 +1317,9 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     pipeline.Add(core.Dump)
 
     pipeline.Add(CoaddMapsAndDoSomeMapAnalysis,
-                 map_ids=\
-                     map_ids,
-                 map_sources=\
-                     sources,
-                 temperature_only=\
-                     temperature_maps_only,
+                 map_ids=map_ids,
+                 map_sources=sources,
+                 temperature_only=temperature_maps_only,
                  maps_split_by_scan_direction=\
                      maps_split_by_scan_direction,
                  combine_left_right=\
@@ -1288,6 +1334,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                      calculate_noise_from_individual_maps,
                  calculate_noise_from_coadded_maps=\
                      calculate_noise_from_coadded_maps,
+                 point_source_file=\
+                     point_source_file,
                  calculate_pointing_discrepancies=\
                      calculate_pointing_discrepancies)
 
@@ -1297,16 +1345,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                  filename=output_file)
 
 
-    # ==============================================================================
-
-
-
-
-
-    # ==============================================================================
-    # Time to start!
-    # ------------------------------------------------------------------------------
-
+    # - Time to start!
+    
     print("\n")
     print("# -------------------------- #")
     print("#  Starting the pipeline...  #")
@@ -1322,12 +1362,18 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     print("\n\n\n")
 
 
-    # ==============================================================================
+# ==============================================================================
+
+
+
+
+
+# ==============================================================================
+# Run the script from command line if desired
+# ------------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    # Parse arguments
-    # ------------------------------------------------------------------------------
 
     parser = argparse.ArgumentParser(
                  description="This script makes coadded maps of the "+\
@@ -1402,6 +1448,11 @@ if __name__ == '__main__':
                              "will be calculated from the coadded maps "+\
                              "every time a new map is added.")
 
+    parser.add_argument("-M", "--point_source_file",
+                        type=str, action="store", default="",
+                        help="Path to a point source list, which will be used "+\
+                             "when making a mask for calcuting noise (Cls).")
+
     parser.add_argument("-p", "--calculate_pointing_discrepancies",
                         action="store_true", default=False,
                         help="Whether to calculate the difference between the "+\
@@ -1446,3 +1497,8 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
 
     run(**vars(arguments))
+
+
+# ==============================================================================
+
+
