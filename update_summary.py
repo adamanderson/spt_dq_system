@@ -1,5 +1,6 @@
 import os
 import argparse as ap
+import logging
 import datetime
 from summaryplot import cache_timeseries_data
 from summaryplot import cache_field_maps
@@ -106,15 +107,15 @@ if args.mode == 'maps':
             print('starting from', current_time, '(UTC) ...')
             print()
             if args.nologfiles:
-                log_file_flag = ''
+                logging.basicConfig(level=logging.INFO, format="%(message)s")
             else:
                 log_file = os.path.join(args.coaddslogsdir, \
                                         '{}_last_{}_{}' \
                                         .format(current_time.strftime('20%y%m%d_%H%M%S'),
                                                 n, mode))
-                log_file_flag = '&>' + ' ' + log_file
+                logging.basicConfig(level=logging.INFO, format="%(message)s", filename=log_file)
+                logging.captureWarnings(True)
 
-            # figure out how to save log file
             cache_field_maps.update(mode, 'update', time_interval='last_n',
                                     last_how_many_days=n,
                                     oldest_time_to_consider=args.mintime,
@@ -131,12 +132,14 @@ if args.mode == 'maps':
             print("starting from", current_time, "(UTC) ...")
             print()
             if args.nologfiles:
-                log_file_flag = ''
+                logging.basicConfig(level=logging.INFO, format="%(message)s")
             else:
-                log_file = args.coaddslogsdir + \
-                           current_time.strftime('20%y%m%d_%H%M%S') + \
-                           "_" + interval + "_" + mode
-                log_file_flag = '&>' + ' ' + log_file
+                log_file = os.path.join(args.coaddslogsdir, \
+                                        '{}_{}_{}' \
+                                        .format(current_time.strftime('20%y%m%d_%H%M%S'),
+                                                interval, mode))
+                logging.basicConfig(level=logging.INFO, format="%(message)s", filename=log_file)
+                logging.captureWarnings(True)
 
             cache_field_maps.update(mode, 'update', time_interval=interval,
                                     oldest_time_to_consider=args.mintime,

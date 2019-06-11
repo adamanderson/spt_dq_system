@@ -17,7 +17,7 @@ from    spt3g       import  core
 from    spt3g       import  mapmaker
 from    spt3g       import  std_processing
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.info
 
 
@@ -869,7 +869,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
             pipeline.Add(core.G3Writer,
                      filename=bookkeeping_file)
 
-        log(pipeline.Run(profile=True))
+        pipeline.Run(profile=True)
 
     log("\n")
     log("# ======================= #")

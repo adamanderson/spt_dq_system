@@ -16,7 +16,7 @@ import  argparse
 import  logging
 
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.info
 
 
@@ -1860,7 +1860,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     log("Every frame passed to the pipeline will be printed.")
     log("\n")
 
-    log(pipeline.Run(profile=True))
+    pipeline.Run(profile=True)
 
     log("\n")
     log("# ============================ #")

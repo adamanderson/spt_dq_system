@@ -15,7 +15,7 @@ from spt3g import std_processing
 
 from summaryplot import fields_coadding, fields_plotting
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.info
 
 
@@ -303,7 +303,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             raise RuntimeError("There seems to be a forgotten scenario!")
 
         return ignore_coadds,  subtract_maps, \
-               ids_to_exclude, id_lower_bound, id_upper_bound
+               ids_to_exclude, int(id_lower_bound), int(id_upper_bound)
 
 
     n_ranges = len(desired_obs_id_ranges)
