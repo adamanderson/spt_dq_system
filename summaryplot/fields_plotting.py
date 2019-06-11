@@ -11,11 +11,14 @@ import  glob
 import  numpy 
 import  scipy
 import  argparse
+import  logging
 from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
 from    spt3g       import  std_processing
 
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.info
 
 
 # ==============================================================================
@@ -253,28 +256,28 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         if frame.type == core.G3FrameType.Map:
             if self.map_id == frame["Id"]:
                 
-                print()
-                print("* Found a Map frame with ID", self.map_id+"!")
-                print("* Figures will possibly be made for this frame.")
-                print()
+                log("")
+                log("* Found a Map frame with ID "+self.map_id+"!")
+                log("* Figures will possibly be made for this frame.")
+                log("")
                 
                 if self.make_figure_for_field_map:
                     fd_mp, fd_mp_str = self.get_field_map(frame, self.map_type)
-                    print("Making a figure for the field map...")
-                    print(" ", "Some basic properties of the map:")
-                    print(" "*4, "Map shape    :", fd_mp.shape)
-                    print(" "*4, "Map units    :", fd_mp.units)
-                    print(" "*4, "Map size     :", fd_mp.size)
-                    print(" "*4, "x resolution :", fd_mp.x_res/core.G3Units.arcmin,
-                          "arc minutes")
-                    print(" "*4, "y resolution :", fd_mp.y_res/core.G3Units.arcmin,
-                          "arc minutes")
+                    log("Making a figure for the field map...")
+                    log("  Some basic properties of the map:")
+                    log(" "*4 +"Map shape    : %s", fd_mp.shape)
+                    log(" "*4 +"Map units    : %s", fd_mp.units)
+                    log(" "*4 +"Map size     : %s", fd_mp.size)
+                    log(" "*4 +"x resolution : %s arc minutes",
+                        fd_mp.x_res/core.G3Units.arcmin)
+                    log(" "*4 +"y resolution : %s arc minutes",
+                        fd_mp.y_res/core.G3Units.arcmin)
                     fd_mp   /= core.G3Units.mK
                     res      = fd_mp.x_res
                     cbar_lbl = "\n" + r"$mK_{CMB}$"
                     fd_mp    = numpy.asarray(fd_mp)
                     
-                    print(" ", "Preparing the figure title...")
+                    log("  Preparing the figure title...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
@@ -288,14 +291,14 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                         fl_nm = self.map_id + "-" + \
                                     fd_mp_str.replace(" ", "_") + ".png"
                     
-                    print(" ", "Actually making a figure...")
+                    log("  Actually making a figure...")
                     self.visualize_entire_map(
                         fd_mp, dpi=250,
                         custom_vmin=self.custom_vmin,
                         custom_vmax=self.custom_vmax,
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
-                    print("Done.")
-                    print()
+                    log("Done.")
+                    log("")
                     del fd_mp
                     gc.collect()
                 
@@ -323,24 +326,24 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                               "Cross sectional view of the weight map " + \
                               "along the RA = 0h contour" + "\n"
                     
-                    print("Making a figure for a cross section of "
-                          "the weight map...")
+                    log("Making a figure for a cross section of "
+                        "the weight map...")
                     self.visualize_normalized_map_cross_section(
                         wt_mp, xlabel=xlabel, ylabel=ylabel,
                         fig_title=fig_ttl, file_name=fl_nm)
-                    print("Done.")
-                    print()
+                    log("Done.")
+                    log("")
                     del wt_mp
                     gc.collect()
 
                 if self.make_figure_for_weight_map:
                     wt_mp, wt_mp_str = self.get_weight_map(frame, self.map_type)
-                    print("Making a figure for the entire weight map...")
+                    log("Making a figure for the entire weight map...")
                     
                     res      = wt_mp.x_res
                     cbar_lbl = "\n" + "Weight [arb.]"
                     
-                    print(" ", "Preparing the figure title...")
+                    log("  Preparing the figure title...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
@@ -357,7 +360,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     
                     wt_mp[numpy.where(wt_mp==0.0)] = numpy.nan
                     
-                    print(" ", "Actually making a figure...")
+                    log("  Actually making a figure...")
                     self.visualize_entire_map(
                         wt_mp, dpi=250,
                         custom_vmin=0.0,
@@ -367,8 +370,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     if self.simpler_file_names:
                         file_name = self.map_id + "-" + \
                                     wt_mp_str.replace(" ", "_") + ".png"
-                    print("Done.")
-                    print()
+                    log("Done.")
+                    log("")
                     del wt_mp
                     gc.collect()
                 
@@ -688,19 +691,19 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
              (self.map_id == frame["Id"]):
             
             if self.make_fig_for_flggg_stats:
-                print("Making a figure for flagging statistics...")
+                log("Making a figure for flagging statistics...")
                 self.make_figure_for_flagging_statistics(frame)
-                print("Done.", "\n")
+                log("Done.\n")
             
             if self.make_fig_for_ptg_offsets:
-                print("Making a figure for pointing discrepancies...")
+                log("Making a figure for pointing discrepancies...")
                 self.make_figure_for_pointing_discrepancies(frame)
-                print("Done.", "\n")
+                log("Done.\n")
             
             if self.make_fig_for_noise_levels:
-                print("Making a figure for noise levels...")
+                log("Making a figure for noise levels...")
                 self.make_figure_for_noise_levels(frame)
-                print("Done.", "\n")
+                log("Done.\n")
             
             self.already_made_figures = True
 
@@ -721,8 +724,8 @@ class RecordIDsUsedForPlotting(object):
             return
         
         if "CoaddedObservationIDs" in frame:
-            print()
-            print("Recording what observation IDs were used to make figures...")
+            log("")
+            log("Recording what observation IDs were used to make figures...")
             all_ids = core.G3VectorInt()
             for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
                 for obs_id in obs_ids:
@@ -730,7 +733,7 @@ class RecordIDsUsedForPlotting(object):
             
             new_frame = core.G3Frame()
             new_frame["IDsUsedForMakingFiguresLastTime"] = all_ids
-            print("Done.")
+            log("Done.")
             
             self.already_recorded = True
             
@@ -776,34 +779,34 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
     # Time to start!
     # ------------------------------------------------------------------------------
 
-    print()
-    print("# ======================= #")
-    print("#  Start making figures!  #")
-    print("# ======================= #")
-    print()
+    log("")
+    log("# ======================= #")
+    log("#  Start making figures!  #")
+    log("# ======================= #")
+    log("")
 
 
     if len(good_input_files) == 0:
-        print("Actually, no applicable input files!")
-        print()
+        log("Actually, no applicable input files!")
+        log("")
         return
     else:
-        print()
-        print("- These are the input files to be used:")
-        print()
+        log("")
+        log("- These are the input files to be used:")
+        log("")
         for input_file in good_input_files:
-            print(input_file.split("/")[-1])
-        print()
-        print()
+            log(input_file.split("/")[-1])
+        log("")
+        log("")
 
 
     for input_file in good_input_files:
 
-        print("-------------------------------------")
-        print(" Taking actions on", input_file, "...")
-        print("-------------------------------------")
+        log("-------------------------------------")
+        log(" Taking actions on %s ...", input_file)
+        log("-------------------------------------")
 
-        if decide_whether_to_make_figures_at_all:
+        if decide_whether_to_make_figures_at_all == True:
 
             bookkeeping_file = "bookkeeping_for_plotting_" + \
                                os.path.basename(input_file)
@@ -825,11 +828,11 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
                 common_ids = set(list(previous_ids)) & set(list(newer_ids))
                 if len(common_ids) == len(newer_ids):
-                    print()
-                    print("* This input file does not seem to contain any")
-                    print("* new information, so the same set of figures")
-                    print("* will not be generated again!")
-                    print()
+                    log("")
+                    log("* This input file does not seem to contain any")
+                    log("* new information, so the same set of figures")
+                    log("* will not be generated again!")
+                    log("")
                     continue
 
 
@@ -861,14 +864,16 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
         pipeline.Add(RecordIDsUsedForPlotting)
         pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
-        pipeline.Add(core.G3Writer,
+        
+        if decide_whether_to_make_figures_at_all == True:
+            pipeline.Add(core.G3Writer,
                      filename=bookkeeping_file)
 
-        pipeline.Run(profile=True)
+        log(pipeline.Run(profile=True))
 
-    print("\n")
-    print("# ======================= #")
-    print("\n\n\n")
+    log("\n")
+    log("# ======================= #")
+    log("\n\n\n")
 
 
     # ==============================================================================

@@ -6,6 +6,7 @@ import shutil
 import json
 import argparse
 import datetime
+import logging
 import numpy
 
 from glob  import glob
@@ -14,6 +15,8 @@ from spt3g import std_processing
 
 from summaryplot import fields_coadding, fields_plotting
 
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+log = logging.info
 
 
 # ==============================================================================
@@ -158,14 +161,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     
     # -- Check the input and output directory structure
     
-    print()
-    print("-------------------------------------------------")
-    print(" Making sure the directory structure is valid... ")
-    print("-------------------------------------------------")
-    print()
+    log("")
+    log("-------------------------------------------------")
+    log(" Making sure the directory structure is valid... ")
+    log("-------------------------------------------------")
+    log("")
     
-    print("* Checking whether relevant directories exist or not.")
-    print("  If not, they will be created.")
+    log("* Checking whether relevant directories exist or not.")
+    log("  If not, they will be created.")
     
     
     def convert_time_intervals_to_dir_names(interval_type, datetime_obj):
@@ -200,41 +203,41 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             os.mkdir(dir_name)
 
 
-    print()
+    log("")
 
 
     # -- Calll the relevant script with appropriate arguments
     
-    print()
-    print("----------------------------------------------------------")
-    print(" The mode, action, and time interval that were specified: ")
-    print("----------------------------------------------------------")
-    print()
-    print("  "+mode+", "+action+", "+time_interval)
-    print()
+    log("")
+    log("----------------------------------------------------------")
+    log(" The mode, action, and time interval that were specified: ")
+    log("----------------------------------------------------------")
+    log("")
+    log("   %s, %s, %s", mode, action, time_interval)
+    log("")
     
-    print()
-    print("----------------------------------------------")
-    print(" Relevant obs_id range(s) to take actions on :")
-    print("----------------------------------------------")
-    print()
+    log("")
+    log("----------------------------------------------")
+    log(" Relevant obs_id range(s) to take actions on :")
+    log("----------------------------------------------")
+    log("")
 
     for counter, interval in enumerate(desired_obs_id_ranges, 0):
-        print("Interval", counter+1, ":")
-        print("  from", interval[0], "("+\
-              str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")",
-              "("+str(desired_time_ranges[counter][0])+")")
-        print("  to  ", interval[1], "("+\
-              str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")",
-              "("+str(desired_time_ranges[counter][1])+")")
-    print()
+        log("Interval %s :", counter+1)
+        log("  from %s ("+\
+            str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")" +\
+            "("+str(desired_time_ranges[counter][0])+")", interval[0])
+        log("  to   %s ("+\
+            str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")" +\
+            "("+str(desired_time_ranges[counter][1])+")", interval[1])
+    log("")
 
 
-    print("\n")
-    print("-------------------------")
-    print("Relevant commands to run:")
-    print("-------------------------")
-    print()
+    log("\n")
+    log("-------------------------")
+    log("Relevant commands to run:")
+    log("-------------------------")
+    log("")
 
 
     def decide_what_ids_to_use_and_not(existing_ids, desired_id_range):
@@ -307,9 +310,9 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     for i in range(n_ranges):
         n_cmd_set = "{:03}".format(i+1)
 
-        print("# Command set", n_cmd_set, "to run:")
-        print("# ---------------------------")
-        print()
+        log("# Command set %s to run:", n_cmd_set)
+        log("# ---------------------------")
+        log("")
 
         if mode == "coadding":
             coadd_args = {}
@@ -375,10 +378,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_args['point_source_file'] = point_source_file
 
                     # actually generate the coadd
-                    print("# ------------------")
-                    print()
-                    print('Executing `fields_coadding.run` with arguments:')
-                    print(json.dumps(coadd_args, indent=1))
+                    log("# ------------------")
+                    log("")
+                    log('Executing `fields_coadding.run` with arguments:')
+                    log(json.dumps(coadd_args, indent=1))
                     if not just_see_commands:
                         fields_coadding.run(**coadd_args)
 
@@ -386,8 +389,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     if os.path.isfile(g3_file_for_coadded_maps):
                         g3_file_for_coadded_maps_backup = \
                             '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
-                        print('Copying {} to {}'.format(g3_file_for_coadded_maps,
-                                                        g3_file_for_coadded_maps_backup))
+                        log('Copying %s to %s',g3_file_for_coadded_maps,
+                                               g3_file_for_coadded_maps_backup)
                         if not just_see_commands:
                             shutil.copy(g3_file_for_coadded_maps,
                                         g3_file_for_coadded_maps_backup)
@@ -397,14 +400,11 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     # *** In normal operation, the output file does not exist yet
                     #     when the check below is made.
                     
-                    """if os.path.isfile(coadd_args['output_file']):"""
-                    print('Moving {} to {}'.format(coadd_args['output_file'],
-                                                       g3_file_for_coadded_maps))
-                    if not just_see_commands:
-                        try:
+                    if os.path.isfile(coadd_args['output_file']):
+                        log('Moving %s to %s', coadd_args['output_file'],
+                                               g3_file_for_coadded_maps)
+                        if not just_see_commands:
                             shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
-                        except FileNotFoundError:
-                            pass
 
             else:
                 for map_id in map_ids:        
@@ -469,10 +469,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
 
                         # actually generate the coadd
-                        print("# ------------------")
-                        print()
-                        print('Executing `fields_coadding.run` with arguments:')
-                        print(json.dumps(coadd_args, indent=1))
+                        log("# ------------------")
+                        log("")
+                        log('Executing `fields_coadding.run` with arguments:')
+                        log(json.dumps(coadd_args, indent=1))
                         if not just_see_commands:
                             fields_coadding.run(**coadd_args)
 
@@ -480,23 +480,20 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         if os.path.isfile(g3_file_for_coadded_maps):
                             g3_file_for_coadded_maps_backup = \
                                 '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
-                            print('Copying {} to {}'.format(g3_file_for_coadded_maps,
-                                                            g3_file_for_coadded_maps_backup))
+                            log('Copying %s to %s', g3_file_for_coadded_maps,
+                                                    g3_file_for_coadded_maps_backup)
                             if not just_see_commands:
                                 shutil.copy(g3_file_for_coadded_maps,
                                             g3_file_for_coadded_maps_backup)
 
                         # move output file (check existence because output file
                         # might not exist if the list of input files was empty)
-                        """if os.path.isfile(coadd_args['output_file']):"""
-                        print('Moving {} to {}'.format(coadd_args['output_file'],
-                                                       g3_file_for_coadded_maps))
-                        if not just_see_commands:
-                            try:
+                        if os.path.isfile(coadd_args['output_file']):
+                            log('Moving %s to %s', coadd_args['output_file'],
+                                                   g3_file_for_coadded_maps)
+                            if not just_see_commands:
                                 shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
-                            except FileNotFoundError:
-                                pass
-
+                            
 
                     # combine all subfield coadds
                     coadd_all_fields_args = {}
@@ -512,10 +509,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
                     coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
 
-                    print("# ------------------")
-                    print()
-                    print('Executing `fields_coadding.run` with arguments:')
-                    print(json.dumps(coadd_all_fields_args, indent=1))
+                    log("# ------------------")
+                    log("")
+                    log('Executing `fields_coadding.run` with arguments:')
+                    log(json.dumps(coadd_all_fields_args, indent=1))
                     if not just_see_commands:
                         fields_coadding.run(**coadd_all_fields_args)
 
@@ -546,14 +543,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     plotting_args['decide_whether_to_make_figures_at_all'] = True
 
 
-                print("# ------------------")
-                print()
-                print('Executing `fields_plotting.run` with arguments:')
-                print(json.dumps(plotting_args, indent=1))
+                log("# ------------------")
+                log("")
+                log('Executing `fields_plotting.run` with arguments:')
+                log(json.dumps(plotting_args, indent=1))
                 if not just_see_commands:
                     fields_plotting.run(**plotting_args)
                 
-    print()
+    log("")
 
 
 # ==============================================================================
@@ -667,11 +664,11 @@ if __name__ == '__main__':
     arguments = parser.parse_args()
     
     
-    print()
-    print("# --------------------------------------------- #")
-    print("#  The script cache_field_maps.py was invoked!  #")
-    print("# --------------------------------------------- #")
-    print()
+    log("")
+    log("# --------------------------------------------- #")
+    log("#  The script cache_field_maps.py was invoked!  #")
+    log("# --------------------------------------------- #")
+    log("")
     
     update(mode=arguments.mode,
            action=arguments.action,
