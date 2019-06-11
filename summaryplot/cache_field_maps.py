@@ -7,22 +7,27 @@ import json
 import argparse
 import datetime
 import numpy
-from glob import glob
 
+from glob  import glob
 from spt3g import core
 from spt3g import std_processing
 
 from summaryplot import fields_coadding, fields_plotting
 
 
+
+# ==============================================================================
+# Define a function that calls the map coading and plotting scripts
+# with appropriate arguments
+# ------------------------------------------------------------------------------
+
+
 def update(mode, action, oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=None, original_maps_dir='.',
            coadds_dir='.', figs_dir='.', just_see_commands=False):
-    # ==============================================================================
-    # Understand what to do and define global variables for later use
-    # ------------------------------------------------------------------------------
-
-
+    
+    # - Define global variables
+    
     if current_time is None:
         current_time = datetime.datetime.utcnow()
     else:
@@ -37,6 +42,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
     script_coadding_maps = "summaryplot/fields_coadding.py"
     script_plotting_data = "summaryplot/fields_plotting.py"
+    point_source_file    = "spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt"
 
     sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
                   "ra0hdec-59.75", "ra0hdec-67.25"] 
@@ -49,23 +55,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         coadds_dir += "/"
     if figs_dir[-1] != "/":
         figs_dir += "/"
-
-
-    # ==============================================================================
-
-
-
-
-
-    # ==============================================================================
-    # Figure out what appropriate time intervals are and
-    # make sure an appropriate directory structure exists.
-    # ------------------------------------------------------------------------------
-
-
-    # List the time intervals of interest and the corresponding observation IDs
-    # ------------------------------------------------------------------------------
-
+    
+    
+    # - Figure out what appropriate time intervals are and
+    # - make sure an appropriate directory structure exists.
+    
+    # -- List the time intervals of interest and 
+    # -- the corresponding observation IDs
+    
     def convert_to_obs_id(datetime_object):
         return std_processing.time_to_obsid(
                    datetime_object.strftime("20%y%m%d_%H%M%S"))
@@ -157,25 +154,20 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         desired_time_ranges   = desired_time_ranges"""
     # ** The update mode ahould check all time intervals, too,
     # ** because maps may not appear on disk chronologically.
-
-
-    # ------------------------------------------------------------------------------
-
-
-
-    # Check the input and output directory structure
-    # ------------------------------------------------------------------------------
-
+    
+    
+    # -- Check the input and output directory structure
+    
     print()
     print("-------------------------------------------------")
     print(" Making sure the directory structure is valid... ")
     print("-------------------------------------------------")
     print()
-
+    
     print("* Checking whether relevant directories exist or not.")
     print("  If not, they will be created.")
-
-
+    
+    
     def convert_time_intervals_to_dir_names(interval_type, datetime_obj):
         if interval_type == "weekly":
             str_fmt = "20%y%m%d"
@@ -211,16 +203,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     print()
 
 
-    # ==============================================================================
-
-
-
-
-
-    # ==============================================================================
-    # Run the relevant script with appropriate arguments
-    # ------------------------------------------------------------------------------
-
+    # -- Calll the relevant script with appropriate arguments
+    
     print()
     print("----------------------------------------------------------")
     print(" The mode, action, and time interval that were specified: ")
@@ -228,8 +212,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     print()
     print("  "+mode+", "+action+", "+time_interval)
     print()
-
-
+    
     print()
     print("----------------------------------------------")
     print(" Relevant obs_id range(s) to take actions on :")
@@ -370,7 +353,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                             coadd_args['input_files'] = g3_files_for_individual_observations
                         else:
                             coadd_args['input_files'] = [g3_file_for_coadded_maps] + \
-                                                           g3_files_for_individual_observations
+                                                         g3_files_for_individual_observations
 
                         coadd_args['min_obs_id'] = id_lower_bound
                         coadd_args['max_obs_id'] = id_upper_bound
@@ -386,8 +369,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         
                     coadd_args['temperature_maps_only'] = True
                     coadd_args['collect_averages_from_flagging_statistics'] = True
+                    coadd_args['calculate_pW_to_K_conversion_factors'] = True
                     coadd_args['calculate_pointing_discrepancies'] = True
                     coadd_args['calculate_noise_from_individual_maps'] = True
+                    coadd_args['point_source_file'] = point_source_file
 
                     # actually generate the coadd
                     print("# ------------------")
@@ -409,11 +394,17 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
                     # move output file (check existence because output file
                     # might not exist if the list of input files was empty)
-                    if os.path.isfile(coadd_args['output_file']):
-                        print('Moving {} to {}'.format(coadd_args['output_file'],
+                    # *** In normal operation, the output file does not exist yet
+                    #     when the check below is made.
+                    
+                    """if os.path.isfile(coadd_args['output_file']):"""
+                    print('Moving {} to {}'.format(coadd_args['output_file'],
                                                        g3_file_for_coadded_maps))
-                        if not just_see_commands:
+                    if not just_see_commands:
+                        try:
                             shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
+                        except FileNotFoundError:
+                            pass
 
             else:
                 for map_id in map_ids:        
@@ -474,6 +465,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
                         coadd_args['temperature_maps_only'] = True
                         coadd_args['calculate_noise_from_coadded_maps'] = True
+                        coadd_args['point_source_file'] = point_source_file
+                        coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
 
                         # actually generate the coadd
                         print("# ------------------")
@@ -495,11 +488,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
                         # move output file (check existence because output file
                         # might not exist if the list of input files was empty)
-                        if os.path.isfile(coadd_args['output_file']):
-                            print('Moving {} to {}'.format(coadd_args['output_file'],
-                                                           g3_file_for_coadded_maps))
-                            if not just_see_commands:
+                        """if os.path.isfile(coadd_args['output_file']):"""
+                        print('Moving {} to {}'.format(coadd_args['output_file'],
+                                                       g3_file_for_coadded_maps))
+                        if not just_see_commands:
+                            try:
                                 shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
+                            except FileNotFoundError:
+                                pass
 
 
                     # combine all subfield coadds
@@ -514,6 +510,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_all_fields_args['map_ids'] = [map_id]
                     coadd_all_fields_args['temperature_maps_only'] = True
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
+                    coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
 
                     print("# ------------------")
                     print()
@@ -521,6 +518,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     print(json.dumps(coadd_all_fields_args, indent=1))
                     if not just_see_commands:
                         fields_coadding.run(**coadd_all_fields_args)
+
 
         elif mode == 'plotting':
             for map_id in map_ids:
@@ -558,12 +556,18 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     print()
 
 
-    # ==============================================================================
+# ==============================================================================
+
+
+
+
+# ==============================================================================
+# Run the script from command line if desired
+# ------------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    # Parse arguments
-    # ------------------------------------------------------------------------------
+
     parser = argparse.ArgumentParser(
                  description="This script can co-add field maps corresponding to "
                              "different time intervals (a week, a month, etc.) "
@@ -661,20 +665,14 @@ if __name__ == '__main__':
                              "instead of actually being run.")
 
     arguments = parser.parse_args()
-
-
-    # ------------------------------------------------------------------------------
-
-
-
-    # Define global variables
-    # ------------------------------------------------------------------------------
-
+    
+    
     print()
     print("# --------------------------------------------- #")
     print("#  The script cache_field_maps.py was invoked!  #")
     print("# --------------------------------------------- #")
     print()
+    
     update(mode=arguments.mode,
            action=arguments.action,
            oldest_time_to_consider=arguments.oldest_time_to_consider,
@@ -683,4 +681,9 @@ if __name__ == '__main__':
            last_how_many_days=arguments.last_how_many_days,
            original_maps_dir=arguments.original_maps_dir,
            coadds_dir=arguments.coadds_dir,
-           figs_dir=arguments.figs_dir)
+           figs_dir=arguments.figs_dir,
+           just_see_commands=arguments.just_see_commands)
+
+
+# ==============================================================================
+

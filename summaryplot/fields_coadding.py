@@ -374,7 +374,7 @@ def create_apodization_mask(map_frame, point_source_file):
     new_mp_fr = core.G3Frame(core.G3FrameType.Map)
 
     ptsrc_msk = mapspectra.apodmask.makeApodizedPointSourceMask(
-                    map_frame, arguments.point_source_file)
+                    map_frame, point_source_file)
 
     t_map     = map_frame["T"]
     brdr_msk  = coordinateutils.FlatSkyMap(
