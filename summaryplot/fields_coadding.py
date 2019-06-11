@@ -243,7 +243,8 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
                            "3": numpy.array([325.44375, -64.18742,  388.218])}}    
     discrep_dict = {"1": {"delta_ra": numpy.nan, "delta_dec": numpy.nan},
                     "2": {"delta_ra": numpy.nan, "delta_dec": numpy.nan},
-                    "3": {"delta_ra": numpy.nan, "delta_dec": numpy.nan}}    
+                    "3": {"delta_ra": numpy.nan, "delta_dec": numpy.nan}}
+    flux_dict = {"1": numpy.nan, "2": numpy.nan, "3": numpy.nan}
     
     info_on_point_sources = some_brightest_sources[sub_field]
     
@@ -305,8 +306,18 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
         
         discrep_dict[point_source_number]["delta_ra"]  = effective_delta_ra
         discrep_dict[point_source_number]["delta_dec"] = delta_dec
-    
-    return discrep_dict
+        
+        nearest_x = int(numpy.round(measured_x))
+        nearest_y = int(numpy.round(measured_y))
+        source_centered_mini_map =   \
+            numpy.asarray(map_to_use)\
+                [nearest_y-half_y_length:nearest_y+half_y_length+1,
+                 nearest_x-half_x_length:nearest_x+half_x_length+1]
+        source_flux = numpy.sum(source_centered_mini_map) * \
+                      map_to_use.x_res * map_to_use.y_res
+        flux_dict[point_source_number] = source_flux
+        
+    return discrep_dict, flux_dict
 
 
 
@@ -661,6 +672,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 {rank: {delta_type: {mid: core.G3MapMapDouble()       \
                                      for mid in self.map_ids}         \
                         for delta_type in ["delta_ra", "delta_dec"]}  \
+                 for rank in ["1", "2", "3"]}
+            self.fluxes = \
+                {rank: {mid: core.G3MapMapDouble() for mid in self.map_ids} \
                  for rank in ["1", "2", "3"]}
         
         
@@ -1054,6 +1068,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 remove_partial_mapmapdouble(
                                     self.delta_ras_and_decs[rank][delta_type],
                                     obs_ids_from_this_frame)
+                        self.fluxes[rank] = \
+                            remove_partial_mapmapdouble(
+                                self.fluxes[rank], obs_ids_from_this_frame)
+                
                 if self.calc_noise_from_individ_maps:
                     self.noise_from_individual_maps = \
                         remove_partial_mapmapdouble(
@@ -1135,7 +1153,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 
                 if frame_has_coadds:
                     print()
-                    print("* Gathering pointing discrepancy data")
+                    print("* Gathering pointing discrepancy and flux data")
                     print("* that were calculated previously ...")
                     for rank in ["1", "2", "3"]:
                         for coordinate in ["Ra", "Dec"]:
@@ -1146,29 +1164,36 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 combine_mapmapdoubles(
                                     self.delta_ras_and_decs[rank][delta_type],
                                     {id_for_coadds: frame[relevant_key]})
+                        flux_key = "IntegratedFluxesFromSources" + rank
+                        self.fluxes[rank] = \
+                            combine_mapmapdoubles(
+                                self.fluxes[rank],
+                                {id_for_coadds: frame[flux_key]})
                     print("* Done.")
                     print()
                 else:
                     if self.maps_split_by_scan_direction:
                         print()
-                        print("* Pointing discrepancy calculations")
+                        print("* Pointing discrepancy and flux calculations")
                         print("* are about to start because both")
                         print("*", id_l_ver, "and", id_r_ver)
                         print("* of obs.", oid)
                         print("* have passed the pipeline ...")
                         
-                        pt_offsets_to_be_reorganized = \
+                        pt_offsets_to_be_reorganized, \
+                        fluxes_to_be_reorganized =    \
                             calculate_pointing_discrepancies(
                                 self.map_frame_cache[id_r_ver],
                                 self.map_frame_cache[id_l_ver],
                                 src, temp_only=True)
                     else:
                         print()
-                        print("* Pointing discrepancy calculations")
+                        print("* Pointing discrepancy and flux calculations")
                         print("* are about to start for")
                         print("* obs.", oid, id_for_coadds, "...")
                         
-                        pt_offsets_to_be_reorganized = \
+                        pt_offsets_to_be_reorganized, \
+                        fluxes_to_be_reorganized =    \
                             calculate_pointing_discrepancies(
                                 frame, None, src, temp_only=True)
                         
@@ -1176,6 +1201,11 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         for delta_coord, diff in diffs.items():
                             print("* Source", rank, delta_coord.ljust(9),
                                   diff/core.G3Units.arcsec, "arcseconds")
+                        flux  = fluxes_to_be_reorganized[rank]
+                        usys  = core.G3Units
+                        flux /= (usys.mK * usys.arcmin * usys.arcmin)
+                        print("* Source", rank, "flux".ljust(9),
+                              flux, "mK.arcmin.arcmin")
                     print("* Done.")
                     print()
                     
@@ -1184,6 +1214,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             {rank: {d_type: {idr: core.G3MapMapDouble()} \
                              for d_type in ["delta_ra", "delta_dec"]}    \
                              for rank   in ["1", "2", "3"]}
+                        fluxes_from_this_fr = \
+                            {rank: {idr: core.G3MapMapDouble()} \
+                             for rank in ["1", "2", "3"]}
                         
                         for rank in ["1", "2", "3"]:
                             for d_type in ["delta_ra", "delta_dec"]:
@@ -1197,6 +1230,18 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                     combine_mapmapdoubles(
                                         self.delta_ras_and_decs[rank][d_type],
                                         pt_offsets_from_this_fr[rank][d_type])
+                        
+                        for rank in ["1", "2", "3"]:
+                            fluxes_from_this_fr \
+                            [rank][idr][src] = core.G3MapDouble()
+                            fluxes_from_this_fr \
+                            [rank][idr][src][str(oid)] = \
+                                fluxes_to_be_reorganized[rank]
+                            
+                            self.fluxes[rank] = \
+                                combine_mapmapdoubles(
+                                    self.fluxes[rank],
+                                    fluxes_from_this_fr[rank])
             
             
             # - Calculate noise levels
@@ -1495,8 +1540,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 
                 
                 if self.calc_pointing_discrepancies:
-                    mp_fr["DeltaRasAndDecsContained"] = True
-                    print("# Pointing discrepancies:")
+                    mp_fr["DeltaRasAndDecsContained"]  = True
+                    mp_fr["IntegratedFluxesContained"] = True
+                    print("# Pointing discrepancies and fluxes:")
                     print()
 
                     for rank in ["1", "2", "3"]:
@@ -1520,6 +1566,21 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                       [str(d/core.G3Units.arcsec)[0:6] \
                                        for d in data.values()])
                                 print()
+                        
+                        flux_key = "IntegratedFluxesFromSources" + rank
+                        mp_fr[flux_key] = self.fluxes[rank][map_id]
+                        usys = core.G3Units
+                        flu  = usys.mK * usys.arcmin * usys.arcmin
+                        
+                        print(" "*3, "-", "Flux")
+                        print()
+                        for sub_fld, data in mp_fr[flux_key].items():
+                            print(" "*6, "-", sub_fld)
+                            print()
+                            print(" "*9, data.keys())
+                            print(" "*9,
+                                  [str(d/flu)[0:6] for d in data.values()])
+                            print()
                     print("\n")
                 
                 
