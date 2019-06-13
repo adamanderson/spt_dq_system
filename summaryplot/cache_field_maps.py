@@ -7,6 +7,9 @@ import json
 import argparse
 import datetime
 import logging
+
+import matplotlib
+matplotlib.use("Agg")
 import numpy
 
 from glob  import glob
@@ -15,8 +18,6 @@ from spt3g import std_processing
 
 from summaryplot import fields_coadding, fields_plotting
 
-# logging.basicConfig(level=logging.INFO, format="%(message)s")
-log = logging.info
 
 
 # ==============================================================================
@@ -26,10 +27,35 @@ log = logging.info
 
 
 def update(mode, action, oldest_time_to_consider=None, current_time=None,
-           time_interval=None, last_how_many_days=None, original_maps_dir='.',
-           coadds_dir='.', figs_dir='.', just_see_commands=False):
+           time_interval=None, last_how_many_days=0, original_maps_dir='.',
+           coadds_dir='.', figs_dir='.', just_see_commands=False,
+           logger_name='', log_file=None):
     
     # - Define global variables
+    
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    log_format = logging.Formatter('%(message)s')
+        
+    if log_file is None:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(log_format)
+        logger.addHandler(stream_handler)
+    else:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(log_format)
+        logger.addHandler(file_handler)
+    
+    log = logger.info
+    
+
+    log("")
+    log("# --------------------------------------------- #")
+    log("#  The script cache_field_maps.py was invoked!  #")
+    log("# --------------------------------------------- #")
+    log("")
     
     if current_time is None:
         current_time = datetime.datetime.utcnow()
@@ -313,6 +339,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         log("# Command set %s to run:", n_cmd_set)
         log("# ---------------------------")
         log("")
+        
+        sub_logger_name = '{}_{}_{}'.format(mode,
+                                            time_interval,
+                                            desired_dir_names[i].split('/')[-2])
 
         if mode == "coadding":
             coadd_args = {}
@@ -376,16 +406,23 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_args['calculate_pointing_discrepancies'] = True
                     coadd_args['calculate_noise_from_individual_maps'] = True
                     coadd_args['point_source_file'] = point_source_file
+                    coadd_args['logger_name'] = '{}_{}'.format(sub_logger_name, map_id)
+                    coadd_args['log_file'] = log_file
 
                     # actually generate the coadd
-                    log("# ------------------")
                     log("")
                     log('Executing `fields_coadding.run` with arguments:')
-                    log(json.dumps(coadd_args, indent=1))
+                    log('(w/o input_files & bad_obs_ids b/c they contain too much info)')
+                    log(json.dumps({k: v for k, v in coadd_args.items() \
+                                    if k not in ['input_files', 'bad_obs_ids']},
+                                   indent=1))
                     if not just_see_commands:
                         fields_coadding.run(**coadd_args)
 
                     # copy backup file
+                    log("")
+                    log("# ------------------")
+                    log("")
                     if os.path.isfile(g3_file_for_coadded_maps):
                         g3_file_for_coadded_maps_backup = \
                             '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
@@ -394,18 +431,28 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         if not just_see_commands:
                             shutil.copy(g3_file_for_coadded_maps,
                                         g3_file_for_coadded_maps_backup)
+                    else:
+                        log('%s does not exist, so the cp command not issued.',
+                            g3_file_for_coadded_maps)
 
                     # move output file (check existence because output file
                     # might not exist if the list of input files was empty)
-                    # *** In normal operation, the output file does not exist yet
-                    #     when the check below is made.
-                    
+                    log("")
+                    log("# ------------------")
+                    log("")
                     if os.path.isfile(coadd_args['output_file']):
                         log('Moving %s to %s', coadd_args['output_file'],
                                                g3_file_for_coadded_maps)
                         if not just_see_commands:
-                            shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
-
+                            shutil.move(coadd_args['output_file'],
+                                        g3_file_for_coadded_maps)
+                    else:
+                        log('%s does not exist, so the mv command not issued.',
+                            coadd_args['output_file'])
+                    log("")
+                    log("# ------------------")
+                    log("")
+                    
             else:
                 for map_id in map_ids:        
                     for sub_field in sub_fields:
@@ -467,16 +514,23 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_noise_from_coadded_maps'] = True
                         coadd_args['point_source_file'] = point_source_file
                         coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
+                        coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
+                        coadd_args['log_file'] = log_file
 
                         # actually generate the coadd
-                        log("# ------------------")
                         log("")
                         log('Executing `fields_coadding.run` with arguments:')
-                        log(json.dumps(coadd_args, indent=1))
+                        log('(w/o input_files & bad_obs_ids b/c they contain too much info)')
+                        log(json.dumps({k: v for k, v in coadd_args.items() \
+                                        if k not in ['input_files', 'bad_obs_ids']},
+                                       indent=1))
                         if not just_see_commands:
                             fields_coadding.run(**coadd_args)
 
                         # copy backup file
+                        log("")
+                        log("# ------------------")
+                        log("")
                         if os.path.isfile(g3_file_for_coadded_maps):
                             g3_file_for_coadded_maps_backup = \
                                 '{}_backup.g3'.format(g3_file_for_coadded_maps[:-3])
@@ -485,15 +539,27 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                             if not just_see_commands:
                                 shutil.copy(g3_file_for_coadded_maps,
                                             g3_file_for_coadded_maps_backup)
+                        else:
+                            log('%s does not exist, so the cp command not issued.',
+                                g3_file_for_coadded_maps)
 
                         # move output file (check existence because output file
                         # might not exist if the list of input files was empty)
+                        log("")
+                        log("# ------------------")
+                        log("")
                         if os.path.isfile(coadd_args['output_file']):
                             log('Moving %s to %s', coadd_args['output_file'],
                                                    g3_file_for_coadded_maps)
                             if not just_see_commands:
-                                shutil.move(coadd_args['output_file'], g3_file_for_coadded_maps)
-                            
+                                shutil.move(coadd_args['output_file'],
+                                            g3_file_for_coadded_maps)
+                        else:
+                            log('%s does not exist, so the mv command not issued.',
+                                coadd_args['output_file'])
+                        log("")
+                        log("# ------------------")
+                        log("")
 
                     # combine all subfield coadds
                     coadd_all_fields_args = {}
@@ -508,14 +574,16 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_all_fields_args['temperature_maps_only'] = True
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
                     coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
+                    coadd_all_fields_args['logger_name'] = '{}_{}_full_field'.format(sub_logger_name, map_id)
+                    coadd_all_fields_args['log_file'] = log_file
 
-                    log("# ------------------")
-                    log("")
                     log('Executing `fields_coadding.run` with arguments:')
                     log(json.dumps(coadd_all_fields_args, indent=1))
                     if not just_see_commands:
                         fields_coadding.run(**coadd_all_fields_args)
-
+                    log("")
+                    log("# ------------------")
+                    log("")
 
         elif mode == 'plotting':
             for map_id in map_ids:
@@ -528,7 +596,9 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                  'map_type': 'T',
                                  'coadded_data': True,
                                  'make_figures_for_field_maps': True,
-                                 'make_figures_for_noise_levels': True}
+                                 'make_figures_for_noise_levels': True,
+                                 'log_file': log_file,
+                                 'logger_name': '{}_{}'.format(sub_logger_name, map_id)}
 
                 if time_interval != 'yearly':
                     plotting_args['make_figures_for_flagging_statistics'] = True
@@ -542,14 +612,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 if action == 'update':
                     plotting_args['decide_whether_to_make_figures_at_all'] = True
 
-
-                log("# ------------------")
                 log("")
                 log('Executing `fields_plotting.run` with arguments:')
                 log(json.dumps(plotting_args, indent=1))
                 if not just_see_commands:
                     fields_plotting.run(**plotting_args)
-                
+                log("")
+                log("# ------------------")
+                log("")
     log("")
 
 
@@ -660,16 +730,19 @@ if __name__ == '__main__':
                         action="store_true", default=False,
                         help="Whether the commands to be run will just be shown "
                              "instead of actually being run.")
+    
+    parser.add_argument("-L", "--logger-name",
+                        type=str, action="store", default="",
+                        help="The name of the logger that will be used to "
+                             "record log messages.")
+    
+    parser.add_argument("-l", "--log-file",
+                        type=str, action="store", default=None,
+                        help="The file to which the logger will send messages.")
 
     arguments = parser.parse_args()
     
-    
-    log("")
-    log("# --------------------------------------------- #")
-    log("#  The script cache_field_maps.py was invoked!  #")
-    log("# --------------------------------------------- #")
-    log("")
-    
+        
     update(mode=arguments.mode,
            action=arguments.action,
            oldest_time_to_consider=arguments.oldest_time_to_consider,
@@ -679,7 +752,9 @@ if __name__ == '__main__':
            original_maps_dir=arguments.original_maps_dir,
            coadds_dir=arguments.coadds_dir,
            figs_dir=arguments.figs_dir,
-           just_see_commands=arguments.just_see_commands)
+           just_see_commands=arguments.just_see_commands,
+           logger_name=arguments.logger_name,
+           log_file=arguments.log_file)
 
 
 # ==============================================================================

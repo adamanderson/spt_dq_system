@@ -1,12 +1,14 @@
 import os
 import argparse as ap
 import logging
+import time
 import datetime
 from summaryplot import cache_timeseries_data
 from summaryplot import cache_field_maps
 
 parser = ap.ArgumentParser(description='Wrapper for updating data and plots.',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
+
 S = parser.add_subparsers(dest='mode', title='subcommands',
                           help='Set of plots to update. For help, call: '
                           '%(prog)s %(metavar)s -h')
@@ -52,7 +54,6 @@ parser_maps.add_argument('-j', '--justseecommands',
                          action='store_true', default=False,
                          help='Whether to just see commands to be run.')
 
-
 args = parser.parse_args()
 
 
@@ -84,13 +85,36 @@ if args.mode == 'summarystats':
                                  min_time=args.mintime)
 
 if args.mode == 'maps':
-    # update coadded maps
     
+    # update coadded maps
     current_time = datetime.datetime.utcnow()
-    print('\n')
-    print('Starting to update coadded maps and figures at')
-    print(current_time, '(UTC) ...')
-    print()
+    
+    logger_name = "overall_progress"
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    log_format = logging.Formatter('%(message)s')
+    
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(log_format)
+    logger.addHandler(stream_handler)
+    
+    if args.nologfiles:
+        pass
+    else:
+        time_string = current_time.strftime('20%y%m%d_%H%M%S')
+        log_file = os.path.join(args.coaddslogsdir,
+                                '{}_{}'.format(time_string, logger_name))
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(log_format)
+        logger.addHandler(file_handler)
+    
+    logger.info('\n')
+    logger.info('Starting to update coadded maps and figures at')
+    logger.info('%s (UTC) ...', current_time)
+    logger.info('')
+    time.sleep(1)
     
     modes = ['coadding', 'plotting']
     if args.nocoadding:
@@ -99,23 +123,22 @@ if args.mode == 'maps':
         modes.remove('plotting')
     
     current_day = args.maxtime
-        
+    
     for n in [7, 30]:
         for mode in modes:
             current_time = datetime.datetime.utcnow()
-            print('Running commands for last_n and', mode, 'with n =', n)
-            print('starting from', current_time, '(UTC) ...')
-            print()
+            logger.info('Running commands for last_n and %s with n = %s', mode, n)
+            logger.info('starting from %s (UTC) ...', current_time)
+            logger.info('')
+            
+            logger_name = 'last_{}_{}'.format(n, mode)
+            time_string = current_time.strftime('20%y%m%d_%H%M%S')
             if args.nologfiles:
-                logging.basicConfig(level=logging.INFO, format="%(message)s")
+                log_file = None
             else:
-                log_file = os.path.join(args.coaddslogsdir, \
-                                        '{}_last_{}_{}' \
-                                        .format(current_time.strftime('20%y%m%d_%H%M%S'),
-                                                n, mode))
-                logging.basicConfig(level=logging.INFO, format="%(message)s", filename=log_file)
-                logging.captureWarnings(True)
-
+                log_file = os.path.join(args.coaddslogsdir,
+                                        '{}_{}'.format(time_string, logger_name))
+            
             cache_field_maps.update(mode, 'update', time_interval='last_n',
                                     last_how_many_days=n,
                                     oldest_time_to_consider=args.mintime,
@@ -123,33 +146,38 @@ if args.mode == 'maps':
                                     original_maps_dir=args.mapsdatadir,
                                     coadds_dir=args.coaddsdatadir,
                                     figs_dir=args.coaddsfigsdir,
-                                    just_see_commands=args.justseecommands)
+                                    just_see_commands=args.justseecommands,
+                                    logger_name=logger_name,
+                                    log_file=log_file)
+            time.sleep(1)
     
     for interval in ['yearly', 'monthly', 'weekly']:
         for mode in modes:
             current_time = datetime.datetime.utcnow()
-            print("Running commands for", interval, "and", mode)
-            print("starting from", current_time, "(UTC) ...")
-            print()
+            logger.info('Running commands for %s and %s', interval, mode)
+            logger.info('starting from %s (UTC) ...', current_time)
+            logger.info('')
+            
+            logger_name = '{}_{}'.format(interval, mode)
+            time_string = current_time.strftime('20%y%m%d_%H%M%S')
             if args.nologfiles:
-                logging.basicConfig(level=logging.INFO, format="%(message)s")
+                log_file = None
             else:
-                log_file = os.path.join(args.coaddslogsdir, \
-                                        '{}_{}_{}' \
-                                        .format(current_time.strftime('20%y%m%d_%H%M%S'),
-                                                interval, mode))
-                logging.basicConfig(level=logging.INFO, format="%(message)s", filename=log_file)
-                logging.captureWarnings(True)
-
+                log_file = os.path.join(args.coaddslogsdir,
+                                        '{}_{}'.format(time_string, logger_name))
+            
             cache_field_maps.update(mode, 'update', time_interval=interval,
                                     oldest_time_to_consider=args.mintime,
                                     current_time=current_day,
                                     original_maps_dir=args.mapsdatadir,
                                     coadds_dir=args.coaddsdatadir,
                                     figs_dir=args.coaddsfigsdir,
-                                    just_see_commands=args.justseecommands)
-            
+                                    just_see_commands=args.justseecommands,
+                                    logger_name=logger_name,
+                                    log_file=log_file)
+            time.sleep(1)
+    
     current_time = datetime.datetime.utcnow()
-    print('All done at', current_time, "(UTC)!")
-    print()
+    logger.info('All done at %s (UTC)!', current_time)
+    logger.info('')
 

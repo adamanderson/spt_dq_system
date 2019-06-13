@@ -17,15 +17,16 @@ from    spt3g       import  core
 from    spt3g       import  mapmaker
 from    spt3g       import  std_processing
 
-# logging.basicConfig(level=logging.INFO, format="%(message)s")
-log = logging.info
 
 
 # ==============================================================================
+# Define functions and pipeline modules needed for the pipeline
+# ------------------------------------------------------------------------------
 
 
 # consider changing these global variables to arguments to the constituent
 # functions below
+
 gd_wdth = 0.20
 ttl_fs  = 11
 lbl_fs  = ttl_fs - 1.0   # font size for axis labels
@@ -35,10 +36,6 @@ fig_wd  = 12.0
 fig_ht  =  7.5
 fig_dir = '.'
 
-
-# ==============================================================================
-# Define functions and pipeline modules needed for the pipeline
-# ------------------------------------------------------------------------------
 
 
 # Define functions related to general plotting utilities
@@ -98,7 +95,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                  map_type=None, map_id=None, coadded_data=True,
                  custom_vmin_field_map=None,
                  custom_vmax_field_map=None,
-                 simpler_file_names=True):
+                 simpler_file_names=True,
+                 logging_function=logging.info):
         
         self.make_figure_for_field_map    = fig_f
         self.make_figure_for_weight_map   = fig_w
@@ -110,6 +108,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         self.custom_vmax  = custom_vmax_field_map
         self.simpler_file_names = simpler_file_names
         self.obs_fr = None
+        self.log = logging_function
     
     
     def get_field_map(self, frame, map_type):
@@ -256,28 +255,28 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         if frame.type == core.G3FrameType.Map:
             if self.map_id == frame["Id"]:
                 
-                log("")
-                log("* Found a Map frame with ID "+self.map_id+"!")
-                log("* Figures will possibly be made for this frame.")
-                log("")
+                self.log("")
+                self.log("* Found a Map frame with ID "+self.map_id+"!")
+                self.log("* Figures will possibly be made for this frame.")
+                self.log("")
                 
                 if self.make_figure_for_field_map:
                     fd_mp, fd_mp_str = self.get_field_map(frame, self.map_type)
-                    log("Making a figure for the field map...")
-                    log("  Some basic properties of the map:")
-                    log(" "*4 +"Map shape    : %s", fd_mp.shape)
-                    log(" "*4 +"Map units    : %s", fd_mp.units)
-                    log(" "*4 +"Map size     : %s", fd_mp.size)
-                    log(" "*4 +"x resolution : %s arc minutes",
-                        fd_mp.x_res/core.G3Units.arcmin)
-                    log(" "*4 +"y resolution : %s arc minutes",
-                        fd_mp.y_res/core.G3Units.arcmin)
+                    self.log("Making a figure for the field map...")
+                    self.log("  Some basic properties of the map:")
+                    self.log(" "*4 +"Map shape    : %s", fd_mp.shape)
+                    self.log(" "*4 +"Map units    : %s", fd_mp.units)
+                    self.log(" "*4 +"Map size     : %s", fd_mp.size)
+                    self.log(" "*4 +"x resolution : %s arc minutes",
+                             fd_mp.x_res/core.G3Units.arcmin)
+                    self.log(" "*4 +"y resolution : %s arc minutes",
+                             fd_mp.y_res/core.G3Units.arcmin)
                     fd_mp   /= core.G3Units.mK
                     res      = fd_mp.x_res
                     cbar_lbl = "\n" + r"$mK_{CMB}$"
                     fd_mp    = numpy.asarray(fd_mp)
                     
-                    log("  Preparing the figure title...")
+                    self.log("  Preparing the figure title...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
@@ -291,14 +290,14 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                         fl_nm = self.map_id + "-" + \
                                     fd_mp_str.replace(" ", "_") + ".png"
                     
-                    log("  Actually making a figure...")
+                    self.log("  Actually making a figure...")
                     self.visualize_entire_map(
                         fd_mp, dpi=250,
                         custom_vmin=self.custom_vmin,
                         custom_vmax=self.custom_vmax,
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
-                    log("Done.")
-                    log("")
+                    self.log("Done.")
+                    self.log("")
                     del fd_mp
                     gc.collect()
                 
@@ -326,24 +325,24 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                               "Cross sectional view of the weight map " + \
                               "along the RA = 0h contour" + "\n"
                     
-                    log("Making a figure for a cross section of "
-                        "the weight map...")
+                    self.log("Making a figure for a cross section of "
+                             "the weight map...")
                     self.visualize_normalized_map_cross_section(
                         wt_mp, xlabel=xlabel, ylabel=ylabel,
                         fig_title=fig_ttl, file_name=fl_nm)
-                    log("Done.")
-                    log("")
+                    self.log("Done.")
+                    self.log("")
                     del wt_mp
                     gc.collect()
 
                 if self.make_figure_for_weight_map:
                     wt_mp, wt_mp_str = self.get_weight_map(frame, self.map_type)
-                    log("Making a figure for the entire weight map...")
+                    self.log("Making a figure for the entire weight map...")
                     
                     res      = wt_mp.x_res
                     cbar_lbl = "\n" + "Weight [arb.]"
                     
-                    log("  Preparing the figure title...")
+                    self.log("  Preparing the figure title...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
@@ -360,7 +359,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     
                     wt_mp[numpy.where(wt_mp==0.0)] = numpy.nan
                     
-                    log("  Actually making a figure...")
+                    self.log("  Actually making a figure...")
                     self.visualize_entire_map(
                         wt_mp, dpi=250,
                         custom_vmin=0.0,
@@ -370,8 +369,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     if self.simpler_file_names:
                         file_name = self.map_id + "-" + \
                                     wt_mp_str.replace(" ", "_") + ".png"
-                    log("Done.")
-                    log("")
+                    self.log("Done.")
+                    self.log("")
                     del wt_mp
                     gc.collect()
                 
@@ -384,7 +383,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     def __init__(self,
                  fig_fs=False, fig_pt=False, fig_ns=False,
                  map_type=None, map_id=None,
-                 xlim_left=None, xlim_right=None):
+                 xlim_left=None, xlim_right=None,
+                 logging_function=logging.info):
         
         self.make_fig_for_flggg_stats  = fig_fs
         self.make_fig_for_ptg_offsets  = fig_pt
@@ -406,6 +406,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         self.fig_title_prefix = map_id + " " + map_type + " " + "map" + "  -  "
         self.file_name_prefix = map_id + "-" + map_type + "_" + "map" + "_"
+        
+        self.log = logging_function
     
     
     def get_xlims_from_obs_id_range(self, min_obs_id, max_obs_id, nmarg_r):
@@ -691,19 +693,19 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
              (self.map_id == frame["Id"]):
             
             if self.make_fig_for_flggg_stats:
-                log("Making a figure for flagging statistics...")
+                self.log("Making a figure for flagging statistics...")
                 self.make_figure_for_flagging_statistics(frame)
-                log("Done.\n")
+                self.log("Done.\n")
             
             if self.make_fig_for_ptg_offsets:
-                log("Making a figure for pointing discrepancies...")
+                self.log("Making a figure for pointing discrepancies...")
                 self.make_figure_for_pointing_discrepancies(frame)
-                log("Done.\n")
+                self.log("Done.\n")
             
             if self.make_fig_for_noise_levels:
-                log("Making a figure for noise levels...")
+                self.log("Making a figure for noise levels...")
                 self.make_figure_for_noise_levels(frame)
-                log("Done.\n")
+                self.log("Done.\n")
             
             self.already_made_figures = True
 
@@ -713,9 +715,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
 
 class RecordIDsUsedForPlotting(object):
     
-    def __init__(self):
+    def __init__(self, logging_function=logging.info):
         
         self.already_recorded = False
+        self.log = logging_function
     
     
     def __call__(self, frame):
@@ -724,8 +727,8 @@ class RecordIDsUsedForPlotting(object):
             return
         
         if "CoaddedObservationIDs" in frame:
-            log("")
-            log("Recording what observation IDs were used to make figures...")
+            self.log("")
+            self.log("Recording what observation IDs were used to make figures...")
             all_ids = core.G3VectorInt()
             for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
                 for obs_id in obs_ids:
@@ -733,7 +736,7 @@ class RecordIDsUsedForPlotting(object):
             
             new_frame = core.G3Frame()
             new_frame["IDsUsedForMakingFiguresLastTime"] = all_ids
-            log("Done.")
+            self.log("Done.")
             
             self.already_recorded = True
             
@@ -744,6 +747,11 @@ class RecordIDsUsedForPlotting(object):
 # ==============================================================================
 
 
+
+
+# ==============================================================================
+# Define functions needed to start the pipeline
+# ------------------------------------------------------------------------------
 
 
 def run(input_files, decide_whether_to_make_figures_at_all=False,
@@ -758,9 +766,11 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         right_xlimit_for_time_variations=None,
         figure_title_font_size=11,
         directory_to_save_figures='.',
-        simpler_file_names=False):
-    # Define global variables
-    # ------------------------------------------------------------------------------
+        simpler_file_names=False,
+        logger_name="", log_file=None):
+    
+    
+    # - Define global variables
 
     good_input_files = [input_file for input_file in input_files 
                         if os.path.isfile(input_file)]
@@ -775,9 +785,26 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
     fig_dir = directory_to_save_figures
 
 
-    # ==============================================================================
-    # Time to start!
-    # ------------------------------------------------------------------------------
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    log_format = logging.Formatter('%(message)s')
+        
+    if log_file is None:
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.DEBUG)
+        stream_handler.setFormatter(log_format)
+        logger.addHandler(stream_handler)
+    else:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(log_format)
+        logger.addHandler(file_handler)
+        logging.captureWarnings(True)
+    
+    log = logger.info    
+
+    
+    # - Time to start!
 
     log("")
     log("# ======================= #")
@@ -851,7 +878,8 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
                      coadded_data=coadded_data,
                      custom_vmin_field_map=color_bar_lower_limit,
                      custom_vmax_field_map=color_bar_upper_limit,
-                     simpler_file_names=simpler_file_names)
+                     simpler_file_names=simpler_file_names,
+                     logging_function=log)
 
         pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
                      fig_fs=make_figures_for_flagging_statistics,
@@ -860,29 +888,40 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
                      map_id=map_id,
                      map_type=map_type,
                      xlim_left=left_xlimit_for_time_variations,
-                     xlim_right=right_xlimit_for_time_variations)
+                     xlim_right=right_xlimit_for_time_variations,
+                     logging_function=log)
 
-        pipeline.Add(RecordIDsUsedForPlotting)
+        pipeline.Add(RecordIDsUsedForPlotting,
+                     logging_function=log)
         pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
         
         if decide_whether_to_make_figures_at_all == True:
             pipeline.Add(core.G3Writer,
                      filename=bookkeeping_file)
+        
+        if log_file is None:
+            profile = True
+        else:
+            profile = False
 
-        pipeline.Run(profile=True)
+        pipeline.Run(profile=profile)
 
     log("\n")
     log("# ======================= #")
     log("\n\n\n")
 
+    
+# ==============================================================================
 
-    # ==============================================================================
 
+
+
+# ==============================================================================
+# Run the script from command line if desired
+# ------------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    # Process command line arguments
-    # ------------------------------------------------------------------------------
 
     parser = argparse.ArgumentParser(
                  description="This script makes figures for maps made from "
@@ -994,7 +1033,21 @@ if __name__ == '__main__':
                         help="Whether to omit infomration on source, obs. ID, "
                              "and so on in the names of the PNG files that show "
                              "field maps and weight maps.")
+    
+    parser.add_argument("-g", "--logger_name",
+                        type=str, action="store", default="",
+                        help="The name of the logger that will be used to "+\
+                             "record log messages.")
+    
+    parser.add_argument("-G", "--log_file",
+                        type=str, action="store", default=None,
+                        help="The file to which the logger will send messages.")
+
 
     arguments = parser.parse_args()
 
     run(**vars(arguments))
+
+    
+# ==============================================================================
+
