@@ -98,8 +98,14 @@ if (!fs.existsSync(config.coadds_logs_dir)) {
 app.get('/oldstaticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
-							  req.query.interval + '/');
+	try {
+		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
+								  req.query.interval + '/');
+	}
+	catch(err) {
+		filelist = [];
+	}
+
 	dirlist = [];
 	
 	// get the list of directories that contain plots
