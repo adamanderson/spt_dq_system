@@ -996,8 +996,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 self.coadded_map_ids = \
                     remove_ids(self.coadded_map_ids, map_ids_from_this_frame)
                 self.log("")
-                self.log("* Removing a set of sky map and weight map",
-                         "(%s)", frame["Id"])
+                self.log("* Removing a set of sky map and weight map (%s)", frame["Id"])
                 self.log("* from the coadded maps for %s ...", id_for_coadds)
                 if self.temp_only:
                     existing_t_map = \

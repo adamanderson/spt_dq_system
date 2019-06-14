@@ -76,7 +76,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
                   "ra0hdec-59.75", "ra0hdec-67.25"] 
     map_ids    = ["90GHz", "150GHz", "220GHz"]
-    # map_ids    = ["90GHz"]
+    # map_ids    = ["220GHz"]
 
     if original_maps_dir[-1] != "/":
         original_maps_dir += "/"
@@ -266,11 +266,13 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     log("")
 
 
-    def decide_what_ids_to_use_and_not(existing_ids, desired_id_range):
+    def decide_what_ids_to_use_and_not(
+            existing_ids, desired_id_range, file_name):
 
         if len(existing_ids) == 0:
-            raise RuntimeError("It appears that coadded maps were not made "
-                               "successfully last time!")
+            raise RuntimeError("It appears that coadded maps stored in "
+                               + file_name + "are empty. Probably something "
+                               "went wrong last time!")
 
         max_eid = numpy.max(existing_ids)
         min_eid = numpy.min(existing_ids)
@@ -345,14 +347,15 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                             desired_dir_names[i].split('/')[-2])
 
         if mode == "coadding":
-            coadd_args = {}
 
             if time_interval != "yearly":
                 for map_id in map_ids:
+                    coadd_args = {}
+                    
                     g3_files_for_individual_observations = \
-                        glob(os.path.join(original_maps_dir,
+                        sorted(glob(os.path.join(original_maps_dir,
                                           'ra0hdec*',
-                                          '*{}_tonly.g3.gz'.format(map_id)))
+                                          '*{}_tonly.g3.gz'.format(map_id))))
                     g3_file_for_coadded_maps = \
                         os.path.join(desired_dir_names[i],
                                      'coadded_maps_{}.g3'.format(map_id))
@@ -380,14 +383,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         ignore_coadds,  subtract_maps,                   \
                         ids_to_exclude, id_lower_bound, id_upper_bound = \
                             decide_what_ids_to_use_and_not(
-                                existing_ids, desired_obs_id_ranges[i])
+                                existing_ids, desired_obs_id_ranges[i],
+                                g3_file_for_coadded_maps)
 
                         if ignore_coadds:
                             coadd_args['input_files'] = g3_files_for_individual_observations
                         else:
                             coadd_args['input_files'] = [g3_file_for_coadded_maps] + \
                                                          g3_files_for_individual_observations
-
                         coadd_args['min_obs_id'] = id_lower_bound
                         coadd_args['max_obs_id'] = id_upper_bound
                         coadd_args['bad_obs_ids'] = ids_to_exclude
@@ -453,12 +456,16 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     log("# ------------------")
                     log("")
                     
+                    
             else:
-                for map_id in map_ids:        
+                for map_id in map_ids:
+                    coadd_all_fields_args = {}
+                    
                     for sub_field in sub_fields:
+                        coadd_args = {}
                         g3_files_for_individual_observations = \
-                            glob(os.path.join(original_maps_dir, sub_field,
-                                              '*{}_tonly.g3.gz'.format(map_id)))
+                            sorted(glob(os.path.join(original_maps_dir, sub_field,
+                                              '*{}_tonly.g3.gz'.format(map_id))))
                         g3_file_for_coadded_maps = \
                             os.path.join(desired_dir_names[i],
                                          'coadded_maps_from_{}_{}.g3'\
@@ -490,7 +497,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                             ignore_coadds,  subtract_maps,                   \
                             ids_to_exclude, id_lower_bound, id_upper_bound = \
                                 decide_what_ids_to_use_and_not(
-                                    existing_ids, desired_obs_id_ranges[i])
+                                    existing_ids, desired_obs_id_ranges[i],
+                                    g3_file_for_coadded_maps)
 
                             if ignore_coadds:
                                 coadd_args['input_files'] = g3_files_for_individual_observations

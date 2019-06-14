@@ -911,9 +911,9 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
     for input_file in good_input_files:
 
-        log("-------------------------------------")
+        log("-"*80)
         log(" Taking actions on %s ...", input_file)
-        log("-------------------------------------")
+        log("-"*80)
 
         if decide_whether_to_make_figures_at_all == True:
 
