@@ -9,13 +9,15 @@ import  gc
 import  sys
 import  glob
 import  numpy 
-import  scipy
 import  argparse
 import  logging
 from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
+from    spt3g       import  coordinateutils
 from    spt3g       import  std_processing
+from    scipy       import  ndimage
+
 
 
 
@@ -92,6 +94,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
     
     def __init__(self,
                  fig_f=False, fig_w=False, fig_cr=False,
+                 rebin_map_before_plotting=False, new_map_resolution=None,
+                 smooth_map_with_gaussian=False, gaussian_fwhm=None,
                  map_type=None, map_id=None, coadded_data=True,
                  custom_vmin_field_map=None,
                  custom_vmax_field_map=None,
@@ -101,6 +105,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         self.make_figure_for_field_map    = fig_f
         self.make_figure_for_weight_map   = fig_w
         self.make_figure_for_w_map_cr_sec = fig_cr
+        self.rebin_map_before_plotting    = rebin_map_before_plotting
+        self.new_res  = new_map_resolution
+        self.smooth_map_with_gaussian = smooth_map_with_gaussian
+        self.gaussian_fwhm = gaussian_fwhm
         self.map_type = map_type
         self.map_id   = map_id
         self.coadded_data = coadded_data
@@ -109,6 +117,37 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         self.simpler_file_names = simpler_file_names
         self.obs_fr = None
         self.log = logging_function
+        
+        
+    def rebin_map_to_diff_res(self, frame, new_res):
+        
+        map_parameters = {"x_len"       : 1200,
+                          "y_len"       : 1200,
+                          "res"         : new_res*core.G3Units.arcmin,
+                          "proj"        : frame["T"].proj,
+                          "alpha_center": frame["T"].alpha_center,
+                          "delta_center": frame["T"].delta_center,
+                          "pol_type"    : frame["T"].pol_type,
+                          "coord_ref"   : frame["T"].coord_ref}
+        rebin_factor = int(new_res/(frame["T"].res/core.G3Units.arcmin))
+        print("The rebin factor is", rebin_factor)
+
+        if self.map_type == "T":
+            if "Wunpol" in frame.keys():
+                new_field_map  = coordinateutils.FlatSkyMap(**map_parameters)
+                new_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
+                coordinateutils.reproj_map(frame["T"],
+                                           new_field_map,
+                                           rebin_factor)
+                coordinateutils.reproj_map(frame["Wunpol"].TT,
+                                           new_weight_map,
+                                           rebin_factor)
+                new_frame = core.G3Frame(core.G3FrameType.Map)
+                new_frame["T"]         = new_field_map
+                new_frame["Wunpol"]    = core.G3SkyMapWeights()
+                new_frame["Wunpol"].TT = new_weight_map
+        
+        return new_frame
     
     
     def get_field_map(self, frame, map_type):
@@ -131,7 +170,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             source  = obs_fr["SourceName"]
             obs_id  = str(obs_fr["ObservationID"])
             date    = str(obs_fr["ObservationStart"]).split(".")[0]
-            resol   = str(res/core.G3Units.arcmin)+"' resolution"
+            resol   = str(res/core.G3Units.arcmin)+"' map"
+            if self.smooth_map_with_gaussian:
+                resol += " smoothed w/ " + \
+                         str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "  " + obs_id + " (" + date + ") " + \
                       "   " + self.map_id + " " + mp_ty_str + " (" + resol + ")"
         
@@ -152,7 +194,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             n_obss  = ["{"+str(len(obss))+" "+el_dic[source]+"}" \
                        for source, obss in obs_id_list.items()]
             n_obss  = " ".join(n_obss)
-            resol   = str(res/core.G3Units.arcmin)+"' resolution"
+            resol   = str(res/core.G3Units.arcmin)+"' map"
+            if self.smooth_map_with_gaussian:
+                resol += " smoothed w/ " + \
+                         str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "   " + self.map_id + " coadded " + mp_ty_str + \
                       "s " + "(" + resol + ")" + "\n" + \
                       "(data from observations taken " + dt_rng + ":" + "\n" + \
@@ -166,8 +211,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             median  = str(numpy.round(numpy.median(vals_for_stats)))
             pctl_10 = str(numpy.round(numpy.percentile(vals_for_stats, 10), 3))
             pctl_90 = str(numpy.round(numpy.percentile(vals_for_stats, 90), 3))
-            title_b = "(Some statistics:  " + "10th pctl. = " + pctl_10 +",  " + \
-                      "Median = " + median + ",  " + "90th pctl. = " + pctl_90 + ")"
+            title_b = "(Some statistics:  " + "10th pctl. = " +pctl_10+",  "+\
+                      "Median = " +median+ ",  " + "90th pctl. = " +pctl_90+ ")"
         
         full_ttl = title_a + "\n" + title_b + "\n"
         file_nm  = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
@@ -260,8 +305,20 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                 self.log("* Figures will possibly be made for this frame.")
                 self.log("")
                 
-                if self.make_figure_for_field_map:
-                    fd_mp, fd_mp_str = self.get_field_map(frame, self.map_type)
+                if self.make_figure_for_field_map:                    
+                    if self.rebin_map_before_plotting:
+                        self.log("Rebinning the field map to "
+                                 "%s arcminute resolution...", self.new_res)
+                        new_frame = \
+                            self.rebin_map_to_diff_res(frame, self.new_res)
+                        fd_mp, fd_mp_str = \
+                            self.get_field_map(new_frame, self.map_type)
+                        self.log("Done.")
+                        self.log("")
+                    else:
+                        fd_mp, fd_mp_str = \
+                            self.get_field_map(frame, self.map_type)
+                    
                     self.log("Making a figure for the field map...")
                     self.log("  Some basic properties of the map:")
                     self.log(" "*4 +"Map shape    : %s", fd_mp.shape)
@@ -271,10 +328,19 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                              fd_mp.x_res/core.G3Units.arcmin)
                     self.log(" "*4 +"y resolution : %s arc minutes",
                              fd_mp.y_res/core.G3Units.arcmin)
+                    
                     fd_mp   /= core.G3Units.mK
                     res      = fd_mp.x_res
                     cbar_lbl = "\n" + r"$mK_{CMB}$"
-                    fd_mp    = numpy.asarray(fd_mp)
+                    
+                    fd_mp = numpy.asarray(fd_mp)
+                    if self.smooth_map_with_gaussian:
+                        sigma  = self.gaussian_fwhm * core.G3Units.arcmin
+                        sigma /= res
+                        sigma /= 2.0 * numpy.sqrt(2.0 * numpy.log(2.0))
+                        self.log("  Smoothing the map with a gaussian "
+                                 "whose sigma is %s...", sigma)
+                        fd_mp = ndimage.gaussian_filter(fd_mp, sigma, mode="nearest")
                     
                     self.log("  Preparing the figure title...")
                     if self.coadded_data:
@@ -292,7 +358,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     
                     self.log("  Actually making a figure...")
                     self.visualize_entire_map(
-                        fd_mp, dpi=250,
+                        fd_mp, dpi=100,
                         custom_vmin=self.custom_vmin,
                         custom_vmax=self.custom_vmax,
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
@@ -303,6 +369,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                 
                 if self.make_figure_for_w_map_cr_sec:
                     wt_mp, wt_mp_str = self.get_weight_map(frame, self.map_type)
+                    
                     res = wt_mp.x_res
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
@@ -336,7 +403,18 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     gc.collect()
 
                 if self.make_figure_for_weight_map:
-                    wt_mp, wt_mp_str = self.get_weight_map(frame, self.map_type)
+                    if self.rebin_map_before_plotting:
+                        self.log("Rebinning the weight map to "
+                                 "%s arcminute resolution...", self.new_res)
+                        new_frame = \
+                            self.rebin_map_to_diff_res(frame, self.new_res)
+                        wt_mp, wt_mp_str = \
+                            self.get_weight_map(frame, self.map_type)
+                        self.log("Done.")
+                        self.log("")
+                    else:
+                        wt_mp, wt_mp_str = \
+                            self.get_weight_map(frame, self.map_type)
                     self.log("Making a figure for the entire weight map...")
                     
                     res      = wt_mp.x_res
@@ -361,7 +439,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     
                     self.log("  Actually making a figure...")
                     self.visualize_entire_map(
-                        wt_mp, dpi=250,
+                        wt_mp, dpi=100,
                         custom_vmin=0.0,
                         custom_vmax=numpy.nanmax(wt_mp),
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
@@ -759,6 +837,10 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         coadded_data=False, color_bar_upper_limit=None,
         color_bar_lower_limit=None, make_figures_for_entire_weight_maps=False,
         make_figures_for_weight_maps_cross_section=False,
+        rebin_map_before_plotting=False,
+        new_map_resolution=None,
+        smooth_map_with_gaussian=False,
+        gaussian_fwhm=None,
         make_figures_for_flagging_statistics=False,
         make_figures_for_pointing_discrepancies=False,
         make_figures_for_noise_levels=False,
@@ -873,6 +955,10 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
                      fig_f=make_figures_for_field_maps,
                      fig_w=make_figures_for_entire_weight_maps,
                      fig_cr=make_figures_for_weight_maps_cross_section,
+                     rebin_map_before_plotting=rebin_map_before_plotting,
+                     new_map_resolution=new_map_resolution,
+                     smooth_map_with_gaussian=smooth_map_with_gaussian,
+                     gaussian_fwhm=gaussian_fwhm,
                      map_type=map_type,
                      map_id=map_id,
                      coadded_data=coadded_data,
@@ -985,11 +1071,32 @@ if __name__ == '__main__':
                         help="Whether to make figures for entire weight maps, "
                              "i.e. color maps showing weights at every location "
                              "of the field.")
-
+    
     parser.add_argument("-W", "--make_figures_for_weight_maps_cross_section",
                         action="store_true", default=False,
                         help="Whether to make figures only showing the cross "
                              "section of a weight map along certain RA contour.")
+    
+    parser.add_argument("-b", "--rebin_map_before_plotting",
+                        action="store_true", default=False,
+                        help="Whether to rebin maps to a different resolution "
+                             "before making figures for them.")
+    
+    parser.add_argument("-B", "--new_map_resolution",
+                        action="store", type=float, default=None,
+                        help="The new resolution that will be used during the "
+                             "rebinning mentioned above. This number should be "
+                             "expressed in the units of arcminute.")
+    
+    parser.add_argument("-t", "--smooth_map_with_gaussian",
+                        action="store_true", default=False,
+                        help="Whether to smooth a map by convolving it with "
+                             "a Gaussian.")
+    
+    parser.add_argument("-T", "--gaussian_fwhm",
+                        action="store", type=float, default=None,
+                        help="The full width at half maximum of the Gaussian "
+                             "expressed in the units of arcminute.")
 
     parser.add_argument("-F", "--make_figures_for_flagging_statistics",
                         action="store_true", default=False,

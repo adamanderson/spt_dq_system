@@ -596,6 +596,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                  'map_type': 'T',
                                  'coadded_data': True,
                                  'make_figures_for_field_maps': True,
+                                 'smooth_map_with_gaussian': True,
+                                 'gaussian_fwhm': 1,
                                  'make_figures_for_noise_levels': True,
                                  'log_file': log_file,
                                  'logger_name': '{}_{}'.format(sub_logger_name, map_id)}
