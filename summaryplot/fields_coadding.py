@@ -1385,7 +1385,13 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                          [id_for_coadds][src].values()).\
                                       count(-1.0)
                             
-                            if (n_added == n_subed) and (n_added > 0):
+                            if operation == "Ignore":
+                                self.log("* (Since this map was bad in some way,")
+                                self.log("*  and it was not added nor subtracted,")
+                                self.log("*  the noise calculation will not occur.)")
+                                noise = numpy.nan
+                                pass
+                            elif (n_added == n_subed) and (n_added > 0):
                                 self.log("* (Since %s pairs of " +\
                                          "difference map have been combined", n_added)
                                 self.log("*  into the coadded noise maps,")
