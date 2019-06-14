@@ -105,18 +105,13 @@ app.get('/oldstaticdirs', function(req, res) {
 	catch(err) {
 		filelist = [];
 	}
-
-	dirlist = [];
 	
 	// get the list of directories that contain plots
-	if(req.query.interval == 'monthly' || req.query.interval == 'weekly') {
-		for (jfile=0; jfile<filelist.length; jfile++) {
-			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
-		}
+	dirlist = [];
+	for (jfile=0; jfile<filelist.length; jfile++) {
+		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 	}
-	else {
-		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/current');
-	}
+
 	res.send(dirlist);
 });
 

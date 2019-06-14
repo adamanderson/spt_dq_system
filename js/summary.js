@@ -7,12 +7,7 @@ function get_old_timeseries_plotdirs(interval) {
 	    data.reverse();
 	    for (jdir=0; jdir<data.length; jdir++) {
 			datestring = data[jdir].split('/')[2];
-			if (interval == 'last_3days') {
-				$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>last 3 days</button>");
-			}
-			else if (datestring != 'current') {
-				$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
-			}
+			$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 	    }
 	});
 }
@@ -26,14 +21,7 @@ function get_old_map_plotdirs(interval) {
 	    data.reverse();
 	    for (jdir=0; jdir<data.length; jdir++) {
 			datestring = data[jdir].split('/')[2];
-			console.log(datestring);
-			if (interval == 'last_3days') {
-				$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>last 3 days</button>");
-			}
-			else if (datestring != 'current') {
-				console.log('test');
-				$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
-			}
+			$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 	    }
 	});
 }

@@ -267,7 +267,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
         if timeinterval == 'monthly' or timeinterval == 'weekly':
             timeinterval_stub = timeinterval
         else: # checked arguments at top so we know this is castable to float
-            timeinterval_stub = 'last_{}days'.format(int(timeinterval))
+            timeinterval_stub = 'last_n'
 
         plotstimedir = os.path.join(outdir, 'plots', timeinterval_stub)
         datadir = os.path.join(outdir, 'data')
@@ -291,12 +291,13 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
             if timeinterval == 'weekly':
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                      mindate.strftime('%Y%m%d'))
+                                        mindate.strftime('%Y%m%d'))
             elif timeinterval == 'monthly':
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                      mindate.strftime('%Y%m'))
+                                        mindate.strftime('%Y%m'))
             else:
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub)
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
+                                        'last_{}'.format(timeinterval))
             os.makedirs(plotsdir, exist_ok=True)
 
             # load data from this date range
@@ -418,25 +419,6 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                 # update the hash
                 with open(os.path.join(plotsdir, 'data_hash.dat'), 'w') as f:
                     f.write(new_pkl_hash)
-
-
-            # Create symlink from latest data directory to current
-            # The latest data directory is not necessarily reliably identified by
-            # the modification timestamp; instead, it is defined by having the
-            # latest value of timestamp in its filename. Based on the naming scheme
-            # for directories, an alphanumeric sort should also produce
-            # chronological ordering, so we'll rely on this assumption.
-            symlinkname = os.path.join(plotstimedir, 'current')
-            if os.path.exists(symlinkname):
-                os.unlink(symlinkname)
-            if timeinterval == 'monthly' or timeinterval == 'weekly':
-                dirnames = np.sort(glob('{}/*'.format(plotstimedir)))
-                dirnames = dirnames[dirnames != symlinkname] # just in case unlinking failed above
-                latest_dirname = dirnames[-1]
-                os.symlink(latest_dirname, os.path.join(plotstimedir, 'temp'))
-            else:
-                os.symlink(plotstimedir, os.path.join(plotstimedir, 'temp'))
-            os.rename('{}/temp'.format(plotstimedir), '{}/current'.format(plotstimedir))
 
 
 if __name__ == '__main__':
