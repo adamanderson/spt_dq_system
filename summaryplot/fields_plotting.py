@@ -627,9 +627,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                  "ell range [3000, 5000]  " + r"$[{\mu}K \cdot arcmin]$" + "\n"
         
         if noise_from_running_coadds:
-            more_title = "Noise(+signal) levels of year-to-date coadded maps\n"
+            more_title = "Noise of year-to-date coadded noise maps\n"
         else:
-            more_title = "Noise(+signal) levels of individual maps\n"
+            more_title = "Noise (+some signal) of individual maps\n"
         fig_title = self.get_full_fig_title(more_title)
         
         set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
