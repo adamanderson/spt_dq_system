@@ -84,15 +84,16 @@ function set_variable(variable, newVal)
 function load_plots_timeseries()
 {
     get_old_timeseries_plotdirs('last_n');
-    get_old_timeseries_plotdirs('weekly');
     get_old_timeseries_plotdirs('monthly');
+    get_old_timeseries_plotdirs('weekly');
 }
 
 function load_plots_maps()
 {
     get_old_map_plotdirs('last_n');
-    get_old_map_plotdirs('weekly');
+    get_old_map_plotdirs('yearly');
     get_old_map_plotdirs('monthly');
+    get_old_map_plotdirs('weekly');
 }
 
 function open_tab(tabId)
@@ -115,22 +116,31 @@ function open_tab(tabId)
 
 <div id="summarystats" class="tabcontent">
 
-<h2>Summary Stats</h2>
-<button class="btn" onclick="set_variable('wafer','w172')">w172</button>
-<button class="btn" onclick="set_variable('wafer','w174')">w174</button>
-<button class="btn" onclick="set_variable('wafer','w176')">w176</button>
-<button class="btn" onclick="set_variable('wafer','w177')">w177</button>
-<button class="btn" onclick="set_variable('wafer','w180')">w180</button>
-<button class="btn" onclick="set_variable('wafer','w181')">w181</button>
-<button class="btn" onclick="set_variable('wafer','w188')">w188</button>
-<button class="btn" onclick="set_variable('wafer','w203')">w203</button>
-<button class="btn" onclick="set_variable('wafer','w204')">w204</button>
-<button class="btn" onclick="set_variable('wafer','w206')">w206</button>
-<button class="btn" onclick="set_variable('wafer','all')">all</button>
-<br>
-<br>
 
 <table>
+  <tr>
+	<td colspan="2">
+	  <table>
+		<tr>
+		  <td>
+			<h2>Summary Stats</h2>
+			<button class="btn" onclick="set_variable('wafer','w172')">w172</button>
+			<button class="btn" onclick="set_variable('wafer','w174')">w174</button>
+			<button class="btn" onclick="set_variable('wafer','w176')">w176</button>
+			<button class="btn" onclick="set_variable('wafer','w177')">w177</button>
+			<button class="btn" onclick="set_variable('wafer','w180')">w180</button>
+			<button class="btn" onclick="set_variable('wafer','w181')">w181</button>
+			<button class="btn" onclick="set_variable('wafer','w188')">w188</button>
+			<button class="btn" onclick="set_variable('wafer','w203')">w203</button>
+			<button class="btn" onclick="set_variable('wafer','w204')">w204</button>
+			<button class="btn" onclick="set_variable('wafer','w206')">w206</button>
+			<button class="btn" onclick="set_variable('wafer','all')">all</button>
+		</td>
+		</tr>
+	  </table>
+	</td>
+  </tr>
+
   <tr>
     <td valign="top" width="120">
 	  <table>
@@ -147,23 +157,23 @@ function open_tab(tabId)
 		</tr>
 		<tr>
 		  <td>
-			<b>Weekly</b>
-		  </td>
-		</tr>
-		<tr>
-		  <td>
-			<div id="datalist_weekly_stats" class="datalist_weekly">
-			</div>
-		  </td>
-		</tr>
-		<tr>
-		  <td>
 			<b>Monthly</b>
 		  </td>
 		</tr>
 		<tr>
 		  <td>
 			<div id="datalist_monthly_stats" class="datalist_monthly">
+			</div>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<b>Weekly</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<div id="datalist_weekly_stats" class="datalist_weekly">
 			</div>
 		  </td>
 		</tr>
@@ -428,9 +438,20 @@ function open_tab(tabId)
 
 
 <div id="maps" class="tabcontent" style="display: none">
-<h2>Maps</h2>
 
 <table>
+  <tr>
+	<td colspan="2">
+	  <table>
+		<tr>
+		  <td>
+			<h2>Maps</h2>
+		  </td>
+		</tr>
+	  </table>
+	</td>
+  </tr>
+
   <tr>
     <td valign="top" width="120">
 	  <table>
@@ -447,12 +468,12 @@ function open_tab(tabId)
 		</tr>
 		<tr>
 		  <td>
-			<b>Weekly</b>
+			<b>Yearly</b>
 		  </td>
 		</tr>
 		<tr>
 		  <td>
-			<div id="datalist_weekly_maps" class="datalist_weekly">
+			<div id="datalist_yearly_maps" class="datalist_yearly">
 			</div>
 		  </td>
 		</tr>
@@ -464,6 +485,17 @@ function open_tab(tabId)
 		<tr>
 		  <td>
 			<div id="datalist_monthly_maps" class="datalist_monthly">
+			</div>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<b>Weekly</b>
+		  </td>
+		</tr>
+		<tr>
+		  <td>
+			<div id="datalist_weekly_maps" class="datalist_weekly">
 			</div>
 		  </td>
 		</tr>
