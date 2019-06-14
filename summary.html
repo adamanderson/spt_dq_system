@@ -118,12 +118,9 @@ function load_plots_maps()
 
 function open_tab(tabId)
 {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-		tabcontent[i].style.display = "none";
-    }
-	document.getElementById(tabId).style.display = "block";
+	$("#summarystats").hide();
+	$("#maps").hide();
+	$("#"+tabId).show();
 
 	update_visibility();
 }
