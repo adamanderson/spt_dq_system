@@ -26,28 +26,23 @@ from    scipy       import  ndimage
 # ------------------------------------------------------------------------------
 
 
-# consider changing these global variables to arguments to the constituent
-# functions below
-
-gd_wdth = 0.20
-ttl_fs  = 11
-lbl_fs  = ttl_fs - 1.0   # font size for axis labels
-tck_fs  = ttl_fs - 1.0   # font size for tick labels
-lgd_fs  = ttl_fs - 2.0   # font size for legend
-fig_wd  = 12.0
-fig_ht  =  7.5
-fig_dir = '.'
-
-
-
 # Define functions related to general plotting utilities
 # ------------------------------------------------------------------------------
 
-def get_figure_and_plot_objects(w=fig_wd, h=fig_ht, dpi=None):
+def get_figure_and_plot_objects(w=12.0, h=7.5, dpi=None):
     
     figure_obj = pyplot.figure(figsize=(w, h), dpi=dpi)
     plot_obj   = figure_obj.add_subplot(1, 1, 1)
     return figure_obj, plot_obj
+
+
+def determine_various_font_sizes(title_fontsize):
+
+    labels_fs = title_fontsize - 1.0
+    ticks_fs  = title_fontsize - 1.0
+    legend_fs = title_fontsize - 2.0
+    
+    return labels_fs, ticks_fs, legend_fs
 
 
 def set_lims(plot_obj, l, r, b, t):
@@ -58,17 +53,19 @@ def set_lims(plot_obj, l, r, b, t):
     if t is not None: plot_obj.set_ylim(top=t)
 
 
-def set_ticks(plot_obj, xt, xtl, yt, ytl):
+def set_ticks(plot_obj, xt, xtl, yt, ytl, ttl_fs):
 
+    lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
     if xt  is not None: plot_obj.set_xticks(xt)
     if yt  is not None: plot_obj.set_yticks(yt)
     if xtl is not None: plot_obj.set_xticklabels(xtl, fontsize=tck_fs)
     if ytl is not None: plot_obj.set_yticklabels(ytl, fontsize=tck_fs)
-    plot_obj.grid(which="both", linestyle="dotted", linewidth=gd_wdth)
+    plot_obj.grid(which="both", linestyle="dotted", linewidth=0.20)
 
 
-def set_labels_and_font_sizes(plot_obj, xlabel, ylabel, title):
+def set_labels_and_title(plot_obj, xlabel, ylabel, title, ttl_fs):
     
+    lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
     plot_obj.tick_params(axis="both", labelsize=tck_fs, direction="in")
     plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.2)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
@@ -76,7 +73,7 @@ def set_labels_and_font_sizes(plot_obj, xlabel, ylabel, title):
     plot_obj.set_title(title, fontsize=ttl_fs)
 
 
-def save_figure_etc(figure_obj, file_name):
+def save_figure_etc(figure_obj, fig_dir, file_name):
     
     figure_obj.tight_layout()
     fig_path = os.path.join(fig_dir, file_name)
@@ -99,7 +96,9 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                  map_type=None, map_id=None, coadded_data=True,
                  custom_vmin_field_map=None,
                  custom_vmax_field_map=None,
+                 figure_title_font_size=11,
                  simpler_file_names=True,
+                 directory_to_save_figures="",
                  logging_function=logging.info):
         
         self.make_figure_for_field_map    = fig_f
@@ -115,8 +114,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         self.custom_vmin  = custom_vmin_field_map
         self.custom_vmax  = custom_vmax_field_map
         self.simpler_file_names = simpler_file_names
-        self.obs_fr = None
+        self.ttl_fs = figure_title_font_size
+        self.fig_dir = directory_to_save_figures
         self.log = logging_function
+        self.obs_fr = None
         
         
     def rebin_map_to_diff_res(self, frame, new_res):
@@ -175,7 +176,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                 resol += " smoothed w/ " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "  " + obs_id + " (" + date + ") " + \
-                      "   " + self.map_id + " " + mp_ty_str + " (" + resol + ")"
+                      "   " + self.map_id + " " + mp_ty_str #+ " (" + resol + ")"
         
         elif (obs_fr is None) and (obs_id_list is not None):
             source  = "1500 square degrees field"
@@ -199,7 +200,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                 resol += " smoothed w/ " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "   " + self.map_id + " coadded " + mp_ty_str + \
-                      "s " + "(" + resol + ")" + "\n" + \
+                      "s " + "\n" + \
                       "(data from observations taken " + dt_rng + ":" + "\n" + \
                       n_obss + ", " + obs_id + ")"
         else:
@@ -223,12 +224,12 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
     
     def visualize_entire_map(
             self, map_to_view,
-            w=15.0, h=10.0, dpi=None, aspect="equal",
+            w=12.0, h=8.0, dpi=None, aspect="equal",
             cmap="gray", custom_vmin=None, custom_vmax=None,
             cbar_label="", fig_title="",
-            file_name="map.png"):
+            fig_dir="", file_name="map.png"):
         
-        figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=250)
+        figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=100)
         
         if (custom_vmin == None) or (custom_vmax == None):
             pctl_lo = numpy.nanpercentile(numpy.asarray(map_to_view),  1)
@@ -254,17 +255,18 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             bottom=False, top=False, labelbottom=False, labeltop=False,
             left=False, right=False, labelleft=False, labelright=False)
         
+        lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
         cbar.ax.set_ylabel(cbar_label, fontsize=lbl_fs)
-        plot_obj.set_title(fig_title, fontsize=ttl_fs)
+        plot_obj.set_title(fig_title, fontsize=self.ttl_fs)
                 
-        save_figure_etc(figure_obj, file_name)
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def visualize_normalized_map_cross_section(
             self, map_data,
             fig_w=12.0, fig_h=7.5,
             xlabel="", ylabel="", fig_title="",
-            file_name="cross_section.png"):
+            fig_dir="", file_name="cross_section.png"):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
@@ -286,10 +288,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                 
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, 1.05)
         set_ticks(plot_obj, idcs[1:-1], [str(dec) for dec in decs[1:-1]],
-                  None, None)
-        set_labels_and_font_sizes(plot_obj, xlabel, ylabel, fig_title)
+                  None, None, self.ttl_fs)
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
-        save_figure_etc(figure_obj, file_name)
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def __call__(self, frame):
@@ -462,6 +464,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                  fig_fs=False, fig_pt=False, fig_ns=False,
                  map_type=None, map_id=None,
                  xlim_left=None, xlim_right=None,
+                 figure_title_font_size=11,
+                 directory_to_save_figures="",
                  logging_function=logging.info):
         
         self.make_fig_for_flggg_stats  = fig_fs
@@ -474,6 +478,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 
         self.xlim_left  = xlim_left
         self.xlim_right = xlim_right
+        self.ttl_fs     = figure_title_font_size
         self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
                         "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3"}
         self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
@@ -485,6 +490,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         self.fig_title_prefix = map_id + " " + map_type + " " + "map" + "  -  "
         self.file_name_prefix = map_id + "-" + map_type + "_" + "map" + "_"
         
+        self.fig_dir = directory_to_save_figures
         self.log = logging_function
     
     
@@ -611,7 +617,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             xtick_locs   = None
             xtick_labels = None
         
-        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None)
+        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
 
         if noise_from_running_coadds:
             xlabel = "\n" + "Number of observations"
@@ -626,7 +632,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             more_title = "Noise(+signal) levels of individual maps\n"
         fig_title = self.get_full_fig_title(more_title)
         
-        set_labels_and_font_sizes(plot_obj, xlabel, ylabel, fig_title)
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
         if noise_from_running_coadds:
             more_file_name = "noise_levels_from_running_coadds"
@@ -634,7 +640,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             more_file_name = "noise_levels_from_individual_maps"
         file_name = self.get_full_file_name(more_file_name)
         
-        save_figure_etc(figure_obj, file_name)
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def make_figure_for_pointing_discrepancies(self, frame):
@@ -673,7 +679,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.get_xticks_and_labels_from_obs_id_range(
                     plot_obj, self.xlim_left, self.xlim_right)
             
-            set_ticks(plot_obj, xtick_locs, xtick_labels, None, None)
+            set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
             
             xlabel = "\n" + "Time (UTC)"
             if coordinate == "Ra":
@@ -686,12 +692,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             fig_title = self.get_full_fig_title(more_title)
             
-            set_labels_and_font_sizes(plot_obj, xlabel, ylabel, fig_title)
+            set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
             
             more_file_name = "delta_" + coordinate + "s_from_point_sources"
             file_name = self.get_full_file_name(more_file_name)
             
-            save_figure_etc(figure_obj, file_name)
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def make_figure_for_flagging_statistics(self, frame):
@@ -746,7 +752,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             self.get_xticks_and_labels_from_obs_id_range(
                 plot_obj, self.xlim_left, self.xlim_right)
         
-        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None)
+        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
         
         xlabel = "\n" + "Time (UTC)"
         ylabel = "Average number (avg. over all scans of an obs.)" + "\n"
@@ -754,12 +760,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                      "for select reasons during each observation" + "\n"
         fig_title  = self.get_full_fig_title(more_title)
         
-        set_labels_and_font_sizes(plot_obj, xlabel, ylabel, fig_title)
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
         more_file_name = "average_numbers_of_flagged_detectors"
         file_name = self.get_full_file_name(more_file_name)
         
-        save_figure_etc(figure_obj, file_name)
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def __call__(self, frame):
@@ -856,17 +862,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
     good_input_files = [input_file for input_file in input_files 
                         if os.path.isfile(input_file)]
-
-    # Update some global variables. This is bad form; should fix in further
-    # refactoring.
-    global ttl_fs, lbl_fs, tck_fs, lgd_fs, fig_dir
-    ttl_fs  = figure_title_font_size
-    lbl_fs  = ttl_fs - 1.0   # font size for axis labels
-    tck_fs  = ttl_fs - 1.0   # font size for tick labels
-    lgd_fs  = ttl_fs - 2.0   # font size for legend
-    fig_dir = directory_to_save_figures
-
-
+    
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     log_format = logging.Formatter('%(message)s')
@@ -964,7 +960,9 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
                      coadded_data=coadded_data,
                      custom_vmin_field_map=color_bar_lower_limit,
                      custom_vmax_field_map=color_bar_upper_limit,
+                     figure_title_font_size=figure_title_font_size,
                      simpler_file_names=simpler_file_names,
+                     directory_to_save_figures=directory_to_save_figures,
                      logging_function=log)
 
         pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
@@ -975,6 +973,8 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
                      map_type=map_type,
                      xlim_left=left_xlimit_for_time_variations,
                      xlim_right=right_xlimit_for_time_variations,
+                     figure_title_font_size=figure_title_font_size,
+                     directory_to_save_figures=directory_to_save_figures,
                      logging_function=log)
 
         pipeline.Add(RecordIDsUsedForPlotting,
