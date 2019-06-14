@@ -58,27 +58,47 @@ function update_figs()
   document["map_t_150"].src                       ='staticimg/'+mapweekdir+'/150GHz-T_map.png'
   document["map_t_220"].src                       ='staticimg/'+mapweekdir+'/220GHz-T_map.png'
 
-  document["map_noise_t_90"].src           ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
-  document["map_noise_t_150"].src          ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
-  document["map_noise_t_220"].src          ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+  document["map_noise_t_90"].src                  ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
+  document["map_noise_t_150"].src                 ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
+  document["map_noise_t_220"].src                 ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
 
-  document["map_delta_ras_t_90"].src           ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Ras_from_point_sources.png'
-  document["map_delta_ras_t_150"].src          ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources.png'
-  document["map_delta_ras_t_220"].src          ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Ras_from_point_sources.png'
+  document["map_delta_ras_t_90"].src              ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Ras_from_point_sources.png'
+  document["map_delta_ras_t_150"].src             ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources.png'
+  document["map_delta_ras_t_220"].src             ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Ras_from_point_sources.png'
 
-  document["map_delta_decs_t_90"].src           ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Decs_from_point_sources.png'
-  document["map_delta_decs_t_150"].src          ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Decs_from_point_sources.png'
-  document["map_delta_decs_t_220"].src          ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Decs_from_point_sources.png'
+  document["map_delta_decs_t_90"].src             ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Decs_from_point_sources.png'
+  document["map_delta_decs_t_150"].src            ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Decs_from_point_sources.png'
+  document["map_delta_decs_t_220"].src            ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Decs_from_point_sources.png'
 
-  document["flagging_90"].src           ='staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
-  document["flagging_150"].src          ='staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
-  document["flagging_220"].src          ='staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
+  document["flagging_90"].src                     ='staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
+  document["flagging_150"].src                    ='staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
+  document["flagging_220"].src                    ='staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
+
+  document["weight_xsection_90"].src              ='staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_150"].src             ='staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_220"].src             ='staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
+
+  document["running_noise_90"].src                ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_150"].src               ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_220"].src               ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
+}
+
+function update_visibility() {
+  if(!window["mapweekdir"].includes('yearly')) {
+    $(".maps_yearly").hide();
+    $(".maps_non_yearly").show();
+  }
+  else {
+    $(".maps_yearly").show();
+    $(".maps_non_yearly").hide();
+  }
 }
 
 function set_variable(variable, newVal)
 {
   window[variable]=newVal;
   update_figs();
+  update_visibility();
 }
 
 function load_plots_timeseries()
@@ -104,6 +124,8 @@ function open_tab(tabId)
 		tabcontent[i].style.display = "none";
     }
 	document.getElementById(tabId).style.display = "block";
+
+	update_visibility();
 }
 </script>
 
@@ -526,12 +548,12 @@ function open_tab(tabId)
 			</a>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td colspan=3>
 			<h2>Map Noise Levels</h2>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td>
 			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png">
 			  <img style="display:block;" width="100%" name='map_noise_t_90' src='staticimg/maps/last_n/last_30/90GHz-T_map_noise_levels_from_individual_maps.png'>
@@ -548,12 +570,12 @@ function open_tab(tabId)
 			</a>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td colspan=3>
 			<h2>RA Offsets of Point Sources</h2>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td>
 			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Ras_from_point_sources.png">
 			  <img style="display:block;" width="100%" name='map_delta_ras_t_90' src='staticimg/maps/last_n/last_30/90GHz-T_map_delta_Ras_from_point_sources.png'>
@@ -570,12 +592,12 @@ function open_tab(tabId)
 			</a>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td colspan=3>
 			<h2>Dec Offsets of Point Sources</h2>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td>
 			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Decs_from_point_sources.png">
 			  <img style="display:block;" width="100%" name='map_delta_decs_t_90' src='staticimg/maps/last_n/last_30/90GHz-T_map_delta_Decs_from_point_sources.png'>
@@ -592,12 +614,12 @@ function open_tab(tabId)
 			</a>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td colspan=3>
 			<h2>Flagging Statistics</h2>
 		  </td>
 		</tr>
-		<tr>
+		<tr class="maps_non_yearly">
 		  <td>
 			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png">
 			  <img style="display:block;" width="100%" name='flagging_90' src='staticimg/maps/last_n/last_30/90GHz-T_map_average_numbers_of_flagged_detectors.png'>
@@ -611,6 +633,51 @@ function open_tab(tabId)
 		  <td>
 			<a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'">
 			  <img style="display:block;" width="100%" name='flagging_220' src='staticimg/maps/last_n/last_30/220GHz-T_map_average_numbers_of_flagged_detectors.png'>
+			</a>
+		  </td>
+		</tr>
+		<tr class="maps_yearly">
+		  <td colspan=3>
+			<h2>Weight Map Cross Section</h2>
+		  </td>
+		</tr>
+		<tr class="maps_yearly">
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png">
+			  <img style="display:block;" width="100%" name='weight_xsection_90' src='staticimg/maps/last_n/last_30/90GHz-TT_weight_map_cross_sectional_view.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'">
+			  <img style="display:block;" width="100%" name='weight_xsection_150' src='staticimg/maps/last_n/last_30/150GHz-TT_weight_map_cross_sectional_view.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'">
+			  <img style="display:block;" width="100%" name='weight_xsection_220' src='staticimg/maps/last_n/last_30/220GHz-TT_weight_map_cross_sectional_view.png'>
+			</a>
+		  </td>
+		  </div>
+		</tr>
+		<tr class="maps_yearly">
+		  <td colspan=3>
+			<h2>Noise of Running Coadds</h2>
+		  </td>
+		</tr>
+		<tr class="maps_yearly">
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png">
+			  <img style="display:block;" width="100%" name='running_noise_90' src='staticimg/maps/last_n/last_30/90GHz-T_map_noise_levels_from_running_coadds.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'">
+			  <img style="display:block;" width="100%" name='running_noise_150' src='staticimg/maps/last_n/last_30/150GHz-T_map_noise_levels_from_running_coadds.png'>
+			</a>
+		  </td>
+		  <td>
+			<a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'">
+			  <img style="display:block;" width="100%" name='running_noise_220' src='staticimg/maps/last_n/last_30/220GHz-T_map_noise_levels_from_running_coadds.png'>
 			</a>
 		  </td>
 		</tr>
