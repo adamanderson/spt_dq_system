@@ -17,6 +17,7 @@ from    spt3g       import  mapmaker
 from    spt3g       import  coordinateutils
 from    spt3g       import  std_processing
 from    scipy       import  ndimage
+from    scipy       import  linalg
 
 
 
@@ -391,7 +392,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                                 wt_mp_str.replace(" ", "_") + \
                                 "_cross_sectional_view.png"
                     fig_ttl = self.map_id + " " + wt_mp_str + "   " + "\n" + \
-                              "Cross sectional view of the weight map " + \
+                              "Cross sectional view " + \
                               "along the RA = 0h contour" + "\n"
                     
                     self.log("Making a figure for a cross section of "
@@ -632,25 +633,54 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 x_data = obs_ids
             plot_obj.plot(
                 x_data, noise_levels, label=label,
-                linestyle=self.ln_styl, linewidth=0.45,
+                linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
                 marker=".", markersize=self.mrkrsz,
                 color=color, alpha=0.5)
             
-            self.indicate_out_of_range_values(plot_obj, x_data, noise_levels,
-                                              ylims_dict[self.map_id], color)
+            if noise_from_running_coadds:
+                x_for_lls = []
+                y_for_lls = []
+                for i, noise_level in enumerate(noise_levels):
+                    if numpy.isfinite(noise_level):
+                        x_for_lls.append(x_data[i])
+                        y_for_lls.append(noise_level)
+                x_for_lls = numpy.log(numpy.asarray(x_for_lls))
+                y_for_lls = numpy.log(numpy.asarray(y_for_lls))
+                design_matrix = numpy.asarray(x_for_lls)\
+                                [:, numpy.newaxis]**[1.0, 0.0]
+                parameters, residues, rank, singular_values = \
+                    linalg.lstsq(design_matrix, numpy.asarray(y_for_lls))
+                power = parameters[0]
+                const = parameters[1]
+                x_for_plot = numpy.arange(1, xlims_dict["right"], 2)
+                y_for_plot = numpy.exp(const) * numpy.power(x_for_plot, power)
+                plot_obj.plot(x_for_plot, y_for_plot,
+                              color=color, alpha=0.8, linewidth=self.ln_wdth)
+                explanation = "Slope from LLS fit: " + str(power)[0:6]
+                ylocs_dict  = {"ra0hdec-44.75": 0.15,
+                               "ra0hdec-52.25": 0.11,
+                               "ra0hdec-59.75": 0.07,
+                               "ra0hdec-67.25": 0.03}
+                plot_obj.text(0.03, ylocs_dict[sub_field], explanation,
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="left",
+                              color=color, fontsize=self.ttl_fs-4)
+            else:
+                self.indicate_out_of_range_values(plot_obj, x_data, noise_levels,
+                                                  ylims_dict[self.map_id], color)
                 
         set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
                  ylims_dict[self.map_id]["bottom"],
                  ylims_dict[self.map_id]["top"])
         
         
-        if not noise_from_running_coadds:
+        if noise_from_running_coadds:
+            xtick_locs   = None
+            xtick_labels = None
+        else:
             xtick_locs, xtick_labels = \
                 self.get_xticks_and_labels_from_obs_id_range(
                     plot_obj, self.xlim_left, self.xlim_right)
-        else:
-            xtick_locs   = None
-            xtick_labels = None
         
         set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
 
