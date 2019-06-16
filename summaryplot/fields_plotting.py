@@ -539,6 +539,38 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         return xtick_locs, xtick_labels
     
     
+    def indicate_out_of_range_values(
+            self, plot_obj, x_values, y_values, ylims_dict, color):
+        
+        ytop = ylims_dict["top"]
+        ybot = ylims_dict["bottom"]
+        near_ytop = ybot + 0.90 * (ytop - ybot)
+        near_ybot = ybot + 0.15 * (ytop - ybot)
+        note_fs = self.ttl_fs-4
+        note_lw = 1.5*self.ln_wdth
+        note_st = "--"
+        
+        for i, x_value in enumerate(x_values):
+            y_value = y_values[i]
+            if not numpy.isfinite(y_value):
+                plot_obj.axvline(x_value, color=color,
+                                 linewidth=note_lw, linestyle=note_st)
+                plot_obj.text(x_value, near_ytop, "N\na\nN",
+                              color=color, fontsize=note_fs)
+            elif y_value >= ytop:
+                plot_obj.scatter(x_value, ytop, color=color, marker=6)
+                plot_obj.axvline(x_value, color=color,
+                                 linewidth=note_lw, linestyle=note_st)
+                """plot_obj.text(x_value, near_ytop, "O\nu\nt\nl\ni\ne\nr",
+                                 color=color, fontsize=note_fs)"""
+            elif y_value <= ybot:
+                plot_obj.scatter(x_value, ybot, color=color, marker=7)
+                plot_obj.axvline(x_value, color=color,
+                                 linewidth=note_lw, linestyle=note_st)
+                """plot_obj.text(x_value, near_ybot, "O\nu\nt\nl\ni\ne\nr",
+                                 color=color, fontsize=note_fs)"""
+                              
+    
     def get_full_fig_title(self, additional_title):
         
         return self.fig_title_prefix + additional_title
@@ -564,6 +596,26 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         else:
             raise NameError("Not clear where noise data are!")
         
+        if noise_from_running_coadds:
+            plot_obj.set_xscale("log")
+            plot_obj.set_yscale("log")
+            ylims_dict = { "90GHz": {"bottom":  5, "top": 250},
+                          "150GHz": {"bottom":  5, "top": 250},
+                          "220GHz": {"bottom": 15, "top": 700}}
+            max_n_obss = 0
+            for sub_field, noise_dict in noise_data.items():
+                n_obss = len(noise_dict.keys())
+                if n_obss > max_n_obss:
+                    max_n_obss = n_obss
+            xlims_dict = {"left" : 0.9,
+                          "right": 10**numpy.ceil(numpy.log10(max_n_obss))}
+        else:
+            ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
+                          "150GHz": {"bottom":  90, "top": 210},
+                          "220GHz": {"bottom": 300, "top": 700}}
+            xlims_dict = self.get_xlims_from_obs_id_range(
+                             self.xlim_left, self.xlim_right, 3.0)
+        
         for sub_field, obs_ids in obs_data.items():
             if not noise_from_running_coadds:
                 obs_ids = sorted(obs_ids)
@@ -583,27 +635,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 linestyle=self.ln_styl, linewidth=0.45,
                 marker=".", markersize=self.mrkrsz,
                 color=color, alpha=0.5)
-        
-        if noise_from_running_coadds:
-            plot_obj.set_xscale("log")
-            plot_obj.set_yscale("log")
-            ylims_dict = { "90GHz": {"bottom":  5, "top": 250},
-                          "150GHz": {"bottom":  5, "top": 250},
-                          "220GHz": {"bottom": 15, "top": 700}}
-            max_n_obss = 0
-            for sub_field, noise_dict in noise_data.items():
-                n_obss = len(noise_dict.keys())
-                if n_obss > max_n_obss:
-                    max_n_obss = n_obss
-            xlims_dict = {"left" : 0.9,
-                          "right": 10**numpy.ceil(numpy.log10(max_n_obss))}
-        else:
-            ylims_dict = { "90GHz": {"bottom":  75, "top": 250},
-                          "150GHz": {"bottom":  75, "top": 250},
-                          "220GHz": {"bottom": 300, "top": 700}}
-            xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 3.0)
-        
+            
+            self.indicate_out_of_range_values(plot_obj, x_data, noise_levels,
+                                              ylims_dict[self.map_id], color)
+                
         set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
                  ylims_dict[self.map_id]["bottom"],
                  ylims_dict[self.map_id]["top"])
@@ -650,6 +685,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         for coordinate in ["Ra", "Dec"]:
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
+            xlims_dict = self.get_xlims_from_obs_id_range(
+                             self.xlim_left, self.xlim_right, 4.0)
+            ylims_dict = {"bottom": -45, "top": 45}
+
             for source_rank in ["1", "2", "3"]:
                 key  = "Delta" + coordinate + "s" + "FromSources" + source_rank
                 data = frame[key]
@@ -667,11 +706,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                         marker=marker_dict[source_rank][0],
                         markersize=marker_dict[source_rank][1],
                         color=self.cl_dict[sub_field], alpha=0.8)
-            
-            xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 4.0)
-            ylims_dict = {"bottom": -45, "top": 45}
-            
+                    
+                    self.indicate_out_of_range_values(
+                        plot_obj, obs_ids, offsets, ylims_dict,
+                        self.cl_dict[sub_field])
+                        
             set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                                ylims_dict["bottom"], ylims_dict["top"])
             
@@ -683,10 +722,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             xlabel = "\n" + "Time (UTC)"
             if coordinate == "Ra":
-                ylabel = "(Measured R.A. - True R.A.) " + "\n" + \
-                         r"$\times$" + " cos(True Dec.)"+ " [arc second]" + "\n"
+                ylabel = "(Measured R.A. - True R.A.) " + \
+                         r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
             else:
-                ylabel = "(Measured Dec. - True Dec.) [arc second]" + "\n"
+                ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
             more_title = "Difference between measured and true " + \
                          coordinate + " of several point sources" + "\n"
             
