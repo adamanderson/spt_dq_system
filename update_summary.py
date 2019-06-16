@@ -47,6 +47,9 @@ parser_maps.add_argument('-c', '--nocoadding',
 parser_maps.add_argument('-p', '--noplotting',
                          action='store_true', default=False,
                          help='Skip the plotting part.')
+parser_maps.add_argument('-r', '--rebuildinsteadofupdate',
+                         action='store_true', default=False,
+                         help='Rebuild maps and figures instead of update them.')
 parser_maps.add_argument('-l', '--nologfiles',
                          action='store_true', default=False,
                          help='Whether to redirect stdout/err to txt files.')
@@ -121,6 +124,11 @@ if args.mode == 'maps':
         modes.remove('coadding')
     if args.noplotting:
         modes.remove('plotting')
+        
+    if args.rebuildinsteadofupdate:
+        action = 'rebuild'
+    else:
+        action = 'update'
     
     current_day = args.maxtime
     
@@ -139,7 +147,7 @@ if args.mode == 'maps':
                 log_file = os.path.join(args.coaddslogsdir,
                                         '{}_{}'.format(time_string, logger_name))
             
-            cache_field_maps.update(mode, 'update', time_interval='last_n',
+            cache_field_maps.update(mode, action, time_interval='last_n',
                                     last_how_many_days=n,
                                     oldest_time_to_consider=args.mintime,
                                     current_time=current_day,
@@ -166,7 +174,7 @@ if args.mode == 'maps':
                 log_file = os.path.join(args.coaddslogsdir,
                                         '{}_{}'.format(time_string, logger_name))
             
-            cache_field_maps.update(mode, 'update', time_interval=interval,
+            cache_field_maps.update(mode, action, time_interval=interval,
                                     oldest_time_to_consider=args.mintime,
                                     current_time=current_day,
                                     original_maps_dir=args.mapsdatadir,
