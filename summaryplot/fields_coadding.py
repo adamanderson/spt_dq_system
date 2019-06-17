@@ -63,10 +63,13 @@ def map_seems_fine(map_frame, log_fun):
 def get_band_average(bolo_names_from_each_scan, bolo_props_map):
 
     n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
+    bolos_with_properties  = set(bolo_props_map.keys())
 
     for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
         n_bolos_from_one_scan = {"90": 0, "150": 0, "220": 0}
-        for bn in bolo_names_from_one_scan:
+        identifiable_bolos = set(bolo_names_from_one_scan) & \
+                             bolos_with_properties
+        for bn in identifiable_bolos:
             band = bolo_props_map[bn].band / core.G3Units.GHz
             if not numpy.isfinite(band):
                 continue
