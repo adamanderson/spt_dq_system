@@ -104,8 +104,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         start_time   = current_time + delta_t
         if start_time < beginning_of_the_record:
             start_time = beginning_of_the_record
-        start_time   = start_time.replace(hour=0, minute=0,
-                                          second=0, microsecond=0)
+        """start_time   = start_time.replace(hour=0, minute=0,
+                                          second=0, microsecond=0)"""
         end_obs_id   = convert_to_obs_id(end_time)
         start_obs_id = convert_to_obs_id(start_time)
 
@@ -420,7 +420,15 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                     if k not in ['input_files', 'bad_obs_ids']},
                                    indent=1))
                     if not just_see_commands:
-                        fields_coadding.run(**coadd_args)
+                        try:
+                            fields_coadding.run(**coadd_args)
+                        except Exception:
+                            if log_file is not None:
+                                logger.exception('Something did not go well '
+                                                 'when coadding maps...')
+                                raise RuntimeError('An error occurred! '
+                                                   'Please check where it occurred '
+                                                   'in the log file {}!'.format(log_file))
 
                     # copy backup file
                     log("")
@@ -533,7 +541,16 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                         if k not in ['input_files', 'bad_obs_ids']},
                                        indent=1))
                         if not just_see_commands:
-                            fields_coadding.run(**coadd_args)
+                            try:
+                                fields_coadding.run(**coadd_args)
+                            except Exception:
+                                if log_file is not None:
+                                    logger.exception('Something did not go well '
+                                                     'when coadding maps...')
+                                    raise RuntimeError('An error occurred! '
+                                                       'Please check where it occurred '
+                                                       'in the log file {}!'.format(log_file))
+
 
                         # copy backup file
                         log("")
@@ -588,12 +605,22 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     log('Executing `fields_coadding.run` with arguments:')
                     log(json.dumps(coadd_all_fields_args, indent=1))
                     if not just_see_commands:
-                        fields_coadding.run(**coadd_all_fields_args)
+                        try:
+                            fields_coadding.run(**coadd_args)
+                        except Exception:
+                            if log_file is not None:
+                                logger.exception('Something did not go well '
+                                                 'when coadding maps...')
+                                raise RuntimeError('An error occurred! '
+                                                   'Please check where it occurred '
+                                                   'in the log file {}!'.format(log_file))
                     log("")
                     log("# ------------------")
                     log("")
 
+
         elif mode == 'plotting':
+            
             for map_id in map_ids:
                 plotting_args = {'input_files': [os.path.join(desired_dir_names[i],
                                                               'coadded_maps_{}.g3'.format(map_id))],
@@ -626,7 +653,16 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 log('Executing `fields_plotting.run` with arguments:')
                 log(json.dumps(plotting_args, indent=1))
                 if not just_see_commands:
-                    fields_plotting.run(**plotting_args)
+                    try:
+                        fields_plotting.run(**coadd_args)
+                    except Exception:
+                        if log_file is not None:
+                            logger.exception('Something did not go well '
+                                             'when plotting maps...')
+                            raise RuntimeError('An error occurred! '
+                                               'Please check where it occurred '
+                                               'in the log file {}!'.format(log_file))
+
                 log("")
                 log("# ------------------")
                 log("")
