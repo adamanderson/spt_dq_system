@@ -606,7 +606,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     log(json.dumps(coadd_all_fields_args, indent=1))
                     if not just_see_commands:
                         try:
-                            fields_coadding.run(**coadd_args)
+                            fields_coadding.run(**coadd_all_fields_args)
                         except Exception:
                             if log_file is not None:
                                 logger.exception('Something did not go well '
@@ -654,7 +654,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 log(json.dumps(plotting_args, indent=1))
                 if not just_see_commands:
                     try:
-                        fields_plotting.run(**coadd_args)
+                        fields_plotting.run(**plotting_args)
                     except Exception:
                         if log_file is not None:
                             logger.exception('Something did not go well '
