@@ -42,7 +42,6 @@ def determine_various_font_sizes(title_fontsize):
     labels_fs = title_fontsize - 1.0
     ticks_fs  = title_fontsize - 1.0
     legend_fs = title_fontsize - 2.0
-    
     return labels_fs, ticks_fs, legend_fs
 
 
@@ -54,20 +53,26 @@ def set_lims(plot_obj, l, r, b, t):
     if t is not None: plot_obj.set_ylim(top=t)
 
 
-def set_ticks(plot_obj, xt, xtl, yt, ytl, ttl_fs):
+def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs):
 
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
-    if xt  is not None: plot_obj.set_xticks(xt)
-    if yt  is not None: plot_obj.set_yticks(yt)
+    if xta is not None: plot_obj.set_xticks(xta, minor=False)
+    if xti is not None: plot_obj.set_xticks(xti, minor=True)
+    if yta is not None: plot_obj.set_yticks(yta, minor=False)
+    if yti is not None: plot_obj.set_yticks(yti, minor=True)
     if xtl is not None: plot_obj.set_xticklabels(xtl, fontsize=tck_fs)
     if ytl is not None: plot_obj.set_yticklabels(ytl, fontsize=tck_fs)
-    plot_obj.grid(which="both", linestyle="dotted", linewidth=0.20)
+    plot_obj.grid(which="major", linestyle="dotted", linewidth=0.20)
+    plot_obj.grid(which="minor", linestyle="dotted", linewidth=0.10)
 
 
 def set_labels_and_title(plot_obj, xlabel, ylabel, title, ttl_fs):
     
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
-    plot_obj.tick_params(axis="both", labelsize=tck_fs, direction="in")
+    plot_obj.tick_params(axis="both", which="major",
+                         direction="in", labelsize=tck_fs)
+    plot_obj.tick_params(axis="both", which="minor",
+                         direction="in")
     plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.2)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
     plot_obj.set_ylabel(ylabel, fontsize=lbl_fs)
@@ -288,8 +293,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         xlim_right = idcs[-1]
                 
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, 1.05)
-        set_ticks(plot_obj, idcs[1:-1], [str(dec) for dec in decs[1:-1]],
-                  None, None, self.ttl_fs)
+        set_ticks(plot_obj, idcs[1:-1], None, [str(dec) for dec in decs[1:-1]],
+                  None, None, None, self.ttl_fs)
         set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
         save_figure_etc(figure_obj, self.fig_dir, file_name)
@@ -517,8 +522,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                           split(":")[0].split("-")[0:2])              \
                  for obs_id in xtick_locs]   
         else:
-            xtick_locs   = []
-            xtick_labels = []
+            xtick_locs_major   = []
+            xtick_locs_minor   = []
+            xtick_labels_major = []
             
             total_secs = max_obs_id - min_obs_id
             
@@ -529,15 +535,20 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 date  = tstr.split("-")[0]
                 hour  = tstr.split(":")[1]
                 label = month + " " + date + "\n" + hour + "h"
-                xtick_locs.append(current_tick)
-                xtick_labels.append(label)
+                xtick_locs_major.append(current_tick)
+                xtick_labels_major.append(label)
                 if total_secs < (4 * 24 * 3600 + 10):
-                    current_tick += 12 * 3600
+                    current_tick += 6 * 3600
                 elif total_secs < (8 * 24 * 3600):
+                    for hour in [6, 12, 18]:
+                        xtick_locs_minor.append(current_tick + hour * 3600)
                     current_tick += 24 * 3600
-                else: current_tick += 7 * 24 * 3600
+                else:
+                    for day in [1, 2, 3, 4, 5, 6]:
+                        xtick_locs_minor.append(current_tick + day * 24 * 3600)
+                    current_tick += 7 * 24 * 3600
         
-        return xtick_locs, xtick_labels
+        return xtick_locs_major, xtick_labels_major, xtick_locs_minor
     
     
     def indicate_out_of_range_values(
@@ -678,11 +689,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             xtick_locs   = None
             xtick_labels = None
         else:
-            xtick_locs, xtick_labels = \
+            xtick_locs_major, xtick_labels, xtick_locs_minor = \
                 self.get_xticks_and_labels_from_obs_id_range(
                     plot_obj, self.xlim_left, self.xlim_right)
         
-        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
 
         if noise_from_running_coadds:
             xlabel = "\n" + "Number of observations"
@@ -744,11 +756,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                                ylims_dict["bottom"], ylims_dict["top"])
             
-            xtick_locs, xtick_labels = \
+            xtick_locs_major, xtick_labels, xtick_locs_minor = \
                 self.get_xticks_and_labels_from_obs_id_range(
                     plot_obj, self.xlim_left, self.xlim_right)
             
-            set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
+            set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                      None, None, None, self.ttl_fs)
             
             xlabel = "\n" + "Time (UTC)"
             if coordinate == "Ra":
@@ -817,11 +830,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                            ylims_dict["bottom"], ylims_dict["top"])
         
-        xtick_locs, xtick_labels = \
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
             self.get_xticks_and_labels_from_obs_id_range(
                 plot_obj, self.xlim_left, self.xlim_right)
         
-        set_ticks(plot_obj, xtick_locs, xtick_labels, None, None, self.ttl_fs)
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
         
         xlabel = "\n" + "Time (UTC)"
         ylabel = "Average number (avg. over all scans of an obs.)" + "\n"
