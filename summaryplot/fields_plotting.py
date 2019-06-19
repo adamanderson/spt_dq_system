@@ -686,8 +686,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         
         if noise_from_running_coadds:
-            xtick_locs   = None
-            xtick_labels = None
+            xtick_locs_major = None
+            xtick_labels     = None
+            xtick_locs_minor = None
         else:
             xtick_locs_major, xtick_labels, xtick_locs_minor = \
                 self.get_xticks_and_labels_from_obs_id_range(
