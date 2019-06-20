@@ -1076,9 +1076,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
         pipeline.Run(profile=profile)
 
-    log("\n")
-    log("# ======================= #")
-    log("\n\n\n")
+    log("")
 
     
 # ==============================================================================

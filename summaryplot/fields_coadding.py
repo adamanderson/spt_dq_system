@@ -1884,9 +1884,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
 
     pipeline.Run(profile=profile)
     
-    log("\n")
-    log("# ============================ #")
-    log("\n\n\n")
+    log("")
 
 # ==============================================================================
 
