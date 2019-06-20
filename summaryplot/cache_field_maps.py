@@ -395,7 +395,6 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         log('')
 
         if not just_see_args:
-            log('Starting to run the function...')
             if log_file is None:
                 function(**arguments)
             else:
@@ -406,7 +405,6 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     raise RuntimeError('An error occurred! '
                                        'Please check where it occurred '
                                        'in the log file {}!'.format(log_file))
-        log('Done.')
         log('')
     
     
