@@ -1788,7 +1788,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     if (len(all_good_g3_files) <= 1):
         log("")
         log("No applicable input files, so nothing to do!")
-        log("\n\n")
+        log("")
         return
 
 
