@@ -159,7 +159,7 @@ if args.mode == 'maps':
                                     log_file=log_file)
             time.sleep(1)
     
-    for interval in ['monthly', 'weekly']: # ['yearly', 'monthly', 'weekly']:
+    for interval in ['yearly', 'monthly', 'weekly']:
         for mode in modes:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for %s and %s', interval, mode)
