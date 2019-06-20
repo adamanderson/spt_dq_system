@@ -28,8 +28,8 @@ from summaryplot import fields_coadding, fields_plotting
 
 def update(mode, action, oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=0, original_maps_dir='.',
-           coadds_dir='.', figs_dir='.', just_see_commands=False,
-           logger_name='', log_file=None):
+           coadds_dir='.', figs_dir='.', map_ids=["90GHz", "150GHz", "220GHz"],
+           just_see_commands=False, logger_name='', log_file=None):
     
     # - Define global variables
     
@@ -78,8 +78,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     point_source_file    = "spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt"
 
     sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
-                  "ra0hdec-59.75", "ra0hdec-67.25"] 
-    map_ids    = ["90GHz", "150GHz", "220GHz"]
+                  "ra0hdec-59.75", "ra0hdec-67.25"]
 
     if original_maps_dir[-1] != "/":
         original_maps_dir += "/"
@@ -651,6 +650,11 @@ if __name__ == '__main__':
                              "corresponding to different weeks and months. "
                              "Then, in each directory, a g3 file storing co-added "
                              "temperature maps and weight maps will be saved.")
+    
+    parser.add_argument("-i", "--map_ids",
+                        type=str, action="store",
+                        nargs="+", default=["90GHz", "150GHz", "220GHz"],
+                        help="Relevant map IDs to take actions on.")
 
     parser.add_argument("-j", "--just-see-commands",
                         action="store_true", default=False,
@@ -678,6 +682,7 @@ if __name__ == '__main__':
            original_maps_dir=arguments.original_maps_dir,
            coadds_dir=arguments.coadds_dir,
            figs_dir=arguments.figs_dir,
+           map_ids=arguments.map_ids,
            just_see_commands=arguments.just_see_commands,
            logger_name=arguments.logger_name,
            log_file=arguments.log_file)
