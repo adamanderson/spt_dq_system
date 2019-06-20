@@ -1367,15 +1367,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                          "nor subtracted from the "
                                          "running noise map,")
                                 self.log("*  the noise calc. will not occur.)")
-                                noise = numpy.nan
-                                pass
-                            elif (n_added == n_subed) and (n_added > 0):
-                                self.log("* (Since %s pairs of "
-                                         "difference map have been combined",
-                                         n_added)
-                                self.log("*  into the coadded noise maps,")
-                                self.log("*  now is a good time to calculate "
-                                         "the noise level.)")
+                                noise = -1.0
+                                valid_running_noise = False
+                            else:
                                 divide_map_by = n_added + n_subed
                                 noise = calculate_noise_level(
                                             self.coadded_map_frames\
@@ -1388,28 +1382,32 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                             center_dec=center_dec,
                                             map_key_suffix="_Noise",
                                             divisive_factor=divide_map_by)
-                            else:
-                                self.log("* (Since the current "
-                                         "coadded 'noise' maps don't")
-                                self.log("*  contain a non-zero integer number "
-                                         "of pair(s) of difference map,")
-                                self.log("*  now is not a good time to "
-                                         "calculate the noise level.)")
-                                noise = numpy.nan
+                            
+                                if n_added == n_subed:
+                                    valid_running_noise = True
+                                else:
+                                    valid_running_noise = False
                                                             
-                    n = noise/(core.G3Units.uK*core.G3Units.arcmin)
+                    if self.calc_noise_from_coadded_maps:
+                        if (not numpy.isfinite(noise)) or (noise == 0.0):
+                            raise RuntimeError("The noise calculation "
+                                               "seemed to have failed!")
+                    n = noise / (core.G3Units.uK*core.G3Units.arcmin)
                     self.log("* ... the noise level was calculated to be")
                     self.log("* %s uK.arcmin.", n)
+                    try:
+                        if not valid_running_noise:
+                            self.log("* (Actually, the running 'noise' map")
+                            self.log("*  didn't contain an integer number of")
+                            self.log("*  pairs of difference map,")
+                            self.log("*  or the map from this frame was bad,")
+                            self.log("*  so the noise calculation was invalid,")
+                            self.log("*  and nan will be recorded instead.)")
+                            noise = numpy.nan
+                    except NameError:
+                        pass
                     self.log("* Done.")
                     self.log("")
-                    if numpy.isfinite(n) and \
-                       n < 1.0           and \
-                       self.calc_noise_from_coadded_maps:
-                        raise RuntimeError("The noise calculation "
-                                           "seemed to have failed! "
-                                           "This may ruin "
-                                           "(or have already ruined) "
-                                           "the running noise map!")
                     
                     for idr in ids_for_recording:
                         noise_info_to_add = {idr: core.G3MapMapDouble()}
