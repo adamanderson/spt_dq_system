@@ -53,14 +53,15 @@ def set_lims(plot_obj, l, r, b, t):
     if t is not None: plot_obj.set_ylim(top=t)
 
 
-def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs):
+def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs,
+              xtrot="horizontal"):
 
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
     if xta is not None: plot_obj.set_xticks(xta, minor=False)
     if xti is not None: plot_obj.set_xticks(xti, minor=True)
     if yta is not None: plot_obj.set_yticks(yta, minor=False)
     if yti is not None: plot_obj.set_yticks(yti, minor=True)
-    if xtl is not None: plot_obj.set_xticklabels(xtl, fontsize=tck_fs)
+    if xtl is not None: plot_obj.set_xticklabels(xtl, fontsize=tck_fs, rotation=xtrot)
     if ytl is not None: plot_obj.set_yticklabels(ytl, fontsize=tck_fs)
     plot_obj.grid(which="major", linestyle="dotted", linewidth=0.20)
     plot_obj.grid(which="minor", linestyle="dotted", linewidth=0.10)
@@ -567,7 +568,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             if not numpy.isfinite(y_value):
                 plot_obj.axvline(x_value, color=color,
                                  linewidth=note_lw, linestyle=note_st)
-                plot_obj.text(x_value, near_ytop, "N\na\nN",
+                plot_obj.text(x_value, near_ytop, "NaN", rotation="vertical",
                               color=color, fontsize=note_fs)
             elif y_value >= ytop:
                 plot_obj.scatter(x_value, ytop, color=color, marker=6)
@@ -593,7 +594,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         return self.file_name_prefix + additional_name + ".png"
     
     
-    def make_figure_for_noise_levels(self, frame):
+    def make_figure_for_all_noise_levels(self, frame):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
@@ -727,6 +728,83 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
+    def make_figure_for_recent_noise_levels(self, frame):
+        
+        noise_key = "NoiseFromCoaddedMaps"
+        if noise_key not in frame.keys():
+            return
+        
+        all_noise_calculated     = frame[noise_key]
+        all_obs_ids_used         = frame["CoaddedObservationIDs"]
+        all_operations_performed = frame["NoiseCalculationsOperationsDoneToMaps"] 
+        
+        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            operations_this_sf = \
+                numpy.array([all_operations_performed[sub_field][str(obs_id)] \
+                             for obs_id in obs_ids_this_sf])
+            noise_this_sf = \
+                numpy.array([all_noise_calculated[sub_field][str(obs_id)] \
+                             for obs_id in obs_ids_this_sf])
+            
+            ok_indices   = numpy.where(operations_this_sf!=0.0)[0]
+            ok_obs_ids   = numpy.asarray(obs_ids_this_sf)[ok_indices][-50:]
+            ok_noises    = numpy.asarray(noise_this_sf)[ok_indices][-50:]
+            ok_noises   /= core.G3Units.uK * core.G3Units.arcmin
+            dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
+            
+            color = self.cl_dict[sub_field]
+            
+            plot_obj.plot(dummy_x_data, ok_noises,
+                          linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
+                          marker=".", markersize=self.mrkrsz,
+                          color=color)
+            
+            max_noise = numpy.nanmax(ok_noises)
+            min_noise = numpy.nanmin(ok_noises)
+            diff      = max_noise - min_noise
+            ylim_top  = max_noise + 0.05 * diff
+            near_top  = max_noise + 0.02 * diff
+            
+            set_lims(plot_obj, 0, dummy_x_data[-1]+1, None, ylim_top)
+            
+            for index, noise in enumerate(ok_noises):
+                if not numpy.isfinite(noise):
+                    plot_obj.text(dummy_x_data[index], near_top,
+                                  "N/A", color=color, fontsize=7,
+                                  rotation="vertical",
+                                  verticalalignment="center",
+                                  horizontalalignment="center")
+            
+            def get_month_day_hour(obs_id):
+                full_tstr = str(std_processing.obsid_to_g3time(obs_id))
+                month     = full_tstr.split("-")[1]
+                date      = full_tstr.split("-")[0]
+                hour      = full_tstr.split(":")[1]
+                return "{}/{} {}h".format(month, date, hour)
+            
+            xtick_labels = ["{} ({})".format(
+                            str(obs_id), get_month_day_hour(obs_id)) \
+                            for obs_id in ok_obs_ids]
+            
+            set_ticks(plot_obj, dummy_x_data, [], xtick_labels,
+                      None, None, None, 8, xtrot="vertical")
+            
+            xlabel = ""
+            ylabel = "Noise " + r"$[{\mu}K \cdot arcmin]$"
+            more_title = "Noise due to 50 recently added maps of " + sub_field 
+            fig_title  = self.get_full_fig_title(more_title)
+            
+            set_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = "noise_levels_from_observations_of_{}".\
+                             format(sub_field)
+            file_name = self.get_full_file_name(more_file_name)
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
     def make_figure_for_pointing_discrepancies(self, frame):
         
         marker_dict = {"1": ["*", 8], "2": ["p", 6], "3": [".", 9]}
@@ -781,7 +859,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             fig_title = self.get_full_fig_title(more_title)
             
-            set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            set_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
             
             more_file_name = "delta_" + coordinate + "s_from_point_sources"
             file_name = self.get_full_file_name(more_file_name)
@@ -877,8 +956,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.log("Done.\n")
             
             if self.make_fig_for_noise_levels:
-                self.log("Making a figure for noise levels...")
-                self.make_figure_for_noise_levels(frame)
+                self.log("Making figures for noise levels...")
+                self.make_figure_for_all_noise_levels(frame)
+                self.make_figure_for_recent_noise_levels(frame)
                 self.log("Done.\n")
             
             self.already_made_figures = True
@@ -902,7 +982,8 @@ class RecordIDsUsedForPlotting(object):
         
         if "CoaddedObservationIDs" in frame:
             self.log("")
-            self.log("Recording what observation IDs were used to make figures...")
+            self.log("Recording what observation IDs "
+                     "were used to make figures...")
             all_ids = core.G3VectorInt()
             for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
                 for obs_id in obs_ids:
