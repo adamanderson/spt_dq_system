@@ -289,12 +289,13 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
                    [mini_map_y_bottom:mini_map_y_top+1,
                     mini_map_x_left:mini_map_x_right+1]
         
-        if len(numpy.where(numpy.isnan(mini_map))[0]) > 0:
+        try:
+            fit_parameters = util.fitting.fit_gaussian2d(mini_map)
+        except ValueError:
             discrep_dict[point_source_number]["delta_ra"]  = numpy.nan
             discrep_dict[point_source_number]["delta_dec"] = numpy.nan
             continue
-        
-        fit_parameters = util.fitting.fit_gaussian2d(mini_map)
+            
         gaussian_center_x = fit_parameters[1]
         gaussian_center_y = fit_parameters[2]
         
