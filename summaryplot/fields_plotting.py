@@ -605,6 +605,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         elif "NoiseFromCoaddedMaps" in frame.keys():
             noise_from_running_coadds = True
             noise_data = frame["NoiseFromCoaddedMaps"]
+            oprts_hist = frame["NoiseCalculationsOperationsDoneToMaps"]
         else:
             raise NameError("Not clear where noise data are!")
         
@@ -639,7 +640,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             color = self.cl_dict[sub_field]
             
             if noise_from_running_coadds:
-                x_data = range(1, len(obs_ids)+1)
+                operations_perfomed = \
+                    numpy.array([oprts_hist[sub_field][str(obs_id)] \
+                                 for obs_id in obs_ids])
+                valid_indices = numpy.where(operations_perfomed!=0.0)[0]
+                x_data = range(1, len(valid_indices)+1)
+                noise_levels = numpy.asarray(noise_levels)[valid_indices]
             else:
                 x_data = obs_ids
             plot_obj.plot(
