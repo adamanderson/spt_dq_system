@@ -605,6 +605,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         elif "NoiseFromCoaddedMaps" in frame.keys():
             noise_from_running_coadds = True
             noise_data = frame["NoiseFromCoaddedMaps"]
+            oprts_hist = frame["NoiseCalculationsOperationsDoneToMaps"]
         else:
             raise NameError("Not clear where noise data are!")
         
@@ -639,7 +640,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             color = self.cl_dict[sub_field]
             
             if noise_from_running_coadds:
-                x_data = range(1, len(obs_ids)+1)
+                operations_perfomed = \
+                    numpy.array([oprts_hist[sub_field][str(obs_id)] \
+                                 for obs_id in obs_ids])
+                valid_indices = numpy.where(operations_perfomed!=0.0)[0]
+                x_data = range(1, len(valid_indices)+1)
+                noise_levels = numpy.asarray(noise_levels)[valid_indices]
             else:
                 x_data = obs_ids
             plot_obj.plot(
@@ -686,8 +692,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         
         if noise_from_running_coadds:
-            xtick_locs   = None
-            xtick_labels = None
+            xtick_locs_major = None
+            xtick_labels     = None
+            xtick_locs_minor = None
         else:
             xtick_locs_major, xtick_labels, xtick_locs_minor = \
                 self.get_xticks_and_labels_from_obs_id_range(
@@ -991,7 +998,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
     for input_file in good_input_files:
 
         log("-"*80)
-        log(" Taking actions on %s ...", input_file)
+        log("Taking actions on %s ...", input_file)
         log("-"*80)
 
         if decide_whether_to_make_figures_at_all == True:
@@ -1075,9 +1082,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
         pipeline.Run(profile=profile)
 
-    log("\n")
-    log("# ======================= #")
-    log("\n\n\n")
+    log("")
 
     
 # ==============================================================================

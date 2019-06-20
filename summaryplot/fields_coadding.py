@@ -81,7 +81,6 @@ def get_band_average(bolo_names_from_each_scan, bolo_props_map):
         for band, n_bolos in n_bolos_from_one_scan.items():
             n_bolos_from_each_scan[band].append(n_bolos)
 
-    # print(n_bolos_from_each_scan)
     return {band: numpy.mean(ns_bolos) \
             for band, ns_bolos in n_bolos_from_each_scan.items()}
 
@@ -127,7 +126,6 @@ def collect_averages_from_flagging_info(
         unrecognized_reasons = []
         for reason, number in reasons_and_numbers.items():
             if reason not in recognized_reasons:
-                # print(reason, number)
                 averages[band]["Others"] = \
                     averages[band].get("Others") + number
                 unrecognized_reasons.append(reason)
@@ -229,9 +227,10 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
         if fr_two != None:
             total_weight = fr_one["Wunpol"].TT + fr_two["Wunpol"].TT
             sum_map      = fr_one["T"] + fr_two["T"]
-            map_to_use   = sum_map
+            map_to_use   = sum_map / total_weight
         else:
-            map_to_use = fr_one["T"] / fr_one["Wunpol"].TT
+            map_to_use = mapmaker.mapmakerutils.remove_weight_t(
+                             fr_one["T"], fr_one["Wunpol"])
     
     some_brightest_sources = \
         {"ra0hdec-44.75": {"1": numpy.array([352.32358, -47.50531, 1408.089]),
@@ -290,12 +289,13 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
                    [mini_map_y_bottom:mini_map_y_top+1,
                     mini_map_x_left:mini_map_x_right+1]
         
-        if len(numpy.where(numpy.isnan(mini_map))[0]) > 0:
+        try:
+            fit_parameters = util.fitting.fit_gaussian2d(mini_map)
+        except ValueError:
             discrep_dict[point_source_number]["delta_ra"]  = numpy.nan
             discrep_dict[point_source_number]["delta_dec"] = numpy.nan
             continue
-        
-        fit_parameters = util.fitting.fit_gaussian2d(mini_map)
+            
         gaussian_center_x = fit_parameters[1]
         gaussian_center_y = fit_parameters[2]
         
@@ -327,21 +327,41 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
 
 
 
+def add_map_frames(
+        frame_of_coadded_maps, new_frame,
+        map_keys, operation, ignore_weights=True):
+    
+    for from_this_key, to_that_key in map_keys.items():
+        if to_that_key not in frame_of_coadded_maps.keys():
+            frame_of_coadded_maps[to_that_key] = new_frame[from_this_key]
+        else:
+            existing_map = frame_of_coadded_maps.pop(to_that_key)
+            frame_of_coadded_maps[to_that_key] = \
+                existing_map + new_frame[from_this_key] * operation
+    
+    if ignore_weights:
+        pass
+    elif "Wunpol" in new_frame.keys():
+        if "Wunpol" not in frame_of_coadded_maps.keys():
+            frame_of_coadded_maps["Wunpol"] = new_frame["Wunpol"]
+        else:
+            frame_of_coadded_maps["Wunpol"].TT += \
+                new_frame["Wunpol"].TT * operation
+    
+    return frame_of_coadded_maps
+
+
+
 def create_new_map_frame_with_smaller_map_region(
         map_frame, temperature_only,
         center_ra, center_dec,
-        look_for_noise_map=False, divisive_factor=1.0):
+        map_key_suffix="", divisive_factor=1.0):
 
     new_mp_fr = core.G3Frame(core.G3FrameType.Map)
 
     if temperature_only:
-        if look_for_noise_map and \
-           ("T_Noise" in map_frame.keys()):
-            original_sky_map = map_frame["T_Noise"] / divisive_factor
-        else:
-            original_sky_map = map_frame["T"]
-        original_wght_map = map_frame["Wunpol"].TT
-
+        original_sky_map = map_frame["T"+map_key_suffix] / divisive_factor
+        
         smaller_sky_map = \
             coordinateutils.FlatSkyMap(
                 x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
@@ -352,7 +372,13 @@ def create_new_map_frame_with_smaller_map_region(
                 delta_center=center_dec,
                 pol_type=original_sky_map.pol_type,
                 coord_ref=original_sky_map.coord_ref)
-        smaller_wght_map = coordinateutils.FlatSkyMap(
+        coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
+        new_mp_fr["T"] = smaller_sky_map
+        
+        if "Wunpol" in map_frame.keys():
+            original_wght_map = map_frame["Wunpol"].TT
+            
+            smaller_wght_map = coordinateutils.FlatSkyMap(
                 x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
                 y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
                 res=original_sky_map.res,
@@ -361,13 +387,9 @@ def create_new_map_frame_with_smaller_map_region(
                 delta_center=center_dec,
                 pol_type=original_sky_map.pol_type,
                 coord_ref=original_sky_map.coord_ref)
-
-        coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
-        coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)
-
-        new_mp_fr["T"] = smaller_sky_map
-        new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
-        new_mp_fr["Wunpol"].TT = smaller_wght_map
+            coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)    
+            new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
+            new_mp_fr["Wunpol"].TT = smaller_wght_map
 
     return new_mp_fr
 
@@ -409,13 +431,12 @@ def decide_operation_to_do_with_new_map(
         temp_only, center_ra, center_dec):
     
     mp_fr = create_new_map_frame_with_smaller_map_region(
-                frame, temp_only, center_ra, center_dec, None)
+                frame, temp_only, center_ra, center_dec)
     
-    if (False in numpy.isfinite(numpy.asarray(mp_fr["T"])))         or \
-       (False in numpy.isfinite(numpy.asarray(mp_fr["Wunpol"].TT))) or \
-       (0.0 in numpy.asarray(mp_fr["Wunpol"].TT)):
+    if (False in numpy.isfinite(numpy.asarray(mp_fr["T"]))) or \
+       (0.0   in numpy.asarray(mp_fr["Wunpol"].TT)):
         return "Ignore"
-    
+        
     past_operations = [past_operations[str(oid)] for oid in past_oids[:-1]]
     
     if (len(past_operations) == 0) or \
@@ -435,7 +456,7 @@ def decide_operation_to_do_with_new_map(
 def calculate_noise_level(
         fr_one, fr_two, ptsrc_lst, temp_only=False,
         smaller_region=False, center_ra=None, center_dec=None,
-        look_for_noise_map=False, divisive_factor=None):
+        map_key_suffix="", divisive_factor=1.0):
 
     if fr_two != None:
         mp_fr = map_analysis.subtract_two_maps(
@@ -447,10 +468,11 @@ def calculate_noise_level(
         mp_fr = create_new_map_frame_with_smaller_map_region(
                     mp_fr, temp_only,
                     center_ra, center_dec,
-                    look_for_noise_map=look_for_noise_map,
+                    map_key_suffix=map_key_suffix,
                     divisive_factor=divisive_factor)
     
     mask = create_apodization_mask(mp_fr, ptsrc_lst)
+    
     
     cls = map_analysis.calculateCls(
               mp_fr, cross_map=None, t_only=temp_only,
@@ -513,10 +535,6 @@ def combine_ids(old_dict, new_dict):
                 else:
                     for new_id in new_ids:
                         old_dict[map_id][source].append(new_id)
-                    """old_dict[map_id][source] = \
-                    type(new_ids)(sorted(
-                    set(old_dict[map_id][source]) | set(new_ids)))"""
-                    # ** The order of the IDs may be important.
     
     return old_dict, this_frame_already_added
 
@@ -794,7 +812,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 if id_for_coadds == None:
                     self.log("")
                     self.log("* Skipping the map frame above")
-                    self.log("* because its map ID is not one of the desired IDs.")
+                    self.log("* because its map ID is ")
+                    self.log("* not one of the desired IDs.")
                     self.log("\n")
                     return []
                 else:
@@ -806,7 +825,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 if frame["Id"] not in self.id_mapping.keys():
                     self.log("")
                     self.log("* Skipping the map frame above")
-                    self.log("* because its map ID is not one of the desired IDs.")
+                    self.log("* because its map ID is")
+                    self.log("* not one of the desired IDs.")
                     self.log("\n")
                     return []
                 elif self.obs_info is None:
@@ -819,7 +839,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 elif self.obs_info["SourceName"] not in self.map_sources:
                     self.log("")
                     self.log("* Skipping the map frame above")
-                    self.log("* because the observation type is not of interest.")
+                    self.log("* because the observation type is")
+                    self.log("* not of interest.")
                     self.log("\n")
                     return []
                 else:
@@ -839,7 +860,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             if not map_seems_fine(frame, self.log):
                 self.log("")
                 self.log("* Well, the map doesn't look good,")
-                self.log("* so, this one will be skipped...")
+                self.log("* so, this one will be skipped ...")
                 self.log("\n")
                 return []
             
@@ -855,7 +876,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 self.log("")
                 self.log("* Well, it looks that this map frame")
                 self.log("* has already been added (at least partially),")
-                self.log("* so, it will be skipped...")
+                self.log("* so, it will be skipped ...")
                 self.log("\n")
                 return []
             
@@ -925,18 +946,19 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 elif len(self.coadded_obs_ids[id_for_coadds][src]) <= 1:
                     self.log("")
                     self.log("* Currently, the maps in the cache")
-                    self.log("* (or maps to be added to the cache) are the same as")
-                    self.log("* the maps in this frame, so the cross spectrum")
-                    self.log("* calculation will be skipped for this frame.")
+                    self.log("* (or maps to be added to the cache) are")
+                    self.log("* the same as the maps in this frame,")
+                    self.log("* so the cross spectrum calculation")
+                    self.log("* will be skipped for this frame.")
                     xspec_sqrt_cls = core.G3MapMapDouble()
                     xspec_sqrt_cls[src] = core.G3MapDouble()
                     xspec_sqrt_cls[src][str(oid)] = numpy.nan
                     xspec_sqrt_cls_this_fr = {id_for_coadds: xspec_sqrt_cls}
                 else:
                     self.log("")
-                    self.log("* Calculating avg.(sqrt(Cl)) of the cross spectrum")
-                    self.log("* between the coadded maps and the map from")
-                    self.log("* this observation ...")
+                    self.log("* Calculating avg.(sqrt(Cl)) of the")
+                    self.log("* cross spectrum between the coadded maps")
+                    self.log("* and the map from this observation ...")
                     center_ra  = 0.0 * core.G3Units.deg
                     center_dec = float(src[-6:]) * core.G3Units.deg
                     xspec_sqrt_cl = calculate_average_cl_of_cross_spectrum(
@@ -965,52 +987,35 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             
             # - Add (including -1 of) maps together
                         
-            if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
+            if subtract_maps_in_this_frame:
                 self.log("")
-                self.log("* A map frame with ID %s is here!", frame["Id"])
-                self.log("* Both the sky map and weight map are added to the ")
-                self.log("* empty coadded maps as %s ...", id_for_coadds)
-                if self.temp_only:
-                    self.coadded_map_frames \
-                        [id_for_coadds]["T"] = frame["T"]
-                    self.coadded_map_frames \
-                        [id_for_coadds]["Wunpol"] = frame["Wunpol"]
-                self.log("* Done.")
-                self.log("")
-            elif not subtract_maps_in_this_frame:
-                self.log("")
-                self.log("* Adding another set of sky map and weight map "
-                         "(%s)", frame["Id"])
-                self.log("* to the coadded maps for %s ...", id_for_coadds)
-                if self.temp_only:
-                    existing_t_map = \
-                        self.coadded_map_frames[id_for_coadds].pop("T")
-                    existing_w_map = \
-                        self.coadded_map_frames[id_for_coadds].pop("Wunpol")
-                    self.coadded_map_frames[id_for_coadds]["T"] = \
-                        existing_t_map + frame["T"]
-                    self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
-                        existing_w_map + frame["Wunpol"]
-                self.log("* Done.")
-                self.log("")
-            else:
+                self.log("* Removing a set of ")
+                self.log("* sky map and weight map (%s)", frame["Id"])
+                self.log("* from the coadded maps for %s ...", id_for_coadds)
                 self.coadded_obs_ids = \
                     remove_ids(self.coadded_obs_ids, obs_ids_from_this_frame)
                 self.coadded_map_ids = \
                     remove_ids(self.coadded_map_ids, map_ids_from_this_frame)
-                self.log("")
-                self.log("* Removing a set of sky map and weight map (%s)", frame["Id"])
-                self.log("* from the coadded maps for %s ...", id_for_coadds)
                 if self.temp_only:
-                    existing_t_map = \
-                        self.coadded_map_frames[id_for_coadds].pop("T")
-                    self.coadded_map_frames[id_for_coadds]["T"] = \
-                        existing_t_map + (frame["T"] * (-1))
-                    self.coadded_map_frames[id_for_coadds]["Wunpol"].TT += \
-                        (frame["Wunpol"].TT * (-1))
+                    self.coadded_map_frames[id_for_coadds] = \
+                        add_map_frames(self.coadded_map_frames[id_for_coadds],
+                                       frame,
+                                       {"T": "T"}, -1.0, ignore_weights=False)
                 self.log("* Done.")
                 self.log("")
-            
+            else:
+                self.log("")
+                self.log("* Adding a set of ")
+                self.log("* sky map and weight map (ID: %s)", frame["Id"])
+                self.log("* to the coadded maps (ID: %s) ...", id_for_coadds)
+                if self.temp_only:
+                    self.coadded_map_frames[id_for_coadds] = \
+                        add_map_frames(self.coadded_map_frames[id_for_coadds],
+                                       frame,
+                                       {"T": "T"}, 1.0, ignore_weights=False)
+                self.log("* Done.")
+                self.log("")
+
             
             # - Collect averages related to flagging statistics
             
@@ -1083,32 +1088,6 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         remove_partial_mapmapdouble(
                             self.noise_from_individual_maps,
                             obs_ids_from_this_frame)
-                """elif self.calc_noise_from_coadded_maps:
-                    self.noise_from_coadded_maps = \
-                        remove_partial_mapmapdouble(
-                            self.noise_from_coadded_maps,
-                            obs_ids_from_this_frame)
-                    if not self.maps_split_by_scan_direction:
-                        ops_done = self.operations_done_to_maps[src][oid]
-                        inverse_ops = -1.0 * ops_done
-                        if self.temp_only:
-                            if inverse_ops == 0.0:
-                                pass
-                            else:
-                                map_from_this_obs  = \
-                                    frame["T"] / frame["Wunpol"].TT
-                                map_from_this_obs.is_weighted = False
-                                existing_noise_map = \
-                                    self.coadded_map_frames\
-                                    [id_for_coadds].pop("T_Noise")
-                                self.coadded_map_frames["T_Noise"] = \
-                                    existing_noise_map + \
-                                    (map_from_this_obs * inverse_ops)
-                        
-                        self.operations_done_to_maps = \
-                            remove_partial_mapmapdouble(
-                                self.operations_done_to_maps,
-                                obs_ids_from_this_frame)"""
                 
                 time_to_calculate_pointing_and_noise = False
             
@@ -1205,12 +1184,16 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         
                     for rank, diffs in pt_offsets_to_be_reorganized.items():
                         for delta_coord, diff in diffs.items():
-                            self.log("* Source %s " + delta_coord.ljust(9) + " %s arcseconds",
+                            self.log("* Source %s " + \
+                                     delta_coord.ljust(9) + \
+                                     " %s arcseconds",
                                      rank, diff/core.G3Units.arcsec)
                         flux  = fluxes_to_be_reorganized[rank]
                         usys  = core.G3Units
                         flux /= (usys.mK * usys.arcmin * usys.arcmin)
-                        self.log("* Source %s " + "flux".ljust(9) + " %s mK.arcmin.arcmin",
+                        self.log("* Source %s " + \
+                                 "flux".ljust(9) + \
+                                 " %s mK.arcmin.arcmin",
                                  rank, flux)
                     self.log("* Done.")
                     self.log("")
@@ -1274,18 +1257,16 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 {id_for_coadds: frame[noise_key]})
                         if not self.maps_split_by_scan_direction:
                             if self.temp_only:
-                                if "T_Noise" in self.coadded_map_frames[id_for_coadds].keys():
-                                    existing_noise_map  = self.coadded_map_frames[id_for_coadds].pop("T_Noise")
-                                    existing_noise_map += frame["T_Noise"]
-                                    self.coadded_map_frames[id_for_coadds]["T_Noise"] = existing_noise_map
-                                else:
-                                    self.coadded_map_frames[id_for_coadds]["T_Noise"] = frame["T_Noise"]
+                                self.coadded_map_frames[id_for_coadds] = \
+                                    add_map_frames(
+                                        self.coadded_map_frames[id_for_coadds],
+                                        frame,
+                                        {"T_Noise": "T_Noise"}, 1.0)
                             ops_key = "NoiseCalculationsOperationsDoneToMaps"
                             self.operations_done_to_maps = \
                                 combine_mapmapdoubles(
                                     self.operations_done_to_maps,
                                     {id_for_coadds: frame[ops_key]})
-                    
                     self.log("* Done.")
                     self.log("")
                 else:
@@ -1336,50 +1317,42 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 self.operations_done_to_maps\
                                 [id_for_coadds][src] = core.G3MapDouble()
                             
+                            new_frame = core.G3Frame(core.G3FrameType.Map)
+                            new_frame["T"] = mapmaker.mapmakerutils.\
+                                             remove_weight_t(
+                                                 frame["T"], frame["Wunpol"])
+                            new_frame["Wunpol"] = frame["Wunpol"]
+                            
                             operation = decide_operation_to_do_with_new_map(
-                                            frame,
+                                            new_frame,
                                             self.operations_done_to_maps\
                                             [id_for_coadds][src],
                                             self.coadded_obs_ids\
                                             [id_for_coadds][src],
                                             self.temp_only,
                                             center_ra, center_dec)
-                            op_dict = {"Copy"    :  1,
-                                       "Add"     :  1,
-                                       "Subtract": -1,
-                                       "Ignore"  :  0}
+                            
+                            op_dict = {"Copy"    :  1.0,
+                                       "Add"     :  1.0,
+                                       "Subtract": -1.0,
+                                       "Ignore"  :  0.0}
                             
                             self.operations_done_to_maps\
-                                [id_for_coadds][src][str(oid)] = op_dict[operation]                            
-                            self.log("* (The operation to be performed on the map ")
-                            self.log("*  from this frame is %s.)", operation)
+                            [id_for_coadds][src][str(oid)] = op_dict[operation]                            
+                            self.log("* (The operation to be performed")
+                            self.log("*  on the map that is stored")
+                            self.log("*  in this frame is %s.)", operation)
                             
-                            if operation == "Copy":
-                                if self.temp_only:
-                                    self.coadded_map_frames\
-                                    [id_for_coadds]["T_Noise"] = \
-                                        frame["T"] / frame["Wunpol"].TT
-                                    self.coadded_map_frames\
-                                    [id_for_coadds]["T_Noise"].\
-                                        is_weighted = False
-                            elif operation == "Ignore":
+                            if operation == "Ignore":
                                 pass
                             else:
-                                if operation == "Add":
-                                    multiplicative_factor = 1.0
-                                elif operation == "Subtract":
-                                    multiplicative_factor = -1.0
-                                
                                 if self.temp_only:
-                                    new_mp = frame["T"] / frame["Wunpol"].TT
-                                    new_mp.is_weighted = False
-                                    existing_map = \
-                                        self.coadded_map_frames\
-                                        [id_for_coadds].pop("T_Noise")
-                                    self.coadded_map_frames\
-                                    [id_for_coadds]["T_Noise"] = \
-                                        existing_map + \
-                                        (multiplicative_factor * new_mp)
+                                    self.coadded_map_frames[id_for_coadds] = \
+                                        add_map_frames(
+                                            self.coadded_map_frames\
+                                            [id_for_coadds],
+                                            new_frame,
+                                            {"T": "T_Noise"}, op_dict[operation])
                             
                             n_added = list(self.operations_done_to_maps\
                                          [id_for_coadds][src].values()).\
@@ -1389,18 +1362,16 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                       count(-1.0)
                             
                             if operation == "Ignore":
-                                self.log("* (Since this map was bad in some way,")
-                                self.log("*  and it was not added nor subtracted,")
-                                self.log("*  the noise calculation will not occur.)")
-                                noise = numpy.nan
-                                pass
-                            elif (n_added == n_subed) and (n_added > 0):
-                                self.log("* (Since %s pairs of " +\
-                                         "difference map have been combined", n_added)
-                                self.log("*  into the coadded noise maps,")
-                                self.log("*  now is a good time to calculate " +\
-                                         "the noise level.)")
-                                divide_map_by = n_added * 2
+                                self.log("* (Since this map was bad "
+                                         "in some way,")
+                                self.log("*  and it was not added to "
+                                         "nor subtracted from the "
+                                         "running noise map,")
+                                self.log("*  the noise calc. will not occur.)")
+                                noise = -1.0
+                                valid_running_noise = False
+                            else:
+                                divide_map_by = n_added + n_subed
                                 noise = calculate_noise_level(
                                             self.coadded_map_frames\
                                             [id_for_coadds],
@@ -1410,20 +1381,32 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                             smaller_region=True,
                                             center_ra=center_ra,
                                             center_dec=center_dec,
-                                            look_for_noise_map=True,
+                                            map_key_suffix="_Noise",
                                             divisive_factor=divide_map_by)
-                            else:
-                                self.log("* (Since the current " +\
-                                         "coadded 'noise' maps don't")
-                                self.log("*  contain a non-zero integer number " +\
-                                         "of pair(s) of difference map,")
-                                self.log("*  now is not a good time to " +\
-                                         "calculate the noise level.)")
-                                noise = numpy.nan
+                            
+                                if n_added == n_subed:
+                                    valid_running_noise = True
+                                else:
+                                    valid_running_noise = False
                                                             
-                    n = noise/(core.G3Units.uK*core.G3Units.arcmin)
+                    if self.calc_noise_from_coadded_maps:
+                        if (not numpy.isfinite(noise)) or (noise == 0.0):
+                            raise RuntimeError("The noise calculation "
+                                               "seemed to have failed!")
+                    n = noise / (core.G3Units.uK*core.G3Units.arcmin)
                     self.log("* ... the noise level was calculated to be")
                     self.log("* %s uK.arcmin.", n)
+                    try:
+                        if not valid_running_noise:
+                            self.log("* (Actually, the running 'noise' map")
+                            self.log("*  didn't contain an integer number of")
+                            self.log("*  pairs of difference map,")
+                            self.log("*  or the map from this frame was bad,")
+                            self.log("*  so the noise calculation was invalid,")
+                            self.log("*  and nan will be recorded instead.)")
+                            noise = numpy.nan
+                    except NameError:
+                        pass
                     self.log("* Done.")
                     self.log("")
                     
@@ -1526,8 +1509,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         for sub_fld, data in mp_fr[prefix+flg_typ].items():
                             self.log(" "*3 + "- %s", sub_fld)
                             self.log("")
-                            self.log(" "*6 + "%s", data.keys())
-                            self.log(" "*6 + "%s", [int(avg) for avg in data.values()])
+                            self.log(" "*6 + "%s",
+                                     data.keys())
+                            self.log(" "*6 + "%s",
+                                     [int(avg) for avg in data.values()])
                             self.log("")
                     self.log("\n")
                 
@@ -1548,8 +1533,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         for sub_fld, data in mp_fr[prefix+wafer].items():
                             self.log(" "*3 + "- %s", sub_fld)
                             self.log("")
-                            self.log(" "*6 + "%s", data.keys())
-                            self.log(" "*6 + "%s", [cf/uni for cf in data.values()])
+                            self.log(" "*6 + "%s",
+                                     data.keys())
+                            self.log(" "*6 + "%s",
+                                     [cf/uni for cf in data.values()])
                             self.log("")
                     self.log("\n")
                 
@@ -1621,6 +1608,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 if self.calc_noise_from_individ_maps or \
                    self.calc_noise_from_coadded_maps:
                     mp_fr["NoiseLevelsContained"] = True
+                    ops_k = None
                     self.log("# Noise levels:")
                     self.log("")
                     
@@ -1640,17 +1628,15 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.log("- %s", sub_field)
                         self.log("")
                         for obs_id in mp_fr["CoaddedObservationIDs"][sub_field]:
-                            noise = data[str(obs_id)]
+                            noise  = data[str(obs_id)]
                             noise /= (core.G3Units.uK*core.G3Units.arcmin)
-                            self.log(" "*3 +" %s, %s uK.arcmin", obs_id, noise)
+                            if ops_k is not None:
+                                operation = mp_fr[ops_k][sub_field][str(obs_id)]
+                            else:
+                                operation = ""
+                            self.log(" "*3 +"%s, %s uK.arcmin %s",
+                                     obs_id, noise, operation)
                         self.log("")
-                        if (not self.calc_noise_from_individ_maps) and \
-                           (not self.maps_split_by_scan_direction):
-                            self.log(" "*3 + "Operations done to maps" +\
-                                "during noise calculations: %s",
-                                [mp_fr[ops_k][sub_field][str(oid)] for oid in \
-                                 mp_fr["CoaddedObservationIDs"][sub_field]])
-                            self.log("")
                     self.log("\n")
                 
                 meta_info_frame = core.G3Frame()
@@ -1802,7 +1788,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     if (len(all_good_g3_files) <= 1):
         log("")
         log("No applicable input files, so nothing to do!")
-        log("\n\n")
+        log("")
         return
 
 
@@ -1897,9 +1883,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
 
     pipeline.Run(profile=profile)
     
-    log("\n")
-    log("# ============================ #")
-    log("\n\n\n")
+    log("")
 
 # ==============================================================================
 
@@ -1915,139 +1899,140 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-                 description="This script makes coadded maps of the "+\
-                             "1500 sq. deg. field and can also perform some "+\
+                 description="This script makes coadded maps of the "
+                             "1500 sq. deg. field and can also perform some "
                              "analysis on the maps such as calculating noise.",
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("input_files",
                         type=str, action="store", nargs="+",
-                        help="The paths to the g3 files "+\
+                        help="The paths to the g3 files "
                              "that contain map frames. ")
 
     parser.add_argument("-o", "--output_file",
                         type=str, action="store", default="./coadded_maps.g3",
-                        help="The location and name of the output g3 file "+\
+                        help="The location and name of the output g3 file "
                              "that will contain the coadded maps.")
 
     parser.add_argument("-i", "--map_ids",
                         type=str, action="store", nargs="+", default=["90GHz"],
-                        help="The relevant map IDs for which corresponding "+\
+                        help="The relevant map IDs for which corresponding "
                              "map data will be added. ")
 
     parser.add_argument("-t", "--temperature_maps_only",
                         action="store_true", default=False,
-                        help="Whether the maps stored in the data frames contain "+\
-                             "temperature-only maps or not.")
+                        help="Whether the maps stored in the data frames "
+                             "contain temperature-only maps or not.")
 
     parser.add_argument("-r", "--maps_split_by_scan_direction",
                         action="store_true", default=False,
-                        help="Whether the maps stored in the data frames are "+\
+                        help="Whether the maps stored in the data frames are "
                              "split by the scan direction.")
 
     parser.add_argument("-c", "--combine_left_right",
                         action="store_true", default=False,
-                        help="Whether to add maps made from left-going scans and "+\
-                             "those made from right-going scans together. "+\
-                             "If True, a map whose 'Id' is 'Left'+map_id and "+\
-                             "one whose 'Id' is 'Right'+map_id will be added, "+\
-                             "where map_id is an ID specified in the argument "+\
+                        help="Whether to add maps made from left-going scans "
+                             "and those made from right-going scans together. "
+                             "If True, a map whose 'Id' is 'Left'+map_id and "
+                             "one whose 'Id' is 'Right'+map_id will be added, "
+                             "where map_id is an ID specified in the argument "
                              "map_ids above.")
 
     parser.add_argument("-C", "--combine_different_wafers",
                         action="store_true", default=False,
-                        help="Whether to add maps made from different wafers "+\
-                             "together. If True, maps whose 'Id's look like "+\
-                             "map_id+a_wafer_name will be added, "+\
-                             "where map_id is an ID specified in the argument "+\
+                        help="Whether to add maps made from different wafers "
+                             "together. If True, maps whose 'Id's look like "
+                             "map_id+a_wafer_name will be added, where"
+                             "map_id is an ID specified in the argument "
                              "map_ids above.")
 
     parser.add_argument("-u", "--subtract_existing_maps",
                         action="store_true", default=False,
-                        help="Whether to subtract certain observation's data "+\
-                             "contained in an input file from the coadded maps "+\
+                        help="Whether to subtract certain observation's data "
+                             "contained in an input file from the coadded maps "
                              "if the data already exist in the coadded maps.")
 
     parser.add_argument("-a", "--collect_averages_from_flagging_statistics",
                         action="store_true", default=False,
-                        help="Whether to calculate average number of bolometers "+\
-                             "that were not flagged over all scans of "+\
-                             "an observation, average number of bolometers that "+\
+                        help="Whether to calculate average number of "
+                             "bolometers that were not flagged "
+                             "over all scans of an observation, "
+                             "average number of bolometers that "
                              "were removed, and so on.")
     
     parser.add_argument("-k", "--calculate_pW_to_K_conversion_factors",
                         action="store_true", default=False,
-                        help="Whether to calculate the mean value of the "+\
-                             "pW/K absolute calibration factors for each band "+\
+                        help="Whether to calculate the mean value of the "
+                             "pW/K absolute calibration factors for each band "
                              "of each wafer.")
 
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
-                        help="Whether to calculate map noise levels from "+\
+                        help="Whether to calculate map noise levels from "
                              "each map that goes into the coadded maps.")
 
     parser.add_argument("-N", "--calculate_noise_from_coadded_maps",
                         action="store_true", default=False,
-                        help="Whether to calculate map noise levels for the "+\
-                             "running coadded maps. In other words, the noise "+\
-                             "will be calculated from the coadded maps "+\
+                        help="Whether to calculate map noise levels for the "
+                             "running coadded maps. In other words, the noise "
+                             "will be calculated from the coadded maps "
                              "every time a new map is added.")
     
     parser.add_argument("-x", "--calculate_cross_spectrum_with_coadded_maps",
                         action="store_true", default=False,
-                        help="Whether to calculate the cross spectrum between "+\
-                             "each observation's map and the running "+\
+                        help="Whether to calculate the cross spectrum between "
+                             "each observation's map and the running "
                              "coadded maps.")
 
     parser.add_argument("-M", "--point_source_file",
                         type=str, action="store", default="",
-                        help="Path to a point source list, which will be used "+\
+                        help="Path to a point source list, which will be used "
                              "when making a mask for calcuting Cls.")
 
     parser.add_argument("-p", "--calculate_pointing_discrepancies",
                         action="store_true", default=False,
-                        help="Whether to calculate the difference between the "+\
-                             "true positions of some point sources and the "+\
+                        help="Whether to calculate the difference between the "
+                             "true positions of some point sources and the "
                              "measured positions")
 
     parser.add_argument("-S", "--sources",
                         type=str, action="store", nargs="+",
                         default=["ra0hdec-44.75", "ra0hdec-52.25",
                                  "ra0hdec-59.75", "ra0hdec-67.25"],
-                        help="The sub-field(s) that will be included "+\
+                        help="The sub-field(s) that will be included "
                              "in the coadded maps.")
 
     parser.add_argument("-s", "--min_obs_id",
                         type=int, action="store", default=0,
-                        help="The smallest observation ID that will be "+\
-                             "considered to be used in the coadded map. "+\
+                        help="The smallest observation ID that will be "
+                             "considered to be used in the coadded map. "
                              "The default is 00000000.")
 
     parser.add_argument("-l", "--max_obs_id",
                         type=int, action="store", default=99999999,
-                        help="The largest observation ID that will be "+\
-                             "considered to be used in the coadded map. "+\
+                        help="The largest observation ID that will be "
+                             "considered to be used in the coadded map. "
                              "The default is 99999999.")
 
     parser.add_argument("-b", "--bad_obs_ids",
                         type=int, action="store", nargs="+", default=[],
-                        help="The observation IDs that will be excluded from "+\
-                             "making the coadded map. The script has some "+\
-                             "simple criteria to decide whether to include "+\
-                             "certain observations, but one can manually specify "+\
-                             "bad observations, too.")
+                        help="The observation IDs that will be excluded from "
+                             "making the coadded map. The script has some "
+                             "simple criteria to decide whether to include "
+                             "certain observations, but one can manually "
+                             "specify bad observations, too.")
 
     parser.add_argument("-m", "--min_file_size",
                         type=float, action="store", default=0.01,
-                        help="The minimum size (in GB) a g3 file needs "+\
-                             "to have for it to be considered as a good file. "+\
-                             "This is to reduce the occurrence of a situation "+\
-                             "where the script crashes due to reading a "+\
+                        help="The minimum size (in GB) a g3 file needs "
+                             "to have for it to be considered as a good file. "
+                             "This is to reduce the occurrence of a situation "
+                             "where the script crashes due to reading a "
                              "problematic file.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
-                        help="The name of the logger that will be used to "+\
+                        help="The name of the logger that will be used to "
                              "record log messages.")
     
     parser.add_argument("-G", "--log_file",
@@ -2059,5 +2044,4 @@ if __name__ == '__main__':
     run(**vars(arguments))
 
 # ==============================================================================
-
 
