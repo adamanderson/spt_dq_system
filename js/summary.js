@@ -17,10 +17,10 @@ function get_old_map_plotdirs(interval) {
     $('#datalist_'+interval+'_maps').empty()
 
     // now rebuild the div
-    $.get('/oldstaticdirs', {subdirectory:"maps", interval:interval}, function(data, status) {
+    $.get('/oldstaticdirs', {subdirectory:"maps/figures", interval:interval}, function(data, status) {
 	    data.reverse();
 	    for (jdir=0; jdir<data.length; jdir++) {
-			datestring = data[jdir].split('/')[2];
+			datestring = data[jdir].split('/')[3];
 			$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
 	    }
 	});
