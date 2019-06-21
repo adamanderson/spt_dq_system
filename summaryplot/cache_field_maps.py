@@ -21,14 +21,17 @@ from summaryplot import fields_coadding, fields_plotting
 
 
 # ==============================================================================
-# Define a function that calls the map coading and plotting scripts
+# Define a function that calls the map coadding and plotting scripts
 # with appropriate arguments
 # ------------------------------------------------------------------------------
 
 
 def update(mode, action, oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=0, original_maps_dir='.',
-           coadds_dir='.', figs_dir='.', map_ids=["90GHz", "150GHz", "220GHz"],
+           coadds_dir='.', figs_dir='.',
+           map_ids=["90GHz", "150GHz", "220GHz"],
+           sub_fields=["ra0hdec-44.75", "ra0hdec-52.25",
+                       "ra0hdec-59.75", "ra0hdec-67.25"],
            just_see_commands=False, logger_name='', log_file=None):
     
     # - Define global variables
@@ -76,9 +79,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     script_coadding_maps = "summaryplot/fields_coadding.py"
     script_plotting_data = "summaryplot/fields_plotting.py"
     point_source_file    = "spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt"
-
-    sub_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
-                  "ra0hdec-59.75", "ra0hdec-67.25"]
+    bad_ids_file         = "summaryplot/bad_observation_ids.txt"
 
     if original_maps_dir[-1] != "/":
         original_maps_dir += "/"
@@ -240,10 +241,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     for counter, interval in enumerate(desired_obs_id_ranges, 0):
         log("Interval %s :", counter+1)
         log("  from %s ("+\
-            str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")" +\
+            str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")"+\
             "("+str(desired_time_ranges[counter][0])+")", interval[0])
         log("  to   %s ("+\
-            str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")" +\
+            str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")"+\
             "("+str(desired_time_ranges[counter][1])+")", interval[1])
     log("")
 
@@ -276,7 +277,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             id_lower_bound = min_gid
             id_upper_bound = max_gid
 
-        elif (min_eid < min_gid) and (max_eid > min_gid) and (max_eid < max_gid):
+        elif (min_eid<min_gid) and (max_eid>min_gid) and (max_eid<max_gid):
             ignore_coadds  = False
             ids_to_exclude = \
                 [obs_id for obs_id in existing_ids \
@@ -301,7 +302,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             id_lower_bound = min_gid
             id_upper_bound = max_gid
 
-        elif (min_eid >= min_gid) and (min_eid < max_gid) and (max_eid > max_gid):
+        elif (min_eid>=min_gid) and (min_eid<max_gid) and (max_eid>max_gid):
             ignore_coadds  = False
             ids_to_exclude = \
                 [obs_id for obs_id in existing_ids \
@@ -324,18 +325,24 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                ids_to_exclude, int(id_lower_bound), int(id_upper_bound)
     
     
-    def figure_out_arguments_to_use_for_coadding(map_id, sub_field, time_range_id):
+    def figure_out_arguments_to_use_for_coadding(
+            map_id, sub_field, time_range_id):
         
         arguments = {}
         
         g3_files_for_individual_observations = \
-            sorted(glob(os.path.join(original_maps_dir, sub_field, '*{}_tonly.g3.gz'.format(map_id))))
+            sorted(glob(os.path.join(original_maps_dir,
+                                     sub_field,
+                                     '*{}_tonly.g3.gz'.format(map_id))))
         if sub_field == '*':
             g3_file_for_coadded_maps = \
-                os.path.join(desired_dir_names[time_range_id], 'coadded_maps_{}.g3'.format(map_id))
+                os.path.join(desired_dir_names[time_range_id],
+                             'coadded_maps_{}.g3'.format(map_id))
         else:
             g3_file_for_coadded_maps = \
-                os.path.join(desired_dir_names[time_range_id], 'coadded_maps_from_{}_{}.g3'.format(sub_field, map_id))
+                os.path.join(desired_dir_names[time_range_id],
+                             'coadded_maps_from_{}_{}.g3'.format(sub_field,
+                                                                 map_id))
         
         arguments['output_file'] = '{}.g4'.format(g3_file_for_coadded_maps[:-3])
         arguments['map_ids'] = [map_id]
@@ -348,7 +355,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 try:
                     frame = iterator.next()
                     if "CoaddedObservationIDs" in frame.keys():
-                        for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
+                        for sub_field, obs_ids \
+                        in  frame["CoaddedObservationIDs"].items():
                             for obs_id in obs_ids:
                                 if obs_id not in existing_ids:
                                     existing_ids.append(obs_id)
@@ -356,13 +364,18 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 except StopIteration:
                     break
         
-            ignore_coadds, subtract_maps, ids_to_exclude, id_lower_bound, id_upper_bound = \
-                decide_what_ids_to_use_and_not(existing_ids, desired_obs_id_ranges[time_range_id], g3_file_for_coadded_maps)
+            ignore_coadds,  subtract_maps, \
+            ids_to_exclude, id_lower_bound, id_upper_bound = \
+                decide_what_ids_to_use_and_not(
+                    existing_ids,
+                    desired_obs_id_ranges[time_range_id],
+                    g3_file_for_coadded_maps)
             
             if ignore_coadds:
                 arguments['input_files'] = g3_files_for_individual_observations
             else:
-                arguments['input_files'] = [g3_file_for_coadded_maps] + g3_files_for_individual_observations
+                arguments['input_files'] = [g3_file_for_coadded_maps] + \
+                                           g3_files_for_individual_observations
             
             arguments['min_obs_id']  = id_lower_bound
             arguments['max_obs_id']  = id_upper_bound
@@ -385,6 +398,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     
     def run_command(function, arguments, logger, log_file, just_see_args):
         
+        log('Calling the main function ...')
         log('Here are the arguments to be supplied:')
         arguments_to_show = {k: v for k, v in arguments.items()}
         for key in ['input_files', 'bad_obs_ids']:
@@ -408,28 +422,55 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         log('')
     
     
-    def generate_new_coadded_maps(function, arguments, logger, log_file, just_see_commands):
+    def record_bad_obs_id(map_id, sub_field, obs_id, text_file, bad_reason):
+        
+        def pad_by_space(string):
+            return " "*2 + string + " "*2
+        
+        words_to_write = []
+        words_to_write.append(pad_by_space(map_id.rjust(6)))
+        words_to_write.append(pad_by_space(sub_field.rjust(8)))
+        words_to_write.append(pad_by_space(str(obs_id).rjust(9)))
+        time_added = datetime.datetime.utcnow().strftime('20%y%m%d_%H%M%S')
+        words_to_write.append(pad_by_space(time_added.center(15)))
+        words_to_write.append(" "*2 + bad_reason)
+        line_to_write = "|".join(words_to_write) + "\n"
+        
+        with open(text_file, "a") as file_object:
+            file_object.write(line_to_write)
+    
+    
+    def gather_bad_obs_ids_from_list(
+            text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
+        
+        ids_to_exclude = []
+        
+        map_ids, sub_fields, obs_ids = \
+            numpy.loadtxt(text_file, dtype=str, delimiter="|",
+                          usecols=(0, 1, 2), unpack=True)
+        for index, map_id in enumerate(map_ids):
+            map_id = map_id.replace(" ", "")
+            if map_id == map_id_to_compare:
+                sub_field = sub_fields[index].replace(" ", "")
+                if sub_field == sub_field_to_compare:
+                    ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
+        
+        dict_to_record["bad_obs_ids"] = \
+            ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
+        
+        return dict_to_record
+    
+    
+    def generate_new_coadded_maps(
+            function, arguments, logger, log_file,
+            just_see_commands, back_up_good_coadds):
         
         output_file_temp = arguments['output_file']
         output_file_perm = '{}.g3'.format(output_file_temp[:-3])
         
-        log('Creating a backup for %s...', output_file_perm)
-        if os.path.isfile(output_file_perm):
-            duplicate = '{}_backup.g3'.format(output_file_perm[:-3])
-            log('  (Original file: %s' , output_file_perm)
-            log('   Backup file  : %s)', duplicate)
-            if not just_see_commands:
-                shutil.copy(output_file_perm, duplicate)
-            log('Done.')
-        else:
-            log('Actually, %s does not exist.', output_file_perm)
-        log('')
-        
-        log('Executing the main function...')
-        log('')
         run_command(function, arguments, logger, log_file, just_see_commands)
         
-        log('Changing the name of the temporary output file...')
+        log('Changing the name of the temporary output file ...')
         if os.path.isfile(output_file_temp):
             log('  (Original name: %s' , output_file_temp)
             log('   New name     : %s)', output_file_perm)
@@ -439,7 +480,74 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         else:
             log('Actually, %s does not exist.', output_file_temp)
         log('')
-    
+        
+        if back_up_good_coadds and os.path.isfile(output_file_perm):
+            make_backup = "yes"
+            backup      = '{}_backup.g3'.format(output_file_perm[:-3])
+            iterator    = core.G3File(output_file_perm)
+            new_frame   = iterator.next()
+            obs_info    = new_frame["CoaddedObservationIDs"]
+            noise_info  = new_frame["NoiseFromCoaddedMaps"]
+            map_id      = new_frame["Id"]
+            all_bad_ids = {}
+            for sub_field, obs_ids in obs_info.items():
+                n_over_time = \
+                    numpy.array([noise_info[sub_field][str(obs_id)] \
+                                 for obs_id in obs_ids])
+                if not numpy.isfinite(n_over_time[-1]):
+                    make_backup = "unsure"
+                    break
+                else:
+                    valid_indices = numpy.where(numpy.isfinite(n_over_time))[0]
+                    valid_data    = n_over_time[valid_indices]
+                    if valid_data[-1] > valid_data[-2]:
+                        bad_obs_ids = obs_ids[int(valid_indices[-2])+1:]
+                        for boid in bad_obs_ids:
+                            all_bad_ids[boid] = sub_field
+                        make_backup = "no"
+                        break
+            
+            if make_backup == "unsure":
+                pass
+            elif make_backup == "yes":
+                log('Creating a backup for %s ...', output_file_perm)
+                log('(b/c the data seem fine and may be useful in the future)')
+                log('  (Original file: %s' , output_file_perm)
+                log('   Backup file  : %s)', backup)
+                if not just_see_commands:
+                    shutil.copy(output_file_perm, backup)
+                log('Done.')
+                log('')
+            else:
+                log('The output file seems to contain problematic data')
+                log('(noise in the running noise map '
+                    'does not decrease monotonically).')
+                log('The possibly bad observations are being recorded ...')
+                for obs_id, sub_field in all_bad_ids.items():
+                    record_bad_obs_id(map_id, sub_field, obs_id,
+                                      bad_ids_file, "Noisy")
+                log('Done.')
+                log('')
+                
+                if os.path.isfile(backup):
+                    log('Since fortunately a backup file exists,')
+                    log('the ouput file will be replaced with this one,')
+                    log('and coadding will be redone without the')
+                    log('bad observations.')
+                    log('Replacing the file ...')
+                    if not just_see_commands:
+                        os.remove(output_file_perm)
+                        shutil.copy(backup, output_file_perm)
+                else:
+                    log('Since unfortunately there is no backup file,')
+                    log('the output file will just be deleted,')
+                    log('and the coadding will be redone,')
+                    log('but without the bad observations.')
+                    log('Deleting the file ...')
+                    if not just_see_commands:
+                        os.remove(output_file_perm)
+                log('Done.')
+                log('')
     
     
     # -- Then, execute commands by utilizing those functions
@@ -469,7 +577,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_args['calculate_noise_from_individual_maps'] = True
                     coadd_args['logger_name'] = '{}_{}'.format(sub_logger_name, map_id)
 
-                    generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands)
+                    generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
                     log('\n\n')
             else:
                 for map_id in map_ids:
@@ -484,8 +592,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_noise_from_coadded_maps'] = True
                         coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
+                        """coadd_args = gather_bad_obs_ids_from_list(
+                                         bad_ids_file, map_id, sub_field, coadd_args)"""
                         
-                        generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands)
+                        generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
                         log('\n\n')
                     
                     log('--- %s Full field ---', map_id)
@@ -504,7 +614,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
                     coadd_all_fields_args['logger_name'] = '{}_{}_full_field'.format(sub_logger_name, map_id)
                     coadd_all_fields_args['log_file'] = log_file
-
+                    
                     run_command(fields_coadding.run, coadd_all_fields_args, logger, log_file, just_see_commands)
                     log('\n\n')
 
@@ -652,7 +762,15 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--map_ids",
                         type=str, action="store",
                         nargs="+", default=["90GHz", "150GHz", "220GHz"],
-                        help="Relevant map IDs to take actions on.")
+                        help="Relevant map IDs to take actions on. This option is "
+                             "here mainly for debugging purposes.")
+    
+    parser.add_argument("-f", "--sub_fields",
+                        type=str, action="store",
+                        nargs="+", default=["ra0hdec-44.75", "ra0hdec-52.25",
+                                            "ra0hdec-59.75", "ra0hdec-67.25"],
+                        help="Relevant sub-fields to take actions on. This option is "
+                             "here mainly for debugging purposes.")
 
     parser.add_argument("-j", "--just-see-commands",
                         action="store_true", default=False,
@@ -681,6 +799,7 @@ if __name__ == '__main__':
            coadds_dir=arguments.coadds_dir,
            figs_dir=arguments.figs_dir,
            map_ids=arguments.map_ids,
+           sub_fields=arguments.sub_fields,
            just_see_commands=arguments.just_see_commands,
            logger_name=arguments.logger_name,
            log_file=arguments.log_file)
