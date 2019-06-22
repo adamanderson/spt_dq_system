@@ -199,20 +199,23 @@ def collect_averages_of_pw_to_K_factors(wafers, calframe):
         if (band  not in values_by_band_and_wafer.keys()) or \
            (wafer not in wafers):
             continue
-        pw_k  = calframe["CalibratorResponse"][bolo]
-        pw_k *= calframe[flux_calibration_key][bolo]
-        pw_k *= calframe[integral_flux_key][bolo]
-        pw_k *= calframe[sky_transmission_key][band]
-        pw_k /= flx[source][band]
+        if band in calframe[sky_transmission_key].keys():
+            pw_k  = calframe["CalibratorResponse"][bolo]
+            pw_k *= calframe[flux_calibration_key][bolo]
+            pw_k *= calframe[integral_flux_key][bolo]
+            pw_k *= calframe[sky_transmission_key][band]
+            pw_k /= flx[source][band]
+        else:
+            pw_k = numpy.nan
         values_by_band_and_wafer[band][wafer].append(pw_k)
     
     for band in values_by_band_and_wafer.keys():
         for wafer in wafers:
             vals = values_by_band_and_wafer[band][wafer]
-            if True not in numpy.isfinite(vals):
-                values_by_band_and_wafer[band][wafer] = numpy.nan
-            else:
+            try:
                 values_by_band_and_wafer[band][wafer] = numpy.nanmean(vals)
+            except:
+                values_by_band_and_wafer[band][wafer] = numpy.nan
     
     return values_by_band_and_wafer
 
