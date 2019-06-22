@@ -644,7 +644,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 operations_perfomed = \
                     numpy.array([oprts_hist[sub_field][str(obs_id)] \
                                  for obs_id in obs_ids])
-                valid_indices = numpy.where(operations_perfomed!=0.0)[0]
+                valid_indices = numpy.where(operations_perfomed==-1.0)[0]
                 x_data = range(1, len(valid_indices)+1)
                 noise_levels = numpy.asarray(noise_levels)[valid_indices]
             else:
@@ -656,14 +656,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 color=color, alpha=0.5)
             
             if noise_from_running_coadds:
-                x_for_lls = []
-                y_for_lls = []
-                for i, noise_level in enumerate(noise_levels):
-                    if numpy.isfinite(noise_level):
-                        x_for_lls.append(x_data[i])
-                        y_for_lls.append(noise_level)
-                x_for_lls = numpy.log(numpy.asarray(x_for_lls))
-                y_for_lls = numpy.log(numpy.asarray(y_for_lls))
+                x_for_lls = numpy.log(numpy.asarray(x_data))
+                y_for_lls = numpy.log(numpy.asarray(noise_levels))
                 design_matrix = numpy.asarray(x_for_lls)\
                                 [:, numpy.newaxis]**[1.0, 0.0]
                 parameters, residues, rank, singular_values = \
@@ -705,7 +699,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                   None, None, None, self.ttl_fs)
 
         if noise_from_running_coadds:
-            xlabel = "\n" + "Number of observations"
+            xlabel = "\n" + "Number of pairs of difference map"
         else:
             xlabel = "\n" + "Time (UTC)"
         ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
