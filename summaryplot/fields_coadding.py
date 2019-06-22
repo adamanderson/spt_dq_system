@@ -60,6 +60,48 @@ def map_seems_fine(map_frame, log_fun):
 
 
 
+
+def record_bad_obs_id(text_file, map_id, sub_field, obs_id, bad_reason):
+    
+    def pad_by_space(string):
+        return " "*2 + string + " "*2
+    
+    words_to_write = []
+    words_to_write.append(pad_by_space(map_id.rjust(6)))
+    words_to_write.append(pad_by_space(sub_field.rjust(8)))
+    words_to_write.append(pad_by_space(str(obs_id).rjust(9)))
+    words_to_write.append(" "*2 + bad_reason)
+    line_to_write = "|".join(words_to_write) + "\n"
+    
+    with open(text_file, "a") as file_object:
+        file_object.write(line_to_write)
+
+
+
+
+def gather_bad_obs_ids_from_list(
+        text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
+    
+    ids_to_exclude = []
+    
+    map_ids, sub_fields, obs_ids = \
+        numpy.loadtxt(text_file, dtype=str, delimiter="|",
+                      usecols=(0, 1, 2), unpack=True)
+    for index, map_id in enumerate(map_ids):
+        map_id = map_id.replace(" ", "")
+        if map_id == map_id_to_compare:
+            sub_field = sub_fields[index].replace(" ", "")
+            if sub_field == sub_field_to_compare:
+                ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
+    
+    dict_to_record["bad_obs_ids"] = \
+        ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
+        
+    return dict_to_record
+
+
+
+
 def get_band_average(bolo_names_from_each_scan, bolo_props_map):
 
     n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
@@ -604,6 +646,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  calculate_noise_from_coadded_maps=False,
                  calculate_xspec_with_coadded_maps=False,
                  point_source_file=None,
+                 bad_map_list_file=None,
                  calculate_pointing_discrepancies=False,
                  logging_function=logging.info):
         
@@ -636,7 +679,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             self.log("  as a different ID according to the relations below:")
             for id_from in sorted(self.id_mapping.keys()):
                 id_to = self.id_mapping[id_from]
-                self.log("      %s ==> %s", id_from, id_to)        
+                self.log("      %s ==> %s", id_from, id_to)
+        
+        self.bad_map_list_file = bad_map_list_file
 
         
         # - Initialize variables related to storing coadded maps
@@ -1377,6 +1422,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                          "running noise map,")
                                 self.log("*  the noise calc. will not occur.")
                                 self.log("*  -1 will be recorded as a dummy.)")
+                                record_bad_obs_id(
+                                    self.bad_map_list_file,
+                                    id_for_coadds, src, oid,
+                                    "Bad values around field center.")
                                 noise = -1.0 * noise_units                                
                             else:
                                 divide_map_by = n_added + n_subed
@@ -1394,7 +1443,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 self.log("* (So far, %s and %s maps have been "
                                          "added and subtracted, respectively,",
                                          n_added, n_subed)
-                                self.log("   and the running noise map was "
+                                self.log("*  and the running noise map was "
                                          "divided by %s when calculating "
                                          "the noise.)", divide_map_by)
                             
@@ -1408,9 +1457,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                     [id_for_coadds][src][:-1]
                                 past_ops = \
                                     numpy.asarray(
-                                        [self.operations_done_to_maps   \
-                                         [id_for_coadds][src][str(oid)] \
-                                         for oid in past_obs_ids])
+                                        [self.operations_done_to_maps    \
+                                         [id_for_coadds][src][str(poid)] \
+                                         for poid in past_obs_ids])
                                 valid_indices = \
                                     numpy.where(past_ops!=0.0)[0]
                                 last_good_obs_id = \
@@ -1433,6 +1482,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                              noise/noise_units)
                                     self.log("*  It was %s last time.)",
                                              last_noise/noise_units)
+                                    self.log("* (This map will be recorded in "
+                                             "the list of bad maps.)")
+                                    record_bad_obs_id(
+                                        self.bad_map_list_file,
+                                        id_for_coadds, src, oid,
+                                        "Made running noise map noisier.")
                                     reverse_op = op_dict[operation] * (-1)
                                     self.coadded_map_frames[id_for_coadds] = \
                                         add_map_frames(
@@ -1744,6 +1799,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         calculate_noise_from_coadded_maps=False,
         calculate_cross_spectrum_with_coadded_maps=False,
         point_source_file='',
+        bad_map_list_file='',
         calculate_pointing_discrepancies=False,
         sources=["ra0hdec-44.75", "ra0hdec-52.25",
                  "ra0hdec-59.75", "ra0hdec-67.25"],
@@ -1897,6 +1953,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                      calculate_cross_spectrum_with_coadded_maps,
                  point_source_file=\
                      point_source_file,
+                 bad_map_list_file=\
+                     bad_map_list_file,
                  calculate_pointing_discrepancies=\
                      calculate_pointing_discrepancies,
                  logging_function=log)
@@ -2062,6 +2120,11 @@ if __name__ == '__main__':
                              "simple criteria to decide whether to include "
                              "certain observations, but one can manually "
                              "specify bad observations, too.")
+    
+    parser.add_argument("-B", "--bad_map_list_file",
+                        type=str, action="store", default="",
+                        help="A text file in which maps that are found to be "
+                             "bad during the coadding processes are recorded.")
 
     parser.add_argument("-m", "--min_file_size",
                         type=float, action="store", default=0.01,

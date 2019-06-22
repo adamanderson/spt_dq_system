@@ -16,7 +16,8 @@ from glob  import glob
 from spt3g import core
 from spt3g import std_processing
 
-from summaryplot import fields_coadding, fields_plotting
+from summaryplot import fields_coadding
+from summaryplot import fields_plotting
 
 
 
@@ -79,7 +80,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     script_coadding_maps = "summaryplot/fields_coadding.py"
     script_plotting_data = "summaryplot/fields_plotting.py"
     point_source_file    = "spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt"
-    bad_ids_file         = "summaryplot/bad_observation_ids.txt"
+    bad_map_list_file    = "summaryplot/fields_bad_map_list.txt"
 
     if original_maps_dir[-1] != "/":
         original_maps_dir += "/"
@@ -325,6 +326,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                ids_to_exclude, int(id_lower_bound), int(id_upper_bound)
     
     
+    
     def figure_out_arguments_to_use_for_coadding(
             map_id, sub_field, time_range_id):
         
@@ -391,10 +393,12 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     
         arguments['temperature_maps_only'] = True
         arguments['point_source_file'] = point_source_file
+        arguments['bad_map_list_file'] = bad_map_list_file
         arguments['log_file'] = log_file
         
         return arguments
 
+    
     
     def run_command(function, arguments, logger, log_file, just_see_args):
         
@@ -420,45 +424,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                        'Please check where it occurred '
                                        'in the log file {}!'.format(log_file))
         log('')
-    
-    
-    def record_bad_obs_id(map_id, sub_field, obs_id, text_file, bad_reason):
         
-        def pad_by_space(string):
-            return " "*2 + string + " "*2
-        
-        words_to_write = []
-        words_to_write.append(pad_by_space(map_id.rjust(6)))
-        words_to_write.append(pad_by_space(sub_field.rjust(8)))
-        words_to_write.append(pad_by_space(str(obs_id).rjust(9)))
-        time_added = datetime.datetime.utcnow().strftime('20%y%m%d_%H%M%S')
-        words_to_write.append(pad_by_space(time_added.center(15)))
-        words_to_write.append(" "*2 + bad_reason)
-        line_to_write = "|".join(words_to_write) + "\n"
-        
-        with open(text_file, "a") as file_object:
-            file_object.write(line_to_write)
-    
-    
-    def gather_bad_obs_ids_from_list(
-            text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
-        
-        ids_to_exclude = []
-        
-        map_ids, sub_fields, obs_ids = \
-            numpy.loadtxt(text_file, dtype=str, delimiter="|",
-                          usecols=(0, 1, 2), unpack=True)
-        for index, map_id in enumerate(map_ids):
-            map_id = map_id.replace(" ", "")
-            if map_id == map_id_to_compare:
-                sub_field = sub_fields[index].replace(" ", "")
-                if sub_field == sub_field_to_compare:
-                    ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
-        
-        dict_to_record["bad_obs_ids"] = \
-            ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
-        
-        return dict_to_record
     
     
     def generate_new_coadded_maps(
@@ -524,8 +490,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     'does not decrease monotonically).')
                 log('The possibly bad observations are being recorded ...')
                 for obs_id, sub_field in all_bad_ids.items():
-                    record_bad_obs_id(map_id, sub_field, obs_id,
-                                      bad_ids_file, "Noisy")
+                    fields_coadding.record_bad_obs_id(
+                        bad_ids_file, map_id, sub_field, obs_id, "Noisy")
                 log('Done.')
                 log('')
                 
@@ -592,7 +558,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_noise_from_coadded_maps'] = True
                         coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
-                        """coadd_args = gather_bad_obs_ids_from_list(
+                        """coadd_args = fields_coadding.gather_bad_obs_ids_from_list(
                                          bad_ids_file, map_id, sub_field, coadd_args)"""
                         
                         generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
