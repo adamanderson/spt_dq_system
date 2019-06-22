@@ -338,7 +338,7 @@ def add_map_frames(
             existing_map = frame_of_coadded_maps.pop(to_that_key)
             frame_of_coadded_maps[to_that_key] = \
                 existing_map + new_frame[from_this_key] * operation
-    
+        
     if ignore_weights:
         pass
     elif "Wunpol" in new_frame.keys():
@@ -1270,8 +1270,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("* Done.")
                     self.log("")
                 else:
-                    center_ra  = 0.0 * core.G3Units.deg
-                    center_dec = float(src[-6:]) * core.G3Units.deg
+                    center_ra   = 0.0 * core.G3Units.deg
+                    center_dec  = float(src[-6:]) * core.G3Units.deg
+                    noise_units = core.G3Units.uK*core.G3Units.arcmin
                     if self.maps_split_by_scan_direction:
                         self.log("")
                         self.log("* Noise calculation is about to start")
@@ -1311,6 +1312,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                         smaller_region=True,
                                         center_ra=center_ra,
                                         center_dec=center_dec)
+
                         else:
                             if src not in \
                             self.operations_done_to_maps[id_for_coadds].keys():
@@ -1318,10 +1320,11 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 [id_for_coadds][src] = core.G3MapDouble()
                             
                             new_frame = core.G3Frame(core.G3FrameType.Map)
-                            new_frame["T"] = mapmaker.mapmakerutils.\
-                                             remove_weight_t(
-                                                 frame["T"], frame["Wunpol"])
-                            new_frame["Wunpol"] = frame["Wunpol"]
+                            if self.temp_only:
+                                new_frame["T"] = \
+                                    mapmaker.mapmakerutils.remove_weight_t(
+                                        frame["T"], frame["Wunpol"])
+                                new_frame["Wunpol"] = frame["Wunpol"]
                             
                             operation = decide_operation_to_do_with_new_map(
                                             new_frame,
@@ -1352,7 +1355,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                             self.coadded_map_frames\
                                             [id_for_coadds],
                                             new_frame,
-                                            {"T": "T_Noise"}, op_dict[operation])
+                                            {"T": "T_Noise"},
+                                            op_dict[operation])
+                                self.log("* (The operation was done.)")
                             
                             n_added = list(self.operations_done_to_maps\
                                          [id_for_coadds][src].values()).\
@@ -1367,9 +1372,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 self.log("*  and it was not added to "
                                          "nor subtracted from the "
                                          "running noise map,")
-                                self.log("*  the noise calc. will not occur.)")
-                                noise = -1.0
-                                valid_running_noise = False
+                                self.log("*  the noise calc. will not occur.")
+                                self.log("*  -1 will be recorded as a dummy.)")
+                                noise = -1.0 * noise_units                                
                             else:
                                 divide_map_by = n_added + n_subed
                                 noise = calculate_noise_level(
@@ -1383,30 +1388,63 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                             center_dec=center_dec,
                                             map_key_suffix="_Noise",
                                             divisive_factor=divide_map_by)
+                                self.log("* (So far, %s and %s maps have been "
+                                         "added and subtracted, respectively,",
+                                         n_added, n_subed)
+                                self.log("   and the running noise map was "
+                                         "divided by %s when calculating "
+                                         "the noise.)", divide_map_by)
                             
-                                if n_added == n_subed:
-                                    valid_running_noise = True
+                            if operation in ["Ignore", "Copy"]:
+                                pass
+                            elif divide_map_by < 11:
+                                pass
+                            else:
+                                past_obs_ids = \
+                                    self.coadded_obs_ids \
+                                    [id_for_coadds][src][:-1]
+                                past_ops = \
+                                    numpy.asarray(
+                                        [self.operations_done_to_maps   \
+                                         [id_for_coadds][src][str(oid)] \
+                                         for oid in past_obs_ids])
+                                valid_indices = \
+                                    numpy.where(past_ops!=0.0)[0]
+                                last_good_obs_id = \
+                                    str(past_obs_ids[int(valid_indices[-1])])
+                                last_noise  = \
+                                    self.noise_from_coadded_maps\
+                                    [id_for_coadds][src][last_good_obs_id]
+                                if noise < 1.1 * last_noise:
+                                    pass
                                 else:
-                                    valid_running_noise = False
-                                                            
-                    if self.calc_noise_from_coadded_maps:
-                        if (not numpy.isfinite(noise)) or (noise == 0.0):
-                            raise RuntimeError("The noise calculation "
-                                               "seemed to have failed!")
-                    n = noise / (core.G3Units.uK*core.G3Units.arcmin)
+                                    self.log("* (The noise calculated "
+                                             "this time is larger than the one "
+                                             "calculated last time,")
+                                    self.log("*  which indicates that "
+                                             "this map might be too noisy,")
+                                    self.log("*  so the operation done "
+                                             "will be reversed.")
+                                    self.log("*  For the record,")
+                                    self.log("*  the noise is %s uK.arcmin.",
+                                             noise/noise_units)
+                                    self.log("*  It was %s last time.)",
+                                             last_noise/noise_units)
+                                    reverse_op = op_dict[operation] * (-1)
+                                    self.coadded_map_frames[id_for_coadds] = \
+                                        add_map_frames(
+                                            self.coadded_map_frames\
+                                            [id_for_coadds],
+                                            new_frame,
+                                            {"T": "T_Noise"},
+                                            reverse_op)
+                                    self.operations_done_to_maps\
+                                        [id_for_coadds][src].pop(str(oid))
+                                    self.operations_done_to_maps\
+                                        [id_for_coadds][src][str(oid)] = 0.0
+                    
                     self.log("* ... the noise level was calculated to be")
-                    self.log("* %s uK.arcmin.", n)
-                    try:
-                        if not valid_running_noise:
-                            self.log("* (Actually, the running 'noise' map")
-                            self.log("*  didn't contain an integer number of")
-                            self.log("*  pairs of difference map,")
-                            self.log("*  or the map from this frame was bad,")
-                            self.log("*  so the noise calculation was invalid,")
-                            self.log("*  and nan will be recorded instead.)")
-                            noise = numpy.nan
-                    except NameError:
-                        pass
+                    self.log("* %s uK.arcmin.", noise/noise_units)
                     self.log("* Done.")
                     self.log("")
                     
