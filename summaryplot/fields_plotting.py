@@ -514,7 +514,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     
     def get_xticks_and_labels_from_obs_id_range(
-            self, plot_obj, min_obs_id, max_obs_id):
+            self, plot_obj, min_obs_id, max_obs_id, no_hour=False):
 
         if (min_obs_id is None) or (max_obs_id is None):
             xtick_locs   = plot_obj.get_xticks()
@@ -535,19 +535,29 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 month = tstr.split("-")[1]
                 date  = tstr.split("-")[0]
                 hour  = tstr.split(":")[1]
-                label = month + " " + date + "\n" + hour + "h"
+                if no_hour:
+                    label = month + " " + date
+                else:
+                    label = month + " " + date + "\n" + hour + "h"
                 xtick_locs_major.append(current_tick)
                 xtick_labels_major.append(label)
                 if total_secs < (4 * 24 * 3600 + 10):
                     current_tick += 6 * 3600
                 elif total_secs < (8 * 24 * 3600):
                     for hour in [6, 12, 18]:
-                        xtick_locs_minor.append(current_tick + hour * 3600)
+                        secs_hours = hour * 3600
+                        xtick_locs_minor.append(current_tick + secs_hours)
                     current_tick += 24 * 3600
-                else:
+                elif total_secs < (33 * 24 * 3600):
                     for day in [1, 2, 3, 4, 5, 6]:
-                        xtick_locs_minor.append(current_tick + day * 24 * 3600)
+                        secs_days = day * 24 * 3600
+                        xtick_locs_minor.append(current_tick + secs_days)
                     current_tick += 7 * 24 * 3600
+                else:
+                    for week in [1, 2, 3]:
+                        secs_weeks = week * 7 * 24 * 3600
+                        xtick_locs_minor.append(current_tick + secs_weeks)    
+                    current_tick += 4 * 7 * 24 * 3600
         
         return xtick_locs_major, xtick_labels_major, xtick_locs_minor
     
@@ -704,7 +714,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                   None, None, None, self.ttl_fs)
 
         if noise_from_running_coadds:
-            xlabel = "\n" + "Number of pairs of difference map"
+            xlabel = "\n" + "Number of pairs of difference map added"
         else:
             xlabel = "\n" + "Time (UTC)"
         ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
@@ -717,7 +727,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 alias = self.el_dict[sub_field]
                 n_bad = n_excluded[sub_field]
                 more_info.append("{" + str(n_bad) + " " + alias.upper() + "}")
-            more_info   = "(numbers of excluded noisy observations: " + \
+            more_info   = "(numbers of excluded maps: " + \
                           " ".join(more_info) + ")\n"
             more_title += more_info
         else:
@@ -809,6 +819,57 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             more_file_name = "noise_levels_from_observations_of_{}".\
                              format(sub_field)
             file_name = self.get_full_file_name(more_file_name)
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
+    def make_figure_for_order_of_addition(self, frame):
+        
+        noise_key = "NoiseFromCoaddedMaps"
+        if noise_key not in frame.keys():
+            return
+        
+        all_obs_ids_used = frame["CoaddedObservationIDs"]
+        
+        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            plot_obj.plot(obs_ids_this_sf,
+                          linestyle="None",
+                          marker=".", markersize=self.mrkrsz,
+                          color=self.cl_dict[sub_field])
+            
+            min_oid = numpy.min(obs_ids_this_sf)
+            max_oid = numpy.max(obs_ids_this_sf)
+            
+            ylims_dict = self.get_xlims_from_obs_id_range(
+                min_oid, max_oid, 0.0)
+            ylims_dict["bottom"] = ylims_dict.pop("left")
+            ylims_dict["top"]    = ylims_dict.pop("right")
+            
+            set_lims(plot_obj, 0, len(obs_ids_this_sf)+1,
+                               ylims_dict["bottom"], ylims_dict["top"])
+            
+            ytick_locs_major, ytick_labels, ytick_locs_minor = \
+                self.get_xticks_and_labels_from_obs_id_range(
+                    plot_obj, min_oid, max_oid, no_hour=True)
+            
+            set_ticks(plot_obj, None, None, None,
+                      ytick_locs_major, ytick_locs_minor, ytick_labels,
+                      self.ttl_fs)
+            
+            xlabel = "\n" + "Number of observations added"
+            ylabel = "Date of observation" + "\n"
+            
+            more_title = "Order in which observations of " + \
+                         sub_field + " were added" + "\n"
+            fig_title = self.get_full_fig_title(more_title)
+            
+            set_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = "order_of_addition_of_maps_of_" + sub_field
+            file_name = self.get_full_file_name(more_file_name)
+            
             save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
@@ -966,6 +1027,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.log("Making figures for noise levels...")
                 self.make_figure_for_all_noise_levels(frame)
                 self.make_figure_for_recent_noise_levels(frame)
+                self.make_figure_for_order_of_addition(frame)
                 self.log("Done.\n")
             
             self.already_made_figures = True
