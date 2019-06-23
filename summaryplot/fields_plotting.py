@@ -219,7 +219,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             median  = str(numpy.round(numpy.median(vals_for_stats)))
             pctl_10 = str(numpy.round(numpy.percentile(vals_for_stats, 10), 3))
             pctl_90 = str(numpy.round(numpy.percentile(vals_for_stats, 90), 3))
-            title_b = "(Some statistics:  " + "10th pctl. = " +pctl_10+",  "+\
+            title_b = "(some statistics:  " + "10th pctl. = " +pctl_10+",  "+\
                       "Median = " +median+ ",  " + "90th pctl. = " +pctl_90+ ")"
         
         full_ttl = title_a + "\n" + title_b + "\n"
@@ -630,6 +630,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             xlims_dict = self.get_xlims_from_obs_id_range(
                              self.xlim_left, self.xlim_right, 3.0)
         
+        if noise_from_running_coadds:
+            n_excluded = {}
+        
         for sub_field, obs_ids in obs_data.items():
             if not noise_from_running_coadds:
                 obs_ids = sorted(obs_ids)
@@ -641,10 +644,12 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             color = self.cl_dict[sub_field]
             
             if noise_from_running_coadds:
-                operations_perfomed = \
+                operations_performed = \
                     numpy.array([oprts_hist[sub_field][str(obs_id)] \
                                  for obs_id in obs_ids])
-                valid_indices = numpy.where(operations_perfomed==-1.0)[0]
+                valid_indices = numpy.where(operations_performed==-1.0)[0]
+                bad_indices   = numpy.where(operations_performed== 0.0)[0]
+                n_excluded[sub_field] = len(bad_indices)
                 x_data = range(1, len(valid_indices)+1)
                 noise_levels = numpy.asarray(noise_levels)[valid_indices]
             else:
@@ -707,6 +712,14 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         if noise_from_running_coadds:
             more_title = "Noise of year-to-date coadded noise maps\n"
+            more_info  = []
+            for sub_field in sorted(n_excluded.keys()):
+                alias = self.el_dict[sub_field]
+                n_bad = n_excluded[sub_field]
+                more_info.append("{" + str(n_bad) + " " + alias.upper() + "}")
+            more_info   = "(numbers of excluded noisy observations: " + \
+                          " ".join(more_info) + ")\n"
+            more_title += more_info
         else:
             more_title = "Noise (+some signal) of individual maps\n"
         fig_title = self.get_full_fig_title(more_title)
