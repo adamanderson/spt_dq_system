@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse as ap
 import logging
 import time
@@ -147,16 +148,21 @@ if args.mode == 'maps':
                 log_file = os.path.join(args.coaddslogsdir,
                                         '{}_{}'.format(time_string, logger_name))
             
-            cache_field_maps.update(mode, action, time_interval='last_n',
-                                    last_how_many_days=n,
-                                    oldest_time_to_consider=args.mintime,
-                                    current_time=current_day,
-                                    original_maps_dir=args.mapsdatadir,
-                                    coadds_dir=args.coaddsdatadir,
-                                    figs_dir=args.coaddsfigsdir,
-                                    just_see_commands=args.justseecommands,
-                                    logger_name=logger_name,
-                                    log_file=log_file)
+            try:
+                cache_field_maps.update(mode, action, time_interval='last_n',
+                                        last_how_many_days=n,
+                                        oldest_time_to_consider=args.mintime,
+                                        current_time=current_day,
+                                        original_maps_dir=args.mapsdatadir,
+                                        coadds_dir=args.coaddsdatadir,
+                                        figs_dir=args.coaddsfigsdir,
+                                        just_see_commands=args.justseecommands,
+                                        logger_name=logger_name,
+                                        log_file=log_file)
+            except Exception:
+                logger.exception('Something did not go well '
+                                 'while updating maps/figures ...')
+                sys.exit()
             time.sleep(1)
     
     for interval in ['yearly', 'monthly', 'weekly']:
@@ -174,15 +180,20 @@ if args.mode == 'maps':
                 log_file = os.path.join(args.coaddslogsdir,
                                         '{}_{}'.format(time_string, logger_name))
             
-            cache_field_maps.update(mode, action, time_interval=interval,
-                                    oldest_time_to_consider=args.mintime,
-                                    current_time=current_day,
-                                    original_maps_dir=args.mapsdatadir,
-                                    coadds_dir=args.coaddsdatadir,
-                                    figs_dir=args.coaddsfigsdir,
-                                    just_see_commands=args.justseecommands,
-                                    logger_name=logger_name,
-                                    log_file=log_file)
+            try:
+                cache_field_maps.update(mode, action, time_interval=interval,
+                                        oldest_time_to_consider=args.mintime,
+                                        current_time=current_day,
+                                        original_maps_dir=args.mapsdatadir,
+                                        coadds_dir=args.coaddsdatadir,
+                                        figs_dir=args.coaddsfigsdir,
+                                        just_see_commands=args.justseecommands,
+                                        logger_name=logger_name,
+                                        log_file=log_file)
+            except Exception:
+                logger.exception('Something did not go well '
+                                 'while updating maps/figures ...')
+                sys.exit()
             time.sleep(1)
     
     current_time = datetime.datetime.utcnow()

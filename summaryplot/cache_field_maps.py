@@ -419,7 +419,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 try:
                     function(**arguments)
                 except Exception:
-                    logger.exception('Something did not go well ...')
+                    logger.exception('Something did not go well '
+                                     'while running coadding/plotting!')
                     raise RuntimeError('An error occurred! '
                                        'Please check where it occurred '
                                        'in the log file {}!'.format(log_file))
