@@ -13,6 +13,7 @@ import  sys
 import  glob
 import  numpy
 import  argparse
+import  datetime
 import  logging
 
 
@@ -822,10 +823,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             return
         
         if frame.type == core.G3FrameType.Observation:
+            current_time = datetime.datetime.utcnow()
             self.log("")
             self.log("-----------------------------------------------------")
             self.log("Found an observation frame!")
             self.log("(Probably a new g3 file has arrived to the pipeline.)")
+            self.log("(Current UTC time is %s.)", current_time)
             self.log("-----------------------------------------------------")
             self.log("")
             self.obs_info = frame
