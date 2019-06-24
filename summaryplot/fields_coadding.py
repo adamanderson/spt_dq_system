@@ -1470,7 +1470,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                 last_noise  = \
                                     self.noise_from_coadded_maps\
                                     [id_for_coadds][src][last_good_obs_id]
-                                if noise < 1.1 * last_noise:
+                                if noise < 1.0 * last_noise:
                                     pass
                                 else:
                                     self.log("* (The noise calculated "
