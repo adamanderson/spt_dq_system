@@ -195,10 +195,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             max_id  = str(numpy.max(obs_ids))
             min_dt  = str(std_processing.obsid_to_g3time(min_id)).split(":")[0]
             max_dt  = str(std_processing.obsid_to_g3time(max_id)).split(":")[0]
-            obs_id  = "from " + min_id + " to " + max_id
+            obs_id  = min_id + " to " + max_id
             dt_rng  = "from " + min_dt + " to " + max_dt
-            el_dic  = {"ra0hdec-44.75": "El 0", "ra0hdec-52.25": "El 1",
-                       "ra0hdec-59.75": "El 2", "ra0hdec-67.25": "El 3"}
+            el_dic  = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
+                       "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3"}
             n_obss  = ["{"+str(len(obss))+" "+el_dic[source]+"}" \
                        for source, obss in obs_id_list.items()]
             n_obss  = " ".join(n_obss)
@@ -217,10 +217,10 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             title_b = "(No information on statistics)"
         else:
             median  = str(numpy.round(numpy.median(vals_for_stats)))
-            pctl_10 = str(numpy.round(numpy.percentile(vals_for_stats, 10), 3))
-            pctl_90 = str(numpy.round(numpy.percentile(vals_for_stats, 90), 3))
-            title_b = "(some statistics:  " + "10th pctl. = " +pctl_10+",  "+\
-                      "Median = " +median+ ",  " + "90th pctl. = " +pctl_90+ ")"
+            pctl_10 = str(numpy.round(numpy.percentile(vals_for_stats, 15), 3))
+            pctl_90 = str(numpy.round(numpy.percentile(vals_for_stats, 85), 3))
+            title_b = "(15th pctl. = " +pctl_10+",  "+\
+                      "Median = " +median+ ",  " + "85th pctl. = " +pctl_90+ ")"
         
         full_ttl = title_a + "\n" + title_b + "\n"
         file_nm  = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
@@ -256,6 +256,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         
         cbar = figure_obj.colorbar(
                    cax, ax=plot_obj, pad=0.01, shrink=0.75, aspect=30)
+        cbar.ax.tick_params(labelsize=self.ttl_fs-2.0)
         
         plot_obj.tick_params(
             axis="both", which="both",
@@ -424,18 +425,22 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                     else:
                         wt_mp, wt_mp_str = \
                             self.get_weight_map(frame, self.map_type)
+                    
                     self.log("Making a figure for the entire weight map...")
                     
-                    res      = wt_mp.x_res
-                    cbar_lbl = "\n" + "Weight [arb.]"
+                    res = wt_mp.x_res
+                    
+                    wt_mp  = numpy.asarray(wt_mp)
+                    wt_mp /= 1.0 / (core.G3Units.mK*core.G3Units.mK)
+                    cbar_lbl = "\n" + "1 / " + r"${mK_{CMB}}^2$"
                     
                     self.log("  Preparing the figure title...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
                         obs_id_list = None
-                    wt_mp = numpy.asarray(wt_mp)
                     non_zero_wghts = wt_mp[numpy.where(wt_mp!=0.0)]
+    
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
                             self.obs_fr, obs_id_list,
@@ -638,7 +643,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                           "150GHz": {"bottom":  90, "top": 210},
                           "220GHz": {"bottom": 300, "top": 700}}
             xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 3.0)
+                             self.xlim_left, self.xlim_right, 3.5)
         
         if noise_from_running_coadds:
             n_excluded = {}
@@ -684,10 +689,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.plot(x_for_plot, y_for_plot,
                               color=color, alpha=0.8, linewidth=self.ln_wdth)
                 explanation = "Slope from LLS fit: " + str(power)[0:6]
-                ylocs_dict  = {"ra0hdec-44.75": 0.15,
-                               "ra0hdec-52.25": 0.11,
-                               "ra0hdec-59.75": 0.07,
-                               "ra0hdec-67.25": 0.03}
+                ylocs_dict  = {"ra0hdec-44.75": 0.19,
+                               "ra0hdec-52.25": 0.14,
+                               "ra0hdec-59.75": 0.09,
+                               "ra0hdec-67.25": 0.04}
                 plot_obj.text(0.03, ylocs_dict[sub_field], explanation,
                               transform=plot_obj.transAxes,
                               horizontalalignment="left",
@@ -726,7 +731,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             for sub_field in sorted(n_excluded.keys()):
                 alias = self.el_dict[sub_field]
                 n_bad = n_excluded[sub_field]
-                more_info.append("{" + str(n_bad) + " " + alias.upper() + "}")
+                more_info.append("{" + str(n_bad) + " " + alias + "}")
             more_info   = "(numbers of excluded maps: " + \
                           " ".join(more_info) + ")\n"
             more_title += more_info
@@ -881,7 +886,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
             xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 4.0)
+                             self.xlim_left, self.xlim_right, 5.4)
             ylims_dict = {"bottom": -45, "top": 45}
 
             for source_rank in ["1", "2", "3"]:
@@ -923,7 +928,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             else:
                 ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
             more_title = "Difference between measured and true " + \
-                         coordinate + " of several point sources" + "\n"
+                         coordinate + " of point sources" + "\n"
             
             fig_title = self.get_full_fig_title(more_title)
             
@@ -979,7 +984,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         ylims_dict = {"bottom": -10, "top": 5000}
         xlims_dict = self.get_xlims_from_obs_id_range(
-                         self.xlim_left, self.xlim_right, 5.0)
+                         self.xlim_left, self.xlim_right, 6.2)
         
         set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                            ylims_dict["bottom"], ylims_dict["top"])
@@ -992,9 +997,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                   None, None, None, self.ttl_fs)
         
         xlabel = "\n" + "Time (UTC)"
-        ylabel = "Average number (avg. over all scans of an obs.)" + "\n"
-        more_title = "Average number of flagged detectors " + \
-                     "for select reasons during each observation" + "\n"
+        ylabel = "Averages (over all scans of an obs.)" + "\n"
+        more_title = "Average number of flagged detectors" + "\n"
         fig_title  = self.get_full_fig_title(more_title)
         
         set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
