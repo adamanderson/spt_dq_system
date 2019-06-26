@@ -392,6 +392,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             arguments['max_obs_id'] = desired_obs_id_ranges[i][1]
                     
         arguments['temperature_maps_only'] = True
+        arguments['calculate_map_rms_and_weight_stat'] = True
         arguments['point_source_file'] = point_source_file
         arguments['bad_map_list_file'] = bad_map_list_file
         arguments['log_file'] = log_file
@@ -538,6 +539,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     log('')
                     
                     coadd_args = figure_out_arguments_to_use_for_coadding(map_id, '*', i)
+                    if time_interval == "last_n":
+                        coadd_args['subtract_existing_maps'] = True
+                    else:
+                        coadd_args['subtract_existing_maps'] = False
                     coadd_args['collect_averages_from_flagging_statistics'] = True
                     coadd_args['calculate_pW_to_K_conversion_factors'] = True
                     coadd_args['calculate_pointing_discrepancies'] = True
@@ -594,7 +599,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                                               'coadded_maps_{}.g3'.format(map_id))],
                                  'directory_to_save_figures': desired_dir_names[i+n_time_ranges],
                                  'simpler_file_names': True,
-                                 'figure_title_font_size': 15,
+                                 'figure_title_font_size': 18,
                                  'map_id': map_id,
                                  'map_type': 'T',
                                  'coadded_data': True,
