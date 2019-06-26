@@ -606,6 +606,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                  'make_figures_for_field_maps': True,
                                  'smooth_map_with_gaussian': True,
                                  'gaussian_fwhm': 1,
+                                 'make_figures_for_entire_weight_maps': True,
+                                 'make_figures_for_weight_maps_cross_section': True,
                                  'make_figures_for_noise_levels': True,
                                  'log_file': log_file,
                                  'logger_name': '{}_{}'.format(sub_logger_name, map_id)}
@@ -616,9 +618,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     plotting_args['left_xlimit_for_time_variations'] = desired_obs_id_ranges[i][0]
                     plotting_args['right_xlimit_for_time_variations'] = desired_obs_id_ranges[i][1]
                 else:
-                    plotting_args['make_figures_for_entire_weight_maps'] = True
-                    plotting_args['make_figures_for_weight_maps_cross_section'] = True
-
+                    pass
+                
                 if action == 'update':
                     plotting_args['decide_whether_to_make_figures_at_all'] = True
 
