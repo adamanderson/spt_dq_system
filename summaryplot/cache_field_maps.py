@@ -339,14 +339,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         if sub_field == '*':
             g3_file_for_coadded_maps = \
                 os.path.join(desired_dir_names[time_range_id],
-                             'coadded_maps_{}.g3'.format(map_id))
+                             'coadded_maps_{}.g3.gz'.format(map_id))
         else:
             g3_file_for_coadded_maps = \
                 os.path.join(desired_dir_names[time_range_id],
-                             'coadded_maps_from_{}_{}.g3'.format(sub_field,
+                             'coadded_maps_from_{}_{}.g3.gz'.format(sub_field,
                                                                  map_id))
         
-        arguments['output_file'] = '{}.g4'.format(g3_file_for_coadded_maps[:-3])
+        arguments['output_file'] = '{}.g4.gz'.format(g3_file_for_coadded_maps[:-6])
         arguments['map_ids'] = [map_id]
         
         if (action == 'update') and \
@@ -434,7 +434,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             just_see_commands, back_up_good_coadds):
         
         output_file_temp = arguments['output_file']
-        output_file_perm = '{}.g3'.format(output_file_temp[:-3])
+        output_file_perm = '{}.g3.gz'.format(output_file_temp[:-6])
         
         run_command(function, arguments, logger, log_file, just_see_commands)
         
@@ -576,10 +576,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_all_fields_args = {}
                     coadd_all_fields_args['input_files'] = \
                         [os.path.join(desired_dir_names[i],
-                                      'coadded_maps_from_{}_{}.g3'.format(sf, map_id)) for sf in sub_fields]
+                                      'coadded_maps_from_{}_{}.g3.gz'.format(sf, map_id)) for sf in sub_fields]
                     coadd_all_fields_args['output_file'] = \
                         os.path.join(desired_dir_names[i],
-                                     'coadded_maps_{}.g3'.format(map_id))
+                                     'coadded_maps_{}.g3.gz'.format(map_id))
                     coadd_all_fields_args['map_ids'] = [map_id]
                     coadd_all_fields_args['temperature_maps_only'] = True
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
@@ -596,7 +596,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 log('')
                 
                 plotting_args = {'input_files': [os.path.join(desired_dir_names[i],
-                                                              'coadded_maps_{}.g3'.format(map_id))],
+                                                              'coadded_maps_{}.g3.gz'.format(map_id))],
                                  'directory_to_save_figures': desired_dir_names[i+n_time_ranges],
                                  'simpler_file_names': True,
                                  'figure_title_font_size': 18,
