@@ -35,28 +35,7 @@ def map_seems_fine(map_frame, log_fun):
         log_fun("")
         log_fun("There seem to be only NaNs in the map!")
         return False
-    
-    """
-    ## Ignore this part for now
-    too_big_map_vals = {"T": {}}
-    for map_id in arguments.map_ids:
-        if "90GHz" in map_id:
-            too_big_map_vals["T"][map_id] = numpy.inf
-        elif "150GHz" in map_id:
-            too_big_map_vals["T"][map_id] = numpy.inf
-        elif "220GHz" in map_id:
-            too_big_map_vals["T"][map_id] = numpy.inf
-    pctl_10 = numpy.nanpercentile(numpy.asarray(map_weight_divided), 90)
-    pctl_90 = numpy.nanpercentile(numpy.asarray(map_weight_divided), 10)
-    larger_abs = numpy.max([numpy.abs(pctl_10), numpy.abs(pctl_90)])
-    if larger_abs/core.G3Units.mK > dict_thresh[tqu_type][id_for_thresh]:
-        print()
-        print("The fluctuations seem too large!")
-        print("10th pctl. value in the map:", pctl_10, "mK")
-        print("90th pctl. value in the map:", pctl_90, "mK")
-        return False
-    """
-    
+        
     return True
 
 
@@ -398,6 +377,54 @@ def add_map_frames(
 
 
 
+
+def calculate_map_fluctuation_metrics(
+        map_frame, temperature_only,
+        center_ra, center_dec,
+        return_nans=False):
+    
+    keys = ["MapStdDevs",
+            "MeansOfWeights",
+            "VarsOfProductsOfMapValuesAndSqrtWeights"]
+    
+    fluctuation_metrics = {key: numpy.nan for key in keys}
+    
+    if return_nans:
+        return fluctuation_metrics
+    else:
+        if temperature_only:
+            t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
+                                   map_frame["T"], map_frame["Wunpol"]))
+            w_vals = numpy.asarray(map_frame["Wunpol"].TT)
+        
+        if (False in numpy.isfinite(t_vals)) or \
+           (False in numpy.isfinite(w_vals)):
+            return fluctuation_metrics
+        
+        w_cut = numpy.nanpercentile(w_vals[numpy.where(w_vals>0.0)], 25)
+        igw   = numpy.where(w_vals > w_cut)
+        good_w_vals = w_vals[igw]
+        good_t_vals = t_vals[igw]
+        
+        pctl_hi = numpy.percentile(good_t_vals, 99.5)
+        pctl_lo = numpy.percentile(good_t_vals,  0.5)
+        inx = numpy.where((good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
+        better_t_vals = good_t_vals[inx]
+        better_w_vals = good_w_vals[inx]
+        
+        map_stddev  = numpy.nanstd(better_t_vals)
+        mean_weight = numpy.mean(better_w_vals)
+        var_product = numpy.var(better_t_vals * numpy.sqrt(better_w_vals))
+        
+        fluctuation_metrics[keys[0]] = map_stddev
+        fluctuation_metrics[keys[1]] = mean_weight
+        fluctuation_metrics[keys[2]] = var_product
+        
+        return fluctuation_metrics
+
+
+
+
 def create_new_map_frame_with_smaller_map_region(
         map_frame, temperature_only,
         center_ra, center_dec,
@@ -643,6 +670,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                  allow_subtraction=False,
                  collect_averages_from_flagging_stats=False,
                  calculate_pW_to_K_conversion_factors=False,
+                 calculate_map_rms_and_weight_stat=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
                  calculate_xspec_with_coadded_maps=False,
@@ -734,6 +762,25 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             self.means_of_temp_cal_factors = \
                 {wafer: {mid: core.G3MapMapDouble() \
                          for mid in self.map_ids} for wafer in self.wafers}
+        
+        
+        # - Initialize variables related to calculating a Std. dev. of
+        # - a map, a mean weight, and a variance of a product between
+        # - map values and square root of the weights
+        
+        self.calc_map_stddev_etc = calculate_map_rms_and_weight_stat
+        
+        if self.calc_map_stddev_etc:
+            self.fluctuation_keys = ["MapStdDevs",
+                                     "MeansOfWeights",
+                                     "VarsOfProductsOfMapValuesAndSqrtWeights"]
+            self.map_types = ["IndividualMaps",
+                              "CoaddedMaps"]
+            self.map_fluctuation_metrics =  \
+                {map_type: {fluc_type: {mid: core.G3MapMapDouble()  \
+                                        for mid in self.map_ids}    \
+                            for fluc_type in self.fluctuation_keys} \
+                 for map_type in self.map_types}
         
         
         # - Initialize variables related to pointing dicrepancy calculations
@@ -895,10 +942,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("\n")
                     return []
                 else:
-                    id_for_coadds  = self.id_mapping[frame["Id"]]
-                    oid = self.obs_info["ObservationID"]
-                    src = self.obs_info["SourceName"]
+                    id_for_coadds = self.id_mapping[frame["Id"]]
+                    oid  = self.obs_info["ObservationID"]
+                    src  = self.obs_info["SourceName"]
                     dmid = str(oid) + frame["Id"]   # ** more detailed map id
+                    center_ra  = core.G3Units.deg * 0.0
+                    center_dec = core.G3Units.deg * float(src[-6:])
                     obs_ids_from_this_frame = \
                         {id_for_coadds: {src: core.G3VectorInt([oid])}}
                     map_ids_from_this_frame = \
@@ -1010,8 +1059,6 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("* Calculating avg.(sqrt(Cl)) of the")
                     self.log("* cross spectrum between the coadded maps")
                     self.log("* and the map from this observation ...")
-                    center_ra  = 0.0 * core.G3Units.deg
-                    center_dec = float(src[-6:]) * core.G3Units.deg
                     xspec_sqrt_cl = calculate_average_cl_of_cross_spectrum(
                                         self.coadded_map_frames[id_for_coadds],
                                         frame,
@@ -1066,7 +1113,68 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                        {"T": "T"}, 1.0, ignore_weights=False)
                 self.log("* Done.")
                 self.log("")
-
+            
+            
+            # - Calculate a standard deviation of the map values,
+            # - a mean of the weights, and a variance of the product
+            # - of the map values and square root of the weights
+            
+            if subtract_maps_in_this_frame:
+                if self.calc_map_stddev_etc:
+                    for mtp in self.map_types:
+                        for fk in self.fluctuation_keys:
+                            self.map_fluctuation_metrics[mtp][fk] = \
+                                remove_partial_mapmapdouble(
+                                    self.map_fluctuation_metrics[mtp][fk],
+                                    obs_ids_from_this_frame)
+            
+            elif self.calc_map_stddev_etc:
+                if frame_has_coadds:
+                    self.log("")
+                    self.log("* Gathering map standard deviations,")
+                    self.log("* mean values of weights, and so on")
+                    self.log("* that were calculated previously ...")
+                    stddevs_etc = {}
+                    prefix = "BasicMapFluctuationMetrics"
+                    for mtp in self.map_types:
+                        stddevs_etc[mtp] = {}
+                        for fk in self.fluctuation_keys:
+                            stddevs_etc[mtp][fk] = \
+                                {id_for_coadds: frame[prefix+mtp+fk]}
+                else:
+                    self.log("")
+                    self.log("* Gathering a map standard deviation,")
+                    self.log("* a mean value of weights, and so on")
+                    self.log("* from this observation's map and also ")
+                    self.log("* the coadded maps ...")
+                    stddevs_etc = {}
+                    for mtp in self.map_types:
+                        if mtp == "IndividualMaps":
+                            fr_to_use = frame
+                        elif mtp == "CoaddedMaps":
+                            fr_to_use = self.coadded_map_frames[id_for_coadds]
+                        stddevs_etc[mtp] = {}
+                        flc_mtrs = calculate_map_fluctuation_metrics(
+                                       fr_to_use,
+                                       self.temp_only,
+                                       center_ra, center_dec,
+                                       return_nans=(self.allow_subtraction and\
+                                                    mtp=="CoaddedMaps"))
+                        for flc_k, flc_vl in flc_mtrs.items():
+                            mmd = core.G3MapMapDouble()
+                            mmd[src] = core.G3MapDouble()
+                            mmd[src][str(oid)] = flc_vl
+                            stddevs_etc[mtp][flc_k] = \
+                                {id_for_coadds: mmd}
+                self.log("* Done.")
+                self.log("")
+                for mtp in self.map_types:
+                    for fk in self.fluctuation_keys:
+                        self.map_fluctuation_metrics[mtp][fk] = \
+                            combine_mapmapdoubles(
+                                self.map_fluctuation_metrics[mtp][fk],
+                                stddevs_etc[mtp][fk])
+            
             
             # - Collect averages related to flagging statistics
             
@@ -1321,8 +1429,6 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("* Done.")
                     self.log("")
                 else:
-                    center_ra   = 0.0 * core.G3Units.deg
-                    center_dec  = float(src[-6:]) * core.G3Units.deg
                     noise_units = core.G3Units.uK*core.G3Units.arcmin
                     if self.maps_split_by_scan_direction:
                         self.log("")
@@ -1640,6 +1746,39 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("\n")
                 
                 
+                if self.calc_map_stddev_etc:
+                    mp_fr["BasicMapFluctuationMetricsContained"] = True
+                    self.log("# Basic metrics for fluctuations of map values:")
+                    self.log("")
+                    
+                    prefix = "BasicMapFluctuationMetrics"
+                    for mp in self.map_types:
+                        self.log("- Map type: %s", mp)
+                        self.log("")
+                        
+                        for flc in self.fluctuation_keys:
+                            key_name = prefix + mp + flc
+                            mp_fr[key_name] = \
+                                self.map_fluctuation_metrics[mp][flc][map_id]
+                            
+                            self.log(" "*3 + " - Metric: %s", flc)
+                            self.log("")
+                            if flc == "MapStdDevs":
+                                u = core.G3Units.mK
+                            elif flc == "MeansOfWeights":
+                                u = 1 / (core.G3Units.mK*core.G3Units.mK)
+                            else:
+                                u = 1.0
+                            for sub_fld, data in mp_fr[key_name].items():
+                                self.log(" "*6 + " - %s", sub_fld)
+                                self.log("")
+                                self.log(" "*9 + " %s", data.keys())
+                                self.log(" "*9 + " %s",
+                                         [str(d/u)[0:6] for d in data.values()])
+                                self.log("")
+                    self.log("\n")
+                
+                
                 if self.calc_pointing_discrepancies:
                     mp_fr["DeltaRasAndDecsContained"]  = True
                     mp_fr["IntegratedFluxesContained"] = True
@@ -1657,7 +1796,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             mp_fr[key_name] = \
                                 self.delta_ras_and_decs[rank][d_typ][map_id]
                             
-                            self.log(" "*3+" - %s", d_typ)
+                            self.log(" "*3 + " - %s", d_typ)
                             self.log("")
                             for sub_fld, data in mp_fr[key_name].items():
                                 self.log(" "*6 + " - %s", sub_fld)
@@ -1798,6 +1937,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         subtract_existing_maps=False, 
         collect_averages_from_flagging_statistics=False,
         calculate_pW_to_K_conversion_factors=False,
+        calculate_map_rms_and_weight_stat=False,
         calculate_noise_from_individual_maps=False,
         calculate_noise_from_coadded_maps=False,
         calculate_cross_spectrum_with_coadded_maps=False,
@@ -1833,12 +1973,12 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     # - Check consistencies among some options that are supposed to be used
 
     if calculate_noise_from_coadded_maps:
-        """if len(sources) > 1:
-            print()
-            print("If noise is to be calculated from running coadds,")
-            print("then only one observation type can be specified!")
-            print()
-            sys.exit()"""
+        if len(sources) > 1:
+            log()
+            log("If noise is to be calculated from running coadds,")
+            log("then only one observation type can be specified!")
+            log()
+            sys.exit()
         if combine_left_right:
             log("")
             log("If noise is to be calculated from running coadds,")
@@ -1948,6 +2088,8 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                      collect_averages_from_flagging_statistics,
                  calculate_pW_to_K_conversion_factors=\
                      calculate_pW_to_K_conversion_factors,
+                 calculate_map_rms_and_weight_stat=\
+                     calculate_map_rms_and_weight_stat,
                  calculate_noise_from_individual_maps=\
                      calculate_noise_from_individual_maps,
                  calculate_noise_from_coadded_maps=\
@@ -2067,6 +2209,12 @@ if __name__ == '__main__':
                         help="Whether to calculate the mean value of the "
                              "pW/K absolute calibration factors for each band "
                              "of each wafer.")
+    
+    parser.add_argument("-w", "--calculate_map_rms_and_weight_stat",
+                        action="store_true", default=False,
+                        help="Whether to calculate an RMS value of the map, "
+                             "a mean weight, and a product of these for "
+                             "individual maps and coadded maps.")
 
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
