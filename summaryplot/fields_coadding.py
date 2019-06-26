@@ -1973,12 +1973,6 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     # - Check consistencies among some options that are supposed to be used
 
     if calculate_noise_from_coadded_maps:
-        if len(sources) > 1:
-            log()
-            log("If noise is to be calculated from running coadds,")
-            log("then only one observation type can be specified!")
-            log()
-            sys.exit()
         if combine_left_right:
             log("")
             log("If noise is to be calculated from running coadds,")
