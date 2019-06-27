@@ -1531,10 +1531,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                          "running noise map,")
                                 self.log("*  the noise calc. will not occur.")
                                 self.log("*  -1 will be recorded as a dummy.)")
-                                record_bad_obs_id(
+                                """record_bad_obs_id(
                                     self.bad_map_list_file,
                                     id_for_coadds, src, oid,
-                                    "Bad values around field center.")
+                                    "Bad values around field center.")"""
                                 noise = -1.0 * noise_units                                
                             else:
                                 divide_map_by = n_added + n_subed
@@ -1593,10 +1593,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                                              last_noise/noise_units)
                                     self.log("* (This map will be recorded in "
                                              "the list of bad maps.)")
-                                    record_bad_obs_id(
+                                    """record_bad_obs_id(
                                         self.bad_map_list_file,
                                         id_for_coadds, src, oid,
-                                        "Made running noise map noisier.")
+                                        "Made running noise map noisier.")"""
                                     reverse_op = op_dict[operation] * (-1)
                                     self.coadded_map_frames[id_for_coadds] = \
                                         add_map_frames(
