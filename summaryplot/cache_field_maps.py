@@ -327,6 +327,28 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     
     
     
+    def gather_bad_obs_ids_from_list(
+        text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
+    
+        ids_to_exclude = []
+        
+        map_ids, sub_fields, obs_ids = \
+            numpy.loadtxt(text_file, dtype=str, delimiter="|",
+                          usecols=(0, 1, 2), unpack=True)
+        for index, map_id in enumerate(map_ids):
+            map_id = map_id.replace(" ", "")
+            if map_id == map_id_to_compare:
+                sub_field = sub_fields[index].replace(" ", "")
+                if sub_field == sub_field_to_compare:
+                    ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
+        
+        dict_to_record["bad_obs_ids"] = \
+            ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
+        
+        return dict_to_record
+    
+    
+    
     def figure_out_arguments_to_use_for_coadding(
             map_id, sub_field, time_range_id):
         
@@ -493,7 +515,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 log('The possibly bad observations are being recorded ...')
                 for obs_id, sub_field in all_bad_ids.items():
                     fields_coadding.record_bad_obs_id(
-                        bad_ids_file, map_id, sub_field, obs_id, "Noisy")
+                        bad_map_list_file, map_id, sub_field, obs_id, "Noisy")
                 log('Done.')
                 log('')
                 
@@ -564,8 +586,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_noise_from_coadded_maps'] = True
                         coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
-                        """coadd_args = fields_coadding.gather_bad_obs_ids_from_list(
-                                         bad_ids_file, map_id, sub_field, coadd_args)"""
+                        coadd_args = gather_bad_obs_ids_from_list(
+                                         bad_map_list_file, map_id, sub_field, coadd_args)
                         
                         generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
                         log('\n\n')

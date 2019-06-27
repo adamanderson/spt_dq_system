@@ -59,29 +59,6 @@ def record_bad_obs_id(text_file, map_id, sub_field, obs_id, bad_reason):
 
 
 
-def gather_bad_obs_ids_from_list(
-        text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
-    
-    ids_to_exclude = []
-    
-    map_ids, sub_fields, obs_ids = \
-        numpy.loadtxt(text_file, dtype=str, delimiter="|",
-                      usecols=(0, 1, 2), unpack=True)
-    for index, map_id in enumerate(map_ids):
-        map_id = map_id.replace(" ", "")
-        if map_id == map_id_to_compare:
-            sub_field = sub_fields[index].replace(" ", "")
-            if sub_field == sub_field_to_compare:
-                ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
-    
-    dict_to_record["bad_obs_ids"] = \
-        ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
-        
-    return dict_to_record
-
-
-
-
 def get_band_average(bolo_names_from_each_scan, bolo_props_map):
 
     n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
