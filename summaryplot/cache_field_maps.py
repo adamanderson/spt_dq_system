@@ -604,6 +604,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                      'coadded_maps_{}.g3.gz'.format(map_id))
                     coadd_all_fields_args['map_ids'] = [map_id]
                     coadd_all_fields_args['temperature_maps_only'] = True
+                    coadd_all_fields_args['calculate_map_rms_and_weight_stat'] = True
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
                     coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
                     coadd_all_fields_args['logger_name'] = '{}_{}_full_field'.format(sub_logger_name, map_id)

@@ -4,6 +4,7 @@ from    spt3g              import  core
 from    spt3g              import  mapmaker
 from    spt3g              import  util
 from    spt3g              import  coordinateutils
+from    spt3g              import  std_processing
 from    spt3g              import  mapspectra
 from    spt3g.mapspectra   import  map_analysis
 from    scipy              import  signal
@@ -382,11 +383,7 @@ def calculate_map_fluctuation_metrics(
             t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
                                    map_frame["T"], map_frame["Wunpol"]))
             w_vals = numpy.asarray(map_frame["Wunpol"].TT)
-        
-        """if (False in numpy.isfinite(t_vals)) or \
-           (False in numpy.isfinite(w_vals)):
-            return fluctuation_metrics"""
-        
+                
         w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
         igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
         if len(igw[0]) == 0:
@@ -702,7 +699,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         self.bad_map_list_file = bad_map_list_file
 
         
-        # - Initialize variables related to storing coadded maps
+        # - Initialize variables related to storing coadded maps and
+        # - their basic information
         
         self.map_sources = map_sources
         self.temp_only   = temperature_only
@@ -712,6 +710,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         self.coadded_obs_ids    = {map_id: core.G3MapVectorInt()    \
                                    for map_id in self.map_ids}
         self.coadded_map_ids    = {map_id: core.G3MapVectorString() \
+                                   for map_id in self.map_ids}
+        self.observat_durations = {map_id: core.G3MapMapDouble()    \
                                    for map_id in self.map_ids}
         self.allow_subtraction  = allow_subtraction
         self.obs_info = None
@@ -911,6 +911,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         {id_for_coadds: frame["CoaddedObservationIDs"]}
                     map_ids_from_this_frame = \
                         {id_for_coadds: frame["CoaddedMapIDs"]}
+                    obs_tms_from_this_frame = \
+                        {id_for_coadds: frame["ObservationDurations"]}
             else:
                 if frame["Id"] not in self.id_mapping.keys():
                     self.log("")
@@ -938,12 +940,24 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     oid  = self.obs_info["ObservationID"]
                     src  = self.obs_info["SourceName"]
                     dmid = str(oid) + frame["Id"]   # ** more detailed map id
+                    t_i  = self.obs_info["ObservationStart"]
+                    t_f  = self.obs_info["ObservationStop"]
+                    d_i  = std_processing.time_to_obsid(t_i)
+                    d_f  = std_processing.time_to_obsid(t_f)
+                    dura = (d_f - d_i) * core.G3Units.s
                     center_ra  = core.G3Units.deg * 0.0
                     center_dec = core.G3Units.deg * float(src[-6:])
                     obs_ids_from_this_frame = \
                         {id_for_coadds: {src: core.G3VectorInt([oid])}}
                     map_ids_from_this_frame = \
                         {id_for_coadds: {src: core.G3VectorString([dmid])}}
+                    obs_tms_from_this_frame = \
+                        {id_for_coadds: {src: core.G3MapMapDouble()}}
+                    obs_tms_from_this_frame \
+                        [id_for_coadds][src] = core.G3MapDouble()
+                    obs_tms_from_this_frame \
+                        [id_for_coadds][src][str(oid)] = dura
+                    
             
             
             # - Perform a few basic checks on the frame
@@ -962,6 +976,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             self.coadded_map_ids, this_frame_already_added = \
                 combine_ids(self.coadded_map_ids,
                             map_ids_from_this_frame)
+            self.observat_durations = \
+                combine_mapmapdoubles(self.observat_durations,
+                                      obs_tms_from_this_frame)
             
             if this_frame_already_added and \
                (not self.allow_subtraction):
@@ -1086,6 +1103,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     remove_ids(self.coadded_obs_ids, obs_ids_from_this_frame)
                 self.coadded_map_ids = \
                     remove_ids(self.coadded_map_ids, map_ids_from_this_frame)
+                self.observat_durations = \
+                    remove_partial_mapmapdouble(self.observat_durations,
+                                                obs_ids_from_this_frame)
                 if self.temp_only:
                     self.coadded_map_frames[id_for_coadds] = \
                         add_map_frames(self.coadded_map_frames[id_for_coadds],
@@ -1705,6 +1725,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 mp_fr["CoaddedMapsContained"] = True
                 mp_fr["CoaddedMapIDs"] = self.coadded_map_ids[map_id]
                 mp_fr["CoaddedObservationIDs"] = self.coadded_obs_ids[map_id]
+                mp_fr["ObservationDurations"] = self.observat_durations[map_id]
                 
                 self.log("# Observation IDs used:")
                 self.log("")
@@ -1724,6 +1745,18 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("- %s", sf)
                     self.log("")
                     self.log(" "*3 + " %s", list(mids))
+                    self.log("")
+                self.log("\n")
+                
+                self.log("# Observation durations:")
+                self.log("")
+                for sub_fld, data in mp_fr["ObservationDurations"].items():
+                    self.log(" "*3 + "- %s", sub_fld)
+                    self.log("")
+                    self.log(" "*6 + "%s",
+                             data.keys())
+                    self.log(" "*6 + "%s",
+                             [t/core.G3Units.min for t in data.values()])
                     self.log("")
                 self.log("\n")
                 
