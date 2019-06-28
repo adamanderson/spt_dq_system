@@ -221,7 +221,9 @@ def collect_averages_of_pw_to_K_factors(wafers, calframe):
 
 
 
-def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
+def calculate_pointing_discrepancies(
+        fr_one, fr_two, sub_field,
+        temp_only=True, map_stddev=None):
 
     u = core.G3Units
 
@@ -251,6 +253,7 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
                     "2": {"delta_ra": numpy.nan, "delta_dec": numpy.nan},
                     "3": {"delta_ra": numpy.nan, "delta_dec": numpy.nan}}
     flux_dict = {"1": numpy.nan, "2": numpy.nan, "3": numpy.nan}
+    snr_dict  = {"1": numpy.nan, "2": numpy.nan, "3": numpy.nan}
     
     info_on_point_sources = some_brightest_sources[sub_field]
     
@@ -324,7 +327,13 @@ def calculate_pointing_discrepancies(fr_one, fr_two, sub_field, temp_only=True):
                       map_to_use.x_res * map_to_use.y_res
         flux_dict[point_source_number] = source_flux
         
-    return discrep_dict, flux_dict
+        if map_stddev is None:
+            source_snr = numpy.nan
+        else:
+            source_snr = numpy.max(source_centered_mini_map) / map_stddev
+        snr_dict[point_source_number] = source_snr
+        
+    return discrep_dict, flux_dict, snr_dict
 
 
 
@@ -374,22 +383,25 @@ def calculate_map_fluctuation_metrics(
                                    map_frame["T"], map_frame["Wunpol"]))
             w_vals = numpy.asarray(map_frame["Wunpol"].TT)
         
-        if (False in numpy.isfinite(t_vals)) or \
+        """if (False in numpy.isfinite(t_vals)) or \
            (False in numpy.isfinite(w_vals)):
+            return fluctuation_metrics"""
+        
+        w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
+        igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
+        if len(igw[0]) == 0:
             return fluctuation_metrics
         
-        w_cut = numpy.nanpercentile(w_vals[numpy.where(w_vals>0.0)], 25)
-        igw   = numpy.where(w_vals > w_cut)
         good_w_vals = w_vals[igw]
         good_t_vals = t_vals[igw]
         
-        pctl_hi = numpy.percentile(good_t_vals, 99.5)
-        pctl_lo = numpy.percentile(good_t_vals,  0.5)
-        inx = numpy.where((good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
+        pctl_hi = numpy.nanpercentile(good_t_vals, 99.5)
+        pctl_lo = numpy.nanpercentile(good_t_vals,  0.5)
+        inx = numpy.where(numpy.isfinite(good_t_vals) & (good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
         better_t_vals = good_t_vals[inx]
         better_w_vals = good_w_vals[inx]
         
-        map_stddev  = numpy.nanstd(better_t_vals)
+        map_stddev  = numpy.std(better_t_vals)
         mean_weight = numpy.mean(better_w_vals)
         var_product = numpy.var(better_t_vals * numpy.sqrt(better_w_vals))
         
@@ -772,6 +784,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         for delta_type in ["delta_ra", "delta_dec"]}  \
                  for rank in ["1", "2", "3"]}
             self.fluxes = \
+                {rank: {mid: core.G3MapMapDouble() for mid in self.map_ids} \
+                 for rank in ["1", "2", "3"]}
+            self.snrs = \
                 {rank: {mid: core.G3MapMapDouble() for mid in self.map_ids} \
                  for rank in ["1", "2", "3"]}
         
@@ -1218,6 +1233,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.fluxes[rank] = \
                             remove_partial_mapmapdouble(
                                 self.fluxes[rank], obs_ids_from_this_frame)
+                        self.snrs[rank] = \
+                            remove_partial_mapmapdouble(
+                                self.snrs[rank], obs_ids_from_this_frame)
                 
                 if self.calc_noise_from_individ_maps:
                     self.noise_from_individual_maps = \
@@ -1290,9 +1308,20 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             combine_mapmapdoubles(
                                 self.fluxes[rank],
                                 {id_for_coadds: frame[flux_key]})
+                        snr_key = "PointSourceSNRs" + rank
+                        self.snrs[rank] = \
+                            combine_mapmapdoubles(
+                                self.snrs[rank],
+                                {id_for_coadds: frame[snr_key]})
                     self.log("* Done.")
                     self.log("")
                 else:
+                    if self.calc_map_stddev_etc:
+                        map_stddev = self.map_fluctuation_metrics\
+                                     ["IndividualMaps"]["MapStdDevs"]\
+                                     [id_for_coadds][src][str(oid)]
+                    else:
+                        map_stddev = None
                     if self.maps_split_by_scan_direction:
                         self.log("")
                         self.log("* Pointing discrepancy and flux calculations")
@@ -1301,22 +1330,27 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.log("* of obs. %s", oid)
                         self.log("* have passed the pipeline ...")
                         
-                        pt_offsets_to_be_reorganized, \
-                        fluxes_to_be_reorganized =    \
+                        pt_offsets_to_be_reorganized,   \
+                        fluxes_to_be_reorganized,       \
+                        source_snrs_to_be_reorganized = \
                             calculate_pointing_discrepancies(
                                 self.map_frame_cache[id_r_ver],
                                 self.map_frame_cache[id_l_ver],
-                                src, temp_only=True)
+                                src,
+                                temp_only=True,
+                                map_stddev=map_stddev)
                     else:
                         self.log("")
                         self.log("* Pointing discrepancy and flux calculations")
                         self.log("* are about to start for")
                         self.log("* obs. %s %s ...", oid, id_for_coadds)
                         
-                        pt_offsets_to_be_reorganized, \
-                        fluxes_to_be_reorganized =    \
+                        pt_offsets_to_be_reorganized,   \
+                        fluxes_to_be_reorganized,       \
+                        source_snrs_to_be_reorganized = \
                             calculate_pointing_discrepancies(
-                                frame, None, src, temp_only=True)
+                                frame, None, src,
+                                temp_only=True, map_stddev=map_stddev)
                         
                     for rank, diffs in pt_offsets_to_be_reorganized.items():
                         for delta_coord, diff in diffs.items():
@@ -1327,10 +1361,14 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         flux  = fluxes_to_be_reorganized[rank]
                         usys  = core.G3Units
                         flux /= (usys.mK * usys.arcmin * usys.arcmin)
-                        self.log("* Source %s " + \
+                        snr   = source_snrs_to_be_reorganized[rank]
+                        self.log("* Source %s "  + \
                                  "flux".ljust(9) + \
                                  " %s mK.arcmin.arcmin",
                                  rank, flux)
+                        self.log("* Source %s " + \
+                                 "SNR".ljust(9) + \
+                                 " %s.", rank, snr)
                     self.log("* Done.")
                     self.log("")
                     
@@ -1340,6 +1378,9 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                              for d_type in ["delta_ra", "delta_dec"]}    \
                              for rank   in ["1", "2", "3"]}
                         fluxes_from_this_fr = \
+                            {rank: {idr: core.G3MapMapDouble()} \
+                             for rank in ["1", "2", "3"]}
+                        snrs_from_this_fr = \
                             {rank: {idr: core.G3MapMapDouble()} \
                              for rank in ["1", "2", "3"]}
                         
@@ -1363,10 +1404,21 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             [rank][idr][src][str(oid)] = \
                                 fluxes_to_be_reorganized[rank]
                             
+                            snrs_from_this_fr \
+                            [rank][idr][src] = core.G3MapDouble()
+                            snrs_from_this_fr \
+                            [rank][idr][src][str(oid)] = \
+                                source_snrs_to_be_reorganized[rank]
+                            
                             self.fluxes[rank] = \
                                 combine_mapmapdoubles(
                                     self.fluxes[rank],
                                     fluxes_from_this_fr[rank])
+                            
+                            self.snrs[rank] = \
+                                combine_mapmapdoubles(
+                                    self.snrs[rank],
+                                    snrs_from_this_fr[rank])
             
             
             # - Calculate noise levels
@@ -1759,7 +1811,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 if self.calc_pointing_discrepancies:
                     mp_fr["DeltaRasAndDecsContained"]  = True
                     mp_fr["IntegratedFluxesContained"] = True
-                    self.log("# Pointing discrepancies and fluxes:")
+                    mp_fr["PointSourceSNRsContained"]  = True
+                    self.log("# Pointing discrepancies, fluxes, and SNRs:")
                     self.log("")
 
                     for rank in ["1", "2", "3"]:
@@ -1797,6 +1850,19 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             self.log(" "*9 + " %s", data.keys())
                             self.log(" "*9 + " %s",
                                      [str(d/flu)[0:6] for d in data.values()])
+                            self.log("")
+                        
+                        snr_key = "PointSourceSNRs" + rank
+                        mp_fr[snr_key] = self.snrs[rank][map_id]
+                        
+                        self.log(" "*3 + " - SNR")
+                        self.log("")
+                        for sub_fld, data in mp_fr[snr_key].items():
+                            self.log(" "*6 + " - %s", sub_fld)
+                            self.log("")
+                            self.log(" "*9 + " %s", data.keys())
+                            self.log(" "*9 + " %s",
+                                     [str(d)[0:3] for d in data.values()])
                             self.log("")
                     self.log("\n")
                 
