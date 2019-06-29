@@ -1,9 +1,19 @@
 # ==============================================================================
 # This text file lists possibly bad observations that were identified through
-# making the year-to-date coadded field maps (made by fields_coadding.py) and
-# calculating the time evolution of the noise in the year-to-date noise maps.
+# making the year-to-date coadded field maps and calculating the time evolution
+# of the noise in the year-to-date noise maps (done by fields_coadding.py).
 # ==============================================================================
 
 
 #  Map ID |    Sub-field    |   Obs. ID   |               Reason
 # ------------------------------------------------------------------------------
+
+# - The following maps have anomalously large weights and degraded the
+# - year-to-date coadd field maps.
+
+   90GHz  |  ra0hdec-59.75  |   71718785  |      Anomalously large weights.
+  150GHz  |  ra0hdec-59.75  |   71718785  |      Anomalously large weights.
+  220GHz  |  ra0hdec-59.75  |   71718785  |      Anomalously large weights.
+
+  150GHz  |  ra0hdec-59.75  |   71853745  |      Anomalously large weights.
+  220GHz  |  ra0hdec-59.75  |   71853745  |      Anomalously large weights.
