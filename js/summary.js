@@ -4,11 +4,14 @@ if(typeof Cookies.get('wafer') !== undefined)
 	wafer = Cookies.get('wafer', {expires: 1});
 else
 	wafer='all';
-if(typeof Cookies.get('weekdir') !== undefined)
+if(typeof Cookies.get('weekdir') !== undefined) {
 	weekdir = Cookies.get('weekdir', {expires: 1});
-else
-	weekdir='plots/last_3days/current';
-
+    mapweekdir = Cookies.get('mapweekdir', {expires: 1});
+}
+else {
+	weekdir='plots/last_n/last_3/';
+    mapweekdir='maps/figures/last_n/last_30/';
+}
 
 /**
  * Updates the source of all images defined on the summary page.
@@ -53,6 +56,34 @@ function update_figs()
   document["ts_median_nei_1Hz_to_2Hz"].src        ='staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
   document["ts_median_nei_3Hz_to_5Hz"].src        ='staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
   document["ts_median_nei_10Hz_to_15Hz"].src      ='staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
+
+  document["map_t_90"].src                        ='staticimg/'+mapweekdir+'/90GHz-T_map.png'
+  document["map_t_150"].src                       ='staticimg/'+mapweekdir+'/150GHz-T_map.png'
+  document["map_t_220"].src                       ='staticimg/'+mapweekdir+'/220GHz-T_map.png'
+  
+  document["map_noise_t_90"].src                  ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
+  document["map_noise_t_150"].src                 ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
+  document["map_noise_t_220"].src                 ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+  
+  document["map_delta_ras_t_90"].src              ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Ras_from_point_sources.png'
+  document["map_delta_ras_t_150"].src             ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources.png'
+  document["map_delta_ras_t_220"].src             ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Ras_from_point_sources.png'
+  
+  document["map_delta_decs_t_90"].src             ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Decs_from_point_sources.png'
+  document["map_delta_decs_t_150"].src            ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Decs_from_point_sources.png'
+  document["map_delta_decs_t_220"].src            ='staticimg/'+mapweekdir+'/220GHz-T_map_delta_Decs_from_point_sources.png'
+
+  document["flagging_90"].src                     ='staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
+  document["flagging_150"].src                    ='staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
+  document["flagging_220"].src                    ='staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
+
+  document["weight_xsection_90"].src              ='staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_150"].src             ='staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_220"].src             ='staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
+
+  document["running_noise_90"].src                ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_150"].src               ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_220"].src               ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
 }
 
 /**
@@ -70,24 +101,32 @@ function set_variable(variable, newVal)
  * of data to display. These are constructed by appending the DOM directly.
  * Note also that this function also initializes the jQuery UI "controlgroup"
  * and binds the click event to it after appending all the buttons.
+ * 
+ * Arguments:
+ *  interval : time interval to traverse, 'weekly' or 'monthly'
+ *  subdirectory : subdirectory that we should traverse to get dated data
+ *  tab : tab in which to add buttons, 'summary' or 'maps'
  */
-function add_date_buttons(interval)
+function add_date_buttons(interval, subdirectory, tab)
 {
     // now rebuild the div
-	$.get('/staticdirs', {},
+	$.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
 		  function(data, status) {
-			  //data.reverse();
+			  div_id = '#datalist_'+interval+'_'+tab
+			  
+			  data.reverse();
 			  for (jdir=0; jdir<data.length; jdir++)
 			  {
-				  datestring = data[jdir].split('/')[2];
-				  if (datestring != 'current')
-				  {
-					  $('#datalist').append("<input type='radio' id='dates-"+datestring+"' name='dates' value='" +
-											data[jdir] + "'>\n" + 
-											"<label for='dates-"+datestring+"'>"+datestring+"</label>");
-				  }
+				  if (tab === 'summary')
+					  datestring = data[jdir].split('/')[2];
+				  else if (tab == 'maps')
+					  datestring = data[jdir].split('/')[3];
+
+				  $(div_id).append("<input type='radio' id='dates-"+datestring+"' name='dates' value='" +
+								   data[jdir] + "'>\n" + 
+								   "<label for='dates-"+datestring+"'>"+datestring+"</label>");
 			  }
-			  $('#datalist').controlgroup();
+			  $(div_id).controlgroup();
 			  $("[id^=dates-]").click(function(event) {
 				  set_variable("weekdir", event.target.value);
 			  });

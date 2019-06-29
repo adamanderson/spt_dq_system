@@ -1,4 +1,4 @@
-from statistics import compute_median, compute_nalive
+from summaryplot.statistics import compute_median, compute_nalive
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g.std_processing import obsid_to_g3time
@@ -6,7 +6,7 @@ from spt3g import core
 import datetime
 import matplotlib.dates as mdates
 import numpy as np
-from plot_util import plot_timeseries
+from summaryplot.plot_util import plot_timeseries
 import operator
 
 

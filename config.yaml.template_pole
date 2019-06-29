@@ -18,7 +18,14 @@ static_plot_dir: /var/www/spt_dq_system/static_plot_cache/
 calib_data_dir: /poleanalysis/sptdaq/calresult/
 bolo_data_dir: /spt_data/bolodata/fullrate/
 
+no_data_update: false
+
+maps_data_dir: 
+coadds_data_dir: 
+coadds_figs_dir: 
+coadds_logs_dir:
 
 port: 3000
 
-min_time_static_plots: 20181220
+min_time_summary_plots: 20181220
+min_time_maps: 20190320

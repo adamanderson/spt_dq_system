@@ -89,6 +89,11 @@ if (!fs.existsSync(config.static_plot_dir)) {
 }
 app.use('/staticimg', express.static(config.static_plot_dir));
 
+// make directory for log files if it doesn't already exist
+if (!fs.existsSync(config.coadds_logs_dir)) {
+    fs.mkdirSync(config.coadds_logs_dir);
+}
+
 // get subdirectory information for previous plots
 app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
@@ -98,14 +103,17 @@ app.get('/staticdirs', function(req, res) {
 	var dirlist = [];
     for(jInterval=0; jInterval<intervalList.length; jInterval++)
     {
-		filelist = fs.readdirSync(config.static_plot_dir + 'plots/' + 
-								  intervalList[jInterval] + '/');
+		try {
+			filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
+									  req.query.interval + '/');
+		}
+		catch(err) {
+			filelist = [];
+		}
 
 		// get the list of directories that contain plots
 		for (jfile=0; jfile<filelist.length; jfile++) {
-			dirlist.push('plots/' + 
-						 intervalList[jInterval] + '/' + 
-						 filelist[jfile]);
+			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 		}
 	}
 	res.send(dirlist);
@@ -148,13 +156,28 @@ app.get('/dbpage', function(req, res) {
 	db.all(query.toParam()['text'],
 	       query.toParam()['values'],
 	       function(err, rows) {
-			   // append log file information to database results
 			   if(req.query.dbname == 'scanify') {
+				   // append log file information to database results
 				   for(var jrow in rows) {
 					   rows[jrow]['log_file'] = 'scanify_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
+				   
+				   // interpret transfer_fullrate and transfer_downsampled
+				   // integer flags as booleans for simpler parsing by the 
+				   // transfer status table
+				   for(var jrow in rows) {
+					   if(rows[jrow]['transfer_fullrate'] > 0)
+						   rows[jrow]['transfer_fullrate'] = true;
+					   else
+						   rows[jrow]['transfer_fullrate'] = false;
+					   if(rows[jrow]['transfer_downsampled'] > 0)
+						   rows[jrow]['transfer_downsampled'] = true;
+					   else
+						   rows[jrow]['transfer_downsampled'] = false;
+				   }
 			   }
 			   if(req.query.dbname == 'autoproc') {
+				   // append log file information to database results
 				   for(var jrow in rows) {
 					   rows[jrow]['log_file'] = 'autoproc_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
 				   }
@@ -352,13 +375,17 @@ app.listen(parseInt(config.port))
 
 // static timeseries plots update
 is_update_running = false;
+is_map_update_running = false;
 var child;
-function updateStaticPlots() {
+var child_maps;
+
+function updateSummaryPlots() {
 	args = ['-B', 'update_summary.py',
+			'summarystats',
 			config.static_plot_dir,
 			config.calib_data_dir,
 			config.bolo_data_dir,
-			config.min_time_static_plots]
+			config.min_time_summary_plots]
 
 	if(config.no_data_update) {
 		args.push('--no-data-update')
@@ -367,16 +394,45 @@ function updateStaticPlots() {
     if(is_update_running == false) {
 		is_update_running = true;
 		// update data skims
-		child = execFile(config.python_location, args, function(err) {
+		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
+						 function(err) {
 			console.log(err);
 			console.log('Finished updating data skims and plots.');
 			is_update_running = false;
 	    });
-		console.log('Updating plots...');
+		console.log('Updating summary plots...');
     }
     else {
-		console.log('Plot updater already running, so not spawning again!');
+		console.log('Summary plot updater already running, so not spawning again!');
     }
 }
 
-setInterval(updateStaticPlots, 60000); // update static plots every 10 minutes
+function updateMapPlots() {
+	args = ['-B', 'update_summary.py',
+			'maps',
+			config.maps_data_dir,
+			config.coadds_data_dir,
+			config.coadds_figs_dir,
+			config.coadds_logs_dir,
+			config.min_time_maps]
+
+    if(is_map_update_running == false) {
+		is_map_update_running = true;
+		// update data skims
+		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
+						 function(err) {
+			console.log(err);
+			console.log('Finished map coadds and plots.');
+			is_map_update_running = false;
+	    });
+		console.log('Updating maps...');
+    }
+    else {
+		console.log('Map updater already running, so not spawning again!');
+    }
+}
+
+// update both types of plots in parallel every 10 minutes
+setInterval(updateSummaryPlots, 600000);
+if(config.site == 'pole') // only update map plots at pole
+	setInterval(updateMapPlots, 600000);

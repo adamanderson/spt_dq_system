@@ -1,11 +1,11 @@
-from statistics import compute_median
+from summaryplot.statistics import compute_median
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core
 from spt3g.std_processing import obsid_to_g3time
 import matplotlib.dates as mdates
 import datetime
-from plot_util import plot_timeseries
+from summaryplot.plot_util import plot_timeseries
 
 
 def median_nei_01Hz_to_05Hz(frame, boloprops, selector_dict):
