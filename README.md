@@ -24,7 +24,8 @@ The rationale behind building a local version of `spt3g_software` is that user v
 * `calib_data_dir`: Location of autoprocessed calibration data.
 * `bolo_data_dir`: Location of scanified data.
 * `port`: Port from which website will be accessible. This must be unused; note that production versions of the data quality system run on port 3000 at pole and in the north, and a development version is often running on port 3001, so you may want to choose a port different from these.
-* `min_time_static_plots`: Date string of format `YYYYMMDD` at which to start static plot generation. 
+* `min_time_summary_plots`: Date string of format `YYYYMMDD` denoting time after which to generate summary plots.
+* `min_time_maps`: Date string of format `YYYYMMDD` denoting time after which to generate map coadds and plots..
 
 5.) Launch the server. If you are certain that you have the correct environment set up, this can be done simply with:
 ```
