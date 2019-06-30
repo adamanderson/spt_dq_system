@@ -1977,6 +1977,68 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                    [frame]
 
 
+
+
+def print_recorded_information(
+        filepath, info_tuples, print_frame=True, output_path=None):
+    
+    iterator = core.G3File(filepath)
+    
+    while True:
+        new_frame = iterator.next()
+        if "CoaddedObservationIDs" in new_frame.keys():
+            database = new_frame
+            break
+    
+    contents  = "\n"
+    if print_frame:
+        contents += "# -------------------------- #\n"
+        contents += "#  The list of keys stored:  #\n"
+        contents += "# -------------------------- #\n"
+        contents += "\n"
+        keys = list(database.keys())
+        keys = "\n".join(sorted(keys))
+        contents += keys
+        contents += "\n"
+    
+    contents += "\n\n"
+    contents += "# ------------------------ #\n"
+    contents += "#  Requested information:  #\n"
+    contents += "# ------------------------ #\n"
+    contents += "\n\n"
+    
+    all_oids = database["CoaddedObservationIDs"]
+    
+    quantity_names  = "   ".join([entry[2].ljust(15) for entry in info_tuples])
+    table_first_row = "Observation ID   {}\n".format(quantity_names)
+    
+    for sub_field, oids in all_oids.items():
+        contents += "* {}\n".format(sub_field)
+        contents += "---------------\n"
+        contents += "\n"
+        
+        contents += table_first_row
+        contents += "\n"
+        
+        for oid in oids:
+            data = []
+            for entry in info_tuples:
+                key   = entry[0]
+                units = entry[1]
+                data.append(database[key][sub_field][str(oid)] / units)
+            data = "   ".join(["{:+15.2e}".format(number) for number in data])
+            
+            contents += "{:>15}   {}\n".format(oid, data)
+        
+        contents += "\n\n"
+    
+    print(contents)
+    
+    if output_path is not None:
+        with open(output_path, "w") as f_obj:
+            f_obj.writelines(contents)
+
+
 # ==============================================================================
 
 
