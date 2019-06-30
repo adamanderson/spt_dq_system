@@ -637,6 +637,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
                 if time_interval != 'yearly':
                     plotting_args['make_figures_for_flagging_statistics'] = True
+                    plotting_args['make_figures_for_calibration_factors'] = True
                     plotting_args['make_figures_for_pointing_discrepancies'] = True
                     plotting_args['left_xlimit_for_time_variations'] = desired_obs_id_ranges[i][0]
                     plotting_args['right_xlimit_for_time_variations'] = desired_obs_id_ranges[i][1]

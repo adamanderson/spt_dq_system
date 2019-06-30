@@ -473,7 +473,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
 class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def __init__(self,
-                 fig_fs=False, fig_pt=False, fig_ns=False,
+                 fig_fs=False, fig_tc=False, fig_pt=False, fig_ns=False,
                  map_type=None, map_id=None,
                  xlim_left=None, xlim_right=None,
                  figure_title_font_size=11,
@@ -481,6 +481,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                  logging_function=logging.info):
         
         self.make_fig_for_flggg_stats  = fig_fs
+        self.make_fig_for_temp_cal_fac = fig_tc
         self.make_fig_for_ptg_offsets  = fig_pt
         self.make_fig_for_noise_levels = fig_ns
         self.map_type = map_type
@@ -941,10 +942,72 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
+    def make_figure_for_calibration_factors(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        waf_cl_dict = {"W172": "#1f77b4", "W174": "#ff7f0e",
+                       "W176": "#2ca02c", "W177": "#d62728",
+                       "W180": "#9467bd", "W181": "#8c564b",
+                       "W188": "#e377c2", "W203": "#7f7f7f",
+                       "W204": "#bcbd22", "W206": "#17becf"}
+        cal_uni = core.G3Units.pW / core.G3Units.K
+        
+        ylims_dict = { "90GHz": {"bottom": -0.14, "top": -0.03},
+                      "150GHz": {"bottom": -0.21, "top": -0.02},
+                      "220GHz": {"bottom": -0.04, "top": -0.00}}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 4.0)
+
+        for wafer, color in waf_cl_dict.items():
+            cal_data = frame["MeansOfTemperatureCalibrationFactors" + wafer]
+            
+            times_and_cals = []
+            for sub_field, oids_and_cals in cal_data.items():
+                for oid, cal in oids_and_cals.items():
+                    times_and_cals.append((int(oid), cal/cal_uni))
+            
+            times_and_cals = sorted(times_and_cals, key=itemgetter(0))
+            times = [entry[0] for entry in times_and_cals]
+            cals  = [entry[1] for entry in times_and_cals]
+            
+            plot_obj.plot(
+                times, cals, label=wafer,
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=0.8)
+            
+            self.indicate_out_of_range_values(
+                        plot_obj, times, cals, ylims_dict[self.map_id], color)
+                
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
+
+        xlabel = "\n" + "Time (UTC)"
+        ylabel = "Mean from each wafer [pW/K]" + "\n"
+        more_title = "Temperature calibration factors" + "\n"
+        fig_title  = self.get_full_fig_title(more_title)
+        
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "mean_temperature_calibration_factors"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
     def make_figure_for_flagging_statistics(self, frame):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
-        #1f77b4 2ca02c d62728 9467bd
+        
         cl_mk_lbl_dict  = \
             {"BadHk"                  : ["#1f77b4" , "Bad HK"      , "." , 8],
              "Latched"                : ["#1f77b4" , "Latched"     , "p" , 5],
@@ -1022,8 +1085,13 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.make_figure_for_flagging_statistics(frame)
                 self.log("Done.\n")
             
+            if self.make_fig_for_temp_cal_fac:
+                self.log("Making a figure for calibration factors...")
+                self.make_figure_for_calibration_factors(frame)
+                self.log("Done.\n")
+            
             if self.make_fig_for_ptg_offsets:
-                self.log("Making a figure for pointing discrepancies...")
+                self.log("Making figures for pointing discrepancies...")
                 self.make_figure_for_pointing_discrepancies(frame)
                 self.log("Done.\n")
             
@@ -1092,6 +1160,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         smooth_map_with_gaussian=False,
         gaussian_fwhm=None,
         make_figures_for_flagging_statistics=False,
+        make_figures_for_calibration_factors=False,
         make_figures_for_pointing_discrepancies=False,
         make_figures_for_noise_levels=False,
         left_xlimit_for_time_variations=None,
@@ -1211,6 +1280,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
         pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
                      fig_fs=make_figures_for_flagging_statistics,
+                     fig_tc=make_figures_for_calibration_factors,
                      fig_pt=make_figures_for_pointing_discrepancies,
                      fig_ns=make_figures_for_noise_levels,
                      map_id=map_id,
@@ -1344,6 +1414,11 @@ if __name__ == '__main__':
                         action="store_true", default=False,
                         help="Whether to make figures showing average number of "
                              "flagged detectors over time.")
+    
+    parser.add_argument("-C", "--make_figures_for_calibration_factors",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing temperature "
+                             "calibration factors over time.")
 
     parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
                         action="store_true", default=False,
