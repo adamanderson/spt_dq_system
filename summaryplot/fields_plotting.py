@@ -482,11 +482,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                  directory_to_save_figures="",
                  logging_function=logging.info):
         
-        self.make_fig_for_flggg_stats  = fig_fs
-        self.make_fig_for_temp_cal_fac = fig_tc
-        self.make_fig_for_fluc_metric  = fig_fl
-        self.make_fig_for_ptg_offsets  = fig_pt
-        self.make_fig_for_noise_levels = fig_ns
+        self.make_fig_for_flggg_stats   = fig_fs
+        self.make_fig_for_temp_cal_facs = fig_tc
+        self.make_fig_for_fluc_metrics  = fig_fl
+        self.make_fig_for_ptg_offsets   = fig_pt
+        self.make_fig_for_noise_levels  = fig_ns
         self.map_type = map_type
         self.map_id   = map_id
         
@@ -681,6 +681,49 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
+    def make_figure_for_observation_durations(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        obs_dur_data = frame["ObservationDurations"]
+        
+        for sub_field, oids_and_olens in obs_dur_data.items():
+            oids = [int(oid) for oid in oids_and_olens.keys()]
+            lens = [oids_and_olens[str(oid)]/core.G3Units.min \
+                    for oid in oids_and_olens.keys()]
+            label = self.el_dict[sub_field]
+            color = self.cl_dict[sub_field]
+
+            plot_obj.plot(
+                oids, lens, label=label,
+                linestyle="None", marker=".", markersize=self.mrkrsz,
+                color=color, alpha=0.8)
+        
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 3.5)
+        ylims_dict = {"bottom": 0.0, "top": 140.0}
+        
+        set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
+                           ylims_dict["bottom"], ylims_dict["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
+        
+        xlabel = "\n" + "Time (UTC)"
+        ylabel = "Duration [minute]" + "\n"
+        fig_title = "Durations of observations" + "\n"
+        
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        file_name = "observation_durations.png"
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
     def make_figure_for_calibration_factors(self, frame):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
@@ -718,7 +761,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             self.indicate_out_of_range_values(
                         plot_obj, times, cals, ylims_dict[self.map_id], color)
-                
+        
         set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
                  ylims_dict[self.map_id]["bottom"],
                  ylims_dict[self.map_id]["top"])
@@ -1156,14 +1199,15 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             if self.make_fig_for_flggg_stats:
                 self.log("Making a figure for flagging statistics...")
                 self.make_figure_for_flagging_statistics(frame)
+                self.make_figure_for_observation_durations(frame)
                 self.log("Done.\n")
             
-            if self.make_fig_for_temp_cal_fac:
+            if self.make_fig_for_temp_cal_facs:
                 self.log("Making a figure for calibration factors...")
                 self.make_figure_for_calibration_factors(frame)
                 self.log("Done.\n")
             
-            if self.make_fig_for_fluc_metric:
+            if self.make_fig_for_fluc_metrics:
                 self.log("Making figures for map fluctuation metrics...")
                 self.make_figure_for_map_fluctuation_metrics(frame)
                 self.log("Done.\n")
