@@ -2,6 +2,7 @@
 
 import  matplotlib
 matplotlib.use("Agg")
+matplotlib.rcParams["mathtext.default"] = "regular"
 from matplotlib import pyplot
 
 import  os
@@ -473,7 +474,8 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
 class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def __init__(self,
-                 fig_fs=False, fig_tc=False, fig_pt=False, fig_ns=False,
+                 fig_fs=False, fig_tc=False, fig_fl=False,
+                 fig_pt=False, fig_ns=False,
                  map_type=None, map_id=None,
                  xlim_left=None, xlim_right=None,
                  figure_title_font_size=11,
@@ -482,6 +484,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         self.make_fig_for_flggg_stats  = fig_fs
         self.make_fig_for_temp_cal_fac = fig_tc
+        self.make_fig_for_fluc_metric  = fig_fl
         self.make_fig_for_ptg_offsets  = fig_pt
         self.make_fig_for_noise_levels = fig_ns
         self.map_type = map_type
@@ -608,6 +611,206 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     def get_full_file_name(self, additional_name):
         
         return self.file_name_prefix + additional_name + ".png"
+    
+    
+    def make_figure_for_flagging_statistics(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        cl_mk_lbl_dict  = \
+            {"BadHk"                  : ["#1f77b4" , "Bad HK"      , "." , 8],
+             "Latched"                : ["#1f77b4" , "Latched"     , "p" , 5],
+             "Overbiased"             : ["#1f77b4" , "Saturated"   , "s" , 5],
+             "Oscillating"            : ["#9467bd" , "Oscillating" , "v" , 5],
+             "Glitchy"                : ["#9467bd" , "Glitchy"     , "^" , 6],
+             "UnphysicalLowVariance"  : ["#9467bd" , "Low Var."    , "D" , 4],
+             "BadCalSn"               : ["#1fbecf" , "Low Cal S/N" , "1" , 8],
+             "MissingFluxCalibration" : ["#1fbecf" , "No Fluxcal"  , "2" , 8],
+             "PostCalibrationNaNs"    : ["#1fbecf" , "Has NaNs"    , "3" , 8],
+             "BadWeight"              : ["#1fbecf" , "Bad Weight"  , "4" , 8],
+             "Others"                 : ["black"   , "Others"      , "." , 6],
+             "TotalNotFlagged"        : ["green"   , "Survived"    , "*" , 8],
+             "TotalRemoved"           : ["red"     , "Removed"     , "x" , 6]}
+        
+        for flag_type in cl_mk_lbl_dict.keys():
+            key_name = "FlaggingStatisticsAverageNumberOf" + flag_type
+            averages = frame[key_name]
+            
+            times_and_averages = []
+            for sub_field, oids_and_avgs in averages.items():
+                for oid, avg in oids_and_avgs.items():
+                    times_and_averages.append((int(oid), avg))
+            times_and_averages = sorted(times_and_averages, key=itemgetter(0))
+            times    = [entry[0] for entry in times_and_averages]
+            averages = [entry[1] for entry in times_and_averages]
+            
+            plot_obj.plot(
+                times, averages, label=cl_mk_lbl_dict[flag_type][1],
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=cl_mk_lbl_dict[flag_type][2],
+                markersize=cl_mk_lbl_dict[flag_type][3],
+                color=cl_mk_lbl_dict[flag_type][0], alpha=0.8)
+        
+        plot_obj.set_yscale("symlog", linthreshy=150,
+                            subsy=[2, 3, 4, 5, 6, 7, 8, 9])
+        
+        ylims_dict = {"bottom": -10, "top": 5000}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 6.2)
+        
+        set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
+                           ylims_dict["bottom"], ylims_dict["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
+        
+        xlabel = "\n" + "Time (UTC)"
+        ylabel = "Averages (over all scans of an obs.)" + "\n"
+        more_title = "Average number of flagged detectors" + "\n"
+        fig_title  = self.get_full_fig_title(more_title)
+        
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "average_numbers_of_flagged_detectors"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
+    def make_figure_for_calibration_factors(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        waf_cl_dict = {"W172": "#1f77b4", "W174": "#ff7f0e",
+                       "W176": "#2ca02c", "W177": "#d62728",
+                       "W180": "#9467bd", "W181": "#8c564b",
+                       "W188": "#e377c2", "W203": "#7f7f7f",
+                       "W204": "#bcbd22", "W206": "#17becf"}
+        cal_uni = core.G3Units.pW / core.G3Units.K
+        
+        ylims_dict = { "90GHz": {"bottom": -0.14, "top": -0.03},
+                      "150GHz": {"bottom": -0.21, "top": -0.02},
+                      "220GHz": {"bottom": -0.04, "top": -0.00}}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 4.0)
+
+        for wafer, color in waf_cl_dict.items():
+            cal_data = frame["MeansOfTemperatureCalibrationFactors" + wafer]
+            
+            times_and_cals = []
+            for sub_field, oids_and_cals in cal_data.items():
+                for oid, cal in oids_and_cals.items():
+                    times_and_cals.append((int(oid), cal/cal_uni))
+            
+            times_and_cals = sorted(times_and_cals, key=itemgetter(0))
+            times = [entry[0] for entry in times_and_cals]
+            cals  = [entry[1] for entry in times_and_cals]
+            
+            plot_obj.plot(
+                times, cals, label=wafer,
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=0.8)
+            
+            self.indicate_out_of_range_values(
+                        plot_obj, times, cals, ylims_dict[self.map_id], color)
+                
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs)
+
+        xlabel = "\n" + "Time (UTC)"
+        ylabel = "Mean from each wafer [pW/K]" + "\n"
+        more_title = "Temperature calibration factors" + "\n"
+        fig_title  = self.get_full_fig_title(more_title)
+        
+        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "mean_temperature_calibration_factors"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
+    def make_figure_for_map_fluctuation_metrics(self, frame):
+        
+        key_prefix = "BasicMapFluctuationMetricsIndividualMaps"
+        param_lists = \
+            [{"key"   : key_prefix+ "MapStdDevs",
+              "ylims" : { "90GHz": {"bottom": 0.15, "top": 0.60},
+                         "150GHz": {"bottom": 0.15, "top": 0.60},
+                         "220GHz": {"bottom": 0.75, "top": 1.65}},
+              "yunits": core.G3Units.mK,
+              "ylabel": "Standard deviation  " + r"$[mK_{CMB}]$" + "\n",
+              "title" : "Standard deviation of map values" + "\n",
+              "file"  : "standard_deviation_of_map_values"},
+             {"key"   : key_prefix + "MeansOfWeights",
+              "ylims" : { "90GHz": {"bottom": 20, "top": 100},
+                         "150GHz": {"bottom": 10, "top": 150},
+                         "220GHz": {"bottom":  0, "top":  12}},
+              "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
+              "ylabel": "Mean weight  " + \
+                        "[1 / " + r"${mK_{CMB}}^2$" + "]" + "\n",
+              "title" : "Mean of TT weight map" + "\n",
+              "file"  : "mean_of_tt_weight_map_values"}]
+        
+        
+        for plist in param_lists:
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            data = frame[plist["key"]]
+            
+            ylims = plist["ylims"]
+            xlims = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 3.5)
+            
+            for sub_field, xs_and_ys in data.items():
+                xvals = sorted([int(oid) for oid in xs_and_ys.keys()])
+                yvals = [xs_and_ys[str(oid)]/plist["yunits"] for oid in xvals]
+                label = self.el_dict[sub_field]
+                color = self.cl_dict[sub_field]
+                
+                plot_obj.plot(
+                    xvals, yvals, label=label,
+                    linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
+                    marker=".", markersize=self.mrkrsz,
+                    color=color, alpha=0.8)
+                
+                self.indicate_out_of_range_values(
+                    plot_obj, xvals, yvals, ylims[self.map_id], color)
+            
+            set_lims(plot_obj, xlims["left"], xlims["right"],
+                     ylims[self.map_id]["bottom"], ylims[self.map_id]["top"])
+            
+            xtick_locs_major, xtick_labels, xtick_locs_minor = \
+                self.get_xticks_and_labels_from_obs_id_range(
+                    plot_obj, self.xlim_left, self.xlim_right)
+            
+            set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                      None, None, None, self.ttl_fs)
+            
+            xlabel = "\n" + "Time (UTC)"
+            ylabel = plist["ylabel"]
+            more_title = plist["title"]
+            fig_title  = self.get_full_fig_title(more_title)
+            
+            set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = plist["file"]
+            file_name = self.get_full_file_name(more_file_name)
+            
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def make_figure_for_all_noise_levels(self, frame):
@@ -942,136 +1145,6 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
-    def make_figure_for_calibration_factors(self, frame):
-        
-        figure_obj, plot_obj = get_figure_and_plot_objects()
-        
-        waf_cl_dict = {"W172": "#1f77b4", "W174": "#ff7f0e",
-                       "W176": "#2ca02c", "W177": "#d62728",
-                       "W180": "#9467bd", "W181": "#8c564b",
-                       "W188": "#e377c2", "W203": "#7f7f7f",
-                       "W204": "#bcbd22", "W206": "#17becf"}
-        cal_uni = core.G3Units.pW / core.G3Units.K
-        
-        ylims_dict = { "90GHz": {"bottom": -0.14, "top": -0.03},
-                      "150GHz": {"bottom": -0.21, "top": -0.02},
-                      "220GHz": {"bottom": -0.04, "top": -0.00}}
-        xlims_dict = self.get_xlims_from_obs_id_range(
-                         self.xlim_left, self.xlim_right, 4.0)
-
-        for wafer, color in waf_cl_dict.items():
-            cal_data = frame["MeansOfTemperatureCalibrationFactors" + wafer]
-            
-            times_and_cals = []
-            for sub_field, oids_and_cals in cal_data.items():
-                for oid, cal in oids_and_cals.items():
-                    times_and_cals.append((int(oid), cal/cal_uni))
-            
-            times_and_cals = sorted(times_and_cals, key=itemgetter(0))
-            times = [entry[0] for entry in times_and_cals]
-            cals  = [entry[1] for entry in times_and_cals]
-            
-            plot_obj.plot(
-                times, cals, label=wafer,
-                linestyle=self.ln_styl, linewidth=self.ln_wdth,
-                marker=".", markersize=self.mrkrsz,
-                color=color, alpha=0.8)
-            
-            self.indicate_out_of_range_values(
-                        plot_obj, times, cals, ylims_dict[self.map_id], color)
-                
-        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
-                 ylims_dict[self.map_id]["bottom"],
-                 ylims_dict[self.map_id]["top"])
-        
-        xtick_locs_major, xtick_labels, xtick_locs_minor = \
-            self.get_xticks_and_labels_from_obs_id_range(
-                plot_obj, self.xlim_left, self.xlim_right)
-        
-        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
-                  None, None, None, self.ttl_fs)
-
-        xlabel = "\n" + "Time (UTC)"
-        ylabel = "Mean from each wafer [pW/K]" + "\n"
-        more_title = "Temperature calibration factors" + "\n"
-        fig_title  = self.get_full_fig_title(more_title)
-        
-        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
-        
-        more_file_name = "mean_temperature_calibration_factors"
-        file_name = self.get_full_file_name(more_file_name)
-        
-        save_figure_etc(figure_obj, self.fig_dir, file_name)
-    
-    
-    def make_figure_for_flagging_statistics(self, frame):
-        
-        figure_obj, plot_obj = get_figure_and_plot_objects()
-        
-        cl_mk_lbl_dict  = \
-            {"BadHk"                  : ["#1f77b4" , "Bad HK"      , "." , 8],
-             "Latched"                : ["#1f77b4" , "Latched"     , "p" , 5],
-             "Overbiased"             : ["#1f77b4" , "Saturated"   , "s" , 5],
-             "Oscillating"            : ["#9467bd" , "Oscillating" , "v" , 5],
-             "Glitchy"                : ["#9467bd" , "Glitchy"     , "^" , 6],
-             "UnphysicalLowVariance"  : ["#9467bd" , "Low Var."    , "D" , 4],
-             "BadCalSn"               : ["#1fbecf" , "Low Cal S/N" , "1" , 8],
-             "MissingFluxCalibration" : ["#1fbecf" , "No Fluxcal"  , "2" , 8],
-             "PostCalibrationNaNs"    : ["#1fbecf" , "Has NaNs"    , "3" , 8],
-             "BadWeight"              : ["#1fbecf" , "Bad Weight"  , "4" , 8],
-             "Others"                 : ["black"   , "Others"      , "." , 6],
-             "TotalNotFlagged"        : ["green"   , "Survived"    , "*" , 8],
-             "TotalRemoved"           : ["red"     , "Removed"     , "x" , 6]}
-        
-        for flag_type in cl_mk_lbl_dict.keys():
-            key_name = "FlaggingStatisticsAverageNumberOf" + flag_type
-            averages = frame[key_name]
-            
-            times_and_averages = []
-            for sub_field, oids_and_avgs in averages.items():
-                for oid, avg in oids_and_avgs.items():
-                    times_and_averages.append((int(oid), avg))
-            times_and_averages = sorted(times_and_averages, key=itemgetter(0))
-            times    = [entry[0] for entry in times_and_averages]
-            averages = [entry[1] for entry in times_and_averages]
-            
-            plot_obj.plot(
-                times, averages, label=cl_mk_lbl_dict[flag_type][1],
-                linestyle=self.ln_styl, linewidth=self.ln_wdth,
-                marker=cl_mk_lbl_dict[flag_type][2],
-                markersize=cl_mk_lbl_dict[flag_type][3],
-                color=cl_mk_lbl_dict[flag_type][0], alpha=0.8)
-        
-        plot_obj.set_yscale("symlog", linthreshy=150,
-                            subsy=[2, 3, 4, 5, 6, 7, 8, 9])
-        
-        ylims_dict = {"bottom": -10, "top": 5000}
-        xlims_dict = self.get_xlims_from_obs_id_range(
-                         self.xlim_left, self.xlim_right, 6.2)
-        
-        set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
-                           ylims_dict["bottom"], ylims_dict["top"])
-        
-        xtick_locs_major, xtick_labels, xtick_locs_minor = \
-            self.get_xticks_and_labels_from_obs_id_range(
-                plot_obj, self.xlim_left, self.xlim_right)
-        
-        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
-                  None, None, None, self.ttl_fs)
-        
-        xlabel = "\n" + "Time (UTC)"
-        ylabel = "Averages (over all scans of an obs.)" + "\n"
-        more_title = "Average number of flagged detectors" + "\n"
-        fig_title  = self.get_full_fig_title(more_title)
-        
-        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
-        
-        more_file_name = "average_numbers_of_flagged_detectors"
-        file_name = self.get_full_file_name(more_file_name)
-        
-        save_figure_etc(figure_obj, self.fig_dir, file_name)
-    
-    
     def __call__(self, frame):
         
         if self.already_made_figures:
@@ -1090,9 +1163,9 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.make_figure_for_calibration_factors(frame)
                 self.log("Done.\n")
             
-            if self.make_fig_for_ptg_offsets:
-                self.log("Making figures for pointing discrepancies...")
-                self.make_figure_for_pointing_discrepancies(frame)
+            if self.make_fig_for_fluc_metric:
+                self.log("Making figures for map fluctuation metrics...")
+                self.make_figure_for_map_fluctuation_metrics(frame)
                 self.log("Done.\n")
             
             if self.make_fig_for_noise_levels:
@@ -1100,6 +1173,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 self.make_figure_for_all_noise_levels(frame)
                 self.make_figure_for_recent_noise_levels(frame)
                 self.make_figure_for_order_of_addition(frame)
+                self.log("Done.\n")
+            
+            if self.make_fig_for_ptg_offsets:
+                self.log("Making figures for pointing discrepancies...")
+                self.make_figure_for_pointing_discrepancies(frame)
                 self.log("Done.\n")
             
             self.already_made_figures = True
@@ -1161,6 +1239,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         gaussian_fwhm=None,
         make_figures_for_flagging_statistics=False,
         make_figures_for_calibration_factors=False,
+        make_figures_for_fluctuation_metrics=False,
         make_figures_for_pointing_discrepancies=False,
         make_figures_for_noise_levels=False,
         left_xlimit_for_time_variations=None,
@@ -1281,6 +1360,7 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
                      fig_fs=make_figures_for_flagging_statistics,
                      fig_tc=make_figures_for_calibration_factors,
+                     fig_fl=make_figures_for_fluctuation_metrics,
                      fig_pt=make_figures_for_pointing_discrepancies,
                      fig_ns=make_figures_for_noise_levels,
                      map_id=map_id,
@@ -1412,13 +1492,18 @@ if __name__ == '__main__':
 
     parser.add_argument("-F", "--make_figures_for_flagging_statistics",
                         action="store_true", default=False,
-                        help="Whether to make figures showing average number of "
-                             "flagged detectors over time.")
+                        help="Whether to make figures showing average number "
+                             "of flagged detectors over time.")
     
     parser.add_argument("-C", "--make_figures_for_calibration_factors",
                         action="store_true", default=False,
                         help="Whether to make figures showing temperature "
                              "calibration factors over time.")
+    
+    parser.add_argument("-U", "--make_figures_for_fluctuation_metrics",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing some basic "
+                             "metrics of fluctuations of map values.")
 
     parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
                         action="store_true", default=False,
@@ -1446,17 +1531,19 @@ if __name__ == '__main__':
                         action="store", type=float, default=11,
                         help="The font size to be used for figure titles. "
                              "Then, the font sizes of other things such as "
-                             "axis labels will be determined based on this value.")
+                             "axis labels will be determined "
+                             "based on this value.")
 
     parser.add_argument("-d", "--directory_to_save_figures",
                         action="store", type=str, default=".",
-                        help="The directory where generated figures will be saved.")
+                        help="The directory where generated figures "
+                             "will be saved.")
 
     parser.add_argument("-f", "--simpler_file_names",
                         action="store_true", default=False,
                         help="Whether to omit infomration on source, obs. ID, "
-                             "and so on in the names of the PNG files that show "
-                             "field maps and weight maps.")
+                             "and so on in the names of the PNG files that "
+                             "show field maps and weight maps.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
