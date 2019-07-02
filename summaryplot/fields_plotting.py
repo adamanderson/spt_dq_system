@@ -1129,12 +1129,13 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         marker_dict = {"1": ["*", 8], "2": ["p", 6], "3": [".", 9]}
         
+
         for coordinate in ["Ra", "Dec"]:
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
             xlims_dict = self.get_xlims_from_obs_id_range(
                              self.xlim_left, self.xlim_right, 5.4)
-            ylims_dict = {"bottom": -45, "top": 45}
+            ylims_dict = {"bottom": -45, "top": 45}            
 
             for source_rank in ["1", "2", "3"]:
                 key  = "Delta" + coordinate + "s" + "FromSources" + source_rank
@@ -1186,6 +1187,102 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             file_name = self.get_full_file_name(more_file_name)
             
             save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        
+        for sub_field in self.el_dict.keys():
+            xlims_dict = self.get_xlims_from_obs_id_range(
+                             self.xlim_left, self.xlim_right, 6.4)
+            ylims_dict = {"bottom": -45, "top": 45}            
+
+            for coordinate in ["Ra", "Dec"]:
+                figure_obj, plot_obj = get_figure_and_plot_objects()
+                
+                all_offsets = {"1": None, "2": None, "3": None}
+                
+                for source_rank in ["1", "2", "3"]:
+                    key  = "Delta"+coordinate+"s"+"FromSources"+source_rank
+                    data = frame[key][sub_field]
+                    
+                    obs_ids = sorted(data.keys())
+                    offsets = numpy.array([data[oid]/core.G3Units.arcsec \
+                                           for oid in obs_ids])
+                    obs_ids = [int(oid) for oid in obs_ids]
+                    all_offsets[source_rank] = offsets
+                
+                avgs = numpy.nanmean([all_offsets["1"],
+                                      all_offsets["2"],
+                                      all_offsets["3"]], axis=0)
+                
+                for source_rank, offsets in all_offsets.items():
+                    plot_obj.plot(
+                        obs_ids, offsets,
+                        label="Src. "+source_rank+" offsets",
+                        linestyle="None",
+                        marker=marker_dict[source_rank][0],
+                        markersize=marker_dict[source_rank][1],
+                        color=self.cl_dict[sub_field], alpha=0.8)
+                    
+                    self.indicate_out_of_range_values(
+                        plot_obj, obs_ids, offsets, ylims_dict,
+                        self.cl_dict[sub_field])
+                
+                plot_obj.plot(
+                    obs_ids, avgs, label="Avg. offsets",
+                    linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                    color=self.cl_dict[sub_field], alpha=0.8)
+                
+                set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
+                                   ylims_dict["bottom"], ylims_dict["top"])
+                
+                text_tr = 0.70
+                separat = 0.05
+                counter = 0
+                for source_rank, offsets in all_offsets.items():
+                    avg = numpy.nanmean(offsets)
+                    plot_obj.text(0.98, text_tr-counter*separat,
+                                  "{} - avg.: {:+4.1f}".format(source_rank, avg),
+                                  transform=plot_obj.transAxes,
+                                  horizontalalignment="right",
+                                  verticalalignment="top",
+                                  color=self.cl_dict[sub_field],
+                                  fontsize=self.ttl_fs-4)
+                    std = numpy.nanstd(offsets)
+                    plot_obj.text(0.98, text_tr-(counter+3)*separat,
+                                  "{} - std.: {:+4.1f}".format(source_rank, std),
+                                  transform=plot_obj.transAxes,
+                                  horizontalalignment="right",
+                                  verticalalignment="top",
+                                  color=self.cl_dict[sub_field],
+                                  fontsize=self.ttl_fs-4)
+                    counter += 1
+                
+                xtick_locs_major, xtick_labels, xtick_locs_minor = \
+                    self.get_xticks_and_labels_from_obs_id_range(
+                        plot_obj, self.xlim_left, self.xlim_right)
+                
+                set_ticks(plot_obj,
+                          xtick_locs_major, xtick_locs_minor, xtick_labels,
+                          None, None, None, self.ttl_fs)
+                
+                xlabel = "\n" + "Time (UTC)"
+                if coordinate == "Ra":
+                    ylabel = "(Measured R.A. - True R.A.) " + \
+                             r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
+                else:
+                    ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
+                more_title = coordinate + " offsets of point sources " + \
+                             "in " + sub_field + "\n"
+                
+                fig_title = self.get_full_fig_title(more_title)
+                
+                set_labels_and_title(
+                    plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+                
+                more_file_name = "delta_" + coordinate + \
+                                 "s_from_point_sources_in_" + sub_field
+                file_name = self.get_full_file_name(more_file_name)
+                
+                save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
     def __call__(self, frame):
