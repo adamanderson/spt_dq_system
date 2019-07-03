@@ -372,6 +372,7 @@ def calculate_map_fluctuation_metrics(
     
     keys = ["MapStdDevs",
             "MeansOfWeights",
+            "NumbersOfPixelsWithGoodWeights",
             "VarsOfProductsOfMapValuesAndSqrtWeights"]
     
     fluctuation_metrics = {key: numpy.nan for key in keys}
@@ -383,9 +384,10 @@ def calculate_map_fluctuation_metrics(
             t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
                                    map_frame["T"], map_frame["Wunpol"]))
             w_vals = numpy.asarray(map_frame["Wunpol"].TT)
-                
+        
         w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
         igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
+        npnzw = len(numpy.where(w_vals > 0.0)[0])
         if len(igw[0]) == 0:
             return fluctuation_metrics
         
@@ -404,7 +406,8 @@ def calculate_map_fluctuation_metrics(
         
         fluctuation_metrics[keys[0]] = map_stddev
         fluctuation_metrics[keys[1]] = mean_weight
-        fluctuation_metrics[keys[2]] = var_product
+        fluctuation_metrics[keys[2]] = npnzw
+        fluctuation_metrics[keys[3]] = var_product
         
         return fluctuation_metrics
 
@@ -762,6 +765,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         if self.calc_map_stddev_etc:
             self.fluctuation_keys = ["MapStdDevs",
                                      "MeansOfWeights",
+                                     "NumbersOfPixelsWithGoodWeights",
                                      "VarsOfProductsOfMapValuesAndSqrtWeights"]
             self.map_types = ["IndividualMaps",
                               "CoaddedMaps"]
@@ -1135,10 +1139,13 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 if self.calc_map_stddev_etc:
                     for mtp in self.map_types:
                         for fk in self.fluctuation_keys:
-                            self.map_fluctuation_metrics[mtp][fk] = \
-                                remove_partial_mapmapdouble(
-                                    self.map_fluctuation_metrics[mtp][fk],
-                                    obs_ids_from_this_frame)
+                            try:
+                                self.map_fluctuation_metrics[mtp][fk] = \
+                                    remove_partial_mapmapdouble(
+                                        self.map_fluctuation_metrics[mtp][fk],
+                                        obs_ids_from_this_frame)
+                            except KeyError:
+                                pass
             
             elif self.calc_map_stddev_etc:
                 if frame_has_coadds:
@@ -1151,8 +1158,13 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     for mtp in self.map_types:
                         stddevs_etc[mtp] = {}
                         for fk in self.fluctuation_keys:
-                            stddevs_etc[mtp][fk] = \
-                                {id_for_coadds: frame[prefix+mtp+fk]}
+                            try:
+                                stddevs_etc[mtp][fk] = \
+                                    {id_for_coadds: frame[prefix+mtp+fk]}
+                            except KeyError:
+                                stddevs_etc[mtp][fk] = \
+                                    {id_for_coadds: core.G3MapMapDouble()}
+                            
                 else:
                     self.log("")
                     self.log("* Gathering a map standard deviation,")
