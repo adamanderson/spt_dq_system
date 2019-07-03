@@ -569,6 +569,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     coadd_args['calculate_pW_to_K_conversion_factors'] = True
                     coadd_args['calculate_pointing_discrepancies'] = True
                     coadd_args['calculate_noise_from_individual_maps'] = True
+                    if time_interval == 'monthly':
+                        coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
                     coadd_args['logger_name'] = '{}_{}'.format(sub_logger_name, map_id)
 
                     generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)

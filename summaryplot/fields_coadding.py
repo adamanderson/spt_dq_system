@@ -1055,7 +1055,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("* Gathering avg.(sqrt(Cl)) of cross spectra")
                     self.log("* that were calculated previously ...")
                     cl_key = "ClsFromCrossSpectraBetweenCoaddsAndIndividuals"
-                    xspec_sqrt_cls_this_fr = {id_for_coadds: frame[cl_key]}
+                    try:
+                        xspec_sqrt_cls_this_fr = {id_for_coadds: frame[cl_key]}
+                    except KeyError:
+                        xspec_sqrt_cls_this_fr = {id_for_coadds: core.G3MapMapDouble()}
                 elif len(self.coadded_obs_ids[id_for_coadds][src]) <= 1:
                     self.log("")
                     self.log("* Currently, the maps in the cache")
@@ -1924,7 +1927,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.log("- %s", sub_field)
                         self.log("")
                         for obs_id in mp_fr["CoaddedObservationIDs"][sub_field]:
-                            sqrt_cl  = data[str(obs_id)]
+                            try:
+                                sqrt_cl = data[str(obs_id)]
+                            except KeyError:
+                                sqrt_cl = numpy.nan
                             sqrt_cl /= (core.G3Units.uK*core.G3Units.arcmin)
                             self.log(" "*3 + "%s %s uK.arcmin", obs_id, sqrt_cl)
                         self.log("")
