@@ -350,7 +350,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     
     
     def figure_out_arguments_to_use_for_coadding(
-            map_id, sub_field, time_range_id):
+            map_id, sub_field, time_range_id, n_iter=1):
         
         arguments = {}
         
@@ -375,19 +375,15 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
            (os.path.isfile(g3_file_for_coadded_maps)):
             iterator = core.G3File(g3_file_for_coadded_maps)
             existing_ids = []
-            while True:
-                try:
-                    frame = iterator.next()
-                    if "CoaddedObservationIDs" in frame.keys():
-                        for sub_field, obs_ids \
-                        in  frame["CoaddedObservationIDs"].items():
-                            for obs_id in obs_ids:
-                                if obs_id not in existing_ids:
-                                    existing_ids.append(obs_id)
-                        break
-                except StopIteration:
-                    break
-        
+            
+            for iteration_time in range(n_iter):
+                frame = iterator.next()
+                for sub_field, obs_ids \
+                in  frame["CoaddedObservationIDs"].items():
+                    for obs_id in obs_ids:
+                        if obs_id not in existing_ids:
+                            existing_ids.append(obs_id)
+            
             ignore_coadds,  subtract_maps, \
             ids_to_exclude, id_lower_bound, id_upper_bound = \
                 decide_what_ids_to_use_and_not(
@@ -437,10 +433,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 
         if not just_see_args:
             if log_file is None:
-                function(**arguments)
+                rval = function(**arguments)
             else:
                 try:
-                    function(**arguments)
+                    rval = function(**arguments)
                 except Exception:
                     logger.exception('Something did not go well '
                                      'while running coadding/plotting!')
@@ -448,6 +444,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                        'Please check where it occurred '
                                        'in the log file {}!'.format(log_file))
         log('')
+        
+        return rval
         
     
     
@@ -458,7 +456,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         output_file_temp = arguments['output_file']
         output_file_perm = '{}.g3.gz'.format(output_file_temp[:-6])
         
-        run_command(function, arguments, logger, log_file, just_see_commands)
+        rval = run_command(function, arguments, logger, log_file, just_see_commands)
         
         log('Changing the name of the temporary output file ...')
         if os.path.isfile(output_file_temp):
@@ -538,6 +536,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         os.remove(output_file_perm)
                 log('Done.')
                 log('')
+        
+        return rval
     
     
     # -- Then, execute commands by utilizing those functions
@@ -577,25 +577,37 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     log('\n\n')
             else:
                 for map_id in map_ids:
-                    coadd_all_fields_args = {}
+                    rvals_sum = 0
                     for sub_field in sub_fields:
                         log('--- %s %s ---', map_id, sub_field)
                         log('')
                         
-                        coadd_args = figure_out_arguments_to_use_for_coadding(map_id, sub_field, i)
+                        coadd_args = figure_out_arguments_to_use_for_coadding(map_id, sub_field, i, n_iter=2)
+                        coadd_args['map_ids'] = ['Left'+map_id, 'Right'+map_id]
+                        coadd_args['trick_pipeline_into_getting_left_right_maps'] = True
+                        coadd_args['maps_split_by_scan_direction'] = True
                         coadd_args.pop('subtract_existing_maps', None)
                         coadd_args['sources'] = [sub_field]
+                        coadd_args['calculate_map_rms_and_weight_stat'] = False
                         coadd_args['calculate_noise_from_coadded_maps'] = True
-                        coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
                         coadd_args = gather_bad_obs_ids_from_list(
                                          bad_map_list_file, map_id, sub_field, coadd_args)
                         
-                        generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
+                        rval = generate_new_coadded_maps(
+                                   fields_coadding.run, coadd_args,
+                                   logger, log_file, just_see_commands, False)
+                        rvals_sum += rval
                         log('\n\n')
                     
                     log('--- %s Full field ---', map_id)
                     log('')
+                    
+                    if rvals_sum == 0:
+                        log('There was no update to any of the sub-field, ')
+                        log('so, there is no need to combine the four g3 files again!')
+                        log('\n\n')
+                        return
                     
                     coadd_all_fields_args = {}
                     coadd_all_fields_args['input_files'] = \
@@ -606,9 +618,10 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                                      'coadded_maps_{}.g3.gz'.format(map_id))
                     coadd_all_fields_args['map_ids'] = [map_id]
                     coadd_all_fields_args['temperature_maps_only'] = True
-                    coadd_all_fields_args['calculate_map_rms_and_weight_stat'] = True
+                    coadd_all_fields_args['maps_split_by_scan_direction'] = True
+                    coadd_all_fields_args['combine_left_right'] = True
+                    coadd_all_fields_args['calculate_map_rms_and_weight_stat'] = False
                     coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
-                    coadd_all_fields_args['calculate_cross_spectrum_with_coadded_maps'] = True
                     coadd_all_fields_args['logger_name'] = '{}_{}_full_field'.format(sub_logger_name, map_id)
                     coadd_all_fields_args['log_file'] = log_file
                     

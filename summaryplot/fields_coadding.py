@@ -535,7 +535,6 @@ def calculate_noise_level(
     
     mask = create_apodization_mask(mp_fr, ptsrc_lst)
     
-    
     cls = map_analysis.calculateCls(
               mp_fr, cross_map=None, t_only=temp_only,
               apod_mask=mask, kspace_filt=None, tf_2d=None,
@@ -1289,27 +1288,28 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     # ** The assignment above is just a dummy one
                 
                 elif self.maps_split_by_scan_direction:
-                    self.map_frame_arrival_counters[frame["Id"]] = 1
                     if self.calc_noise_from_individ_maps or \
                        self.calc_pointing_discrepancies:
                         self.map_frame_cache[frame["Id"]] = frame
+                    self.map_fr_arrival_counters[frame["Id"]] += 1
                     
                     time_to_calculate_pointing_and_noise = False
                     for di_mid in self.direction_independent_map_ids:
                         if "SomeDirection" in di_mid:
-                            id_l_ver = map_id.replace("SomeDirection", "Left")
-                            id_r_ver = map_id.replace("SomeDirection", "Right")
+                            id_l_ver = di_mid.replace("SomeDirection", "Left")
+                            id_r_ver = di_mid.replace("SomeDirection", "Right")
                         else:
-                            id_l_ver = "Left"  + map_id
-                            id_r_ver = "Right" + map_id
-                        if (self.map_fr_arrival_counters[id_l_ver] == 1) and \
-                           (self.map_fr_arrival_counters[id_r_ver] == 1):
+                            id_l_ver = "Left"  + di_mid
+                            id_r_ver = "Right" + di_mid
+                        if self.map_fr_arrival_counters[id_l_ver] == \
+                           self.map_fr_arrival_counters[id_r_ver]:
                             time_to_calculate_pointing_and_noise = True
                             break
                 else:
                     time_to_calculate_pointing_and_noise = True
                 
-                if time_to_calculate_pointing_and_noise:
+                if time_to_calculate_pointing_and_noise and \
+                   (not frame_has_coadds):
                     if self.combine_left_right:
                         ids_for_recording = [id_for_coadds]
                     elif (not self.maps_split_by_scan_direction):
@@ -1478,7 +1478,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                             combine_mapmapdoubles(
                                 self.noise_from_coadded_maps,
                                 {id_for_coadds: frame[noise_key]})
-                        if not self.maps_split_by_scan_direction:
+                        if self.maps_split_by_scan_direction:
+                            self.map_fr_arrival_counters[id_for_coadds] = \
+                                len(frame["CoaddedObservationIDs"].values()[0])
+                        else:
                             if self.temp_only:
                                 self.coadded_map_frames[id_for_coadds] = \
                                     add_map_frames(
@@ -1499,7 +1502,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.log("* Noise calculation is about to start")
                         self.log("* b/c both %s and %s", id_l_ver, id_r_ver)
                         self.log("* of obs. %s", oid)
-                        self.log("* have passed the pipeline...")
+                        self.log("* have passed the pipeline ...")
                         
                         if self.calc_noise_from_individ_maps:
                             noise = calculate_noise_level(
@@ -1704,9 +1707,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                        self.calc_pointing_discrepancies:
                         for each_id in [id_r_ver, id_l_ver]:
                             self.map_frame_cache[each_id] = None
-                    
-                    self.map_frame_arrival_counters[id_r_ver] = 0
-                    self.map_frame_arrival_counters[id_l_ver] = 0
+                        self.map_fr_arrival_counters[id_r_ver] = 0
+                        self.map_fr_arrival_counters[id_l_ver] = 0
             
             
             # - Free up some memory
@@ -1960,7 +1962,10 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         self.log("- %s", sub_field)
                         self.log("")
                         for obs_id in mp_fr["CoaddedObservationIDs"][sub_field]:
-                            noise  = data[str(obs_id)]
+                            try:
+                                noise = data[str(obs_id)]
+                            except KeyError:
+                                noise = numpy.nan
                             noise /= (core.G3Units.uK*core.G3Units.arcmin)
                             if ops_k is not None:
                                 operation = mp_fr[ops_k][sub_field][str(obs_id)]
@@ -1993,6 +1998,36 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
             return meta_info_frames_to_return + \
                    list(self.coadded_map_frames.values()) + \
                    [frame]
+
+
+
+
+class AppendDirectionsToMapIDs(object):
+    
+    def __init__(self, map_id):
+        
+        self.map_id = map_id.replace("Left", "")
+        self.n_mp_l = 0
+        self.n_mp_r = 0
+    
+    def __call__(self, frame):
+        
+        if "CoaddedObservationIDs" in frame.keys():
+            n_maps = len(frame["CoaddedObservationIDs"].values()[0])
+            if "Left" in frame["Id"]:
+                self.n_mp_l = n_maps
+            elif "Right" in frame["Id"]:
+                self.n_mp_r = n_maps
+        
+        if (frame.type == core.G3FrameType.Map) and \
+           (frame["Id"] in ["90GHz", "150GHz", "220GHz"]):
+            old_id = frame.pop("Id")
+            if self.n_mp_l > self.n_mp_r:
+                frame["Id"] = "Right" + old_id
+                self.n_mp_r += 1
+            else:
+                frame["Id"] = "Left" + old_id
+                self.n_mp_l += 1
 
 
 
@@ -2088,8 +2123,11 @@ def is_a_good_obs_id(g3_file, min_obs_id, max_obs_id, bad_obs_ids=[]):
 
 
 def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
-        temperature_maps_only=False, maps_split_by_scan_direction=False,
-        combine_left_right=False, combine_different_wafers=False,
+        temperature_maps_only=False,
+        trick_pipeline_into_getting_left_right_maps=False,
+        maps_split_by_scan_direction=False,
+        combine_left_right=False,
+        combine_different_wafers=False,
         subtract_existing_maps=False, 
         collect_averages_from_flagging_statistics=False,
         calculate_pW_to_K_conversion_factors=False,
@@ -2128,7 +2166,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     
     # - Check consistencies among some options that are supposed to be used
 
-    if calculate_noise_from_coadded_maps:
+    """if calculate_noise_from_coadded_maps:
         if combine_left_right:
             log("")
             log("If noise is to be calculated from running coadds,")
@@ -2136,7 +2174,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
             log("so that the coadded left-going and right-going maps")
             log("can be used later as well!")
             log("")
-            sys.exit()
+            sys.exit()"""
 
     if calculate_noise_from_individual_maps and \
        calculate_noise_from_coadded_maps:
@@ -2144,7 +2182,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         log("Currently, calculating noise from both individual maps")
         log("and coadded maps is not supported...")
         log("")
-        sys.exit()
+        return 0
     
     if calculate_noise_from_coadded_maps and \
        subtract_existing_maps:
@@ -2155,7 +2193,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         log("this would make the results of previous noise level")
         log("calculations not meaningful.")
         log("")
-        sys.exit()
+        return 0
     
     if calculate_cross_spectrum_with_coadded_maps and \
        maps_split_by_scan_direction:
@@ -2165,6 +2203,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         log("in the case when the maps are split by scan direction")
         log("is not supported...")
         log("")
+        return 0
 
 
     all_good_g3_files = []
@@ -2179,7 +2218,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         log("")
         log("No applicable input files, so nothing to do!")
         log("")
-        return
+        return 0
 
 
     # - Show settings related to I/O
@@ -2220,8 +2259,12 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     pipeline.Add(core.G3Reader,
                  filename=all_good_g3_files)
     
+    if trick_pipeline_into_getting_left_right_maps:
+        pipeline.Add(AppendDirectionsToMapIDs,
+                     map_id=map_ids[0])
+    
     pipeline.Add(lambda frame: log(frame))
-
+    
     pipeline.Add(CoaddMapsAndDoSomeMapAnalysis,
                  map_ids=map_ids,
                  map_sources=sources,
@@ -2278,6 +2321,9 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
     pipeline.Run(profile=profile)
     
     log("")
+    
+    return 1
+
 
 # ==============================================================================
 
@@ -2317,6 +2363,18 @@ if __name__ == '__main__':
                         action="store_true", default=False,
                         help="Whether the maps stored in the data frames "
                              "contain temperature-only maps or not.")
+    
+    parser.add_argument("-P", "--trick_pipeline_into_getting_left_right_maps",
+                        action="store_true", default=False,
+                        help="Whether to trick the pipeline module that "
+                             "co-adds maps and performs analyses into "
+                             "receiving maps whose IDs imply that "
+                             "they are made from only one scan direction. "
+                             "This option is useful in the case where "
+                             "we want to calculate noise levels from "
+                             "running coadded maps but the input files "
+                             "do not contain maps that are split by "
+                             "scan direction.")
 
     parser.add_argument("-r", "--maps_split_by_scan_direction",
                         action="store_true", default=False,
