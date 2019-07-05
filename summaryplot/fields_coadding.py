@@ -27,14 +27,21 @@ import  logging
 
 def map_seems_fine(map_frame, log_fun):
     
+    if "IgnoreThisMap" in map_frame.keys():
+        log_fun("")
+        log_fun("* This map was determined to be bad from ")
+        log_fun("* a previous processing step!")
+        return False
+    
     if map_frame["T"].units != core.G3TimestreamUnits.Tcmb:
-        log_fun("The units of this map are not in Tcmb!")
+        log_fun("")
+        log_fun("* The units of this map are not in Tcmb!")
         return False
     
     map_values = map_frame["T"]
     if not numpy.isfinite(numpy.nanmean(numpy.asarray(map_values))):
         log_fun("")
-        log_fun("There seem to be only NaNs in the map!")
+        log_fun("* There seem to be only NaNs in the map!")
         return False
         
     return True
@@ -366,9 +373,7 @@ def add_map_frames(
 
 
 def calculate_map_fluctuation_metrics(
-        map_frame, temperature_only,
-        center_ra, center_dec,
-        return_nans=False):
+        map_frame, temperature_only, return_nans=False):
     
     keys = ["MapStdDevs",
             "MeansOfWeights",
@@ -1183,7 +1188,6 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         flc_mtrs = calculate_map_fluctuation_metrics(
                                        fr_to_use,
                                        self.temp_only,
-                                       center_ra, center_dec,
                                        return_nans=(self.allow_subtraction and\
                                                     mtp=="CoaddedMaps"))
                         for flc_k, flc_vl in flc_mtrs.items():
@@ -2002,13 +2006,42 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
 
 
 
-class AppendDirectionsToMapIDs(object):
+def cut_map_based_on_mean_weight(mean_wt, band, sub_field):
     
-    def __init__(self, map_id):
+    wu = 1 / (core.G3Units.mK * core.G3Units.mK)
+    
+    thresholds = {"90GHz" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  65.0*wu},
+                             "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  70.0*wu},
+                             "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  80.0*wu},
+                             "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  95.0*wu}},
+                  "150GHz": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 120.0*wu},
+                             "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 140.0*wu},
+                             "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 145.0*wu},
+                             "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 165.0*wu}},
+                  "220GHz": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":   8.0*wu},
+                             "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  10.0*wu},
+                             "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  12.0*wu},
+                             "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  14.0*wu}}}
+    
+    if (mean_wt < thresholds[band][sub_field]["lo"]) or \
+       (mean_wt > thresholds[band][sub_field]["hi"]):
+        return True
+    else:
+        return False
+
+
+
+
+class CutBadMapsAndAppendDirectionsToMapIDs(object):
+    
+    def __init__(self, map_id, t_only, logging_function):
         
+        self.t_only = t_only
+        self.sb_fld = None
         self.map_id = map_id.replace("Left", "")
         self.n_mp_l = 0
         self.n_mp_r = 0
+        self.logfun = logging_function
     
     def __call__(self, frame):
         
@@ -2019,15 +2052,40 @@ class AppendDirectionsToMapIDs(object):
             elif "Right" in frame["Id"]:
                 self.n_mp_r = n_maps
         
+        if frame.type == core.G3FrameType.Observation:
+            self.sb_fld = frame["SourceName"]
+        
         if (frame.type == core.G3FrameType.Map) and \
            (frame["Id"] in ["90GHz", "150GHz", "220GHz"]):
+            
+            self.logfun("")
+            self.logfun("* Checking whether this map is reasonable before ")
+            self.logfun("* assigning a fake ID to it ...")
+            
+            flc_dct = calculate_map_fluctuation_metrics(frame, self.t_only)
+            mean_wt = flc_dct["MeansOfWeights"]
+            map_is_bad = cut_map_based_on_mean_weight(
+                             mean_wt, frame["Id"], self.sb_fld)
+                        
             old_id = frame.pop("Id")
-            if self.n_mp_l > self.n_mp_r:
-                frame["Id"] = "Right" + old_id
-                self.n_mp_r += 1
-            else:
+            if map_is_bad:
+                self.logfun("* ... the map looks bad!")
+                self.logfun("* A fake ID will be assigned anyway,")
+                self.logfun("* but it will not be used for coadding.")
+                self.logfun("* Done.")
+                self.logfun("")
+                frame["IgnoreThisMap"] = True
                 frame["Id"] = "Left" + old_id
-                self.n_mp_l += 1
+            else:
+                self.logfun("* ... the map doesn't look obviously bad!")
+                self.logfun("* Done.")
+                self.logfun("")
+                if self.n_mp_l > self.n_mp_r:
+                    frame["Id"] = "Right" + old_id
+                    self.n_mp_r += 1
+                else:
+                    frame["Id"] = "Left" + old_id
+                    self.n_mp_l += 1
 
 
 
@@ -2260,8 +2318,10 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
                  filename=all_good_g3_files)
     
     if trick_pipeline_into_getting_left_right_maps:
-        pipeline.Add(AppendDirectionsToMapIDs,
-                     map_id=map_ids[0])
+        pipeline.Add(CutBadMapsAndAppendDirectionsToMapIDs,
+                     map_id=map_ids[0],
+                     t_only=temperature_maps_only,
+                     logging_function=log)
     
     pipeline.Add(lambda frame: log(frame))
     

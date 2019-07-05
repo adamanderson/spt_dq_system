@@ -332,9 +332,14 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     
         ids_to_exclude = []
         
-        map_ids, sub_fields, obs_ids = \
-            numpy.loadtxt(text_file, dtype=str, delimiter="|",
-                          usecols=(0, 1, 2), unpack=True)
+        try:
+            map_ids, sub_fields, obs_ids = \
+                numpy.loadtxt(text_file, dtype=str, delimiter="|",
+                              usecols=(0, 1, 2), unpack=True)
+        except:
+            map_ids    = []
+            sub_fields = []
+            obs_ids    = []
         for index, map_id in enumerate(map_ids):
             map_id = map_id.replace(" ", "")
             if map_id == map_id_to_compare:
@@ -443,6 +448,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                     raise RuntimeError('An error occurred! '
                                        'Please check where it occurred '
                                        'in the log file {}!'.format(log_file))
+        else:
+            rval = 1
         log('')
         
         return rval
@@ -593,7 +600,6 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
                         coadd_args = gather_bad_obs_ids_from_list(
                                          bad_map_list_file, map_id, sub_field, coadd_args)
-                        
                         rval = generate_new_coadded_maps(
                                    fields_coadding.run, coadd_args,
                                    logger, log_file, just_see_commands, False)
