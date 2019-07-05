@@ -586,7 +586,7 @@ def calculate_average_cl_of_cross_spectrum(
 
 
 
-def combine_ids(old_dict, new_dict):
+def combine_ids(old_dict, new_dict, check_for_existence=False):
     
     this_frame_already_added = False
     for map_id in new_dict.keys():
@@ -602,7 +602,10 @@ def combine_ids(old_dict, new_dict):
                     for new_id in new_ids:
                         old_dict[map_id][source].append(new_id)
     
-    return old_dict, this_frame_already_added
+    if check_for_existence:
+        return old_dict, this_frame_already_added
+    else:
+        return old_dict
 
 
 
@@ -717,6 +720,8 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
         self.coadded_obs_ids    = {map_id: core.G3MapVectorInt()    \
                                    for map_id in self.map_ids}
         self.coadded_map_ids    = {map_id: core.G3MapVectorString() \
+                                   for map_id in self.map_ids}
+        self.ignored_obs_ids    = {map_id: core.G3MapVectorInt()    \
                                    for map_id in self.map_ids}
         self.observat_durations = {map_id: core.G3MapMapDouble()    \
                                    for map_id in self.map_ids}
@@ -921,6 +926,12 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                         {id_for_coadds: frame["CoaddedMapIDs"]}
                     obs_tms_from_this_frame = \
                         {id_for_coadds: frame["ObservationDurations"]}
+                    if "IgnoredObservationIDs" in frame.keys():
+                        bad_ids_from_this_frame = \
+                            {id_for_coadds: frame["IgnoredObservationIDs"]}
+                        self.ignored_obs_ids = \
+                            combine_ids(self.ignored_obs_ids,
+                                        bad_ids_from_this_frame)
             else:
                 if frame["Id"] not in self.id_mapping.keys():
                     self.log("")
@@ -976,14 +987,18 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 self.log("* Well, the map doesn't look good,")
                 self.log("* so, this one will be skipped ...")
                 self.log("\n")
+                self.ignored_obs_ids = \
+                    combine_ids(self.ignored_obs_ids,
+                                obs_ids_from_this_frame)
                 return []
             
-            self.coadded_obs_ids, this_frame_already_added = \
+            self.coadded_obs_ids = \
                 combine_ids(self.coadded_obs_ids,
                             obs_ids_from_this_frame)
             self.coadded_map_ids, this_frame_already_added = \
                 combine_ids(self.coadded_map_ids,
-                            map_ids_from_this_frame)
+                            map_ids_from_this_frame,
+                            check_for_existence=True)
             self.observat_durations = \
                 combine_mapmapdoubles(self.observat_durations,
                                       obs_tms_from_this_frame)
@@ -1746,6 +1761,7 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                 mp_fr["CoaddedMapsContained"] = True
                 mp_fr["CoaddedMapIDs"] = self.coadded_map_ids[map_id]
                 mp_fr["CoaddedObservationIDs"] = self.coadded_obs_ids[map_id]
+                mp_fr["IgnoredObservationIDs"] = self.ignored_obs_ids[map_id]
                 mp_fr["ObservationDurations"] = self.observat_durations[map_id]
                 
                 self.log("# Observation IDs used:")
@@ -1759,6 +1775,16 @@ class CoaddMapsAndDoSomeMapAnalysis(object):
                     self.log("")
                 self.log("\n")
                 
+                self.log("# Observation IDs ignored:")
+                self.log("")
+                for sf, oids \
+                in  mp_fr["IgnoredObservationIDs"].items():
+                    self.log("- %s", sf)
+                    self.log("")
+                    self.log(" "*3 +" %s", list(oids))
+                    self.log("")
+                self.log("\n")
+
                 self.log("# Map IDs used:")
                 self.log("")
                 for sf, mids \
