@@ -1174,7 +1174,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 ylabel = "(Measured R.A. - True R.A.) " + \
                          r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
             else:
-                ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
+                ylabel = "Measured Dec. - True Dec." + ' ["]' + "\n"
             more_title = "Difference between measured and true " + \
                          coordinate + " of point sources" + "\n"
             
@@ -1192,7 +1192,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         for sub_field in self.el_dict.keys():
             xlims_dict = self.get_xlims_from_obs_id_range(
                              self.xlim_left, self.xlim_right, 6.4)
-            ylims_dict = {"bottom": -45, "top": 45}            
+            ylims_dict = {"bottom": -45, "top": 45}     
+            srccl_dict = {"1": "red", "2": "blue", "3": "green"}
 
             for coordinate in ["Ra", "Dec"]:
                 figure_obj, plot_obj = get_figure_and_plot_objects()
@@ -1220,7 +1221,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                         linestyle="None",
                         marker=marker_dict[source_rank][0],
                         markersize=marker_dict[source_rank][1],
-                        color=self.cl_dict[sub_field], alpha=0.8)
+                        color=srccl_dict[source_rank], alpha=0.8)
                     
                     self.indicate_out_of_range_values(
                         plot_obj, obs_ids, offsets, ylims_dict,
@@ -1229,7 +1230,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.plot(
                     obs_ids, avgs, label="Avg. offsets",
                     linestyle=self.ln_styl, linewidth=self.ln_wdth,
-                    color=self.cl_dict[sub_field], alpha=0.8)
+                    color="black", alpha=0.8)
                 
                 set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                                    ylims_dict["bottom"], ylims_dict["top"])
@@ -1240,21 +1241,38 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 for source_rank, offsets in all_offsets.items():
                     avg = numpy.nanmean(offsets)
                     plot_obj.text(0.98, text_tr-counter*separat,
-                                  "{} - avg.: {:04.1f}".format(source_rank, avg),
+                                  "Src. {} - avg.: {:04.1f}".format(source_rank, avg),
                                   transform=plot_obj.transAxes,
                                   horizontalalignment="right",
                                   verticalalignment="top",
-                                  color=self.cl_dict[sub_field],
+                                  color=srccl_dict[source_rank],
                                   fontsize=self.ttl_fs-4)
                     std = numpy.nanstd(offsets)
-                    plot_obj.text(0.98, text_tr-(counter+3)*separat,
-                                  "{} - std.: {:04.1f}".format(source_rank, std),
+                    plot_obj.text(0.98, text_tr-(counter+4)*separat,
+                                  "Src. {} - std.: {:04.1f}".format(source_rank, std),
                                   transform=plot_obj.transAxes,
                                   horizontalalignment="right",
                                   verticalalignment="top",
-                                  color=self.cl_dict[sub_field],
+                                  color=srccl_dict[source_rank],
                                   fontsize=self.ttl_fs-4)
                     counter += 1
+                
+                avg_avgs = numpy.nanmean(avgs)
+                std_avgs = numpy.nanstd(avgs)
+                plot_obj.text(0.98, text_tr-8*separat,
+                              "Avg. - avg.: {:04.1f}".format(avg_avgs),
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="right",
+                              verticalalignment="top",
+                              color="black",
+                              fontsize=self.ttl_fs-4)
+                plot_obj.text(0.98, text_tr-9*separat,
+                              "Avg. - std.: {:04.1f}".format(std_avgs),
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="right",
+                              verticalalignment="top",
+                              color="black",
+                              fontsize=self.ttl_fs-4)                
                 
                 xtick_locs_major, xtick_labels, xtick_locs_minor = \
                     self.get_xticks_and_labels_from_obs_id_range(
@@ -1269,7 +1287,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                     ylabel = "(Measured R.A. - True R.A.) " + \
                              r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
                 else:
-                    ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
+                    ylabel = "Measured Dec. - True Dec." + ' ["]' + "\n"
                 more_title = coordinate + " offsets of point sources " + \
                              "in " + sub_field + "\n"
                 
