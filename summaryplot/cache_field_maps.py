@@ -70,6 +70,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     else:
         current_time = datetime.datetime.strptime(
                            current_time, "20%y%m%d")
+        current_time = current_time.replace(hour=23, minute=59, second=59)
     beginning_of_the_record = \
         datetime.datetime.strptime(oldest_time_to_consider, "20%y%m%d")
 
