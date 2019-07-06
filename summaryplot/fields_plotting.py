@@ -868,7 +868,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         elif "NoiseFromCoaddedMaps" in frame.keys():
             noise_from_running_coadds = True
             noise_data = frame["NoiseFromCoaddedMaps"]
-            oprts_hist = frame["NoiseCalculationsOperationsDoneToMaps"]
+            try:
+                oprts_hist   = frame["NoiseCalculationsOperationsDoneToMaps"]
+                ops_recorded = True
+            except KeyError:
+                ops_recorded = False
         else:
             raise NameError("Not clear where noise data are!")
         
@@ -900,20 +904,31 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 obs_ids = sorted(obs_ids)
             noise_units  = core.G3Units.uK * core.G3Units.arcmin
             noise_levels = [noise_data[sub_field][str(obs_id)] / noise_units \
-                            for obs_id in obs_ids]
+                            for obs_id in obs_ids \
+                            if str(obs_id) in noise_data[sub_field].keys()]
             
             label = self.el_dict[sub_field]
             color = self.cl_dict[sub_field]
             
             if noise_from_running_coadds:
-                operations_performed = \
-                    numpy.array([oprts_hist[sub_field][str(obs_id)] \
-                                 for obs_id in obs_ids])
-                valid_indices = numpy.where(operations_performed==-1.0)[0]
-                bad_indices   = numpy.where(operations_performed== 0.0)[0]
-                n_excluded[sub_field] = len(bad_indices)
-                x_data = range(1, len(valid_indices)+1)
-                noise_levels = numpy.asarray(noise_levels)[valid_indices]
+                if ops_recorded:
+                    operations_performed = \
+                        numpy.array([oprts_hist[sub_field][str(obs_id)] \
+                                     for obs_id in obs_ids])
+                    valid_indices = numpy.where(operations_performed==-1.0)[0]
+                    bad_indices   = numpy.where(operations_performed== 0.0)[0]
+                    n_excluded[sub_field] = len(bad_indices)
+                    x_data = range(1, len(valid_indices)+1)
+                    noise_levels = numpy.asarray(noise_levels)[valid_indices]
+                else:
+                    if sub_field in frame["IgnoredObservationIDs"].keys():
+                        n_bad_obs = frame["IgnoredObservationIDs"][sub_field]
+                    else:
+                        n_bad_obs = 0
+                    n_excluded[sub_field] = n_bad_obs
+                    x_data = [obs_id for obs_id in obs_ids \
+                              if str(obs_id) in noise_data[sub_field].keys()]
+                    x_data = range(1, len(x_data)+1)
             else:
                 x_data = obs_ids
             plot_obj.plot(
@@ -1003,25 +1018,53 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         if noise_key not in frame.keys():
             return
         
-        all_noise_calculated     = frame[noise_key]
-        all_obs_ids_used         = frame["CoaddedObservationIDs"]
-        all_operations_performed = frame["NoiseCalculationsOperationsDoneToMaps"] 
+        all_noise_calculated = frame[noise_key]
+        all_obs_ids_used     = frame["CoaddedObservationIDs"]
+        try:
+            all_operations_performed = frame["NoiseCalculationsOperationsDoneToMaps"]
+            ops_recorded = True
+        except KeyError:
+            ops_recorded = False
         
         for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
-            operations_this_sf = \
-                numpy.array([all_operations_performed[sub_field][str(obs_id)] \
-                             for obs_id in obs_ids_this_sf])
-            noise_this_sf = \
-                numpy.array([all_noise_calculated[sub_field][str(obs_id)] \
-                             for obs_id in obs_ids_this_sf])
-            
-            ok_indices   = numpy.where(operations_this_sf!=0.0)[0]
-            ok_obs_ids   = numpy.asarray(obs_ids_this_sf)[ok_indices][-50:]
-            ok_noises    = numpy.asarray(noise_this_sf)[ok_indices][-50:]
-            ok_noises   /= core.G3Units.uK * core.G3Units.arcmin
-            dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
+            if ops_recorded:
+                operations_this_sf = \
+                    numpy.array([all_operations_performed[sub_field][str(obs_id)] \
+                                 for obs_id in obs_ids_this_sf])
+                noise_this_sf = \
+                    numpy.array([all_noise_calculated[sub_field][str(obs_id)] \
+                                 for obs_id in obs_ids_this_sf])
+                
+                ok_indices   = numpy.where(operations_this_sf!=0.0)[0]
+                ok_obs_ids   = numpy.asarray(obs_ids_this_sf)[ok_indices][-50:]
+                ok_noises    = numpy.asarray(noise_this_sf)[ok_indices][-50:]
+                ok_noises   /= core.G3Units.uK * core.G3Units.arcmin
+                dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
+            else:
+                l_ids = []
+                r_ids = []
+                for obs_id in frame["CoaddedObservationIDs"][sub_field]:
+                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
+                        r_ids.append(obs_id)
+                    else:
+                        l_ids.append(obs_id)
+                ok_obs_ids = []
+                for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                    ok_obs_ids.append(l_ids[i])
+                    ok_obs_ids.append(r_ids[i])
+                ok_noises = []
+                for obs_id in ok_obs_ids:
+                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
+                        noise  = frame["NoiseFromCoaddedMaps"][sub_field][str(obs_id)]
+                        noise /= core.G3Units.uK * core.G3Units.arcmin
+                        ok_noises.append(noise)
+                    else:
+                        ok_noises.append(numpy.nan)
+                ok_obs_ids = ok_obs_ids[-50:]
+                ok_noises  = ok_noises[-50:]
+                dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
             
             color = self.cl_dict[sub_field]
             
@@ -1077,13 +1120,31 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     def make_figure_for_order_of_addition(self, frame):
         
         noise_key = "NoiseFromCoaddedMaps"
+        
         if noise_key not in frame.keys():
             return
+        if "NoiseCalculationsOperationsDoneToMaps" in frame.keys():
+            easy_stuff = True
+        else:
+            easy_stuff = False
         
         all_obs_ids_used = frame["CoaddedObservationIDs"]
         
         for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
             figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            if not easy_stuff:
+                l_ids = []
+                r_ids = []
+                for obs_id in obs_ids_this_sf:
+                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
+                        r_ids.append(obs_id)
+                    else:
+                        l_ids.append(obs_id)
+                obs_ids_this_sf = []
+                for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                    obs_ids_this_sf.append(l_ids[i])
+                    obs_ids_this_sf.append(r_ids[i])
             
             plot_obj.plot(obs_ids_this_sf,
                           linestyle="None",
