@@ -593,14 +593,10 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.scatter(x_value, ytop, color=color, marker=6)
                 plot_obj.axvline(x_value, color=color,
                                  linewidth=note_lw, linestyle=note_st)
-                """plot_obj.text(x_value, near_ytop, "O\nu\nt\nl\ni\ne\nr",
-                                 color=color, fontsize=note_fs)"""
             elif y_value <= ybot:
                 plot_obj.scatter(x_value, ybot, color=color, marker=7)
                 plot_obj.axvline(x_value, color=color,
                                  linewidth=note_lw, linestyle=note_st)
-                """plot_obj.text(x_value, near_ybot, "O\nu\nt\nl\ni\ne\nr",
-                                 color=color, fontsize=note_fs)"""
                               
     
     def get_full_fig_title(self, additional_title):
@@ -1286,7 +1282,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                     
                     self.indicate_out_of_range_values(
                         plot_obj, obs_ids, offsets, ylims_dict,
-                        self.cl_dict[sub_field])
+                        srccl_dict[source_rank])
                 
                 plot_obj.plot(
                     obs_ids, avgs, label="Avg. offsets",
