@@ -1302,7 +1302,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 for source_rank, offsets in all_offsets.items():
                     avg = numpy.nanmean(offsets)
                     plot_obj.text(0.98, text_tr-counter*separat,
-                                  "Src. {} - avg.: {:04.1f}".format(source_rank, avg),
+                                  "Src. {} - avg.: {:+05.1f}".format(source_rank, avg),
                                   transform=plot_obj.transAxes,
                                   horizontalalignment="right",
                                   verticalalignment="top",
@@ -1321,7 +1321,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 avg_avgs = numpy.nanmean(avgs)
                 std_avgs = numpy.nanstd(avgs)
                 plot_obj.text(0.98, text_tr-8*separat,
-                              "Avg. - avg.: {:04.1f}".format(avg_avgs),
+                              "Avg. - avg.: {:+05.1f}".format(avg_avgs),
                               transform=plot_obj.transAxes,
                               horizontalalignment="right",
                               verticalalignment="top",
