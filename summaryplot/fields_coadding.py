@@ -2037,7 +2037,7 @@ def cut_map_based_on_mean_weight(mean_wt, band, sub_field):
     wu = 1 / (core.G3Units.mK * core.G3Units.mK)
     
     thresholds = {"90GHz" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  65.0*wu},
-                             "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  70.0*wu},
+                             "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  80.0*wu},
                              "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  80.0*wu},
                              "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  95.0*wu}},
                   "150GHz": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 120.0*wu},
