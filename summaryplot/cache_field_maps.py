@@ -599,8 +599,8 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                         coadd_args['calculate_map_rms_and_weight_stat'] = False
                         coadd_args['calculate_noise_from_coadded_maps'] = True
                         coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
-                        coadd_args = gather_bad_obs_ids_from_list(
-                                         bad_map_list_file, map_id, sub_field, coadd_args)
+                        """coadd_args = gather_bad_obs_ids_from_list(
+                                         bad_map_list_file, map_id, sub_field, coadd_args)"""
                         rval = generate_new_coadded_maps(
                                    fields_coadding.run, coadd_args,
                                    logger, log_file, just_see_commands, False)
