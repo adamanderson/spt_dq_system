@@ -918,7 +918,7 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                     noise_levels = numpy.asarray(noise_levels)[valid_indices]
                 else:
                     if sub_field in frame["IgnoredObservationIDs"].keys():
-                        n_bad_obs = frame["IgnoredObservationIDs"][sub_field]
+                        n_bad_obs = len(frame["IgnoredObservationIDs"][sub_field])
                     else:
                         n_bad_obs = 0
                     n_excluded[sub_field] = n_bad_obs
