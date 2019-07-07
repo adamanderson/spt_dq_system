@@ -2060,13 +2060,15 @@ def cut_map_based_on_mean_weight(mean_wt, band, sub_field):
 
 class CutBadMapsAndAppendDirectionsToMapIDs(object):
     
-    def __init__(self, map_id, t_only, logging_function):
+    def __init__(self, map_id, t_only, bad_map_list_file, logging_function):
         
         self.t_only = t_only
         self.sb_fld = None
+        self.obs_id = None
         self.map_id = map_id.replace("Left", "")
         self.n_mp_l = 0
         self.n_mp_r = 0
+        self.x_list = bad_map_list_file
         self.logfun = logging_function
     
     def __call__(self, frame):
@@ -2080,6 +2082,7 @@ class CutBadMapsAndAppendDirectionsToMapIDs(object):
         
         if frame.type == core.G3FrameType.Observation:
             self.sb_fld = frame["SourceName"]
+            self.obs_id = frame["ObservationID"]
         
         if (frame.type == core.G3FrameType.Map) and \
            (frame["Id"] in ["90GHz", "150GHz", "220GHz"]):
@@ -2092,7 +2095,11 @@ class CutBadMapsAndAppendDirectionsToMapIDs(object):
             mean_wt = flc_dct["MeansOfWeights"]
             map_is_bad = cut_map_based_on_mean_weight(
                              mean_wt, frame["Id"], self.sb_fld)
-                        
+            if map_is_bad:
+                record_bad_obs_id(self.x_list,
+                                  frame["Id"], self.sb_fld, self.obs_id,
+                                  "Anomalously large weights.")
+            
             old_id = frame.pop("Id")
             if map_is_bad:
                 self.logfun("* ... the map looks bad!")
@@ -2347,6 +2354,7 @@ def run(input_files=[], output_file='./coadded_maps.g3', map_ids=["90GHz"],
         pipeline.Add(CutBadMapsAndAppendDirectionsToMapIDs,
                      map_id=map_ids[0],
                      t_only=temperature_maps_only,
+                     bad_map_list_file=bad_map_list_file,
                      logging_function=log)
     
     pipeline.Add(lambda frame: log(frame))
