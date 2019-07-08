@@ -934,6 +934,17 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 color=color, alpha=0.5)
             
             if noise_from_running_coadds:
+                curr_nois = noise_levels[-1]
+                ylocs_dict  = {"ra0hdec-44.75": 0.45,
+                               "ra0hdec-52.25": 0.40,
+                               "ra0hdec-59.75": 0.35,
+                               "ra0hdec-67.25": 0.30}
+                plot_obj.text(0.03, ylocs_dict[sub_field],
+                              "Year-to-date noise: {:04.1f}".format(curr_nois),
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="left",
+                              color=color, fontsize=self.ttl_fs-4)
+                
                 x_for_lls = numpy.log(numpy.asarray(x_data))
                 y_for_lls = numpy.log(numpy.asarray(noise_levels))
                 design_matrix = numpy.asarray(x_for_lls)\
@@ -951,7 +962,8 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                                "ra0hdec-52.25": 0.14,
                                "ra0hdec-59.75": 0.09,
                                "ra0hdec-67.25": 0.04}
-                plot_obj.text(0.03, ylocs_dict[sub_field], explanation,
+                plot_obj.text(0.03, ylocs_dict[sub_field],
+                              explanation,
                               transform=plot_obj.transAxes,
                               horizontalalignment="left",
                               color=color, fontsize=self.ttl_fs-4)
