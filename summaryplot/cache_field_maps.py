@@ -1,39 +1,52 @@
-# ******* Always need to import modules! ******* #
+# ==============================================================================
+#  This script is intended to be called by spt_dq_system/update_summary.py.
+#  
+#  When update_summary.py calls this script, the former specifies
+#  whether we want to process individual maps and then co-add them or
+#  we want to make figures showing maps and their related quantities,
+#  what time intervals we are interested in using maps from, and so on.
+#  
+#  Then, Based on the specifications, this script in turn calls another script,
+#  which is either fields_coadding.py or fields_plotting.py,
+#  with approprite arguments.
+#  
+# ==============================================================================
 
-import os
-import sys
-import shutil
-import json
+
 import argparse
 import datetime
+import os
+import glob
+import shutil
+import json
+import sys
 import logging
-
 import matplotlib
 matplotlib.use("Agg")
 import numpy
 
-from glob  import glob
 from spt3g import core
 from spt3g import std_processing
-
 from summaryplot import fields_coadding
 from summaryplot import fields_plotting
 
 
 
 # ==============================================================================
-# Define a function that calls the map coadding and plotting scripts
+# Define the function that calls the map coadding and plotting scripts
 # with appropriate arguments
 # ------------------------------------------------------------------------------
 
 
-def update(mode, action, oldest_time_to_consider=None, current_time=None,
-           time_interval=None, last_how_many_days=0, original_maps_dir='.',
-           coadds_dir='.', figs_dir='.',
-           map_ids=["90GHz", "150GHz", "220GHz"],
-           sub_fields=["ra0hdec-44.75", "ra0hdec-52.25",
-                       "ra0hdec-59.75", "ra0hdec-67.25"],
-           just_see_commands=False, logger_name='', log_file=None):
+def update(mode, action,
+           oldest_time_to_consider=None, current_time=None,
+           time_interval=None, last_how_many_days=0,
+           original_maps_dir='.', coadds_dir='.', figs_dir='.',
+           map_ids=['90GHz', '150GHz', '220GHz'],
+           sub_fields=['ra0hdec-44.75', 'ra0hdec-52.25',
+                       'ra0hdec-59.75', 'ra0hdec-67.25'],
+           logger_name='', log_file=None,
+           just_see_commands=False):
     
     # - Define global variables
     
@@ -42,7 +55,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     log_format = logging.Formatter('%(message)s')
-        
+    
     if log_file is None:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
@@ -55,85 +68,82 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         logger.addHandler(file_handler)
     
     log = logger.info
-
+    
     log("")
     log("# --------------------------------------------- #")
     log("#  The script cache_field_maps.py was invoked!  #")
     log("# --------------------------------------------- #")
     log("")
     
-    
-    # -- Other variables.
+    # -- Variables related to other things
     
     if current_time is None:
         current_time = datetime.datetime.utcnow()
     else:
-        current_time = datetime.datetime.strptime(
-                           current_time, "20%y%m%d")
+        current_time = datetime.datetime.strptime(current_time, '20%y%m%d')
         current_time = current_time.replace(hour=23, minute=59, second=59)
-    beginning_of_the_record = \
-        datetime.datetime.strptime(oldest_time_to_consider, "20%y%m%d")
-
-    desired_obs_id_ranges   = []
-    desired_time_ranges     = []
-    desired_dir_names       = []
-
-    script_coadding_maps = "summaryplot/fields_coadding.py"
-    script_plotting_data = "summaryplot/fields_plotting.py"
-    point_source_file    = "spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt"
-    bad_map_list_file    = "summaryplot/fields_bad_map_list.txt"
-
-    if original_maps_dir[-1] != "/":
-        original_maps_dir += "/"
-    if coadds_dir[-1] != "/":
-        coadds_dir += "/"
-    if figs_dir[-1] != "/":
-        figs_dir += "/"
     
+    beginning_of_the_record = \
+        datetime.datetime.strptime(oldest_time_to_consider, '20%y%m%d')
+    
+    desired_obs_id_ranges = []
+    desired_time_ranges   = []
+    desired_dir_names     = []
+    
+    script_coadding_maps = 'summaryplot/fields_coadding.py'
+    script_plotting_data = 'summaryplot/fields_plotting.py'
+    point_source_list    = 'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
+    bad_map_list         = 'summaryplot/fields_bad_map_list.txt'
     
     
     # - Figure out what appropriate time intervals are and
-    #   make sure an appropriate directory structure exists.
+    #   make sure an appropriate directory structure exists
     
     # -- Figure out appropriate time intervals
     
     def convert_to_obs_id(datetime_object):
+        
         return std_processing.time_to_obsid(
                    datetime_object.strftime("20%y%m%d_%H%M%S"))
-
+    
+    
     if time_interval == "last_n":
-
-        delta_t      = datetime.timedelta(days=-1*last_how_many_days)
-        end_time     = current_time
-        start_time   = current_time + delta_t
+        delta_t    = datetime.timedelta(days=-1*last_how_many_days)
+        end_time   = current_time
+        start_time = current_time + delta_t
         if start_time < beginning_of_the_record:
             start_time = beginning_of_the_record
-        """start_time   = start_time.replace(hour=0, minute=0,
-                                          second=0, microsecond=0)"""
+        
         end_obs_id   = convert_to_obs_id(end_time)
         start_obs_id = convert_to_obs_id(start_time)
-
+        
         desired_obs_id_ranges.append((start_obs_id, end_obs_id))
         desired_time_ranges.append((start_time, end_time))
-
-    else:
+    
+    else:        
         def get_the_beginning_of_the_interval(interval, end_time):
+            
             if interval == "yearly":
-                return end_time.replace(month=1, day=1, hour=0,
+                start_of_interval = end_time.replace(
+                                        month=1, day=1, hour=0,
                                         minute=0, second=0, microsecond=0)
-            elif interval == "monthly":
-                return end_time.replace(day=1, hour=0,
+            if interval == "monthly":
+                start_of_interval = end_time.replace(
+                                        day=1, hour=0,
                                         minute=0, second=0, microsecond=0)
-            elif interval == "weekly":
-                current_weekday = end_time.weekday()
-                delta_t         = datetime.timedelta(days=-1*current_weekday)
-                return (end_time + delta_t).replace(hour=0, minute=0,
-                                                    second=0, microsecond=0)
-
+            if interval == "weekly":
+                current_weekday   = end_time.weekday()
+                delta_t           = datetime.timedelta(days=-1*current_weekday)
+                start_of_interval = (end_time + delta_t).replace(
+                                        hour=0,
+                                        minute=0, second=0, microsecond=0)
+            return start_of_interval
+        
+        
         if mode == "plotting":
             if time_interval == "yearly":
-                end_time_at_start_of_loop = current_time.replace(microsecond=0)
-            elif time_interval == "monthly":
+                end_time_at_start_of_loop = current_time
+            if time_interval == "monthly":
                 beginning_of_next_month = \
                     current_time.replace(
                         month=current_time.month+1, day=1,
@@ -141,56 +151,54 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 end_of_this_month = \
                     beginning_of_next_month + \
                     datetime.timedelta(seconds=-1)
-                end_time_at_start_of_loop = \
-                    end_of_this_month
-            elif time_interval == "weekly":
-                end_day_of_this_week = \
+                end_time_at_start_of_loop = end_of_this_month
+            if time_interval == "weekly":
+                end_of_this_week = \
                     current_time + \
                     datetime.timedelta(days=(6-current_time.weekday()))
-                end_time_this_week = \
-                    end_day_of_this_week.replace(
+                end_of_this_week = \
+                    end_of_this_week.replace(
                         hour=23, minute=59, second=59, microsecond=0)
-                end_time_at_start_of_loop = \
-                    end_time_this_week
-        elif mode == "coadding":
+                end_time_at_start_of_loop = end_of_this_week
+        if mode == "coadding":
             end_time_at_start_of_loop = current_time
-
+        
         while end_time_at_start_of_loop > beginning_of_the_record:
             beginning_of_the_interval = \
-                get_the_beginning_of_the_interval(time_interval,
-                                                  end_time_at_start_of_loop)
+                get_the_beginning_of_the_interval(
+                    time_interval, end_time_at_start_of_loop)
             if (mode == "coadding") and \
                (beginning_of_the_interval < beginning_of_the_record):
-                start_obs_id_of_the_interval = \
-                    convert_to_obs_id(beginning_of_the_record)
+                time_to_use_as_start = beginning_of_the_record
             else:
-                start_obs_id_of_the_interval = \
-                    convert_to_obs_id(beginning_of_the_interval)
+                time_to_use_as_start = beginning_of_the_interval
+            
+            start_obs_id_of_the_interval = \
+                convert_to_obs_id(time_to_use_as_start)
             end_obs_id_of_the_interval = \
                 convert_to_obs_id(end_time_at_start_of_loop)
-
-            desired_obs_id_ranges.append((start_obs_id_of_the_interval,
-                                          end_obs_id_of_the_interval))
-            desired_time_ranges.append((beginning_of_the_interval,
-                                        end_time_at_start_of_loop))
-
-            end_time_at_start_of_loop = beginning_of_the_interval + \
-                                            datetime.timedelta(seconds=-1)
-
-
+            
+            desired_obs_id_ranges.append(
+                (start_obs_id_of_the_interval, end_obs_id_of_the_interval))
+            desired_time_ranges.append(
+                (beginning_of_the_interval, end_time_at_start_of_loop))
+            
+            end_time_at_start_of_loop = \
+                beginning_of_the_interval + datetime.timedelta(seconds=-1)
+    
     # -- Check the input and output directory structure
     
     log("")
-    log("-------------------------------------------------")
-    log(" Making sure the directory structure is valid... ")
-    log("-------------------------------------------------")
+    log("--------------------------------------------------")
+    log(" Making sure the directory structure is valid ... ")
+    log("--------------------------------------------------")
     log("")
     
-    log("* Checking whether relevant directories exist or not.")
-    log("  If not, they will be created.")
-    
+    log("* Checking whether relevant directories exist or not ...")
+    log("  (If not, they will be created.)")
     
     def convert_time_intervals_to_dir_names(interval_type, datetime_obj):
+        
         if interval_type == "weekly":
             str_fmt = "20%y%m%d"
         elif interval_type == "monthly":
@@ -198,32 +206,26 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         elif interval_type == "yearly":
             str_fmt = "20%y"
         return datetime_obj.strftime(str_fmt)
-
-
+    
+    
     for root_directory in [coadds_dir, figs_dir]:
         if time_interval not in os.listdir(root_directory):
-            os.mkdir(root_directory+time_interval)
-
+            os.mkdir(os.path.join(root_directory, time_interval))
         for time_range in desired_time_ranges:
             if time_interval == "last_n":
-                subdir_name = time_interval[:-1] + \
-                              str(last_how_many_days) + "/"
+                sub_dir = time_interval.replace("n", str(last_how_many_days))
             else:
-                subdir_name = convert_time_intervals_to_dir_names(
-                                  time_interval, time_range[0]) + "/"
-            fulldir_name = root_directory + \
-                           time_interval + "/" + \
-                           subdir_name
-            desired_dir_names.append(fulldir_name)
-
-
+                sub_dir = convert_time_intervals_to_dir_names(
+                              time_interval, time_range[0])
+            full_path = os.path.join(root_directory, time_interval, sub_dir)
+            desired_dir_names.append(full_path)
+    
     for dir_name in desired_dir_names:
         if not os.path.isdir(dir_name):
             os.mkdir(dir_name)
-
+    
     log("")
     
-
     
     # - Call the relevant functions with appropriate arguments
     
@@ -240,55 +242,54 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
     log(" Relevant obs_id range(s) to take actions on: ")
     log("----------------------------------------------")
     log("")
-    for counter, interval in enumerate(desired_obs_id_ranges, 0):
-        log("Interval %s :", counter+1)
+    for counter, interval in enumerate(desired_obs_id_ranges, 1):
+        log("Interval %s :", counter)
         log("  from %s ("+\
-            str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")"+\
-            "("+str(desired_time_ranges[counter][0])+")", interval[0])
+            str(std_processing.obsid_to_g3time(interval[0])).split(".")[0]+")",
+            interval[0])
         log("  to   %s ("+\
-            str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")"+\
-            "("+str(desired_time_ranges[counter][1])+")", interval[1])
+            str(std_processing.obsid_to_g3time(interval[1])).split(".")[0]+")",
+            interval[1])
     log("")
-
+    
     log("")
-    log("--------------------------")
-    log("Relevant commands to run: ")
-    log("--------------------------")
+    log("---------------------------")
+    log(" Relevant commands to run: ")
+    log("---------------------------")
     log("")
-
+    
     
     # -- First, define some functions
-
+    
     def decide_what_ids_to_use_and_not(
             existing_ids, desired_id_range, file_name):
-
+        
         if len(existing_ids) == 0:
             raise RuntimeError("It appears that coadded maps stored in "
                                + file_name + "are empty. Probably something "
                                "went wrong last time!")
-
+        
         max_eid = numpy.max(existing_ids)
         min_eid = numpy.min(existing_ids)
         max_gid = desired_id_range[1]  # gid = good ids!
         min_gid = desired_id_range[0]
-
-        if max_eid < min_gid:
+        
+        if max_eid<min_gid:
             ignore_coadds  = True
             ids_to_exclude = []
             subtract_maps  = False
             id_lower_bound = min_gid
             id_upper_bound = max_gid
-
+        
         elif (min_eid<min_gid) and (max_eid>min_gid) and (max_eid<max_gid):
             ignore_coadds  = False
             ids_to_exclude = \
-                [obs_id for obs_id in existing_ids \
-                 if obs_id >= min_gid]
+                [obs_id for obs_id in existing_ids if obs_id >= min_gid]
             subtract_maps  = True
             id_lower_bound = min_eid
             id_upper_bound = max_gid
-
-        elif (min_eid < min_gid) and (max_eid > max_gid):
+        
+        elif (min_eid<min_gid) and (max_eid>max_gid):
             ignore_coadds  = False
             ids_to_exclude = \
                 [obs_id for obs_id in existing_ids \
@@ -296,43 +297,43 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             subtract_maps  = True
             id_lower_bound = min_eid
             id_upper_bound = max_eid
-
-        elif (min_eid >= min_gid) and (max_eid <= max_gid):
+        
+        elif (min_eid>=min_gid) and (max_eid<=max_gid):
             ignore_coadds  = False
             ids_to_exclude = existing_ids
             subtract_maps  = False
             id_lower_bound = min_gid
             id_upper_bound = max_gid
-
+        
         elif (min_eid>=min_gid) and (min_eid<max_gid) and (max_eid>max_gid):
             ignore_coadds  = False
             ids_to_exclude = \
-                [obs_id for obs_id in existing_ids \
-                 if obs_id <= max_gid]
+                [obs_id for obs_id in existing_ids if obs_id <= max_gid]
             subtract_maps  = True
             id_lower_bound = min_gid
             id_upper_bound = max_eid
-
-        elif min_eid > max_gid:
+        
+        elif min_eid>max_gid:
             ignore_coadds  = True
             ids_to_exclude = []
             subtract_maps  = False
             id_lower_bound = min_gid
             id_upper_bound = max_gid
-
+        
         else:
-            raise RuntimeError("There seems to be a forgotten scenario!")
-
+            raise RuntimeError("There seems to be a forgotten scenario about "
+                               "the relation between existing observation IDs "
+                               "and desired ones to use!")
+        
         return ignore_coadds,  subtract_maps, \
                ids_to_exclude, int(id_lower_bound), int(id_upper_bound)
     
     
     
-    def gather_bad_obs_ids_from_list(
-        text_file, map_id_to_compare, sub_field_to_compare, dict_to_record):
-    
-        ids_to_exclude = []
+    def get_bad_obs_ids_from_the_list(
+            text_file, map_id_to_compare, sub_field_to_compare, old_bad_ids):
         
+        ids_to_exclude = []
         try:
             map_ids, sub_fields, obs_ids = \
                 numpy.loadtxt(text_file, dtype=str, delimiter="|",
@@ -341,6 +342,7 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             map_ids    = []
             sub_fields = []
             obs_ids    = []
+        
         for index, map_id in enumerate(map_ids):
             map_id = map_id.replace(" ", "")
             if map_id == map_id_to_compare:
@@ -348,34 +350,30 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
                 if sub_field == sub_field_to_compare:
                     ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
         
-        dict_to_record["bad_obs_ids"] = \
-            ids_to_exclude + dict_to_record.get("bad_obs_ids", [])
+        rd = {'bad_obs_ids': old_bad_ids + ids_to_exclude}
         
-        return dict_to_record
+        return rd
     
     
     
-    def figure_out_arguments_to_use_for_coadding(
-            map_id, sub_field, time_range_id, n_iter=1):
+    def figure_out_io_arguments_for_coadding(
+            map_id, sub_field, rg_idx, n_iter=1):
         
         arguments = {}
         
-        g3_files_for_individual_observations = \
-            sorted(glob(os.path.join(original_maps_dir,
-                                     sub_field,
-                                     '*{}_tonly.g3.gz'.format(map_id))))
-        if sub_field == '*':
-            g3_file_for_coadded_maps = \
-                os.path.join(desired_dir_names[time_range_id],
-                             'coadded_maps_{}.g3.gz'.format(map_id))
-        else:
-            g3_file_for_coadded_maps = \
-                os.path.join(desired_dir_names[time_range_id],
-                             'coadded_maps_from_{}_{}.g3.gz'.format(sub_field,
-                                                                 map_id))
-        
-        arguments['output_file'] = '{}.g4.gz'.format(g3_file_for_coadded_maps[:-6])
         arguments['map_ids'] = [map_id]
+        arguments['sources'] = [sub_field]
+        arguments['temperature_maps_only'] = True
+        
+        g3_files_for_individual_observations = \
+            sorted(glob.glob(os.path.join(original_maps_dir, sub_field,
+                             '*{}_tonly.g3.gz'.format(map_id))))
+        g3_file_for_coadded_maps = \
+            os.path.join(desired_dir_names[rg_idx],
+                         'coadded_maps_from_{}_{}.g3.gz'.\
+                         format(sub_field, map_id))
+        
+        arguments['output_file'] = g3_file_for_coadded_maps.replace('g3', 'g4')
         
         if (action == 'update') and \
            (os.path.isfile(g3_file_for_coadded_maps)):
@@ -384,59 +382,58 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             
             for iteration_time in range(n_iter):
                 frame = iterator.next()
-                for sub_field, obs_ids \
-                in  frame["CoaddedObservationIDs"].items():
-                    for obs_id in obs_ids:
-                        if obs_id not in existing_ids:
-                            existing_ids.append(obs_id)
+                for sf, oids in frame["CoaddedObservationIDs"].items():
+                    for oid in oids:
+                        if oid not in existing_ids:
+                            existing_ids.append(oid)
             
             ignore_coadds,  subtract_maps, \
             ids_to_exclude, id_lower_bound, id_upper_bound = \
                 decide_what_ids_to_use_and_not(
-                    existing_ids,
-                    desired_obs_id_ranges[time_range_id],
-                    g3_file_for_coadded_maps)
+                    existing_ids, desired_id_range, g3_file_for_coadded_maps)
             
             if ignore_coadds:
                 arguments['input_files'] = g3_files_for_individual_observations
             else:
                 arguments['input_files'] = [g3_file_for_coadded_maps] + \
                                            g3_files_for_individual_observations
-            
+            if subtract_maps:
+                arguments['subtract_existing_maps'] = True
+            else:
+                arguments['subtract_existing_maps'] = False
             arguments['min_obs_id']  = id_lower_bound
             arguments['max_obs_id']  = id_upper_bound
             arguments['bad_obs_ids'] = ids_to_exclude
-            
-            if subtract_maps:
-                arguments['subtract_existing_maps'] = True
-                
+        
         else:
             arguments['input_files'] = g3_files_for_individual_observations
-            arguments['min_obs_id'] = desired_obs_id_ranges[i][0]
-            arguments['max_obs_id'] = desired_obs_id_ranges[i][1]
-                    
-        arguments['temperature_maps_only'] = True
-        arguments['calculate_map_rms_and_weight_stat'] = True
-        arguments['point_source_file'] = point_source_file
-        arguments['bad_map_list_file'] = bad_map_list_file
-        arguments['log_file'] = log_file
+            arguments['min_obs_id']  = desired_obs_id_ranges[rg_idx][0]
+            arguments['max_obs_id']  = desired_obs_id_ranges[rg_idx][1]
+        
+        arguments['point_source_list'] = point_source_list
+        arguments['bad_map_list']      = bad_map_list
+        arguments['log_file']    = log_file
+        arguments['logger_name'] = \
+            '{}_{}_{}'.format(
+            sub_logger_name, map_id, sub_field.replace('.', ''))
         
         return arguments
-
     
     
-    def run_command(function, arguments, logger, log_file, just_see_args):
+    
+    def run_coadding_or_plotting_function(
+            function, arguments, logger, log_file, just_see_args):
         
-        log('Calling the main function ...')
+        log('Calling the function ...')
         log('Here are the arguments to be supplied:')
         arguments_to_show = {k: v for k, v in arguments.items()}
         for key in ['input_files', 'bad_obs_ids']:
             if key in arguments_to_show.keys():
-                if len(arguments_to_show[key]) > 5:
+                if len(arguments_to_show[key]) > 10:
                     arguments_to_show.pop(key)
         log(json.dumps(arguments_to_show, indent=1))
         log('')
-
+        
         if not just_see_args:
             if log_file is None:
                 rval = function(**arguments)
@@ -454,17 +451,18 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
         log('')
         
         return rval
-        
     
     
-    def generate_new_coadded_maps(
-            function, arguments, logger, log_file,
-            just_see_commands, back_up_good_coadds):
+    
+    def analyze_and_coadd_maps(
+            function, arguments, logger, log_file, just_see_commands):
         
         output_file_temp = arguments['output_file']
-        output_file_perm = '{}.g3.gz'.format(output_file_temp[:-6])
+        output_file_perm = output_file_temp.replace('g4', 'g3')
         
-        rval = run_command(function, arguments, logger, log_file, just_see_commands)
+        rval = run_coadding_or_plotting_function(
+                   function, arguments,
+                   logger, log_file, just_see_commands)
         
         log('Changing the name of the temporary output file ...')
         if os.path.isfile(output_file_temp):
@@ -477,204 +475,159 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
             log('Actually, %s does not exist.', output_file_temp)
         log('')
         
-        if back_up_good_coadds and os.path.isfile(output_file_perm):
-            make_backup = "yes"
-            backup      = '{}_backup.g3'.format(output_file_perm[:-3])
-            iterator    = core.G3File(output_file_perm)
-            new_frame   = iterator.next()
-            obs_info    = new_frame["CoaddedObservationIDs"]
-            noise_info  = new_frame["NoiseFromCoaddedMaps"]
-            map_id      = new_frame["Id"]
-            all_bad_ids = {}
-            for sub_field, obs_ids in obs_info.items():
-                n_over_time = \
-                    numpy.array([noise_info[sub_field][str(obs_id)] \
-                                 for obs_id in obs_ids])
-                if not numpy.isfinite(n_over_time[-1]):
-                    make_backup = "unsure"
-                    break
-                else:
-                    valid_indices = numpy.where(numpy.isfinite(n_over_time))[0]
-                    valid_data    = n_over_time[valid_indices]
-                    if valid_data[-1] > valid_data[-2]:
-                        bad_obs_ids = obs_ids[int(valid_indices[-2])+1:]
-                        for boid in bad_obs_ids:
-                            all_bad_ids[boid] = sub_field
-                        make_backup = "no"
-                        break
-            
-            if make_backup == "unsure":
-                pass
-            elif make_backup == "yes":
-                log('Creating a backup for %s ...', output_file_perm)
-                log('(b/c the data seem fine and may be useful in the future)')
-                log('  (Original file: %s' , output_file_perm)
-                log('   Backup file  : %s)', backup)
-                if not just_see_commands:
-                    shutil.copy(output_file_perm, backup)
-                log('Done.')
-                log('')
-            else:
-                log('The output file seems to contain problematic data')
-                log('(noise in the running noise map '
-                    'does not decrease monotonically).')
-                log('The possibly bad observations are being recorded ...')
-                for obs_id, sub_field in all_bad_ids.items():
-                    fields_coadding.record_bad_obs_id(
-                        bad_map_list_file, map_id, sub_field, obs_id, "Noisy")
-                log('Done.')
-                log('')
-                
-                if os.path.isfile(backup):
-                    log('Since fortunately a backup file exists,')
-                    log('the ouput file will be replaced with this one,')
-                    log('and coadding will be redone without the')
-                    log('bad observations.')
-                    log('Replacing the file ...')
-                    if not just_see_commands:
-                        os.remove(output_file_perm)
-                        shutil.copy(backup, output_file_perm)
-                else:
-                    log('Since unfortunately there is no backup file,')
-                    log('the output file will just be deleted,')
-                    log('and the coadding will be redone,')
-                    log('but without the bad observations.')
-                    log('Deleting the file ...')
-                    if not just_see_commands:
-                        os.remove(output_file_perm)
-                log('Done.')
-                log('')
-        
         return rval
     
     
-    # -- Then, execute commands by utilizing those functions
+    # -- Then, call main functions by utilizing those functions
     
     n_time_ranges = len(desired_obs_id_ranges)
-    
     for i in range(n_time_ranges):
         
-        n_cmd_set = "{:03}".format(i+1)
-
-        log("# Command set %s to run:", n_cmd_set)
+        log("# Command set %s to run:", "{:03}".format(i+1))
         log("# ---------------------------")
         log("")
         
-        sub_logger_name = '{}_{}_{}'.format(mode, time_interval, desired_dir_names[i].split('/')[-2])
+        sub_logger_name = \
+            '{}_{}_{}'.format(
+            mode, time_interval, desired_dir_names[i].split('/')[-1])
         
-        if mode == "coadding":
-            if time_interval != "yearly":
-                for map_id in map_ids:
-                    log('--- %s ---', map_id)
-                    log('')
+        
+        if mode == 'coadding':
+            
+            for map_id in map_ids:
+                rvals_sum = 0
+                
+                anal_yearly_args = \
+                    {'map_ids': ['Left'+map_id, 'Right'+map_id],
+                     'trick_pipeline_to_receive_left_right_maps': True,
+                     'maps_split_by_scan_direction'             : True,
+                     'calculate_map_rmss_and_weight_stats'      : True,
+                     'rmss_and_wgts_from_coadds_or_individuals' : ['c'],
+                     'rmss_and_wgts_from_signals_or_noises'     : ['sn'],
+                     'calculate_noise_from_coadded_maps'        : True}
+                
+                anal_non_yr_args = \
+                    {'calculate_map_rmss_and_weight_stats'      : True,
+                     'rmss_and_wgts_from_coadds_or_individuals' : ['i'],
+                     'rmss_and_wgts_from_signals_or_noises'     : ['s'],
+                     'collect_averages_from_flagging_statistics': True,
+                     'calculate_pW_to_K_conversion_factors'     : True,
+                     'calculate_cross_spectra_with_planck_map'  : True,
+                     'calculate_pointing_discrepancies'         : True,
+                     'calculate_noise_from_individual_maps'     : True}
+                
+                for sub_field in sub_fields:
+                    log("--- %s %s ---", map_id, sub_field)
+                    log("")
                     
-                    coadd_args = figure_out_arguments_to_use_for_coadding(map_id, '*', i)
-                    if time_interval == "last_n":
-                        coadd_args['subtract_existing_maps'] = True
+                    n_iter = 2 if time_interval == 'yearly' else 1
+                    args_coadding = \
+                        figure_out_io_arguments_for_coadding(
+                            map_id, sub_field, i, n_iter=n_iter)
+                    
+                    if time_interval != 'last_n':
+                        args_coadding.update({'subtract_existing_maps': False})
+                    
+                    if time_interval == 'yearly':
+                        args_coadding.update(
+                            get_bad_obs_ids_from_the_list(
+                                bad_map_list, map_id, sub_field,
+                                args_coadding.get('bad_obs_ids', [])))
+                    
+                    if time_interval == "yearly":
+                        args_coadding.update(anal_yearly_args)
                     else:
-                        coadd_args['subtract_existing_maps'] = False
-                    coadd_args['collect_averages_from_flagging_statistics'] = True
-                    coadd_args['calculate_pW_to_K_conversion_factors'] = True
-                    coadd_args['calculate_pointing_discrepancies'] = True
-                    coadd_args['calculate_noise_from_individual_maps'] = True
-                    if time_interval == 'monthly':
-                        coadd_args['calculate_cross_spectrum_with_coadded_maps'] = True
-                    coadd_args['logger_name'] = '{}_{}'.format(sub_logger_name, map_id)
-
-                    generate_new_coadded_maps(fields_coadding.run, coadd_args, logger, log_file, just_see_commands, False)
+                        args_coadding.update(anal_non_yr_args)
+                    
+                    rval = analyze_and_coadd_maps(
+                               fields_coadding.run, args_coadding,
+                               logger, log_file, just_see_commands)
+                    rvals_sum += rval
+                    
                     log('\n\n')
-            else:
-                for map_id in map_ids:
-                    rvals_sum = 0
-                    for sub_field in sub_fields:
-                        log('--- %s %s ---', map_id, sub_field)
-                        log('')
-                        
-                        coadd_args = figure_out_arguments_to_use_for_coadding(map_id, sub_field, i, n_iter=2)
-                        coadd_args['map_ids'] = ['Left'+map_id, 'Right'+map_id]
-                        coadd_args['trick_pipeline_into_getting_left_right_maps'] = True
-                        coadd_args['maps_split_by_scan_direction'] = True
-                        coadd_args.pop('subtract_existing_maps', None)
-                        coadd_args['sources'] = [sub_field]
-                        coadd_args['calculate_map_rms_and_weight_stat'] = False
-                        coadd_args['calculate_noise_from_coadded_maps'] = True
-                        coadd_args['logger_name'] = '{}_{}_{}'.format(sub_logger_name, map_id, sub_field.replace('.', ''))
-                        """coadd_args = gather_bad_obs_ids_from_list(
-                                         bad_map_list_file, map_id, sub_field, coadd_args)"""
-                        rval = generate_new_coadded_maps(
-                                   fields_coadding.run, coadd_args,
-                                   logger, log_file, just_see_commands, False)
-                        rvals_sum += rval
-                        log('\n\n')
-                    
-                    log('--- %s Full field ---', map_id)
-                    log('')
-                    
-                    if rvals_sum == 0:
-                        log('There was no update to any of the sub-field, ')
-                        log('so, there is no need to combine the four g3 files again!')
-                        log('\n\n')
-                        return
-                    
-                    coadd_all_fields_args = {}
-                    coadd_all_fields_args['input_files'] = \
-                        [os.path.join(desired_dir_names[i],
-                                      'coadded_maps_from_{}_{}.g3.gz'.format(sf, map_id)) for sf in sub_fields]
-                    coadd_all_fields_args['output_file'] = \
-                        os.path.join(desired_dir_names[i],
-                                     'coadded_maps_{}.g3.gz'.format(map_id))
-                    coadd_all_fields_args['map_ids'] = [map_id]
-                    coadd_all_fields_args['temperature_maps_only'] = True
-                    coadd_all_fields_args['maps_split_by_scan_direction'] = True
-                    coadd_all_fields_args['combine_left_right'] = True
-                    coadd_all_fields_args['calculate_map_rms_and_weight_stat'] = False
-                    coadd_all_fields_args['calculate_noise_from_coadded_maps'] = True
-                    coadd_all_fields_args['logger_name'] = '{}_{}_full_field'.format(sub_logger_name, map_id)
-                    coadd_all_fields_args['log_file'] = log_file
-                    
-                    run_command(fields_coadding.run, coadd_all_fields_args, logger, log_file, just_see_commands)
+                
+                log('--- %s Full field ---', map_id)
+                log('')
+                if rvals_sum == 0:
+                    log('There was no update to any of the sub-field,')
+                    log('so, there is no need to combine the 4 g3 files again!')
                     log('\n\n')
-
-        elif mode == 'plotting':    
+                    return
+                
+                args_coadding = \
+                    {'map_ids'    : [map_id],
+                     'input_files': [os.path.join(desired_dir_names[i],
+                                     'coadded_maps_from_{}_{}.g3.gz'.\
+                                      format(sf, map_id)) for sf in sub_fields],
+                     'output_file':  os.path.join(desired_dir_names[i],
+                                     'coadded_maps_{}.g3.gz'.format(map_id)),
+                     'logger_name': '{}_{}_full_field'.\
+                                     format(sub_logger_name, map_id),
+                     'log_file'   : log_file}
+                
+                if time_interval == 'yearly':
+                    args_coadding.update({'maps_split_by_scan_direction': True,
+                                          'combine_left_right'          : True})
+                
+                if time_interval == 'yearly':
+                    args_coadding.update(anal_yearly_args)
+                else:
+                    args_coadding.update(anal_non_yr_args)
+                
+                run_coadding_or_plotting_function(
+                    fields_coadding.run, args_coadding,
+                    logger, log_file, just_see_commands)
+                
+                log('\n\n')
+        
+        
+        elif mode == 'plotting':
+            
             for map_id in map_ids:
                 log('--- %s ---', map_id)
                 log('')
                 
-                plotting_args = {'input_files': [os.path.join(desired_dir_names[i],
-                                                              'coadded_maps_{}.g3.gz'.format(map_id))],
-                                 'directory_to_save_figures': desired_dir_names[i+n_time_ranges],
-                                 'simpler_file_names': True,
-                                 'figure_title_font_size': 18,
-                                 'map_id': map_id,
-                                 'map_type': 'T',
-                                 'coadded_data': True,
-                                 'make_figures_for_field_maps': True,
-                                 'smooth_map_with_gaussian': True,
-                                 'gaussian_fwhm': 1,
-                                 'make_figures_for_entire_weight_maps': True,
-                                 'make_figures_for_weight_maps_cross_section': True,
-                                 'make_figures_for_noise_levels': True,
-                                 'log_file': log_file,
-                                 'logger_name': '{}_{}'.format(sub_logger_name, map_id)}
-
+                args_plotting = \
+                    {'input_files': [os.path.join(desired_dir_names[i],
+                                     'coadded_maps_{}.g3.gz'.format(map_id))],
+                     'dir_to_save_figs': desired_dir_names[i+n_time_ranges],
+                     'simpler_file_names'         : True,
+                     'figure_title_font_size'     : 18,
+                     'map_id'                     : map_id,
+                     'map_type'                   : 'T',
+                     'coadded_data'               : True,
+                     'make_figures_for_field_maps': True,
+                     'smooth_map_with_gaussian'   : True,
+                     'gaussian_fwhm'              : 1,
+                     'make_figures_for_entire_weight_maps'       : True,
+                     'make_figures_for_weight_maps_cross_section': True,
+                     'make_figures_for_noise_levels'             : True,
+                     'logger_name': '{}_{}'.format(sub_logger_name, map_id),
+                     'log_file'   : log_file}
+                
                 if time_interval != 'yearly':
-                    plotting_args['make_figures_for_flagging_statistics'] = True
-                    plotting_args['make_figures_for_calibration_factors'] = True
-                    plotting_args['make_figures_for_fluctuation_metrics'] = True
-                    plotting_args['make_figures_for_pointing_discrepancies'] = True
-                    plotting_args['left_xlimit_for_time_variations'] = desired_obs_id_ranges[i][0]
-                    plotting_args['right_xlimit_for_time_variations'] = desired_obs_id_ranges[i][1]
-                else:
-                    pass
+                    args_plotting.update(
+                        {'make_figures_for_flagging_statistics'   : True,
+                         'make_figures_for_calibration_factors'   : True,
+                         'make_figures_for_cross_spectra_ratios'  : True,
+                         'make_figures_for_fluctuation_metrics'   : True,
+                         'make_figures_for_pointing_discrepancies': True,
+                         'left_xlimit_for_time_variations' : \
+                              desired_obs_id_ranges[i][0],
+                         'right_xlimit_for_time_variations': \
+                              desired_obs_id_ranges[i][1]})
                 
                 if action == 'update':
-                    plotting_args['decide_whether_to_make_figures_at_all'] = True
-
-                run_command(fields_plotting.run, plotting_args, logger, log_file, just_see_commands)
+                    args_plotting.update(
+                        {'decide_whether_to_make_figures_at_all': True})
+                
+                run_coadding_or_plotting_function(
+                    fields_plotting.run, args_plotting,
+                    logger, log_file, just_see_commands)
+                
                 log('\n\n')
         
         log('\n\n\n')
-
 
 # ==============================================================================
 
@@ -689,113 +642,113 @@ def update(mode, action, oldest_time_to_consider=None, current_time=None,
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-                 description="This script can co-add field maps corresponding to "
-                             "different time intervals (a week, a month, etc.) "
-                             "and make figures for the resultant co-added maps.",
+                 description="This script can co-add field maps corresponding "
+                             "to different time intervals (a week, a month, "
+                             "last n days, etc.) and make figures for the "
+                             "resultant co-added maps.",
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                  epilog="Hopefully this works well! (Wei)")
-
+    
     parser.add_argument("-m", "--mode",
                         type=str, action="store",
                         choices=["coadding", "plotting"], default="plotting",
                         help="Two modes are available: coadding and plotting. "
                              "In the former mode, this script will run another "
                              "script that coadds maps. In the latter mode, "
-                             "a different script that makes figures will be run.")
-
+                             "a different script that makes figures for maps "
+                             "and related quantities will be run.")
+    
     parser.add_argument("-a", "--action",
                         type=str, action="store",
                         choices=["rebuild", "update"], default="update",
                         help="For each of the two modes mentioned above, "
                              "two actions are available: update and rebuild. "
                              "In the former case, the script will "
-                             "make co-adds and/or generate figures "
+                             "make co-adds or generate figures "
                              "all over again for all relevant time intervals "
-                             "specified by the argument time-interval below. "
+                             "specified by the argument time_interval below. "
                              "In the latter case, the script will "
-                             "just update the co-adds/figures corresponding to "
-                             "the most recent time interval.")
-
+                             "just update the co-adds/figures for those "
+                             "time intervals that contain new information.")
+    
     parser.add_argument("-o", "--oldest-time-to-consider",
-                        type=str, action="store", default="20190218",
-                        help="The oldest time to consider "
+                        type=str, action="store", default="20190321",
+                        help="The oldest day to consider "
                              "when making coadds/figures. In other words, "
                              "data taken before this date will be ignored. "
                              "The format needs to match that of the default.")
-
+    
     parser.add_argument("-c", "--current-time",
                         type=str, action="store", default=None,
-                        help="The 'current' time when the script it run. "
+                        help="The 'current' time when the script is run. "
                              "Having the ability to arbitrarily define "
                              "a 'current' time may be useful in testing. "
                              "The format of the string needs to match that of "
                              "the default of the previous argument.")
-
+    
     parser.add_argument("-t", "--time-interval",
                         type=str, action="store",
                         choices=["last_n", "weekly", "monthly", "yearly"],
                         default="last_n",
                         help="Time intervals for which co-added maps "
-                             "will be made and/or figures will be generated. "
-                             "last_n refers to the last N days, where N will be "
-                             "specified by the argument last_how_many_days below.")
-
+                             "will be made or figures will be generated. "
+                             "last_n refers to the last N days, "
+                             "where N will be specified by the argument "
+                             "last_how_many_days defined below.")
+    
     parser.add_argument("-n", "--last-how-many-days",
-                        type=int, action="store", default=3,
+                        type=int, action="store", default=1,
                         help="Number that specifies how long the time interval "
                              "last_n mentioned above corresponds to.")
-
+    
     parser.add_argument("-d", "--original-maps-dir",
                         type=str, action="store", default=".",
-                        help="The path to the directory that contains field maps "
-                             "from individual observations. It is expected that "
-                             "this directory contains four directories named "
+                        help="The path to the directory that contains "
+                             "field maps from individual observations. It is "
+                             "expected that this directory contains "
+                             "four directories named "
                              "ra0hdec-44.75, ra0hdec-52.25, "
                              "ra0hdec-59.75, and ra0hdec-67.25, and "
                              "each sub-directory in turn contains g3 files "
-                             "named like 12345678.g3, which stores "
+                             "named like 12345678_abc.g3, which stores "
                              "temperature maps and weight maps.")
-
+    
     parser.add_argument("-D", "--coadds-dir",
                         type=str, action="store", default=".",
                         help="The path to the directory where co-added maps "
-                             "are to be stored. This directory may already/will "
+                             "are to be stored. This directory will in turn "
                              "contain four directories named last_n, weekly, "
-                             "monthly, and yearly. The weekly and monthly ones "
-                             "in turn contain multiple sub-directories "
-                             "corresponding to different weeks and months. "
-                             "Then, in each directory, a g3 file storing co-added "
-                             "temperature maps and weight maps will be saved.")
-
+                             "monthly, and yearly, each of which then contain "
+                             "sub-directories corresponding to different "
+                             "weeks, months, and so on. In each of these, "
+                             "g3 file storing co-added maps and weight maps "
+                             "will be saved.")
+    
     parser.add_argument("-F", "--figs-dir",
                         type=str, action="store", default=".",
-                        help="The path to the directory where figures related to "
-                             "co-added maps are to be stored. This directory "
-                             "may already/will contain four directories named "
-                             "last_n, weekly, monthly, and yearly. "
-                             "The weekly and monthly ones "
-                             "in turn contain multiple sub-directories "
-                             "corresponding to different weeks and months. "
-                             "Then, in each directory, a g3 file storing co-added "
-                             "temperature maps and weight maps will be saved.")
+                        help="The path to the directory where figures related "
+                             "to co-added maps are to be stored. The directory "
+                             "structure is the same as the one used for the "
+                             "coadds-dir.")
     
     parser.add_argument("-i", "--map_ids",
                         type=str, action="store",
                         nargs="+", default=["90GHz", "150GHz", "220GHz"],
-                        help="Relevant map IDs to take actions on. This option is "
-                             "here mainly for debugging purposes.")
+                        help="Relevant map IDs to take actions on. This option "
+                             "is here mainly for debugging purposes.")
     
     parser.add_argument("-f", "--sub_fields",
                         type=str, action="store",
                         nargs="+", default=["ra0hdec-44.75", "ra0hdec-52.25",
                                             "ra0hdec-59.75", "ra0hdec-67.25"],
-                        help="Relevant sub-fields to take actions on. This option is "
-                             "here mainly for debugging purposes.")
-
+                        help="Relevant sub-fields to take actions on. This "
+                             "option is here mainly for debugging purposes.")
+    
     parser.add_argument("-j", "--just-see-commands",
                         action="store_true", default=False,
-                        help="Whether the commands to be run will just be shown "
-                             "instead of actually being run.")
+                        help="Whether the commands to be run that add maps or "
+                             "make figures will just be shown instead of "
+                             "actually being run. This is also for debugging.")
     
     parser.add_argument("-L", "--logger-name",
                         type=str, action="store", default="",
@@ -804,11 +757,11 @@ if __name__ == '__main__':
     
     parser.add_argument("-l", "--log-file",
                         type=str, action="store", default=None,
-                        help="The file to which the logger will send messages.")
-
+                        help="The file to which the logs will be recorded.")
+    
     arguments = parser.parse_args()
     
-        
+    
     update(mode=arguments.mode,
            action=arguments.action,
            oldest_time_to_consider=arguments.oldest_time_to_consider,
