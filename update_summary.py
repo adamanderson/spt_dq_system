@@ -78,7 +78,7 @@ if args.mode == 'summarystats':
 
     # update monthly plots
     cache_timeseries_data.update(mode='plot', action='update',
-                                 timeinterval='weekly',
+                                 timeinterval='monthly',
                                  outdir=args.staticplotdir,
                                  min_time=args.mintime)
 
