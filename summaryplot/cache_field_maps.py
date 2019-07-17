@@ -1,16 +1,15 @@
-# ==============================================================================
-#  This script is intended to be called by spt_dq_system/update_summary.py.
-#  
-#  When update_summary.py calls this script, the former specifies
-#  whether we want to process individual maps and then co-add them or
-#  we want to make figures showing maps and their related quantities,
-#  what time intervals we are interested in using maps from, and so on.
-#  
-#  Then, Based on the specifications, this script in turn calls another script,
-#  which is either fields_coadding.py or fields_plotting.py,
-#  with approprite arguments.
-#  
-# ==============================================================================
+# ============================================================================ #
+#  This script is intended to be called by spt_dq_system/update_summary.py.    #
+#  When update_summary.py calls this script, the former specifies              #
+#  whether we want to process individual maps and then co-add them or          #
+#  we want to make figures showing maps and their related quantities,          #
+#  what time intervals we are interested in using maps from, and so on.        #
+#                                                                              #
+#  Then, Based on the specifications, this script in turn calls another        #
+#  script, which is either fields_coadding.py or fields_plotting.py,           #
+#  with approprite arguments.                                                  #
+#                                                                              #
+# ============================================================================ #
 
 
 import argparse
@@ -42,7 +41,7 @@ def update(mode, action,
            oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=0,
            original_maps_dir='.', coadds_dir='.', figs_dir='.',
-           map_ids=['90GHz', '150GHz', '220GHz'],
+           bands=['90GHz', '150GHz', '220GHz'],
            sub_fields=['ra0hdec-44.75', 'ra0hdec-52.25',
                        'ra0hdec-59.75', 'ra0hdec-67.25'],
            logger_name='', log_file=None,
@@ -90,10 +89,14 @@ def update(mode, action,
     desired_time_ranges   = []
     desired_dir_names     = []
     
-    script_coadding_maps = 'summaryplot/fields_coadding.py'
-    script_plotting_data = 'summaryplot/fields_plotting.py'
-    point_source_list    = 'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
-    bad_map_list         = 'summaryplot/fields_bad_map_list.txt'
+    script_coadding_maps   = 'summaryplot/fields_coadding.py'
+    script_plotting_data   = 'summaryplot/fields_plotting.py'
+    bad_map_list_file      = 'summaryplot/fields_aux_files/'+\
+                             'bad_map_list.txt'
+    point_source_list_file = 'spt3g_software/sources/'+\
+                             '1500d_ptsrc_3band_50mJy.txt'
+    planck_map_fits_file = 'summaryplot/fields_aux_files/'+\
+                           'HFI_SkyMap_BAND_2048_R3.01_full_cut_C_G3Units.fits'
     
     
     # - Figure out what appropriate time intervals are and
@@ -227,7 +230,7 @@ def update(mode, action,
     log("")
     
     
-    # - Call the relevant functions with appropriate arguments
+    # - Call the relevant scripts with appropriate arguments
     
     log("")
     log("----------------------------------------------------------")
@@ -257,7 +260,6 @@ def update(mode, action,
     log(" Relevant commands to run: ")
     log("---------------------------")
     log("")
-    
     
     # -- First, define some functions
     
@@ -331,21 +333,21 @@ def update(mode, action,
     
     
     def get_bad_obs_ids_from_the_list(
-            text_file, map_id_to_compare, sub_field_to_compare, old_bad_ids):
+            text_file, band_to_compare, sub_field_to_compare, old_bad_ids):
         
         ids_to_exclude = []
         try:
-            map_ids, sub_fields, obs_ids = \
+            bands, sub_fields, obs_ids = \
                 numpy.loadtxt(text_file, dtype=str, delimiter="|",
                               usecols=(0, 1, 2), unpack=True)
         except:
-            map_ids    = []
+            bands      = []
             sub_fields = []
             obs_ids    = []
         
-        for index, map_id in enumerate(map_ids):
-            map_id = map_id.replace(" ", "")
-            if map_id == map_id_to_compare:
+        for index, band in enumerate(bands):
+            band = band.replace(" ", "")
+            if band == band_to_compare:
                 sub_field = sub_fields[index].replace(" ", "")
                 if sub_field == sub_field_to_compare:
                     ids_to_exclude.append(int(obs_ids[index].replace(" ", "")))
@@ -357,21 +359,20 @@ def update(mode, action,
     
     
     def figure_out_io_arguments_for_coadding(
-            map_id, sub_field, rg_idx, n_iter=1):
+            band, sub_field, rg_idx, n_iter=1):
         
         arguments = {}
         
-        arguments['map_ids'] = [map_id]
-        arguments['sources'] = [sub_field]
+        arguments['sub_fields'] = [sub_field]
         arguments['temperature_maps_only'] = True
         
         g3_files_for_individual_observations = \
             sorted(glob.glob(os.path.join(original_maps_dir, sub_field,
-                             '*{}_tonly.g3.gz'.format(map_id))))
+                             '*{}_tonly.g3.gz'.format(band))))
         g3_file_for_coadded_maps = \
             os.path.join(desired_dir_names[rg_idx],
                          'coadded_maps_from_{}_{}.g3.gz'.\
-                         format(sub_field, map_id))
+                         format(sub_field, band))
         
         arguments['output_file'] = g3_file_for_coadded_maps.replace('g3', 'g4')
         
@@ -410,12 +411,17 @@ def update(mode, action,
             arguments['min_obs_id']  = desired_obs_id_ranges[rg_idx][0]
             arguments['max_obs_id']  = desired_obs_id_ranges[rg_idx][1]
         
-        arguments['point_source_list'] = point_source_list
-        arguments['bad_map_list']      = bad_map_list
+        arguments['bad_map_list_file'] = bad_map_list_file
         arguments['log_file']    = log_file
         arguments['logger_name'] = \
             '{}_{}_{}'.format(
-            sub_logger_name, map_id, sub_field.replace('.', ''))
+            sub_logger_name, band, sub_field.replace('.', ''))
+        
+        arguments['point_source_list_file'] = point_source_list_file
+        spt_to_planck_bands = \
+            {"90GHz": "100GHz", "150GHz": "143GHz", "220GHz": "217GHz"}
+        arguments['planck_map_fits_file'] = \
+            [planck_map_fits_file.replace("BAND", spt_to_planck_bands[band])]
         
         return arguments
     
@@ -478,7 +484,7 @@ def update(mode, action,
         return rval
     
     
-    # -- Then, call main functions by utilizing those functions
+    # -- Then, call the coadding/plotting scripts by using those functions
     
     n_time_ranges = len(desired_obs_id_ranges)
     for i in range(n_time_ranges):
@@ -494,22 +500,25 @@ def update(mode, action,
         
         if mode == 'coadding':
             
-            for map_id in map_ids:
+            for band in bands:
                 rvals_sum = 0
                 
                 anal_yearly_args = \
-                    {'map_ids': ['Left'+map_id, 'Right'+map_id],
+                    {'map_ids': ['Left'+band, 'Right'+band],
                      'trick_pipeline_to_receive_left_right_maps': True,
+                     'ids_to_append_directions_to'              : [band],
                      'maps_split_by_scan_direction'             : True,
+                     'combine_left_right'                       : False,
                      'calculate_map_rmss_and_weight_stats'      : True,
-                     'rmss_and_wgts_from_coadds_or_individuals' : ['c'],
-                     'rmss_and_wgts_from_signals_or_noises'     : ['sn'],
+                     'rmss_and_wgts_from_coadds_or_individuals' : 'c',
+                     'rmss_and_wgts_from_signals_or_noises'     : 'sn',
                      'calculate_noise_from_coadded_maps'        : True}
                 
                 anal_non_yr_args = \
-                    {'calculate_map_rmss_and_weight_stats'      : True,
-                     'rmss_and_wgts_from_coadds_or_individuals' : ['i'],
-                     'rmss_and_wgts_from_signals_or_noises'     : ['s'],
+                    {'map_ids': [band],
+                     'calculate_map_rmss_and_weight_stats'      : True,
+                     'rmss_and_wgts_from_coadds_or_individuals' : 'i',
+                     'rmss_and_wgts_from_signals_or_noises'     : 's',
                      'collect_averages_from_flagging_statistics': True,
                      'calculate_pW_to_K_conversion_factors'     : True,
                      'calculate_cross_spectra_with_planck_map'  : True,
@@ -517,27 +526,21 @@ def update(mode, action,
                      'calculate_noise_from_individual_maps'     : True}
                 
                 for sub_field in sub_fields:
-                    log("--- %s %s ---", map_id, sub_field)
+                    log("--- %s %s ---", band, sub_field)
                     log("")
                     
                     n_iter = 2 if time_interval == 'yearly' else 1
                     args_coadding = \
                         figure_out_io_arguments_for_coadding(
-                            map_id, sub_field, i, n_iter=n_iter)
-                    
-                    if time_interval != 'last_n':
-                        args_coadding.update({'subtract_existing_maps': False})
-                    
-                    if time_interval == 'yearly':
-                        args_coadding.update(
-                            get_bad_obs_ids_from_the_list(
-                                bad_map_list, map_id, sub_field,
-                                args_coadding.get('bad_obs_ids', [])))
+                            band, sub_field, i, n_iter)
                     
                     if time_interval == "yearly":
                         args_coadding.update(anal_yearly_args)
                     else:
                         args_coadding.update(anal_non_yr_args)
+                    
+                    if time_interval != 'last_n':
+                        args_coadding.update({'subtract_existing_maps': False})
                     
                     rval = analyze_and_coadd_maps(
                                fields_coadding.run, args_coadding,
@@ -546,7 +549,7 @@ def update(mode, action,
                     
                     log('\n\n')
                 
-                log('--- %s Full field ---', map_id)
+                log('--- %s Full field ---', band)
                 log('')
                 if rvals_sum == 0:
                     log('There was no update to any of the sub-field,')
@@ -555,24 +558,23 @@ def update(mode, action,
                     return
                 
                 args_coadding = \
-                    {'map_ids'    : [map_id],
+                    {'map_ids'    : [band],
                      'input_files': [os.path.join(desired_dir_names[i],
                                      'coadded_maps_from_{}_{}.g3.gz'.\
-                                      format(sf, map_id)) for sf in sub_fields],
+                                      format(sf, band)) for sf in sub_fields],
                      'output_file':  os.path.join(desired_dir_names[i],
-                                     'coadded_maps_{}.g3.gz'.format(map_id)),
+                                     'coadded_maps_{}.g3.gz'.format(band)),
                      'logger_name': '{}_{}_full_field'.\
-                                     format(sub_logger_name, map_id),
+                                     format(sub_logger_name, band),
                      'log_file'   : log_file}
-                
-                if time_interval == 'yearly':
-                    args_coadding.update({'maps_split_by_scan_direction': True,
-                                          'combine_left_right'          : True})
                 
                 if time_interval == 'yearly':
                     args_coadding.update(anal_yearly_args)
                 else:
                     args_coadding.update(anal_non_yr_args)
+                
+                if time_interval == 'yearly':
+                    args_coadding.update({'combine_left_right': True})
                 
                 run_coadding_or_plotting_function(
                     fields_coadding.run, args_coadding,
@@ -583,17 +585,17 @@ def update(mode, action,
         
         elif mode == 'plotting':
             
-            for map_id in map_ids:
-                log('--- %s ---', map_id)
+            for band in bands:
+                log('--- %s ---', band)
                 log('')
                 
                 args_plotting = \
                     {'input_files': [os.path.join(desired_dir_names[i],
-                                     'coadded_maps_{}.g3.gz'.format(map_id))],
+                                     'coadded_maps_{}.g3.gz'.format(band))],
                      'dir_to_save_figs': desired_dir_names[i+n_time_ranges],
                      'simpler_file_names'         : True,
                      'figure_title_font_size'     : 18,
-                     'map_id'                     : map_id,
+                     'map_ids'                    : [band],
                      'map_type'                   : 'T',
                      'coadded_data'               : True,
                      'make_figures_for_field_maps': True,
@@ -602,7 +604,7 @@ def update(mode, action,
                      'make_figures_for_entire_weight_maps'       : True,
                      'make_figures_for_weight_maps_cross_section': True,
                      'make_figures_for_noise_levels'             : True,
-                     'logger_name': '{}_{}'.format(sub_logger_name, map_id),
+                     'logger_name': '{}_{}'.format(sub_logger_name, band),
                      'log_file'   : log_file}
                 
                 if time_interval != 'yearly':
@@ -731,10 +733,10 @@ if __name__ == '__main__':
                              "structure is the same as the one used for the "
                              "coadds-dir.")
     
-    parser.add_argument("-i", "--map_ids",
+    parser.add_argument("-i", "--bands",
                         type=str, action="store",
                         nargs="+", default=["90GHz", "150GHz", "220GHz"],
-                        help="Relevant map IDs to take actions on. This option "
+                        help="Relevant bands to take actions on. This option "
                              "is here mainly for debugging purposes.")
     
     parser.add_argument("-f", "--sub_fields",
@@ -761,21 +763,7 @@ if __name__ == '__main__':
     
     arguments = parser.parse_args()
     
-    
-    update(mode=arguments.mode,
-           action=arguments.action,
-           oldest_time_to_consider=arguments.oldest_time_to_consider,
-           current_time=arguments.current_time,
-           time_interval=arguments.time_interval,
-           last_how_many_days=arguments.last_how_many_days,
-           original_maps_dir=arguments.original_maps_dir,
-           coadds_dir=arguments.coadds_dir,
-           figs_dir=arguments.figs_dir,
-           map_ids=arguments.map_ids,
-           sub_fields=arguments.sub_fields,
-           just_see_commands=arguments.just_see_commands,
-           logger_name=arguments.logger_name,
-           log_file=arguments.log_file)
+    update(**vars(arguments))
 
 
 # ==============================================================================
