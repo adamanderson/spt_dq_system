@@ -29,5 +29,4 @@ coadds_logs_dir: /var/www/spt_dq_system/static_plots/maplogs/
 
 port: 80
 
-min_time_summary_plots: 20181220
-min_time_maps: 20190320
+min_time_static_plots: 20181220

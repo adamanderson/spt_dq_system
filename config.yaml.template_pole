@@ -27,5 +27,4 @@ coadds_logs_dir:
 
 port: 3000
 
-min_time_summary_plots: 20181220
-min_time_maps: 20190320
+min_time_static_plots: 20181220
