@@ -112,8 +112,11 @@ def add_two_map_frames(
         divide_results_by=1.0,
         record_weights=True):
     
+    print("")
+    print("%%% Adding two map frames ...")
     print("%%% PARAMETERS:")
-    print("%%%", locals().items())
+    for k, v in locals().items():
+        print("%%%   ", k, ":", v)
     
     if t_only:
         
@@ -192,26 +195,29 @@ def add_two_map_frames(
             print("%%% w final:", numpy.asarray(new_frame["Wunpol"].TT)[iy][ix])
         except:
             print("%%% w final: N/A")
-        print("%%%", new_frame, "%%%")
     
     else:
         raise Exception("The case where map frames contain temperature "
                         "as well as polarization maps still needs to be "
                         "handled!")
     
+    print("%%% FRAME TO BE RETURNED:")
+    for k, v in new_frame.iteritems():
+        print("%%%   ", k, ":", v)
+    print("%%% ... adding finished.")
+    
     return new_frame
-    
-    
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
 
 
 
 
 def get_band_average(bolo_names_from_each_scan, bolo_props_map):
-
+    
+    # * This one is called by the function below
+    
     n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
     bolos_with_properties  = set(bolo_props_map.keys())
-
+    
     for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
         n_bolos_from_one_scan = {"90": 0, "150": 0, "220": 0}
         identifiable_bolos = set(bolo_names_from_one_scan) & \
@@ -222,12 +228,11 @@ def get_band_average(bolo_names_from_each_scan, bolo_props_map):
                 continue
             band = str(int(band))
             if band in n_bolos_from_one_scan.keys():
-                n_bolos_from_one_scan[band] = \
-                    n_bolos_from_one_scan.get(band) + 1
-
+                n_bolos_from_one_scan[band] += 1
+        
         for band, n_bolos in n_bolos_from_one_scan.items():
             n_bolos_from_each_scan[band].append(n_bolos)
-
+    
     return {band: numpy.mean(ns_bolos) \
             for band, ns_bolos in n_bolos_from_each_scan.items()}
 
@@ -235,18 +240,18 @@ def get_band_average(bolo_names_from_each_scan, bolo_props_map):
 
 
 def collect_averages_from_flagging_info(
-        pipe_info_frame, bolo_props_map, recognized_reasons):    
+        pipe_info_frame, bolo_props_map, recognized_reasons):
     
     averages = {"90": {}, "150": {}, "220": {}}
     
     # - Collect average numbers of bolos not flagged
-        
-    bolos_not_flagged_each_scan = pipe_info_frame["SurvivingBolos"]
-    max_n_scans = numpy.max([len(scans) for reason, scans \
-                             in pipe_info_frame["DroppedBolos"].items()])
-    n_success_scans = len(bolos_not_flagged_each_scan.keys())
     
-    diff_n_scans = max_n_scans - n_success_scans
+    bolos_not_flagged_each_scan = pipe_info_frame["SurvivingBolos"]
+    total_n_scans = numpy.max([len(scans) for reason, scans \
+                               in pipe_info_frame["DroppedBolos"].items()])
+    n_recorded_here = len(bolos_not_flagged_each_scan.keys())
+    
+    diff_n_scans = total_n_scans - n_recorded_here
     for i in range(diff_n_scans):
         bolos_not_flagged_each_scan["Dummy"+str(i)] = core.G3VectorString()
     
@@ -257,24 +262,27 @@ def collect_averages_from_flagging_info(
     
     # - Collect average numbers of bolos flagged for each reason
     
+    # -- Gather the numbers from all reasons
+    
     all_bolos_flagged_each_scan = pipe_info_frame["DroppedBolos"]
     for flagging_reason, bolos_flagged_each_scan \
-    in  all_bolos_flagged_each_scan.items():    
+    in  all_bolos_flagged_each_scan.items():
         bl_flgd_ea_sc_reorganized = core.G3MapVectorString()
         for scan_number, list_of_bolos in enumerate(bolos_flagged_each_scan):
-            bl_flgd_ea_sc_reorganized[str(scan_number)] = list_of_bolos    
+            bl_flgd_ea_sc_reorganized[str(scan_number)] = list_of_bolos
         avg_bad_bolos_each_band = \
             get_band_average(bl_flgd_ea_sc_reorganized, bolo_props_map)
         for band, average in avg_bad_bolos_each_band.items():
             averages[band][flagging_reason] = average
+    
+    # -- Collectively call unrecognized reasons "Others"
     
     for band, reasons_and_numbers in averages.items():
         averages[band]["Others"] = 0.0
         unrecognized_reasons = []
         for reason, number in reasons_and_numbers.items():
             if reason not in recognized_reasons:
-                averages[band]["Others"] = \
-                    averages[band].get("Others") + number
+                averages[band]["Others"] += number
                 unrecognized_reasons.append(reason)
         for reason in unrecognized_reasons:
             averages[band].pop(reason)
@@ -285,15 +293,18 @@ def collect_averages_from_flagging_info(
     # - Collect average numbers of bolos removed
     
     all_bolos_flagged_each_scan = pipe_info_frame["DroppedBolos"]
-    n_scans = numpy.min([len(bl_flgd_ea_sc) for flg_rsn, bl_flgd_ea_sc \
+    n_scans = numpy.max([len(bl_flgd_ea_sc) for flg_rsn, bl_flgd_ea_sc \
                          in all_bolos_flagged_each_scan.items()])
     bolos_removed_each_scan = core.G3MapVectorString()
     for i in range(n_scans):
         bolos_removed_one_scan = set([])
         for flagging_reason, bolos_flagged_each_scan \
         in  all_bolos_flagged_each_scan.items():
-            bolos_removed_one_scan = \
-                bolos_removed_one_scan | set(bolos_flagged_each_scan[i])
+            try:
+                bolos_removed_one_scan = \
+                    bolos_removed_one_scan | set(bolos_flagged_each_scan[i])
+            except IndexError:
+                pass
         bolos_removed_each_scan[str(i)] = \
             core.G3VectorString(bolos_removed_one_scan)
     avg_n_removed_bolos_each_band = \
@@ -301,11 +312,15 @@ def collect_averages_from_flagging_info(
     for band, average in avg_n_removed_bolos_each_band.items():
         averages[band]["TotalRemoved"] = average
     
+    # * "TotalNotFlagged", "TotalRemoved", and "Others" keys
+    #   need to be changed accordingly if the corresponding names
+    #   in the initialization of AnalyzeAndCoaddMaps are changed.
+    
     return averages
 
 
 
-
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def collect_averages_of_pw_to_K_factors(wafers, calframe):
     
     bpm = calframe["BolometerProperties"]
@@ -1061,8 +1076,8 @@ class AnalyzeAndCoaddMaps(object):
             self.log(" "*indlev + "- %s", sub_field)
             self.log("")
             oids = data.keys()
-            self.log(" "*(indlev+3) + "%s", oids)
-            self.log(" "*(indlev+3) + "%4.1e", [data[oid]/u for oid in oids])
+            for oid, datum in data.items():
+                self.log(" "*(indlev+3) + "%12s : %5.2e", oid, datum/u)
             self.log("")
     
     
@@ -1315,7 +1330,7 @@ class AnalyzeAndCoaddMaps(object):
                         avgs_flg_stats_from_this_fr = {}
                         for key in frame.keys():
                             if self.key_prefix_flg in key:
-                                flg_typ = key.replace(prefix, "")
+                                flg_typ = key.replace(self.key_prefix_flg, "")
                                 avgs_flg_stats_from_this_fr[flg_typ] = \
                                     {id_for_coadds: frame[key]}
                     else:
@@ -1340,7 +1355,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     for flg_typ in avgs_flg_stats_from_this_fr.keys():
                         self.avgs_flagging_stats[flg_typ] = \
-                            combine_mapmapdoubles(
+                            self.combine_mapmapdoubles(
                                 self.avgs_flagging_stats[flg_typ],
                                 avgs_flg_stats_from_this_fr[flg_typ])
             
@@ -1902,13 +1917,7 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("# Observation durations [minutes.]:")
                 self.log("")
                 du = core.G3Units.min   # * display units
-                for sf, data in mp_fr["ObservationDurations"].items():
-                    self.log(" "*3 + "- %s", sf)
-                    self.log("")
-                    oids = data.keys()
-                    self.log(" "*6 + "%s", oids)
-                    self.log(" "*6 + "%s", [data[oid]/du for oid in oids])
-                    self.log("")
+                self.print_mapmapdouble(mp_fr["ObservationDurations"], du, 0)
                 self.log("\n")
                 
                 
