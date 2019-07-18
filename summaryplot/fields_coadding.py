@@ -73,8 +73,8 @@
 #                                                                              #
 #  The first part of this script consists of definitions of functions that     #
 #  are relevent to performing these analyses, and the second part defines a    #
-#  pipeline module (AnalyzeAndCoaddMaps) that adds maps together and           #
-#  performs the analyses.                                                      #
+#  giant (~1200 lines...) pipeline module (AnalyzeAndCoaddMaps) that           #
+#  adds maps together and performs the analyses.                               #
 #                                                                              #
 # ============================================================================ #
 
@@ -102,6 +102,109 @@ from spt3g.mapspectra import map_analysis
 # ==============================================================================
 # Define functions needed to perform the analyses
 # ------------------------------------------------------------------------------
+
+
+def add_two_map_frames(
+        frame_one, frame_two, t_only=True,
+        remove_weights_beforehand=False,
+        multiply_2nd_frame_by=1.0,
+        remove_weights_afterward=False,
+        divide_results_by=1.0,
+        record_weights=True):
+    
+    print("%%% PARAMETERS:")
+    print("%%%", locals().items())
+    
+    if t_only:
+        
+        # (* Handle the case where a new frame (frame two) is being added to
+        #    an empty cache (frame one))
+        
+        if "T" not in frame_one.keys():
+            
+            print("%%% adding a frame to the empty cache")
+            
+            new_frame = core.G3Frame(core.G3FrameType.Map)
+            new_frame["T"] = frame_two["T"]
+            new_frame["Wunpol"] = frame_two["Wunpol"]
+            return new_frame
+        
+        iy = 9000
+        ix = 9000
+        print("%%% use", ix, "and", iy, "for the indices")
+        print("%%% t1 initial:", numpy.asarray(frame_one["T"])[iy][ix])
+        print("%%% t2 initial:", numpy.asarray(frame_two["T"])[iy][ix])
+        print("%%% w1 initial:", numpy.asarray(frame_one["Wunpol"].TT)[iy][ix])
+        print("%%% w2 initial:", numpy.asarray(frame_two["Wunpol"].TT)[iy][ix])
+        
+        # - First, remove weights if necessary
+        
+        if remove_weights_beforehand:
+            t_map_one = mapmaker.mapmakerutils.remove_weight_t(
+                            frame_one["T"], frame_one["Wunpol"])
+            t_map_two = mapmaker.mapmakerutils.remove_weight_t(
+                            frame_two["T"], frame_two["Wunpol"])
+        else:
+            t_map_one = frame_one["T"]
+            t_map_two = frame_two["T"]
+        
+        print("%%% t1 after w. rm.:", numpy.asarray(t_map_one)[iy][ix])
+        print("%%% t2 after w. rm.:", numpy.asarray(t_map_two)[iy][ix])
+        
+        # - Then, add field maps (and weight maps if applicable) together
+        
+        t_map = t_map_one + t_map_two * multiply_2nd_frame_by
+        del t_map_one, t_map_two
+        gc.collect()
+        w_map = frame_one["Wunpol"].TT + \
+                frame_two["Wunpol"].TT * multiply_2nd_frame_by
+        
+        print("%%% t", numpy.asarray(t_map)[iy][ix])
+        print("%%% w", numpy.asarray(w_map)[iy][ix])
+        
+        # - After that, remove weights if necessary
+        
+        if remove_weights_afterward:
+            t_map = mapmaker.mapmakerutils.remove_weight_t(
+                        t_map, w_map)
+        
+        print("%%% t after w. rm.:", numpy.asarray(t_map)[iy][ix])
+        
+        # - Furthur divide the map by some number if requested
+        
+        if divide_results_by != 1.0:
+            t_map = t_map / divide_result_by
+        
+        print("%%% t after div.:", numpy.asarray(t_map)[iy][ix])
+        
+        # - Finally, record the results in a new frame
+        
+        new_frame = core.G3Frame(core.G3FrameType.Map)
+        new_frame["T"] = t_map
+        if record_weights:
+            new_frame["Wunpol"] = core.G3SkyMapWeights()
+            new_frame["Wunpol"].TT = w_map
+        else:
+            del w_map
+        
+        print("%%% t final:", numpy.asarray(new_frame["T"])[iy][ix])
+        try:
+            print("%%% w final:", numpy.asarray(new_frame["Wunpol"].TT)[iy][ix])
+        except:
+            print("%%% w final: N/A")
+        print("%%%", new_frame, "%%%")
+    
+    else:
+        raise Exception("The case where map frames contain temperature "
+                        "as well as polarization maps still needs to be "
+                        "handled!")
+    
+    return new_frame
+    
+    
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+
+
 
 
 def get_band_average(bolo_names_from_each_scan, bolo_props_map):
@@ -379,34 +482,6 @@ def calculate_pointing_discrepancies(
         snr_dict[point_source_number] = source_snr
         
     return discrep_dict, flux_dict, snr_dict
-
-
-
-
-def add_map_frames(
-        frame_of_coadded_maps, new_frame, map_keys={"T": "T"},
-        multiply_2nd_frame_by=1.0, ignore_weights=False):
-    
-    multi_factor = multiply_2nd_frame_by
-    
-    for from_this_key, to_that_key in map_keys.items():
-        if to_that_key not in frame_of_coadded_maps.keys():
-            frame_of_coadded_maps[to_that_key] = new_frame[from_this_key]
-        else:
-            existing_map = frame_of_coadded_maps.pop(to_that_key)
-            frame_of_coadded_maps[to_that_key] = \
-                existing_map + new_frame[from_this_key] * multi_factor
-        
-    if ignore_weights:
-        pass
-    elif "Wunpol" in new_frame.keys():
-        if "Wunpol" not in frame_of_coadded_maps.keys():
-            frame_of_coadded_maps["Wunpol"] = new_frame["Wunpol"]
-        else:
-            frame_of_coadded_maps["Wunpol"].TT += \
-                new_frame["Wunpol"].TT * multi_factor
-    
-    return frame_of_coadded_maps
 
 
 
@@ -871,7 +946,7 @@ class AnalyzeAndCoaddMaps(object):
         if self.analyze_maps:    
             self.maps_split_by_scan_direction = maps_split_by_scan_direction
             self.point_source_list_file       = point_source_list_file
-            self.self.masks_for_powspec_calculations = \
+            self.masks_for_powspec_calculations = \
                 {sub_field: None for sub_field in self.map_sources}
             
             if self.maps_split_by_scan_direction:
@@ -1021,7 +1096,7 @@ class AnalyzeAndCoaddMaps(object):
                 self.calframe   = frame
             except KeyError:
                 pass
-            return
+            return []
         
         if frame.type == core.G3FrameType.Observation:
             current_time = datetime.datetime.utcnow()
@@ -1033,12 +1108,12 @@ class AnalyzeAndCoaddMaps(object):
             self.log("-----------------------------------------------------")
             self.log("")
             self.obs_info = frame
-            return
+            return []
         
         if frame.type == core.G3FrameType.PipelineInfo:
             if ["DroppedBolos", "SurvivingBolos"] <= frame.keys():
                 self.pipe_info = frame
-            return
+            return []
         
         
         if frame.type == core.G3FrameType.Map:
@@ -1113,7 +1188,7 @@ class AnalyzeAndCoaddMaps(object):
                     id_for_coadds = self.id_mapping[frame["Id"]]
                     oid  = self.obs_info["ObservationID"]
                     sbfd = self.obs_info["SourceName"]
-                    dmid = str(oid) + frame["Id"]   # * a more detailed map id
+                    dmid = str(oid) + "_" + frame["Id"]   # * a more detailed map id
                     t_i  = self.obs_info["ObservationStart"]
                     t_f  = self.obs_info["ObservationStop"]
                     d_i  = std_processing.time_to_obsid(t_i)
@@ -1154,7 +1229,7 @@ class AnalyzeAndCoaddMaps(object):
                                  map_ids_from_this_frame,
                                  report_commonness=True)
             self.obser_durations = \
-                self.combine_mapmapdoubles(self.observat_durations,
+                self.combine_mapmapdoubles(self.obser_durations,
                                            obs_tms_from_this_frame)
             
             if this_frame_already_added and \
@@ -1188,14 +1263,16 @@ class AnalyzeAndCoaddMaps(object):
                 self.obser_durations = \
                     self.remove_partial_mapmapdouble(self.obser_durations,
                                                      obs_ids_from_this_frame)
-                if self.temp_only:
-                    self.coadded_map_frames[id_for_coadds] = \
-                        add_map_frames(self.coadded_map_frames[id_for_coadds],
-                                       frame,
-                                       remove_weights_beforehand=False,
-                                       remove_weights_afterward=False,
-                                       t_only=self.t_only,
-                                       multiply_2nd_frame_by=-1.0)
+                self.coadded_map_frames[id_for_coadds] = \
+                    add_two_map_frames(
+                        self.coadded_map_frames[id_for_coadds],
+                        frame,
+                        t_only=self.t_only,
+                        remove_weights_beforehand=False,
+                        multiply_2nd_frame_by=-1.0,
+                        remove_weights_afterward=False,
+                        divide_results_by=1.0,
+                        record_weights=True)
                 self.log("* Done.")
                 self.log("")
             else:
@@ -1203,16 +1280,19 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("* Adding a set of ")
                 self.log("* sky map and weight map (ID: %s)", frame["Id"])
                 self.log("* to the coadded maps (ID: %s) ...", id_for_coadds)
-                if self.temp_only:
-                    self.coadded_map_frames[id_for_coadds] = \
-                        add_map_frames(self.coadded_map_frames[id_for_coadds],
-                                       frame,
-                                       remove_weights_beforehand=False,
-                                       remove_weights_afterward=False,
-                                       t_only=self.t_only,
-                                       multiply_2nd_frame_by=1.0)
+                self.coadded_map_frames[id_for_coadds] = \
+                    add_two_map_frames(
+                        self.coadded_map_frames[id_for_coadds],
+                        frame,
+                        t_only=self.t_only,
+                        remove_weights_beforehand=False,
+                        multiply_2nd_frame_by=1.0,
+                        remove_weights_afterward=False,
+                        divide_results_by=1.0,
+                        record_weights=True)
                 self.log("* Done.")
                 self.log("")
+            gc.collect()
             
             
             # -- Collect averages related to detector flagging
@@ -1365,22 +1445,25 @@ class AnalyzeAndCoaddMaps(object):
                             summ_map_frame_individ = None
                             diff_map_frame_individ = None
                             summ_map_frame_coadded = \
-                                add_map_frames(
-                                self.coadded_map_frames[id_l_ver],
-                                self.coadded_map_frames[id_r_ver],
-                                remove_weights_beforehand=False,
-                                remove_weights_afterward=True,
-                                t_only=self.t_only
-                                multiply_2nd_map_by=1.0)
+                                add_two_map_frames(
+                                    self.coadded_map_frames[id_l_ver],
+                                    self.coadded_map_frames[id_r_ver],
+                                    t_only=self.t_only,
+                                    remove_weights_beforehand=False,
+                                    multiply_2nd_frame_by=1.0,
+                                    remove_weights_afterward=True,
+                                    divide_results_by=1.0,
+                                    record_weights=False)
                             diff_map_frame_coadded = \
-                                add_map_frames(
-                                self.coadded_map_frames[id_l_ver],
-                                self.coadded_map_frames[id_r_ver],
-                                remove_weights_beforehand=True,
-                                remove_weights_afterward=False,
-                                t_only=self.t_only
-                                multiply_2nd_map_by=-1.0,
-                                finally_divide_by=2.0)
+                                add_two_map_frames(
+                                    self.coadded_map_frames[id_l_ver],
+                                    self.coadded_map_frames[id_r_ver],
+                                    t_only=self.t_only,
+                                    remove_weights_beforehand=True,
+                                    multiply_2nd_frame_by=-1.0,
+                                    remove_weights_afterward=False,
+                                    divide_results_by=2.0,
+                                    record_weights=False)
                             summ_map_frame_individ_mini = None
                             diff_map_frame_individ_mini = None
                             summ_map_frame_coadded_mini = None
@@ -1392,15 +1475,19 @@ class AnalyzeAndCoaddMaps(object):
                             # * There are conceivable situations where
                             #   individual maps are needed, but these frames
                             #   suffice for the time being.
+                            gc.collect()
                     else:
                         time_to_analyze_maps   = True
                         summ_map_frame_individ = \
-                            add_map_frames(
-                                frame, None,
+                            add_two_map_frames(
+                                frame,
+                                None,
+                                t_only=self.t_only,
                                 remove_weights_beforehand=False,
+                                multiply_2nd_frame_by=0.0,
                                 remove_weights_afterward=True,
-                                t_only=self.t_only
-                                multiply_2nd_map_by=0.0)
+                                divide_result_by=1.0,
+                                record_weights=False)
                         diff_map_frame_individ = None
                         summ_map_frame_coadded = None
                         diff_map_frame_coadded = None
@@ -1416,6 +1503,10 @@ class AnalyzeAndCoaddMaps(object):
                         # * There are conceivable situations where
                         #   coadded maps are needed, but these frames
                         #   suffice for the time being.
+                        gc.collect()
+            
+            else:
+                time_to_analyze_maps = False
             
             
             # --- Calculate a standard deviation of the temperature map,
@@ -1458,7 +1549,7 @@ class AnalyzeAndCoaddMaps(object):
                         for mt in self.map_types_for_flc:
                             if map_type == "IndividualSignalMaps":
                                 frame_to_use = summ_map_frame_individ
-                            if map_type == "CoaddedSignalMaps:
+                            if map_type == "CoaddedSignalMaps":
                                 frame_to_use = summ_map_frame_coadded
                             if map_type == "IndividualNoiseMaps":
                                 frame_to_use = diff_map_frame_indvid
@@ -1468,7 +1559,7 @@ class AnalyzeAndCoaddMaps(object):
                                 calculate_map_fluctuation_metrics(
                                     frame_to_use,
                                     pixs=self.pixels_to_use_for_flc_calc[src],
-                                    self.t_only)
+                                    t_only=self.t_only)
                             self.log("* %s", mt)
                             tu = core.G3Units.mK
                             for k, v in fluctuation_metrics.items():
@@ -1544,7 +1635,7 @@ class AnalyzeAndCoaddMaps(object):
                             map_stddev = None
                         offsets, fluxes, snrs = \
                             calculate_pointing_discrepancies(
-                                summ_map_frame_individ, src
+                                summ_map_frame_individ, sbfd,
                                 map_stddev=map_stddev)
                         for rank, diffs in offsets.items():
                             u = core.G3Units
@@ -1616,7 +1707,8 @@ class AnalyzeAndCoaddMaps(object):
                         if self.mini_planck_maps[band][sbfd] is None:
                             self.mini_planck_maps[band][sbfd] = \
                                 create_a_mini_planck_map_frame(
-                                    fits_file, frame, center_ra, center_dec)
+                                    fits_file, frame, center_ra, center_dec,
+                                    t_only=self.t_only)
                         avg_xspec_ratio = \
                             calculate_average_ratio_of_spt_planck_xspectra(
                                 summ_map_frame_individ_mini,
@@ -1627,7 +1719,6 @@ class AnalyzeAndCoaddMaps(object):
                                  avg_xspec_ratio)
                         mmd = self.create_mmd_for_one_value(
                                   sbfd, oid, avg_xspec_ratio)
-                        avgs_xspec_ratios_from_this_fr = 
                         self.avgs_xspec_ratios = \
                             self.combine_mapmapdoubles(
                                 self.avgs_xspec_ratios,
@@ -1747,6 +1838,7 @@ class AnalyzeAndCoaddMaps(object):
             
             del frame
             gc.collect()
+            return []
         
         
         
@@ -1774,7 +1866,7 @@ class AnalyzeAndCoaddMaps(object):
                 mp_fr["CoaddedMapIDs"] = self.coadded_map_ids[map_id]
                 mp_fr["CoaddedObservationIDs"] = self.coadded_obs_ids[map_id]
                 mp_fr["IgnoredObservationIDs"] = self.ignored_obs_ids[map_id]
-                mp_fr["ObservationDurations"]  = self.observat_durations[map_id]
+                mp_fr["ObservationDurations"]  = self.obser_durations[map_id]
                 
                 self.log("# Observation IDs used:")
                 self.log("")
@@ -1810,7 +1902,7 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("# Observation durations [minutes.]:")
                 self.log("")
                 du = core.G3Units.min   # * display units
-                for sf, data in mapmapdouble.items():
+                for sf, data in mp_fr["ObservationDurations"].items():
                     self.log(" "*3 + "- %s", sf)
                     self.log("")
                     oids = data.keys()
@@ -1850,7 +1942,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     
                     k_rec_root = self.key_prefix_flc
-                    for mt in self.self.map_types_for_flc:
+                    for mt in self.map_types_for_flc:
                         self.log("- Map type: %s", mt)
                         self.log("")
                         
@@ -1906,7 +1998,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("\n")
                 
                 
-                if self.self.calc_noise_from_individ_maps:
+                if self.calc_noise_from_individ_maps:
                     self.log("# Noise level from individual maps [uK.arcmin]:")
                     self.log("")
                     
@@ -1916,7 +2008,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.print_mapmapdouble(mp_fr[k_rec], du, 3)
                 
                 
-                if self.self.calc_noise_from_coadded_maps:
+                if self.calc_noise_from_coadded_maps:
                     self.log("# Noise level from coadded maps [uK.arcmin]:")
                     self.log("")
                     
@@ -1961,8 +2053,8 @@ class AnalyzeAndCoaddMaps(object):
 
 def drop_duplicate_analysis_results(frame):
     
-    if "CoaddedMapsContained" in frame.keys():
-        if frame["CoaddedMapsContained"] == False:
+    if "AreCoaddedMapsContained" in frame.keys():
+        if frame["AreCoaddedMapsContained"] == False:
             return []
 
 
@@ -2246,7 +2338,6 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
            (os.path.getsize(g3_file) >= min_file_size*2**30):
             all_good_g3_files.append(g3_file)
     
-    
     if (len(all_good_g3_files) <= 1):
         log("")
         log("No applicable input files (or there is only one input file), ")
@@ -2334,7 +2425,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                      calculate_pointing_discrepancies,
                  logging_function=log)
     
-    pipeline.Add(lambda frame: "CoaddedMapsContained" in frame)
+    pipeline.Add(lambda frame: "AreCoaddedMapsContained" in frame)
     
     pipeline.Add(core.G3Writer,
                  filename=output_file)
@@ -2381,7 +2472,7 @@ if __name__ == '__main__':
                              "analyses on the maps such as calculating noise.",
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
-    parser.add_argument("input_files",
+    parser.add_argument("-I", "--input_files",
                         type=str, action="store", nargs="+",
                         help="The paths to the g3 files "
                              "that contain maps to be analyzed and added. ")
@@ -2394,7 +2485,7 @@ if __name__ == '__main__':
                              "where the script crashes due to reading a "
                              "problematic file.")
     
-    parser.add_argument("-o", "--output_file",
+    parser.add_argument("-O", "--output_file",
                         type=str, action="store", default="coadded_maps.g3",
                         help="The path of the output g3 file "
                              "that will contain the coadded maps and "
