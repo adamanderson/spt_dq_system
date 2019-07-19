@@ -112,7 +112,6 @@ def add_two_map_frames(
         divide_results_by=1.0,
         record_weights=True):
     
-    print("")
     print("%%% Adding two map frames ...")
     print("%%% PARAMETERS:")
     for k, v in locals().items():
@@ -247,6 +246,8 @@ def collect_averages_from_flagging_info(
     # - Collect average numbers of bolos not flagged
     
     bolos_not_flagged_each_scan = pipe_info_frame["SurvivingBolos"]
+    # * This is a core.G3MapVectorString instance
+    
     total_n_scans = numpy.max([len(scans) for reason, scans \
                                in pipe_info_frame["DroppedBolos"].items()])
     n_recorded_here = len(bolos_not_flagged_each_scan.keys())
@@ -265,6 +266,8 @@ def collect_averages_from_flagging_info(
     # -- Gather the numbers from all reasons
     
     all_bolos_flagged_each_scan = pipe_info_frame["DroppedBolos"]
+    # * This is a core.G3MapVectorVectorString instance
+    
     for flagging_reason, bolos_flagged_each_scan \
     in  all_bolos_flagged_each_scan.items():
         bl_flgd_ea_sc_reorganized = core.G3MapVectorString()
@@ -320,8 +323,9 @@ def collect_averages_from_flagging_info(
 
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def collect_averages_of_pw_to_K_factors(wafers, calframe):
+
+def collect_medians_of_pW_per_K_factors(
+        wafers_of_interest, band_of_interest, calframe, flagging_stats=None):
     
     bpm = calframe["BolometerProperties"]
     flu = core.G3Units.K * core.G3Units.rad * core.G3Units.rad
@@ -331,9 +335,15 @@ def collect_averages_of_pw_to_K_factors(wafers, calframe):
            "MAT5A": { "90": 2.5738063e-07*flu,
                      "150": 1.7319235e-07*flu,
                      "220": 2.1451640e-07*flu}}
+           # * Copied from spt3g_software/calibration/python/apply_t_cal.py
     
-    values_by_band_and_wafer = \
-        {band: {wafer: [] for wafer in wafers} for band in ["90", "150", "220"]}
+    values_by_wafer = \
+         {wafer: {"PicowattsPerKelvin": [],
+                  "CalibratorResponse": [],
+                  "HIIFluxCalibration": [],
+                  "HIIIntegratedFluux": [],
+                  "HIISkyTransmission": []} \
+          for wafer in wafers_of_interest}
     
     for key in calframe.keys():
         if "FluxCalibration" in key:
@@ -346,11 +356,26 @@ def collect_averages_of_pw_to_K_factors(wafers, calframe):
             integral_flux_key = key
         if "SkyTransmission" in key:
             sky_transmission_key = key
-    
+        
     available_bolos = set(calframe["BolometerProperties"].keys()) & \
                       set(calframe["CalibratorResponse"].keys())  & \
                       set(calframe[flux_calibration_key].keys())  & \
                       set(calframe[integral_flux_key].keys())
+    
+    print("%%% Recording calibration chain-related quantities ...")
+    print("%%% n available bolos from calframe:", len(available_bolos))
+    
+    if flagging_stats is not None:
+        bolos_used_each_scan = flagging_stats["SurvivingBolos"]
+        bolos_used_at_least_once = set([])
+        for scan_number, bolos_used_that_scan \
+        in  bolos_used_each_scan.iteritems():
+            bolos_used_at_least_once = \
+                bolos_used_at_least_once | set(bolos_used_that_scan)
+        available_bolos = available_bolos & bolos_used_at_least_once
+    
+    print("%%% n_available bolos after using flagging stats:",
+          len(available_bolos))
     
     for bolo in available_bolos:
         band  = bpm[bolo].band / core.G3Units.GHz
@@ -358,28 +383,95 @@ def collect_averages_of_pw_to_K_factors(wafers, calframe):
             continue
         band  = str(int(band))
         wafer = bpm[bolo].wafer_id.upper() 
-        if (band  not in values_by_band_and_wafer.keys()) or \
-           (wafer not in wafers):
+        if (band != band_of_interest) or (wafer not in wafers_of_interest):
             continue
+        
+        cr = calframe["CalibratorResponse"][bolo]
+        fc = calframe[flux_calibration_key][bolo]
+        fi = calframe[integral_flux_key][bolo]
         if band in calframe[sky_transmission_key].keys():
-            pw_k  = calframe["CalibratorResponse"][bolo]
-            pw_k *= calframe[flux_calibration_key][bolo]
-            pw_k *= calframe[integral_flux_key][bolo]
-            pw_k *= calframe[sky_transmission_key][band]
-            pw_k /= flx[source][band]
+            st = calframe[sky_transmission_key][band]
+            pk = cr * fc * fi * st / flx[source][band]
         else:
-            pw_k = numpy.nan
-        values_by_band_and_wafer[band][wafer].append(pw_k)
+            st = numpy.nan
+            pk = numpy.nan
+        
+        values_by_wafer[wafer]["PicowattsPerKelvin"].append(pk)
+        values_by_wafer[wafer]["CalibratorResponse"].append(cr)
+        values_by_wafer[wafer]["HIIFluxCalibration"].append(fc)
+        values_by_wafer[wafer]["HIIIntegratedFluux"].append(fi)
+        values_by_wafer[wafer]["HIISkyTransmission"].append(st)
     
-    for band in values_by_band_and_wafer.keys():
-        for wafer in wafers:
-            vals = values_by_band_and_wafer[band][wafer]
+    for waf in values_by_wafer.keys():
+        for quantity, vals in values_by_wafer[waf].items():
             try:
-                values_by_band_and_wafer[band][wafer] = numpy.nanmean(vals)
+                if quantity == "PicowattsPerKelvin":
+                    print("%%% number of collected factors from", waf, ":",
+                          len(vals))
+                
+                median = numpy.nanmedian(vals)
+                
+                if quantity == "PicowattsPerKelvin":
+                    u = core.G3Units.pW / core.G3Units.K
+                    print("%%% median of pW/K:", median/u)
+            
             except:
-                values_by_band_and_wafer[band][wafer] = numpy.nan
+                median = numpy.nan
+            values_by_wafer[waf][quantity] = median
     
-    return values_by_band_and_wafer
+    print("%%% ... that's all I wanted to check.")
+
+    return values_by_wafer
+
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+def calculate_map_fluctuation_metrics(
+        map_frame, temperature_only, return_nans=False):
+    
+    keys = ["MapStdDevs",
+            "MeansOfWeights",
+            "NumbersOfPixelsWithGoodWeights",
+            "VarsOfProductsOfMapValuesAndSqrtWeights"]
+    
+    fluctuation_metrics = {key: numpy.nan for key in keys}
+    
+    if return_nans:
+        return fluctuation_metrics
+    else:
+        if temperature_only:
+            if map_frame["T"].is_weighted:
+                t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
+                                       map_frame["T"], map_frame["Wunpol"]))
+            else:
+                t_vals = numpy.asarray(map_frame["T"])
+            w_vals = numpy.asarray(map_frame["Wunpol"].TT)
+        
+        w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
+        igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
+        npnzw = len(numpy.where(w_vals > 0.0)[0])
+        if len(igw[0]) == 0:
+            return fluctuation_metrics
+        
+        good_w_vals = w_vals[igw]
+        good_t_vals = t_vals[igw]
+        
+        pctl_hi = numpy.nanpercentile(good_t_vals, 99.5)
+        pctl_lo = numpy.nanpercentile(good_t_vals,  0.5)
+        inx = numpy.where(numpy.isfinite(good_t_vals) & (good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
+        better_t_vals = good_t_vals[inx]
+        better_w_vals = good_w_vals[inx]
+        
+        map_stddev  = numpy.std(better_t_vals)
+        mean_weight = numpy.mean(better_w_vals)
+        var_product = numpy.var(better_t_vals * numpy.sqrt(better_w_vals))
+        
+        fluctuation_metrics[keys[0]] = map_stddev
+        fluctuation_metrics[keys[1]] = mean_weight
+        fluctuation_metrics[keys[2]] = npnzw
+        fluctuation_metrics[keys[3]] = var_product
+        
+        return fluctuation_metrics
 
 
 
@@ -497,56 +589,6 @@ def calculate_pointing_discrepancies(
         snr_dict[point_source_number] = source_snr
         
     return discrep_dict, flux_dict, snr_dict
-
-
-
-
-def calculate_map_fluctuation_metrics(
-        map_frame, temperature_only, return_nans=False):
-    
-    keys = ["MapStdDevs",
-            "MeansOfWeights",
-            "NumbersOfPixelsWithGoodWeights",
-            "VarsOfProductsOfMapValuesAndSqrtWeights"]
-    
-    fluctuation_metrics = {key: numpy.nan for key in keys}
-    
-    if return_nans:
-        return fluctuation_metrics
-    else:
-        if temperature_only:
-            if map_frame["T"].is_weighted:
-                t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
-                                       map_frame["T"], map_frame["Wunpol"]))
-            else:
-                t_vals = numpy.asarray(map_frame["T"])
-            w_vals = numpy.asarray(map_frame["Wunpol"].TT)
-        
-        w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
-        igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
-        npnzw = len(numpy.where(w_vals > 0.0)[0])
-        if len(igw[0]) == 0:
-            return fluctuation_metrics
-        
-        good_w_vals = w_vals[igw]
-        good_t_vals = t_vals[igw]
-        
-        pctl_hi = numpy.nanpercentile(good_t_vals, 99.5)
-        pctl_lo = numpy.nanpercentile(good_t_vals,  0.5)
-        inx = numpy.where(numpy.isfinite(good_t_vals) & (good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
-        better_t_vals = good_t_vals[inx]
-        better_w_vals = good_w_vals[inx]
-        
-        map_stddev  = numpy.std(better_t_vals)
-        mean_weight = numpy.mean(better_w_vals)
-        var_product = numpy.var(better_t_vals * numpy.sqrt(better_w_vals))
-        
-        fluctuation_metrics[keys[0]] = map_stddev
-        fluctuation_metrics[keys[1]] = mean_weight
-        fluctuation_metrics[keys[2]] = npnzw
-        fluctuation_metrics[keys[3]] = var_product
-        
-        return fluctuation_metrics
 
 
 
@@ -808,7 +850,7 @@ class AnalyzeAndCoaddMaps(object):
         
         if self.get_avgs_flagging_stats:
             self.bolo_props       = None
-            self.pipe_line_info   = None
+            self.pipe_info_frame  = None
             self.flagging_reasons = \
                 ["BadCalSn", "BadWeight",  "Glitchy", "Oscillating",
                  "Latched",  "Overbiased", "BadHk",
@@ -824,19 +866,36 @@ class AnalyzeAndCoaddMaps(object):
         
         
         # - Initialize variables related to calculating the median value of
-        #   the pW/K conversion factors for each band of each wafer
+        #   the pW/K conversion factors for each wafer
         
-        self.calc_mean_pW_to_K = calculate_pW_to_K_conversion_factors
+        self.calc_median_pW_to_K = calculate_pW_to_K_conversion_factors
         
-        if self.calc_mean_pW_to_K:
-            self.calframe = None
-            self.wafers   = ["W172", "W174", "W176", "W177", "W180",
-                             "W181", "W188", "W203", "W204", "W206"]
-            self.key_prefix_pwk = "MeansOfTemperatureCalibrationFactors"
+        if self.calc_median_pW_to_K:
+            self.calframe   = None
+            self.wafers     = ["W172", "W174", "W176", "W177", "W180",
+                               "W181", "W188", "W203", "W204", "W206"]
+            self.calfactors = ["PicowattsPerKelvin", "CalibratorResponse",
+                               "HIIFluxCalibration", "HIIIntegratedFluux",
+                               "HIISkyTransmission"]
+            usys = core.G3Units
+            self.cal_fat_unis = \
+                {"PicowattsPerKelvin": usys.pW / usys.K,
+                 "CalibratorResponse": usys.pW / 1000,
+                 "HIIFluxCalibration": 1.0,
+                 "HIIIntegratedFluux": usys.arcmin * usys.arcmin,
+                 "HIISkyTransmission": 1.0}
+            self.cal_fat_ustr = \
+                {"PicowattsPerKelvin": "pW/K",
+                 "CalibratorResponse": "fW",
+                 "HIIFluxCalibration": "unitless",
+                 "HIIIntegratedFluux": "arcmin^2",
+                 "HIISkyTransmission": "unitless"}
+            self.key_prefix_pwk = "MediansOfTemperatureCalRelatedFactors"
             
-            self.means_of_temp_cal_factors = \
-                {wafer: {map_id: core.G3MapMapDouble() \
-                         for map_id in self.map_ids}   \
+            self.medians_of_temp_cal_factors = \
+                {wafer: {factor: {map_id: core.G3MapMapDouble() \
+                                  for map_id in self.map_ids}   \
+                         for factor in self.calfactors}         \
                  for wafer in self.wafers}
         
         
@@ -856,7 +915,7 @@ class AnalyzeAndCoaddMaps(object):
                                  "NumbersOfPixelsWithGoodTTWeights": 1}
             self.flu_met_ustr = {"TMapStandardDeviations": "mK",
                                  "MeansOfTTWeights"      : "1/mK^2",
-                                 "NumbersOfPixelsWithGoodTTWeights": ""}
+                                 "NumbersOfPixelsWithGoodTTWeights": "unitless"}
             
             self.coadds_or_individs_for_flc = []
             if "c" in rmss_and_wgts_from_coadds_or_individuals:
@@ -1127,7 +1186,7 @@ class AnalyzeAndCoaddMaps(object):
         
         if frame.type == core.G3FrameType.PipelineInfo:
             if ["DroppedBolos", "SurvivingBolos"] <= frame.keys():
-                self.pipe_info = frame
+                self.pipe_info_frame = frame
             return []
         
         
@@ -1203,7 +1262,7 @@ class AnalyzeAndCoaddMaps(object):
                     id_for_coadds = self.id_mapping[frame["Id"]]
                     oid  = self.obs_info["ObservationID"]
                     sbfd = self.obs_info["SourceName"]
-                    dmid = str(oid) + "_" + frame["Id"]   # * a more detailed map id
+                    dmid = str(oid) + "_" + frame["Id"]   # * more detailed id
                     t_i  = self.obs_info["ObservationStart"]
                     t_f  = self.obs_info["ObservationStop"]
                     d_i  = std_processing.time_to_obsid(t_i)
@@ -1340,7 +1399,7 @@ class AnalyzeAndCoaddMaps(object):
                         avgs_flg_stats_from_this_fr = {}
                         avgs_from_each_band = \
                             collect_averages_from_flagging_info(
-                                self.pipe_info,
+                                self.pipe_info_frame,
                                 self.bolo_props,
                                 self.flagging_reasons)
                         for band, flg_typs_avgs in avgs_from_each_band.items():
@@ -1363,51 +1422,63 @@ class AnalyzeAndCoaddMaps(object):
             # -- Calculate mean value of the pW/K conversion factors
             #    for each band of each wafer
             
-            if self.calc_mean_pW_to_K:
+            if self.calc_median_pW_to_K:
                 
                 if subtract_maps_in_this_frame:
-                    for wafer in self.means_of_temp_cal_factors.keys():
-                        self.means_of_temp_cal_factors[wafer] = \
-                            self.remove_partial_mapmapdouble(
-                                    self.means_of_temp_cal_factors[wafer],
+                    for waf in self.wafers:
+                        for fa in self.calfactors:
+                            self.medians_of_temp_cal_factors[waf][fa] = \
+                                self.remove_partial_mapmapdouble(
+                                    self.medians_of_temp_cal_factors[waf][fa],
                                     obs_ids_from_this_frame)
                 
                 else:
                     if frame_has_old_coadds:
                         self.log("")
-                        self.log("* Gathering the mean values of the pW/K")
-                        self.log("* coversion factors that were ")
+                        self.log("* Gathering the median values of the pW/K")
+                        self.log("* conversion factors that were")
                         self.log("* calculated previously ...")
-                        means_of_convs_from_this_fr = {}
+                        meds_pwks_from_this_fr = {}
                         for key in frame.keys():
                             if self.key_prefix_pwk in key:
-                                wafer = key.replace(prefix, "")
-                                means_of_convs_from_this_fr[wafer] = \
-                                    {id_for_coadds: frame[key]}
+                                for waf in self.wafers:
+                                    meds_pwks_from_this_fr[waf] = {}
+                                    for fa in self.calfactors:
+                                        ck = self.key_prefix_pwk + waf + fa
+                                        meds_pwks_from_this_fr[waf][fa] = \
+                                            {id_for_coadds: frame[ck]}
                     else:
                         self.log("")
-                        self.log("* Gathering the mean values of the pW/K")
+                        self.log("* Gathering the median values of the pW/K")
                         self.log("* conversion factors ...")
-                        means_of_convs_from_this_fr = {}
-                        avgs_to_be_reorganized = \
-                            collect_averages_of_pw_to_K_factors(
-                                self.wafers,
-                                self.calframe)
-                        for band, wfs_avgs in avgs_to_be_reorganized.items():
-                            if (band+"GHz") in id_for_coadds:
-                                for wafer, avg in wfs_avgs.items():
-                                    mmd = self.create_mmd_for_one_value(
-                                              sbfd, oid, avg)
-                                    means_of_convs_from_this_fr[wafer] = \
-                                        {id_for_coadds: mmd}
-                                break
+                        meds_pwks_from_this_fr = {}
+                        if "90GHz"  in id_for_coadds:
+                            band_of_interest =  "90"
+                        if "150GHz" in id_for_coadds:
+                            band_of_interest = "150"
+                        if "220GHz" in id_for_coadds:
+                            band_of_interest = "220"
+                        meds_to_be_reorganized = \
+                            collect_medians_of_pW_per_K_factors(
+                                self.wafers, band_of_interest,
+                                self.calframe,
+                                flagging_stats=self.pipe_info_frame)
+                        for wafer in meds_to_be_reorganized.keys():
+                            meds_pwks_from_this_fr[wafer] = {}
+                            for factor in meds_to_be_reorganized[wafer].keys():
+                                med = meds_to_be_reorganized[wafer][factor]
+                                mmd = self.create_mmd_for_one_value(
+                                          sbfd, oid, med)
+                                meds_pwks_from_this_fr[wafer][factor] = \
+                                    {id_for_coadds: mmd}
                     self.log("* Done.")
                     self.log("")
-                    for wafer in means_of_convs_from_this_fr.keys():
-                        self.means_of_temp_cal_factors[wafer] = \
-                            combine_mapmapdoubles(
-                                self.means_of_temp_cal_factors[wafer],
-                                means_of_convs_from_this_fr[wafer])
+                    for waf in meds_pwks_from_this_fr.keys():
+                        for fa in meds_pwks_from_this_fr[waf].keys():
+                            self.medians_of_temp_cal_factors[waf][fa] = \
+                                self.combine_mapmapdoubles(
+                                    self.medians_of_temp_cal_factors[waf][fa],
+                                    meds_pwks_from_this_fr[waf][fa])
             
             
             # -- Decide whether it's time to perform some analysis on maps
@@ -1915,14 +1986,13 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("\n")
                 
                 self.log("# Observation durations [minutes.]:")
-                self.log("")
                 du = core.G3Units.min   # * display units
                 self.print_mapmapdouble(mp_fr["ObservationDurations"], du, 0)
                 self.log("\n")
                 
                 
                 if self.get_avgs_flagging_stats:
-                    self.log("# Averages related to flagging statistics:")
+                    self.log("# Avg. numbers related to flagging statistics:")
                     self.log("")
                     
                     for flg_typ in self.avgs_flagging_stats.keys():
@@ -1933,16 +2003,22 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("\n")
                 
                 
-                if self.calc_mean_pW_to_K:
-                    self.log("# Averages of pW/K conversion factors:")
+                if self.calc_median_pW_to_K:
+                    self.log("# Medians of pW/K conversion factors:")
                     self.log("")
                     
-                    du = core.G3Units.pW / core.G3Units.K
-                    for w in self.means_of_temp_cal_factors.keys():
-                        k_rec = self.key_prefix_pwk + wafer 
-                        mp_fr[k_rec] = self.means_of_temp_cal_factors[w][map_id]
-                        self.log("- %s", w)
-                        self.print_mapmapdouble(mp_fr[k_rec], du, 3)
+                    for waf in self.wafers:
+                        self.log(" - Wafer: %s", waf)
+                        self.log("")
+                        
+                        for fa in self.calfactors:
+                            k_rec = self.key_prefix_pwk + waf + fa
+                            mp_fr[k_rec] = self.medians_of_temp_cal_factors \
+                                           [waf][fa][map_id]
+                            self.log(" "*3 + " - %s [%s]",
+                                     fa, self.cal_fat_ustr[fa])
+                            du = self.cal_fat_unis[fa]
+                            self.print_mapmapdouble(mp_fr[k_rec], du, 6)
                     self.log("\n")
                 
                 
@@ -1960,7 +2036,7 @@ class AnalyzeAndCoaddMaps(object):
                             mp_fr[k_rec] = \
                                 self.map_fluctuation_metrics[mp][fk][map_id]
                             self.log(" "*3 + " - Metric: %s [%s]",
-                                     fk, self.flu_met_unis[fk])
+                                     fk, self.flu_met_ustr[fk])
                             self.print_mapmapdouble(
                                 mp_fr[k_rec], self.flu_met_unis[fk], 6)
                     self.log("\n")
