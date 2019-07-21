@@ -109,35 +109,30 @@ def add_two_map_frames(
         remove_weights_beforehand=False,
         multiply_2nd_frame_by=1.0,
         remove_weights_afterward=False,
-        divide_results_by=1.0,
-        record_weights=True):
+        divide_result_by=1.0,
+        record_weights=True,
+        logfun=print,
+        iy=6000, ix=9000):
     
-    print("%%% Adding two map frames ...")
-    print("%%% PARAMETERS:")
+    logfun("$$$ Adding two map frames ...")
+    logfun("$$$ PARAMETERS:")
     for k, v in locals().items():
-        print("%%%   ", k, ":", v)
+        if k in ["frame_one", "frame_two"]:
+            continue
+        logfun("    %-25s : %s" %(k, v))
     
     if t_only:
-        
-        # (* Handle the case where a new frame (frame two) is being added to
-        #    an empty cache (frame one))
-        
-        if "T" not in frame_one.keys():
-            
-            print("%%% adding a frame to the empty cache")
-            
-            new_frame = core.G3Frame(core.G3FrameType.Map)
-            new_frame["T"] = frame_two["T"]
-            new_frame["Wunpol"] = frame_two["Wunpol"]
-            return new_frame
-        
-        iy = 9000
-        ix = 9000
-        print("%%% use", ix, "and", iy, "for the indices")
-        print("%%% t1 initial:", numpy.asarray(frame_one["T"])[iy][ix])
-        print("%%% t2 initial:", numpy.asarray(frame_two["T"])[iy][ix])
-        print("%%% w1 initial:", numpy.asarray(frame_one["Wunpol"].TT)[iy][ix])
-        print("%%% w2 initial:", numpy.asarray(frame_two["Wunpol"].TT)[iy][ix])
+                
+        logfun("$$$ use x = %d and y = %d "
+               "for the indices of a particular pixel" %(ix, iy))
+        logfun("$$$ t1 initial : %+7.3e" 
+               %(numpy.asarray(frame_one["T"])[iy][ix]))
+        logfun("$$$ t2 initial : %+7.3e"
+               %(numpy.asarray(frame_two["T"])[iy][ix]))
+        logfun("$$$ w1 initial : %+7.3e"
+               %(numpy.asarray(frame_one["Wunpol"].TT)[iy][ix]))
+        logfun("$$$ w2 initial : %+7.3e"
+               %(numpy.asarray(frame_two["Wunpol"].TT)[iy][ix]))
         
         # - First, remove weights if necessary
         
@@ -150,8 +145,10 @@ def add_two_map_frames(
             t_map_one = frame_one["T"]
             t_map_two = frame_two["T"]
         
-        print("%%% t1 after w. rm.:", numpy.asarray(t_map_one)[iy][ix])
-        print("%%% t2 after w. rm.:", numpy.asarray(t_map_two)[iy][ix])
+        logfun("$$$ t1 after weights removal : %+7.3e"
+               %(numpy.asarray(t_map_one)[iy][ix]))
+        logfun("$$$ t2 after weights removal : %+7.3e"
+               %(numpy.asarray(t_map_two)[iy][ix]))
         
         # - Then, add field maps (and weight maps if applicable) together
         
@@ -161,8 +158,8 @@ def add_two_map_frames(
         w_map = frame_one["Wunpol"].TT + \
                 frame_two["Wunpol"].TT * multiply_2nd_frame_by
         
-        print("%%% t", numpy.asarray(t_map)[iy][ix])
-        print("%%% w", numpy.asarray(w_map)[iy][ix])
+        logfun("$$$ t resultant : %+7.3e" %(numpy.asarray(t_map)[iy][ix]))
+        logfun("$$$ w resultant : %+7.3e" %(numpy.asarray(w_map)[iy][ix]))
         
         # - After that, remove weights if necessary
         
@@ -170,14 +167,16 @@ def add_two_map_frames(
             t_map = mapmaker.mapmakerutils.remove_weight_t(
                         t_map, w_map)
         
-        print("%%% t after w. rm.:", numpy.asarray(t_map)[iy][ix])
+        logfun("$$$ t after weights removal : %+7.3e"
+               %(numpy.asarray(t_map)[iy][ix]))
         
         # - Furthur divide the map by some number if requested
         
-        if divide_results_by != 1.0:
+        if divide_result_by != 1.0:
             t_map = t_map / divide_result_by
         
-        print("%%% t after div.:", numpy.asarray(t_map)[iy][ix])
+        logfun("$$$ t after division : %+7.3e"
+               %(numpy.asarray(t_map)[iy][ix]))
         
         # - Finally, record the results in a new frame
         
@@ -189,23 +188,57 @@ def add_two_map_frames(
         else:
             del w_map
         
-        print("%%% t final:", numpy.asarray(new_frame["T"])[iy][ix])
+        logfun("$$$ t final : %+7.3e"
+               %(numpy.asarray(new_frame["T"])[iy][ix]))
         try:
-            print("%%% w final:", numpy.asarray(new_frame["Wunpol"].TT)[iy][ix])
+            logfun("$$$ w final : %+7.3e"
+                   %(numpy.asarray(new_frame["Wunpol"].TT)[iy][ix]))
         except:
-            print("%%% w final: N/A")
+            logfun("$$$ w final : N/A")
     
     else:
         raise Exception("The case where map frames contain temperature "
                         "as well as polarization maps still needs to be "
                         "handled!")
     
-    print("%%% FRAME TO BE RETURNED:")
+    logfun("$$$ FRAME TO BE RETURNED:")
     for k, v in new_frame.iteritems():
-        print("%%%   ", k, ":", v)
-    print("%%% ... adding finished.")
+        logfun("$$$   %-10s : %s" %(k, v))
+    logfun("$$$ ... adding finished.")
     
     return new_frame
+
+
+
+
+def create_new_map_frame_with_smaller_region(
+        map_frame, center_ra, center_dec, t_only=True):
+    
+    new_map_frame = core.G3Frame(core.G3FrameType.Map)
+
+    if t_only:
+        
+        map_parameters = {"x_len": int(5.0*core.G3Units.deg/map_frame["T"].res),
+                          "y_len": int(5.0*core.G3Units.deg/map_frame["T"].res),
+                          "res"  : map_frame["T"].res,
+                          "proj" : map_frame["T"].proj,
+                          "alpha_center": center_ra,
+                          "delta_center": center_dec,
+                          "coord_ref"   : map_frame["T"].coord_ref,
+                          "pol_type"    : map_frame["T"].pol_type}
+        
+        smaller_field_map = coordinateutils.FlatSkyMap(**map_parameters)
+        coordinateutils.reproj_map(map_frame["T"], smaller_field_map, 1)
+        new_map_frame["T"] = smaller_field_map
+        
+        if "Wunpol" in map_frame.keys():
+            smaller_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
+            coordinateutils.reproj_map(
+                map_frame["Wunpol"].TT, smaller_weight_map, 1)
+            new_map_frame["Wunpol"] = core.G3SkyMapWeights()
+            new_map_frame["Wunpol"].TT = smaller_weight_map
+    
+    return new_map_frame
 
 
 
@@ -325,7 +358,8 @@ def collect_averages_from_flagging_info(
 
 
 def collect_medians_of_pW_per_K_factors(
-        wafers_of_interest, band_of_interest, calframe, flagging_stats=None):
+        wafers_of_interest, band_of_interest, calframe, flagging_stats=None,
+        logfun=print):
     
     bpm = calframe["BolometerProperties"]
     flu = core.G3Units.K * core.G3Units.rad * core.G3Units.rad
@@ -362,8 +396,8 @@ def collect_medians_of_pW_per_K_factors(
                       set(calframe[flux_calibration_key].keys())  & \
                       set(calframe[integral_flux_key].keys())
     
-    print("%%% Recording calibration chain-related quantities ...")
-    print("%%% n available bolos from calframe:", len(available_bolos))
+    logfun("$$$ Recording calibration chain-related quantities ...")
+    logfun("$$$ n available bolos from calframe : %d" %(len(available_bolos)))
     
     if flagging_stats is not None:
         bolos_used_each_scan = flagging_stats["SurvivingBolos"]
@@ -374,8 +408,8 @@ def collect_medians_of_pW_per_K_factors(
                 bolos_used_at_least_once | set(bolos_used_that_scan)
         available_bolos = available_bolos & bolos_used_at_least_once
     
-    print("%%% n_available bolos after using flagging stats:",
-          len(available_bolos))
+    logfun("$$$ n_available bolos after using flagging stats : %d"
+          %(len(available_bolos)))
     
     for bolo in available_bolos:
         band  = bpm[bolo].band / core.G3Units.GHz
@@ -405,77 +439,149 @@ def collect_medians_of_pW_per_K_factors(
     for waf in values_by_wafer.keys():
         for quantity, vals in values_by_wafer[waf].items():
             try:
+                
                 if quantity == "PicowattsPerKelvin":
-                    print("%%% number of collected factors from", waf, ":",
-                          len(vals))
+                    logfun("$$$ [%s] number of collected pW/K factors : %d"
+                           %(waf, len(vals)))
                 
                 median = numpy.nanmedian(vals)
                 
                 if quantity == "PicowattsPerKelvin":
                     u = core.G3Units.pW / core.G3Units.K
-                    print("%%% median of pW/K:", median/u)
+                    logfun("$$$   median of pW/K : %7.3e" %(median/u))
             
             except:
                 median = numpy.nan
             values_by_wafer[waf][quantity] = median
     
-    print("%%% ... that's all I wanted to check.")
-
+    logfun("$$$ ... that's all I wanted to check.")
+    
     return values_by_wafer
 
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def calculate_map_fluctuation_metrics(
-        map_frame, temperature_only, return_nans=False):
+
+def identify_pixels_of_non_atypical_region(
+        map_frame, center_dec, point_source_list_file):
     
-    keys = ["MapStdDevs",
-            "MeansOfWeights",
-            "NumbersOfPixelsWithGoodWeights",
-            "VarsOfProductsOfMapValuesAndSqrtWeights"]
+    ras, decs = coordinateutils.maputils.get_ra_dec_map(map_frame["T"])
+    ras  = numpy.asarray(ras/core.G3Units.deg)
+    decs = numpy.asarray(decs/core.G3Units.deg)
+    center_dec /= core.G3Units.deg
     
-    fluctuation_metrics = {key: numpy.nan for key in keys}
-    
-    if return_nans:
-        return fluctuation_metrics
-    else:
-        if temperature_only:
-            if map_frame["T"].is_weighted:
-                t_vals = numpy.asarray(mapmaker.mapmakerutils.remove_weight_t(
-                                       map_frame["T"], map_frame["Wunpol"]))
-            else:
-                t_vals = numpy.asarray(map_frame["T"])
-            w_vals = numpy.asarray(map_frame["Wunpol"].TT)
+    ptsrc_msk = numpy.asarray(mapspectra.apodmask.makeApodizedPointSourceMask(
+                                  map_frame, point_source_list_file,
+                                  apod_type="none", zero_border_arcmin=0.0))
         
-        w_cut = numpy.percentile(w_vals[numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))], 25)
-        igw   = numpy.where((w_vals > w_cut) & numpy.isfinite(w_vals))
-        npnzw = len(numpy.where(w_vals > 0.0)[0])
-        if len(igw[0]) == 0:
+    typical_pixels = numpy.where((ras > -48.0) & (ras < 48.0) &
+                                 (decs < (center_dec + 3.0))  & 
+                                 (decs > (center_dec - 3.0))  &
+                                 (ptsrc_msk == 1.0))
+    
+    del ras, decs, ptsrc_msk
+    gc.collect()
+    
+    """final_mask = numpy.zeros(map_frame["T"].shape)
+    final_mask[typical_pixels] = 1.0
+    from matplotlib import pyplot
+    pyplot.imshow(final_mask, cmap="gray")
+    pyplot.show()"""
+    
+    return typical_pixels
+
+
+
+
+def calculate_map_fluctuation_metrics(
+        map_frame, band, sub_field, pixs=None, t_only=True, logfun=print):
+    
+    if t_only:
+        field_map_keys = ["T"]
+        weight_types   = ["TT"]
+    
+    k_suffix_stddev = "MapStandardDeviations"
+    k_template_avgw = "MeansOf{}Weights"
+    k_template_npgw = "NumbersOfPixelsWithGood{}Weights"
+    
+    flc_keys = []
+    for fmk in field_map_keys:
+        flc_keys.append(fmk+k_suffix_stddev)
+    for wtp in weight_types:
+        flc_keys.append(k_template_avgw.replace("{}", wtp))
+        flc_keys.append(k_template_npgw.replace("{}", wtp))
+    
+    logfun("$$$ print some debugging info here ...")
+    logfun("$$$ types of metrics to calculate:")
+    for k in flc_keys:
+        logfun("$$$    %s" %(k))
+    
+    fluctuation_metrics = {key: numpy.nan for key in flc_keys}
+    
+    for fmk in field_map_keys:
+        assert (not map_frame[fmk].is_weighted), fmk + " map is still weighted!"
+    
+    if t_only:
+        
+        wu = 1 / (core.G3Units.mK * core.G3Units.mK)
+        nominal_weights_dict = \
+            { "90": {"ra0hdec-44.75": 30.0 * wu,
+                     "ra0hdec-52.25": 34.0 * wu,
+                     "ra0hdec-59.75": 36.0 * wu,
+                     "ra0hdec-67.25": 50.0 * wu},
+             "150": {"ra0hdec-44.75": 45.0 * wu,
+                     "ra0hdec-52.25": 51.0 * wu,
+                     "ra0hdec-59.75": 54.0 * wu,
+                     "ra0hdec-67.25": 75.0 * wu},
+             "220": {"ra0hdec-44.75":  3.5 * wu,
+                     "ra0hdec-52.25":  3.8 * wu,
+                     "ra0hdec-59.75":  4.5 * wu,
+                     "ra0hdec-67.25":  6.5 * wu}}
+        
+        t_vals = numpy.asarray(map_frame["T"])
+        w_vals = numpy.asarray(map_frame["Wunpol"].TT)
+        
+        pnzw = numpy.where((w_vals>0.0) & numpy.isfinite(w_vals))
+        if len(pnzw[0]) == 0:
             return fluctuation_metrics
         
-        good_w_vals = w_vals[igw]
-        good_t_vals = t_vals[igw]
+        logfun("$$$ number of pixels with non-zero weights : %d"
+               %(len(pnzw[0])))
         
-        pctl_hi = numpy.nanpercentile(good_t_vals, 99.5)
-        pctl_lo = numpy.nanpercentile(good_t_vals,  0.5)
-        inx = numpy.where(numpy.isfinite(good_t_vals) & (good_t_vals < pctl_hi) & (good_t_vals > pctl_lo))
-        better_t_vals = good_t_vals[inx]
-        better_w_vals = good_w_vals[inx]
+        if pixs is None:
+            w_cut = numpy.percentile(w_vals[pnzw], 25)
+            igw = numpy.where(w_vals > w_cut)            
+            good_w_vals = w_vals[igw]
+            good_t_vals = t_vals[igw]
+            pctl_hi = numpy.nanpercentile(good_t_vals, 99.5)
+            pctl_lo = numpy.nanpercentile(good_t_vals,  0.5)
+            inx = numpy.where(numpy.isfinite(good_t_vals) &
+                              (good_t_vals < pctl_hi)     &
+                              (good_t_vals > pctl_lo))
+            better_t_vals = good_t_vals[inx]
+            better_w_vals = good_w_vals[inx]
+        else:
+            better_t_vals = t_vals[pixs]
+            better_w_vals = w_vals[pixs]
         
-        map_stddev  = numpy.std(better_t_vals)
+        map_stdddev = numpy.std(better_t_vals)
         mean_weight = numpy.mean(better_w_vals)
-        var_product = numpy.var(better_t_vals * numpy.sqrt(better_w_vals))
+        nominal_wgt = nominal_weights_dict[band][sub_field]
+        n_pix_g_wgt = len(numpy.where(better_w_vals > nominal_wgt)[0])
         
-        fluctuation_metrics[keys[0]] = map_stddev
-        fluctuation_metrics[keys[1]] = mean_weight
-        fluctuation_metrics[keys[2]] = npnzw
-        fluctuation_metrics[keys[3]] = var_product
+        logfun("$$$ number of pixels with good weights : %d" %(n_pix_g_wgt))
         
-        return fluctuation_metrics
+        fluctuation_metrics["TMapStandardDeviations"] = map_stdddev
+        fluctuation_metrics["MeansOfTTWeights"]       = mean_weight
+        fluctuation_metrics["NumbersOfPixelsWithGoodTTWeights"] = n_pix_g_wgt
+    
+    logfun("$$$ ... that's all I wanted to know.")
+    
+    return fluctuation_metrics
 
 
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def calculate_pointing_discrepancies(
         fr_one, fr_two, sub_field,
         temp_only=True, map_stddev=None):
@@ -589,50 +695,6 @@ def calculate_pointing_discrepancies(
         snr_dict[point_source_number] = source_snr
         
     return discrep_dict, flux_dict, snr_dict
-
-
-
-
-def create_new_map_frame_with_smaller_map_region(
-        map_frame, temperature_only,
-        center_ra, center_dec,
-        map_key_suffix="", divisive_factor=1.0):
-
-    new_mp_fr = core.G3Frame(core.G3FrameType.Map)
-
-    if temperature_only:
-        original_sky_map = map_frame["T"+map_key_suffix] / divisive_factor
-        
-        smaller_sky_map = \
-            coordinateutils.FlatSkyMap(
-                x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                res=original_sky_map.res,
-                proj=original_sky_map.proj,
-                alpha_center=center_ra,
-                delta_center=center_dec,
-                pol_type=original_sky_map.pol_type,
-                coord_ref=original_sky_map.coord_ref)
-        coordinateutils.reproj_map(original_sky_map,  smaller_sky_map,  1)
-        new_mp_fr["T"] = smaller_sky_map
-        
-        if "Wunpol" in map_frame.keys():
-            original_wght_map = map_frame["Wunpol"].TT
-            
-            smaller_wght_map = coordinateutils.FlatSkyMap(
-                x_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                y_len=int(5.0*core.G3Units.deg/original_sky_map.res),
-                res=original_sky_map.res,
-                proj=original_sky_map.proj,
-                alpha_center=center_ra,
-                delta_center=center_dec,
-                pol_type=original_sky_map.pol_type,
-                coord_ref=original_sky_map.coord_ref)
-            coordinateutils.reproj_map(original_wght_map, smaller_wght_map, 1)    
-            new_mp_fr["Wunpol"]    = core.G3SkyMapWeights()
-            new_mp_fr["Wunpol"].TT = smaller_wght_map
-
-    return new_mp_fr
 
 
 
@@ -787,9 +849,16 @@ class AnalyzeAndCoaddMaps(object):
                  calculate_cross_spectra_with_planck_map=False,
                  planck_map_fits_files=None,
                  calculate_pointing_discrepancies=False,
-                 logging_function=logging.info):
+                 logging_function=logging.info,
+                 less_verbose=False):
         
         self.log = logging_function
+        if less_verbose:
+            def dummy(x):
+                return
+            self.detail = dummy
+        else:
+            self.detail = self.log
         
         # - Initialize variables related to map IDs
         
@@ -906,16 +975,17 @@ class AnalyzeAndCoaddMaps(object):
         self.calc_map_stddev_etc = calculate_map_rmss_and_weight_stats
         
         if self.calc_map_stddev_etc:
-            self.fluctuation_keys = ["TMapStandardDeviations",
-                                     "MeansOfTTWeights",
-                                     "NumbersOfPixelsWithGoodTTWeights"]
-            tu = core.G3Units.mK
-            self.flu_met_unis = {"TMapStandardDeviations": tu,
-                                 "MeansOfTTWeights"      : 1/(tu*tu),
-                                 "NumbersOfPixelsWithGoodTTWeights": 1}
-            self.flu_met_ustr = {"TMapStandardDeviations": "mK",
-                                 "MeansOfTTWeights"      : "1/mK^2",
-                                 "NumbersOfPixelsWithGoodTTWeights": "unitless"}
+            if self.t_only:
+                self.fluctuation_keys = ["TMapStandardDeviations",
+                                         "MeansOfTTWeights",
+                                         "NumbersOfPixelsWithGoodTTWeights"]
+                tu = core.G3Units.mK
+                self.flu_met_unis = {"TMapStandardDeviations": tu,
+                                     "MeansOfTTWeights"      : 1/(tu*tu),
+                                     "NumbersOfPixelsWithGoodTTWeights": 1}
+                self.flu_met_ustr = {"TMapStandardDeviations": "mK",
+                                     "MeansOfTTWeights"      : "1/mK^2",
+                                     "NumbersOfPixelsWithGoodTTWeights": ""}
             
             self.coadds_or_individs_for_flc = []
             if "c" in rmss_and_wgts_from_coadds_or_individuals:
@@ -927,11 +997,11 @@ class AnalyzeAndCoaddMaps(object):
             if "s" in rmss_and_wgts_from_signals_or_noises:
                 self.signals_or_noises_for_flc.append("Signal")
             if "n" in rmss_and_wgts_from_signals_or_noises:
-                self.signals_of_noises_for_flc.append("Noise")
+                self.signals_or_noises_for_flc.append("Noise")
             
             self.map_types_for_flc = []
             for c_or_i in self.coadds_or_individs_for_flc:
-                for s_or_n in self.signals_of_noises_for_flc:
+                for s_or_n in self.signals_or_noises_for_flc:
                     self.map_types_for_flc.append(c_or_i+s_or_n+"Maps")
             
             self.key_prefix_flc = "FluctuationMetrics"
@@ -1225,6 +1295,12 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("\n")
                     return []
                 else:
+                    center_ra  = core.G3Units.deg * 0.0
+                    center_dec = core.G3Units.deg * -57.5
+                    center_y, center_x = \
+                        numpy.unravel_index(
+                            frame["T"].angle_to_pixel(center_ra, center_dec),
+                            frame["T"].shape)
                     obs_ids_from_this_frame = \
                         {id_for_coadds: frame["CoaddedObservationIDs"]}
                     map_ids_from_this_frame = \
@@ -1270,9 +1346,13 @@ class AnalyzeAndCoaddMaps(object):
                     dura = {str(oid): (d_f - d_i) * core.G3Units.s}
                     center_ra  = core.G3Units.deg * 0.0
                     center_dec = core.G3Units.deg * float(sbfd[-6:])
+                    center_y, center_x = \
+                        numpy.unravel_index(
+                            frame["T"].angle_to_pixel(center_ra, center_dec),
+                            frame["T"].shape)
                     for b in ["90GHz", "150GHz", "220GHz"]:
                         if b in id_for_coadds:
-                            band = b
+                            band_assoc_this_frame = b.replace("GHz", "")
                             break
                     obs_ids_from_this_frame = \
                         {id_for_coadds: {sbfd: core.G3VectorInt([oid])}}
@@ -1345,8 +1425,10 @@ class AnalyzeAndCoaddMaps(object):
                         remove_weights_beforehand=False,
                         multiply_2nd_frame_by=-1.0,
                         remove_weights_afterward=False,
-                        divide_results_by=1.0,
-                        record_weights=True)
+                        divide_result_by=1.0,
+                        record_weights=True,
+                        logfun=self.detail,
+                        iy=center_y, ix=center_x)
                 self.log("* Done.")
                 self.log("")
             else:
@@ -1354,18 +1436,38 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("* Adding a set of ")
                 self.log("* sky map and weight map (ID: %s)", frame["Id"])
                 self.log("* to the coadded maps (ID: %s) ...", id_for_coadds)
-                self.coadded_map_frames[id_for_coadds] = \
-                    add_two_map_frames(
-                        self.coadded_map_frames[id_for_coadds],
-                        frame,
-                        t_only=self.t_only,
-                        remove_weights_beforehand=False,
-                        multiply_2nd_frame_by=1.0,
-                        remove_weights_afterward=False,
-                        divide_results_by=1.0,
-                        record_weights=True)
-                self.log("* Done.")
-                self.log("")
+                if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
+                    if self.t_only:
+                        self.coadded_map_frames[id_for_coadds]["T"] = frame["T"]
+                        self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
+                            frame["Wunpol"]
+                    self.detail("$$$ t of original map @ field center: %7.3e "
+                                %(numpy.asarray(
+                                  self.coadded_map_frames[id_for_coadds]["T"])\
+                                  [center_y][center_x]/core.G3Units.mK))
+                    self.detail("$$$ w of original map @ field center: %7.3e "
+                                %(numpy.asarray(
+                                  self.coadded_map_frames\
+                                  [id_for_coadds]["Wunpol"].TT)\
+                                  [center_y][center_x]/core.G3Units.mK))                    
+                    self.log("* Field and weight maps were added "
+                             "to the empty cache.")
+                    self.log("")
+                else:
+                    self.coadded_map_frames[id_for_coadds] = \
+                        add_two_map_frames(
+                            self.coadded_map_frames[id_for_coadds],
+                            frame,
+                            t_only=self.t_only,
+                            remove_weights_beforehand=False,
+                            multiply_2nd_frame_by=1.0,
+                            remove_weights_afterward=False,
+                            divide_result_by=1.0,
+                            record_weights=True,
+                            logfun=self.detail,
+                            iy=center_y, ix=center_x)
+                    self.log("* Done.")
+                    self.log("")
             gc.collect()
             
             
@@ -1452,17 +1554,12 @@ class AnalyzeAndCoaddMaps(object):
                         self.log("* Gathering the median values of the pW/K")
                         self.log("* conversion factors ...")
                         meds_pwks_from_this_fr = {}
-                        if "90GHz"  in id_for_coadds:
-                            band_of_interest =  "90"
-                        if "150GHz" in id_for_coadds:
-                            band_of_interest = "150"
-                        if "220GHz" in id_for_coadds:
-                            band_of_interest = "220"
                         meds_to_be_reorganized = \
                             collect_medians_of_pW_per_K_factors(
-                                self.wafers, band_of_interest,
+                                self.wafers, band_assoc_this_frame,
                                 self.calframe,
-                                flagging_stats=self.pipe_info_frame)
+                                flagging_stats=self.pipe_info_frame,
+                                logfun=self.detail)
                         for wafer in meds_to_be_reorganized.keys():
                             meds_pwks_from_this_fr[wafer] = {}
                             for factor in meds_to_be_reorganized[wafer].keys():
@@ -1485,18 +1582,22 @@ class AnalyzeAndCoaddMaps(object):
             
             if self.analyze_maps:
                 
+                self.log("")
+                self.log("* Preparing the maps needed for the "
+                         "requested analysis ...")
+                
                 if frame_has_old_coadds:
                     time_to_analyze_maps = True
                     # * Set this to True just to collect 
                     #   the previous analysis results
-                    if self.maps_split_by_direction:
+                    if self.maps_split_by_scan_direction:
                         n_mp_ea_fld = {fld: len(obs_ids) for fld, obs_ids in \
                                        frame["CoaddedObservationIDs"].items()}
                         for f, n in n_mp_ea_fld.items():
                             self.map_fr_arrival_counters[frame["Id"]][f] += n
                 
                 else:
-                    if self.maps_split_by_direction:
+                    if self.maps_split_by_scan_direction:
                         time_to_analyze_maps = False
                         self.map_fr_arrival_counters[frame["Id"]][sbfd] += 1
                         self.map_cache_for_both_dirs[frame["Id"]][sbfd] = frame
@@ -1538,8 +1639,9 @@ class AnalyzeAndCoaddMaps(object):
                                     remove_weights_beforehand=False,
                                     multiply_2nd_frame_by=1.0,
                                     remove_weights_afterward=True,
-                                    divide_results_by=1.0,
-                                    record_weights=False)
+                                    divide_result_by=1.0,
+                                    record_weights=False,
+                                    logfun=self.detail)
                             diff_map_frame_coadded = \
                                 add_two_map_frames(
                                     self.coadded_map_frames[id_l_ver],
@@ -1548,8 +1650,9 @@ class AnalyzeAndCoaddMaps(object):
                                     remove_weights_beforehand=True,
                                     multiply_2nd_frame_by=-1.0,
                                     remove_weights_afterward=False,
-                                    divide_results_by=2.0,
-                                    record_weights=False)
+                                    divide_result_by=2.0,
+                                    record_weights=False,
+                                    logfun=self.detail)
                             summ_map_frame_individ_mini = None
                             diff_map_frame_individ_mini = None
                             summ_map_frame_coadded_mini = None
@@ -1561,19 +1664,21 @@ class AnalyzeAndCoaddMaps(object):
                             # * There are conceivable situations where
                             #   individual maps are needed, but these frames
                             #   suffice for the time being.
-                            gc.collect()
                     else:
                         time_to_analyze_maps   = True
                         summ_map_frame_individ = \
-                            add_two_map_frames(
-                                frame,
-                                None,
-                                t_only=self.t_only,
-                                remove_weights_beforehand=False,
-                                multiply_2nd_frame_by=0.0,
-                                remove_weights_afterward=True,
-                                divide_result_by=1.0,
-                                record_weights=False)
+                            core.G3Frame(core.G3FrameType.Map)
+                        if self.t_only:
+                            summ_map_frame_individ["T"] = \
+                                mapmaker.mapmakerutils.remove_weight_t(
+                                    frame["T"], frame["Wunpol"])
+                            summ_map_frame_individ["Wunpol"] = \
+                                frame["Wunpol"]
+                            self.detail("$$$ t of original map "
+                                        "@ field center: %7.3e "
+                                        %(numpy.asarray(
+                                          summ_map_frame_individ["T"])\
+                                          [center_y][center_x]/core.G3Units.mK))
                         diff_map_frame_individ = None
                         summ_map_frame_coadded = None
                         diff_map_frame_coadded = None
@@ -1582,14 +1687,24 @@ class AnalyzeAndCoaddMaps(object):
                                 summ_map_frame_individ,
                                 center_ra, center_dec,
                                 t_only=self.t_only)
+                        self.detail("$$$ t of smaller map "
+                                    "@ field center: %7.3e "
+                                    %(numpy.asarray(
+                                      summ_map_frame_individ["T"])\
+                                      [center_y][center_x]/core.G3Units.mK))
                         diff_map_frame_individ_mini = \
-                            summ_map_frame_indvid_mini
+                            summ_map_frame_individ_mini
                         summ_map_frame_coadded_mini = None
                         diff_map_frame_coadded_mini = None
                         # * There are conceivable situations where
                         #   coadded maps are needed, but these frames
                         #   suffice for the time being.
                         gc.collect()
+                if self.t_only:
+                    del frame["T"], frame["Wunpol"]
+                    gc.collect()
+                self.log("* Preparations done.")
+                self.log("")
             
             else:
                 time_to_analyze_maps = False
@@ -1627,29 +1742,33 @@ class AnalyzeAndCoaddMaps(object):
                         self.log("* Calculating map fluctuation metrics")
                         self.log("* for the following types of maps:")
                         self.log("* %s ...", self.map_types_for_flc)
-                        if self.pixels_to_use_for_flc_calc[src] is None:
-                            self.pixels_to_use_for_flc_calc[src] = \
+                        if self.pixels_to_use_for_flc_calc[sbfd] is None:
+                            self.log("* (Need to figure out what pixels "
+                                     "to use for the calculations.")
+                            self.pixels_to_use_for_flc_calc[sbfd] = \
                                 identify_pixels_of_non_atypical_region(
-                                    frame, center_ra, center_dec,
+                                    summ_map_frame_individ, center_dec,
                                     self.point_source_list_file)
+                            self.log("*  these will be repeated used.")
                         for mt in self.map_types_for_flc:
-                            if map_type == "IndividualSignalMaps":
+                            if mt == "IndividualSignalMaps":
                                 frame_to_use = summ_map_frame_individ
-                            if map_type == "CoaddedSignalMaps":
+                            if mt == "CoaddedSignalMaps":
                                 frame_to_use = summ_map_frame_coadded
-                            if map_type == "IndividualNoiseMaps":
+                            if mt == "IndividualNoiseMaps":
                                 frame_to_use = diff_map_frame_indvid
-                            if map_type == "CoaddedNoiseMaps":
+                            if mt == "CoaddedNoiseMaps":
                                 frame_to_use = diff_map_frame_coadded
+                            self.log("* Results for %s ...", mt)
                             fluctuation_metrics = \
                                 calculate_map_fluctuation_metrics(
                                     frame_to_use,
-                                    pixs=self.pixels_to_use_for_flc_calc[src],
+                                    band_assoc_this_frame, sbfd,
+                                    pixs=self.pixels_to_use_for_flc_calc[sbfd],
                                     t_only=self.t_only)
-                            self.log("* %s", mt)
                             tu = core.G3Units.mK
                             for k, v in fluctuation_metrics.items():
-                                self.log("*  %35s %s %s",
+                                self.log("*  %35s : %s %s",
                                          k, v/self.flu_met_unis[k],
                                          self.flu_met_ustr[k])
                             for k, v in fluctuation_metrics.items():
@@ -1657,7 +1776,7 @@ class AnalyzeAndCoaddMaps(object):
                                           sbfd, oid, v)
                                 self.map_fluctuation_metrics[mt][k] = \
                                     self.combine_mapmapdoubles(
-                                        self.map_fluctuation_metrics[mt][fk],
+                                        self.map_fluctuation_metrics[mt][k],
                                         {id_for_coadds: mmd})
                     self.log("* Done.")
                     self.log("")
@@ -1716,7 +1835,7 @@ class AnalyzeAndCoaddMaps(object):
                             map_stddev = self.map_fluctuation_metrics  \
                                              ["IndividualSignalMaps"]  \
                                              ["MapStdDevs"]            \
-                                             [id_for_coadds][src][str(oid)]
+                                             [id_for_coadds][sbfd][str(oid)]
                         else:
                             map_stddev = None
                         offsets, fluxes, snrs = \
@@ -1913,7 +2032,7 @@ class AnalyzeAndCoaddMaps(object):
                 summ_map_frame_coadded_mini = None
                 diff_map_frame_coadded_mini = None
                 
-                if self.maps_split_by_direction:
+                if self.maps_split_by_scan_direction:
                     self.map_fr_arrival_counters[idl][sbfd] = 0
                     self.map_fr_arrival_counters[idr][sbfd] = 0
                     self.map_cache_for_both_dirs[idl][sbfd] = None
@@ -1985,7 +2104,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                 self.log("\n")
                 
-                self.log("# Observation durations [minutes.]:")
+                self.log("# Observation durations [minutes]:")
                 du = core.G3Units.min   # * display units
                 self.print_mapmapdouble(mp_fr["ObservationDurations"], du, 0)
                 self.log("\n")
@@ -2034,7 +2153,7 @@ class AnalyzeAndCoaddMaps(object):
                         for fk in self.fluctuation_keys:
                             k_rec = k_rec_root + mt + fk
                             mp_fr[k_rec] = \
-                                self.map_fluctuation_metrics[mp][fk][map_id]
+                                self.map_fluctuation_metrics[mt][fk][map_id]
                             self.log(" "*3 + " - Metric: %s [%s]",
                                      fk, self.flu_met_ustr[fk])
                             self.print_mapmapdouble(
@@ -2195,16 +2314,28 @@ class FlagBadMaps(object):
                  bad_map_list_file, logging_function):
         
         self.t_only = t_only
-        self.sb_fld = None
+        
+        self.sb_fld    = None
+        self.center_ra = None
+        self.center_dc = None
+        
         self.obs_id = None
         self.mp_ids = map_ids
         self.x_list = bad_map_list_file
         self.logfun = logging_function
+        
+        self.pixels_to_use_for_flc_calc = \
+            {sub_field: None for sub_field in \
+             ["ra0hdec-44.75", "ra0hdec-52.25",
+              "ra0hdec-59.75", "ra0hdec-67.25"]}
     
     def __call__(frame):
         
         if frame.type == core.G3FrameType.Observation:
-            self.sb_field = frame["SourceName"]
+            self.sb_fld    = frame["SourceName"]
+            self.center_ra = core.G3Units.deg * 0.0
+            self.center_dc = \
+                core.G3Units.deg * float(self.sb_fld.replace("ra0hdec", ""))
         
         if (frame.type == core.G3FrameType.Map) and \
            (frame["Id"] in self.mp_ids):
@@ -2214,7 +2345,16 @@ class FlagBadMaps(object):
             
             map_is_bad = False
             
-            flc_dct = calculate_map_fluctuation_metrics(frame, self.t_only)
+            if self.pixels_to_use_for_flc_calc[self.sb_fld] is None:
+                self.pixels_to_use_for_flc_calc[sb_fld] = \
+                    identify_pixels_of_non_atypical_region(
+                        frame, self.center_ra, self.center_dec,
+                        self.point_source_list_file)
+                flc_dct = calculate_map_fluctuation_metrics(
+                              frame,
+                              pixs=self.pixels_to_use_for_flc_calc[sb_fld],
+                              t_only=self.t_only,
+                              logfun=(lambda x: ""))
             mean_wt = flc_dct["MeansOfWeights"]
             bad_weights = do_weights_look_bad(
                               mean_wt, frame["Id"], self.sb_fld)
@@ -2376,7 +2516,8 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
         calculate_cross_spectra_with_planck_map=False,
         planck_map_fits_files=[],
         calculate_pointing_discrepancies=False,
-        logger_name="", bad_map_list_file='', log_file=None):
+        logger_name="", less_verbose=False,
+        bad_map_list_file='', log_file=None):
     
     
     logger = logging.getLogger(logger_name)
@@ -2508,7 +2649,8 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                  planck_map_fits_files=planck_map_fits_files,
                  calculate_pointing_discrepancies=\
                      calculate_pointing_discrepancies,
-                 logging_function=log)
+                 logging_function=log,
+                 less_verbose=less_verbose)
     
     pipeline.Add(lambda frame: "AreCoaddedMapsContained" in frame)
     
@@ -2743,6 +2885,12 @@ if __name__ == '__main__':
                         type=str, action="store", default="",
                         help="The name of the logger that will be used to "
                              "record log messages.")
+    
+    parser.add_argument("-V", "--less_verbose",
+                        action="store_true", default=False,
+                        help="Whether to make the logger less verbose "
+                             "by turning off some messages. Search '$$$' "
+                             "to see the nature of these messages.")
     
     parser.add_argument("-B", "--bad_map_list_file",
                         type=str, action="store", default="",

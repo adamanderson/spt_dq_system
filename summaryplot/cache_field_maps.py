@@ -416,6 +416,7 @@ def update(mode, action,
         arguments['logger_name'] = \
             '{}_{}_{}'.format(
             sub_logger_name, band, sub_field.replace('.', ''))
+        arguments['less_verbose'] = True
         
         arguments['point_source_list_file'] = point_source_list_file
         spt_to_planck_bands = \
