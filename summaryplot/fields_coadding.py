@@ -581,124 +581,130 @@ def calculate_map_fluctuation_metrics(
 
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def calculate_pointing_discrepancies(
-        fr_one, fr_two, sub_field,
-        temp_only=True, map_stddev=None):
-
-    u = core.G3Units
-
-    if temp_only:
-        if fr_two != None:
-            total_weight = fr_one["Wunpol"].TT + fr_two["Wunpol"].TT
-            sum_map      = fr_one["T"] + fr_two["T"]
-            map_to_use   = sum_map / total_weight
-        else:
-            map_to_use = mapmaker.mapmakerutils.remove_weight_t(
-                             fr_one["T"], fr_one["Wunpol"])
+        map_frame, sub_field, map_stddev=None):
+    
+    assert (not map_frame["T"].is_weighted), \
+           "The temperature map is still weighted!"
+    
+    usys = core.G3Units
+    
+    # * The dictionary below contains ra, dec, and flux of
+    #   three brightest point sources recorded in
+    #   spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt as of July, 2019.
+    #   The ra and dec of each source are from the ATCA20GHz catalog,
+    #   but the flux is from 2018 SPT3G maps (actually, flux is not used
+    #   in any calculation)."
     
     some_brightest_sources = \
-        {"ra0hdec-44.75": {"1": numpy.array([352.32358, -47.50531, 1408.089]),
-                           "2": numpy.array([314.06833, -47.24664, 1374.576]),
-                           "3": numpy.array([ 41.50037, -46.85467,  715.329])},
-         "ra0hdec-52.25": {"1": numpy.array([ 32.69288, -51.01703, 3819.563]),
-                           "2": numpy.array([ 23.27404, -52.00094, 1026.665]),
-                           "3": numpy.array([359.47312, -53.18686,  864.243])},
-         "ra0hdec-59.75": {"1": numpy.array([ 47.48363, -60.97761,  869.843]),
-                           "2": numpy.array([ 45.96104, -62.19042,  832.717]),
-                           "3": numpy.array([ 14.69433, -56.98650,  785.528])},
-         "ra0hdec-67.25": {"1": numpy.array([329.27542, -69.68981, 1114.524]),
-                           "2": numpy.array([337.25092, -69.17492,  445.331]),
-                           "3": numpy.array([325.44375, -64.18742,  388.218])}}    
-    discrep_dict = {"1": {"delta_ra": numpy.nan, "delta_dec": numpy.nan},
-                    "2": {"delta_ra": numpy.nan, "delta_dec": numpy.nan},
-                    "3": {"delta_ra": numpy.nan, "delta_dec": numpy.nan}}
-    flux_dict = {"1": numpy.nan, "2": numpy.nan, "3": numpy.nan}
-    snr_dict  = {"1": numpy.nan, "2": numpy.nan, "3": numpy.nan}
+        {"ra0hdec-44.75": \
+             {"1st": numpy.array([352.32358, -47.50531, 1408.089]),
+              "2nd": numpy.array([314.06833, -47.24664, 1374.576]),
+              "3rd": numpy.array([ 41.50037, -46.85467,  715.329])},
+         "ra0hdec-52.25": \
+             {"1st": numpy.array([ 32.69288, -51.01703, 3819.563]),
+              "2nd": numpy.array([ 23.27404, -52.00094, 1026.665]),
+              "3rd": numpy.array([359.47312, -53.18686,  864.243])},
+         "ra0hdec-59.75": \
+             {"1st": numpy.array([ 47.48363, -60.97761,  869.843]),
+              "2nd": numpy.array([ 45.96104, -62.19042,  832.717]),
+              "3rd": numpy.array([ 14.69433, -56.98650,  785.528])},
+         "ra0hdec-67.25": \
+             {"1st": numpy.array([329.27542, -69.68981, 1114.524]),
+              "2nd": numpy.array([337.25092, -69.17492,  445.331]),
+              "3rd": numpy.array([325.44375, -64.18742,  388.218])}}
     
-    info_on_point_sources = some_brightest_sources[sub_field]
+    discrep_dict = {"1st": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
+                    "2nd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
+                    "3rd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan}}
+    flux_dict = {"1st": numpy.nan, "2nd": numpy.nan, "3rd": numpy.nan}
+    snr_dict  = {"1st": numpy.nan, "2nd": numpy.nan, "3rd": numpy.nan}
     
-    for point_source_number, info in info_on_point_sources.items():
+    
+    relevant_point_sources = some_brightest_sources[sub_field]
+    
+    for point_source_rank, info in relevant_point_sources.items():
         
         true_right_ascension = info[0]
         if true_right_ascension > 180:
             true_right_ascension -= 360
-        true_right_ascension *= u.deg
+        true_right_ascension *= usys.deg
         
         true_declination  = info[1]
-        true_declination *= u.deg
+        true_declination *= usys.deg
         
         true_x, true_y = \
-            map_to_use.angle_to_xy(true_right_ascension,
-                                   true_declination)
+            map_frame["T"].angle_to_xy(true_right_ascension,
+                                       true_declination)
         nominal_pixel_number = \
-            map_to_use.angle_to_pixel(true_right_ascension,
-                                      true_declination)
+            map_frame["T"].angle_to_pixel(true_right_ascension,
+                                          true_declination)
         nominal_y_index, nominal_x_index = \
             numpy.unravel_index(
-                nominal_pixel_number, map_to_use.shape)
+                nominal_pixel_number, map_frame["T"].shape)
         
         nominal_x_index = int(nominal_x_index)
         nominal_y_index = int(nominal_y_index)
         
-        mini_map_width    = 4 * core.G3Units.arcmin
-        mini_map_height   = 4 * core.G3Units.arcmin
-        mini_map_x_length = int(mini_map_width  / map_to_use.x_res)
-        mini_map_y_length = int(mini_map_height / map_to_use.y_res)
+        mini_map_width    = 4 * usys.arcmin
+        mini_map_height   = 4 * usys.arcmin
+        mini_map_x_length = int(mini_map_width  / map_frame["T"].x_res)
+        mini_map_y_length = int(mini_map_height / map_frame["T"].y_res)
         half_x_length     = mini_map_x_length // 2
         half_y_length     = mini_map_y_length // 2
         mini_map_x_left   = nominal_x_index - half_x_length
         mini_map_x_right  = nominal_x_index + half_x_length
         mini_map_y_bottom = nominal_y_index - half_y_length
         mini_map_y_top    = nominal_y_index + half_y_length
-        mini_map = numpy.asarray(map_to_use)\
-                   [mini_map_y_bottom:mini_map_y_top+1,
-                    mini_map_x_left:mini_map_x_right+1]
+        mini_map = numpy.asarray(map_frame["T"])\
+                       [mini_map_y_bottom:mini_map_y_top+1,
+                        mini_map_x_left:mini_map_x_right+1]
         
         try:
             fit_parameters = util.fitting.fit_gaussian2d(mini_map)
         except ValueError:
-            discrep_dict[point_source_number]["delta_ra"]  = numpy.nan
-            discrep_dict[point_source_number]["delta_dec"] = numpy.nan
+            discrep_dict[point_source_rank]["DeltaRa"]  = numpy.nan
+            discrep_dict[point_source_rank]["DeltaDec"] = numpy.nan
             continue
-            
+        
         gaussian_center_x = fit_parameters[1]
         gaussian_center_y = fit_parameters[2]
         
-        measured_x = gaussian_center_x - half_x_length + nominal_x_index
-        measured_y = gaussian_center_y - half_y_length + nominal_y_index
+        measured_x = gaussian_center_x + mini_map_x_left
+        measured_y = gaussian_center_y + mini_map_y_bottom
         
         measured_right_ascension, measured_declination = \
-            map_to_use.xy_to_angle(measured_x, measured_y)
+            map_frame["T"].xy_to_angle(measured_x, measured_y)
         
         delta_ra  = measured_right_ascension - true_right_ascension
         delta_dec = measured_declination     - true_declination
-        effective_delta_ra = delta_ra * numpy.cos(true_declination/u.rad)
+        effective_delta_ra = delta_ra * numpy.cos(true_declination/usys.rad)
         
-        discrep_dict[point_source_number]["delta_ra"]  = effective_delta_ra
-        discrep_dict[point_source_number]["delta_dec"] = delta_dec
+        discrep_dict[point_source_rank]["DeltaRa"]  = effective_delta_ra
+        discrep_dict[point_source_rank]["DeltaDec"] = delta_dec
         
         nearest_x = int(numpy.round(measured_x))
         nearest_y = int(numpy.round(measured_y))
-        source_centered_mini_map =   \
-            numpy.asarray(map_to_use)\
+        source_centered_mini_map = \
+            numpy.asarray(map_frame["T"])\
                 [nearest_y-half_y_length:nearest_y+half_y_length+1,
                  nearest_x-half_x_length:nearest_x+half_x_length+1]
         source_flux = numpy.sum(source_centered_mini_map) * \
-                      map_to_use.x_res * map_to_use.y_res
-        flux_dict[point_source_number] = source_flux
+                      map_frame["T"].x_res * map_frame["T"].y_res
+        flux_dict[point_source_rank] = source_flux
         
         if map_stddev is None:
             source_snr = numpy.nan
         else:
             source_snr = numpy.max(source_centered_mini_map) / map_stddev
-        snr_dict[point_source_number] = source_snr
-        
+        snr_dict[point_source_rank] = source_snr
+    
     return discrep_dict, flux_dict, snr_dict
 
 
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def create_apodization_mask(map_frame, point_source_file):
 
     new_mp_fr = core.G3Frame(core.G3FrameType.Map)
@@ -1206,7 +1212,7 @@ class AnalyzeAndCoaddMaps(object):
             self.log("")
             oids = data.keys()
             for oid, datum in data.items():
-                self.log(" "*(indlev+3) + "%12s : %5.2e", oid, datum/u)
+                self.log(" "*(indlev+3) + "%12s : %+7.3e", oid, datum/u)
             self.log("")
     
     
@@ -1295,8 +1301,8 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("\n")
                     return []
                 else:
-                    center_ra  = core.G3Units.deg * 0.0
-                    center_dec = core.G3Units.deg * -57.5
+                    center_ra  = core.G3Units.deg *   0.0
+                    center_dec = core.G3Units.deg * -56.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1441,15 +1447,18 @@ class AnalyzeAndCoaddMaps(object):
                         self.coadded_map_frames[id_for_coadds]["T"] = frame["T"]
                         self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
                             frame["Wunpol"]
-                    self.detail("$$$ t of original map @ field center: %7.3e "
+                    tu = core.G3Units.mK
+                    self.detail("$$$ t of original map @ "
+                                "the center of the full field: %7.3e "
                                 %(numpy.asarray(
                                   self.coadded_map_frames[id_for_coadds]["T"])\
-                                  [center_y][center_x]/core.G3Units.mK))
-                    self.detail("$$$ w of original map @ field center: %7.3e "
+                                  [center_y][center_x]/tu))
+                    self.detail("$$$ w of original map @ "
+                                "the center of the full field: %7.3e "
                                 %(numpy.asarray(
                                   self.coadded_map_frames\
                                   [id_for_coadds]["Wunpol"].TT)\
-                                  [center_y][center_x]/core.G3Units.mK))                    
+                                  [center_y][center_x]*tu*tu))                    
                     self.log("* Field and weight maps were added "
                              "to the empty cache.")
                     self.log("")
@@ -1788,19 +1797,19 @@ class AnalyzeAndCoaddMaps(object):
             if time_to_analyze_maps and self.calc_pointing_discrepancies:
                 
                 if subtract_maps_in_this_frame:
-                    for rank in self.ptsrc_ranks:
-                        for delta_type in self.ptsrc_offset_types:
-                            self.ptsrc_delta_ras_and_decs[rank][delta_type] = \
+                    for r in self.ptsrc_ranks:
+                        for d in self.ptsrc_offset_types:
+                            self.ptsrc_delta_ras_and_decs[r][d] = \
                                 self.remove_partial_mapmapdouble(
-                                    self.delta_ras_and_decs[rank][delta_type],
+                                    self.ptsrc_delta_ras_and_decs[r][d],
                                     obs_ids_from_this_frame)
-                        self.ptsrc_fluxes[rank] = \
+                        self.ptsrc_fluxes[r] = \
                             self.remove_partial_mapmapdouble(
-                                self.ptsrc_fluxes[rank],
+                                self.ptsrc_fluxes[r],
                                 obs_ids_from_this_frame)
-                        self.snrs[n] = \
+                        self.ptsrc_snrs[r] = \
                             self.remove_partial_mapmapdouble(
-                                self.ptsrc_snrs[rank],
+                                self.ptsrc_snrs[r],
                                 obs_ids_from_this_frame)
                 
                 else:
@@ -1832,9 +1841,9 @@ class AnalyzeAndCoaddMaps(object):
                         self.log("* 3 bright point sources in the field ...")
                         if self.calc_map_stddev_etc and \
                            ("IndividualSignalMaps" in self.map_types_for_flc):
-                            map_stddev = self.map_fluctuation_metrics  \
-                                             ["IndividualSignalMaps"]  \
-                                             ["MapStdDevs"]            \
+                            map_stddev = self.map_fluctuation_metrics   \
+                                             ["IndividualSignalMaps"]   \
+                                             ["TMapStandardDeviations"] \
                                              [id_for_coadds][sbfd][str(oid)]
                         else:
                             map_stddev = None
@@ -1845,15 +1854,15 @@ class AnalyzeAndCoaddMaps(object):
                         for rank, diffs in offsets.items():
                             u = core.G3Units
                             for coord, diff in diffs.items():
-                                self.log("* Source %s %9s %s arcseconds",
+                                self.log("* %s Source - %9s : %+7.3e arcsec.",
                                          rank, coord, diff/u.arcsec)
                             flux  = fluxes[rank]
                             flux /= u.mK * u.arcmin * u.arcmin
-                            self.log("* Source %s %9s %s mK.arcmin^2",
-                                     "flux", rank, flux)
+                            self.log("* %s Source - %9s : %+7.3e mK.arcmin.^2",
+                                     rank, "flux", flux)
                             snr = snrs[rank]
-                            self.log("* Source %s %9s %s",
-                                     "SNR", rank, snr)
+                            self.log("* %s Source - %9s : %+7.3e",
+                                     rank, "SNR", snr)
                         for r in self.ptsrc_ranks:
                             for d in self.ptsrc_offset_types:
                                 mmd = self.create_mmd_for_one_value(
@@ -2166,7 +2175,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     
                     for r in self.ptsrc_ranks:
-                        self.log("- Point source %s", rank)
+                        self.log("- %s point source", r)
                         self.log("")
                         
                         du = core.G3Units.arcsec
@@ -2186,7 +2195,7 @@ class AnalyzeAndCoaddMaps(object):
                         self.print_mapmapdouble(mp_fr[k_rec], du, 6)
                         
                         k_rec = self.key_template_ptsrc_s.replace("Nth", r)
-                        mp_fr[k_rec] = self.ptsrc_snrs[rank][map_id]                      
+                        mp_fr[k_rec] = self.ptsrc_snrs[r][map_id]                      
                         self.log(" "*3 + " - SNR")
                         self.print_mapmapdouble(mp_fr[k_rec], 1.0, 6)
                     self.log("\n")
@@ -2846,6 +2855,12 @@ if __name__ == '__main__':
                              "maps or coadded maps, and 'noise maps' refer to "
                              "'left-going' maps minus 'right-going' maps.")
     
+    parser.add_argument("-p", "--calculate_pointing_discrepancies",
+                        action="store_true", default=False,
+                        help="Whether to calculate the difference between the "
+                             "true positions of some point sources and their "
+                             "measured positions.")
+    
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
                         help="Whether to calculate map noise levels from "
@@ -2874,12 +2889,6 @@ if __name__ == '__main__':
     parser.add_argument("-X", "--planck_map_fits_files",
                         type=str, action="store", nargs="+", default=[],
                         help="Path to a FITS file that contains a Planck map.")
-    
-    parser.add_argument("-p", "--calculate_pointing_discrepancies",
-                        action="store_true", default=False,
-                        help="Whether to calculate the difference between the "
-                             "true positions of some point sources and their "
-                             "measured positions.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
