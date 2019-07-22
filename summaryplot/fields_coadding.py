@@ -1234,16 +1234,19 @@ class AnalyzeAndCoaddMaps(object):
             self.log("")
             self.log("* This map was determined to be bad from ")
             self.log("* a previous processing step!")
+            self.log("")
             return False
         
         if map_frame["T"].units != core.G3TimestreamUnits.Tcmb:
             self.log("")
             self.log("* The units of this map are not in Tcmb!")
+            self.log("")
             return False
         
         if not numpy.isfinite(numpy.nanmean(numpy.asarray(map_frame["T"]))):
             self.log("")
             self.log("* There seem to be only NaNs in the map!")
+            self.log("")
             return False
         
         return True
@@ -1310,7 +1313,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("* Skipping the map frame above")
                     self.log("* because its map ID is ")
                     self.log("* not one of the desired IDs.")
-                    self.log("\n")
+                    self.log("")
                     return []
                 else:
                     center_ra  = core.G3Units.deg *   0.0
@@ -1337,20 +1340,20 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("* Skipping the map frame above")
                     self.log("* because its map ID is")
                     self.log("* not one of the desired IDs.")
-                    self.log("\n")
+                    self.log("")
                     return []
                 elif self.obs_info is None:
                     self.log("")
                     self.log("* Skipping the map frame above")
                     self.log("* because it is unclear what type of observation")
                     self.log("* the map is from.")
-                    self.log("\n")
+                    self.log("")
                     return []
                 elif self.obs_info["SourceName"] not in self.map_sources:
                     self.log("")
                     self.log("* Skipping the map frame above")
                     self.log("* because of the wrong sub-field.")
-                    self.log("\n")
+                    self.log("")
                     return []
                 else:
                     id_for_coadds = self.id_mapping[frame["Id"]]
@@ -1386,8 +1389,8 @@ class AnalyzeAndCoaddMaps(object):
             if not self.map_seems_fine(frame):
                 self.log("")
                 self.log("* Well, the map doesn't look good,")
-                self.log("* so, it will be skipped ...")
-                self.log("\n")
+                self.log("* so, it will be skipped.")
+                self.log("")
                 self.ignored_obs_ids = \
                     self.combine_ids(self.ignored_obs_ids,
                                      obs_ids_from_this_frame)
@@ -1409,8 +1412,8 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("")
                 self.log("* Well, it looks that this map frame")
                 self.log("* has already been added (at least partially),")
-                self.log("* so, it will be skipped ...")
-                self.log("\n")
+                self.log("* so, it will be skipped.")
+                self.log("")
                 return []
             
             subtract_maps_in_this_frame = this_frame_already_added
@@ -1532,13 +1535,13 @@ class AnalyzeAndCoaddMaps(object):
                                     avgs_flg_stats_from_this_fr[flg_typ] = \
                                         {id_for_coadds: mmd}
                                 break
-                    self.log("* Done.")
-                    self.log("")
                     for flg_typ in avgs_flg_stats_from_this_fr.keys():
                         self.avgs_flagging_stats[flg_typ] = \
                             self.combine_mapmapdoubles(
                                 self.avgs_flagging_stats[flg_typ],
                                 avgs_flg_stats_from_this_fr[flg_typ])
+                    self.log("* Done.")
+                    self.log("")
             
             
             # -- Calculate mean value of the pW/K conversion factors
@@ -1587,14 +1590,14 @@ class AnalyzeAndCoaddMaps(object):
                                           sbfd, oid, med)
                                 meds_pwks_from_this_fr[wafer][factor] = \
                                     {id_for_coadds: mmd}
-                    self.log("* Done.")
-                    self.log("")
                     for waf in meds_pwks_from_this_fr.keys():
                         for fa in meds_pwks_from_this_fr[waf].keys():
                             self.medians_of_temp_cal_factors[waf][fa] = \
                                 self.combine_mapmapdoubles(
                                     self.medians_of_temp_cal_factors[waf][fa],
                                     meds_pwks_from_this_fr[waf][fa])
+                    self.log("* Done.")
+                    self.log("")
             
             
             # -- Decide whether it's time to perform some analysis on maps
@@ -2058,6 +2061,8 @@ class AnalyzeAndCoaddMaps(object):
                                 self.combine_mapmapdoubles(
                                     self.noise_from_individual_maps[mt],
                                     {id_for_coadds: mmd})
+                    self.log("* Done.")
+                    self.log("")
             
             
             # --- Reinitialize some of the variables used when
@@ -2672,7 +2677,9 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                      bad_map_list_file=bad_map_list_file,
                      logging_function=log)
     
-    pipeline.Add(lambda frame: log(frame))
+    def print_frame(frame):
+        log(""); log(frame); log("")
+    pipeline.Add(print_frame)
     
     pipeline.Add(AnalyzeAndCoaddMaps,
                  map_ids=map_ids, map_sources=sub_fields,
