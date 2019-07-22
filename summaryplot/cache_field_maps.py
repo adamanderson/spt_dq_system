@@ -419,10 +419,7 @@ def update(mode, action,
         arguments['less_verbose'] = True
         
         arguments['point_source_list_file'] = point_source_list_file
-        spt_to_planck_bands = \
-            {"90GHz": "100GHz", "150GHz": "143GHz", "220GHz": "217GHz"}
-        arguments['planck_map_fits_file'] = \
-            [planck_map_fits_file.replace("BAND", spt_to_planck_bands[band])]
+        arguments['planck_map_fits_file']   = planck_map_fits_file
         
         return arguments
     

@@ -120,19 +120,20 @@ def add_two_map_frames(
         if k in ["frame_one", "frame_two"]:
             continue
         logfun("    %-25s : %s" %(k, v))
+    tu = core.G3Units.mK
     
     if t_only:
                 
         logfun("$$$ use x = %d and y = %d "
                "for the indices of a particular pixel" %(ix, iy))
-        logfun("$$$ t1 initial : %+7.3e" 
-               %(numpy.asarray(frame_one["T"])[iy][ix]))
+        logfun("$$$ t1 initial : %+7.3e"
+               %(numpy.asarray(frame_one["T"])[iy][ix]/tu))
         logfun("$$$ t2 initial : %+7.3e"
-               %(numpy.asarray(frame_two["T"])[iy][ix]))
-        logfun("$$$ w1 initial : %+7.3e"
-               %(numpy.asarray(frame_one["Wunpol"].TT)[iy][ix]))
-        logfun("$$$ w2 initial : %+7.3e"
-               %(numpy.asarray(frame_two["Wunpol"].TT)[iy][ix]))
+               %(numpy.asarray(frame_two["T"])[iy][ix]/tu))
+        logfun("$$$ w1 initial : %+7.3e [1/mK^2]"
+               %(numpy.asarray(frame_one["Wunpol"].TT)[iy][ix]*tu*tu))
+        logfun("$$$ w2 initial : %+7.3e [1/mK^2]"
+               %(numpy.asarray(frame_two["Wunpol"].TT)[iy][ix]*tu*tu))
         
         # - First, remove weights if necessary
         
@@ -145,10 +146,10 @@ def add_two_map_frames(
             t_map_one = frame_one["T"]
             t_map_two = frame_two["T"]
         
-        logfun("$$$ t1 after weights removal : %+7.3e"
-               %(numpy.asarray(t_map_one)[iy][ix]))
-        logfun("$$$ t2 after weights removal : %+7.3e"
-               %(numpy.asarray(t_map_two)[iy][ix]))
+        logfun("$$$ t1 after potential weights removal : %+7.3e"
+               %(numpy.asarray(t_map_one)[iy][ix]/tu))
+        logfun("$$$ t2 after potential weights removal : %+7.3e"
+               %(numpy.asarray(t_map_two)[iy][ix]/tu))
         
         # - Then, add field maps (and weight maps if applicable) together
         
@@ -158,8 +159,10 @@ def add_two_map_frames(
         w_map = frame_one["Wunpol"].TT + \
                 frame_two["Wunpol"].TT * multiply_2nd_frame_by
         
-        logfun("$$$ t resultant : %+7.3e" %(numpy.asarray(t_map)[iy][ix]))
-        logfun("$$$ w resultant : %+7.3e" %(numpy.asarray(w_map)[iy][ix]))
+        logfun("$$$ t resultant : %+7.3e"
+               %(numpy.asarray(t_map)[iy][ix]/tu))
+        logfun("$$$ w resultant : %+7.3e [1/mK^2]"
+               %(numpy.asarray(w_map)[iy][ix]*tu*tu))
         
         # - After that, remove weights if necessary
         
@@ -167,7 +170,7 @@ def add_two_map_frames(
             t_map = mapmaker.mapmakerutils.remove_weight_t(
                         t_map, w_map)
         
-        logfun("$$$ t after weights removal : %+7.3e"
+        logfun("$$$ t after potential weights removal : %+7.3e [mK]"
                %(numpy.asarray(t_map)[iy][ix]))
         
         # - Furthur divide the map by some number if requested
@@ -175,8 +178,8 @@ def add_two_map_frames(
         if divide_result_by != 1.0:
             t_map = t_map / divide_result_by
         
-        logfun("$$$ t after division : %+7.3e"
-               %(numpy.asarray(t_map)[iy][ix]))
+        logfun("$$$ t after division : %+7.3e [mK]"
+               %(numpy.asarray(t_map)[iy][ix]/tu))
         
         # - Finally, record the results in a new frame
         
@@ -189,10 +192,10 @@ def add_two_map_frames(
             del w_map
         
         logfun("$$$ t final : %+7.3e"
-               %(numpy.asarray(new_frame["T"])[iy][ix]))
+               %(numpy.asarray(new_frame["T"])[iy][ix]/tu))
         try:
-            logfun("$$$ w final : %+7.3e"
-                   %(numpy.asarray(new_frame["Wunpol"].TT)[iy][ix]))
+            logfun("$$$ w final : %+7.3e [1/mK^2]"
+                   %(numpy.asarray(new_frame["Wunpol"].TT)[iy][ix]*tu*tu))
         except:
             logfun("$$$ w final : N/A")
     
@@ -448,7 +451,7 @@ def collect_medians_of_pW_per_K_factors(
                 
                 if quantity == "PicowattsPerKelvin":
                     u = core.G3Units.pW / core.G3Units.K
-                    logfun("$$$   median of pW/K : %7.3e" %(median/u))
+                    logfun("$$$        median of pW/K : %7.3e" %(median/u))
             
             except:
                 median = numpy.nan
@@ -704,64 +707,99 @@ def calculate_pointing_discrepancies(
 
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def create_apodization_mask(map_frame, point_source_file):
-
-    new_mp_fr = core.G3Frame(core.G3FrameType.Map)
-
-    ptsrc_msk = mapspectra.apodmask.makeApodizedPointSourceMask(
+def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
+    
+    ptsrc_mask  = mapspectra.apodmask.makeApodizedPointSourceMask(
                     map_frame, point_source_file)
-
-    t_map     = map_frame["T"]
-    brdr_msk  = coordinateutils.FlatSkyMap(
-                    x_len=t_map.shape[1], y_len=t_map.shape[0],
-                    res=t_map.res, proj=t_map.proj,
-                    alpha_center=t_map.alpha_center,
-                    delta_center=t_map.delta_center,
-                    pol_type=t_map.pol_type,
-                    coord_ref=t_map.coord_ref, units=None)
-
-    twod_window  = numpy.ones(brdr_msk.shape)
-    twod_window *= signal.tukey(brdr_msk.shape[1], alpha=0.2)
+    
+    edge_mask = coordinateutils.FlatSkyMap(
+                    x_len=map_frame["T"].shape[1],
+                    y_len=map_frame["T"].shape[0],
+                    res=map_frame["T"].res, proj=map_frame["T"].proj,
+                    coord_ref=map_frame["T"].coord_ref,
+                    alpha_center=map_frame["T"].alpha_center,
+                    delta_center=map_frame["T"].delta_center,
+                    pol_type=map_frame["T"].pol_type, units=None)
+    
+    twod_window  = numpy.ones(edge_mask.shape)
+    twod_window *= signal.tukey(edge_mask.shape[1], alpha=0.2)
     twod_window  = (twod_window.transpose() *\
-                    signal.tukey(brdr_msk.shape[0], alpha=0.2)).\
+                    signal.tukey(edge_mask.shape[0], alpha=0.2)).\
                    transpose()
-    numpy.asarray(brdr_msk)[:,:] = twod_window
-
-    full_mask = ptsrc_msk * brdr_msk
-
+    numpy.asarray(edge_mask)[:,:] = twod_window
+    
+    full_mask = ptsrc_mask * edge_mask
+    
     return full_mask
 
 
 
 
-def decide_operation_to_do_with_new_map(
-        frame, past_operations, past_oids,
-        temp_only, center_ra, center_dec):
+def create_mini_planck_map_frame(
+        fits_file, spt_map_frame, center_ra, center_dec, t_only=True):
     
-    mp_fr = create_new_map_frame_with_smaller_map_region(
-                frame, temp_only, center_ra, center_dec)
+    planck_healpix_maps = mapmaker.load_spt3g_map(fits_file)
     
-    if (False in numpy.isfinite(numpy.asarray(mp_fr["T"]))) or \
-       (0.0   in numpy.asarray(mp_fr["Wunpol"].TT)):
-        return "Ignore"
+    if t_only:
+        planck_flatsky_map = coordinateutils.maputils.healpix_to_flatsky(
+                                 planck_healpix_maps["T"],
+                                 res=spt_map_frame["T"].res,
+                                 x_len=spt_map_frame["T"].shape[1],
+                                 y_len=spt_map_frame["T"].shape[0],
+                                 alpha_center=spt_map_frame["T"].alpha_center,
+                                 delta_center=spt_map_frame["T"].delta_center,
+                                 proj=spt_map_frame["T"].proj,
+                                 coord_ref=spt_map_frame["T"].coord_ref,
+                                 pol_type=spt_map_frame["T"].pol_type)
+        new_map_frame = core.G3Frame(core.G3FrameType.Map)
+        new_map_frame["T"] = planck_flatsky_map
+    
+    map_frame_smaller = create_new_map_frame_with_smaller_region(
+                            new_map_frame, center_ra, center_dec)
+    
+    assert (not map_frame_smaller["T"].is_weighted), \
+           "The temperature map is still weighted!"
+    
+    del new_map_frame
+    gc.collect()
+    
+    return map_frame_smaller
+
+
+
+
+def calculate_average_ratio_of_spt_planck_xspectra(
+        spt_map_frame, planck_map_frame, mask, t_only=True):
+    
+    average_ratios = {}
+    
+    planck_x_planck = map_analysis.calculate_powerspectra(
+                          planck_map_frame, input2=planck_map_frame,
+                          delta_l=50, l_min=300, l_max=6000,
+                          apod_mask=mask, realimag="real", flatten=False)
+    
+    spt_x_planck = map_analysis.calculate_powerspectra(
+                       spt_map_frame, input2=planck_map_frame,
+                       delta_l=50, l_min=300, l_max=6000,
+                       apod_mask=mask, realimag="real", flatten=False)
+    
+    ell_lo = 750
+    ell_hi = 1250
+    
+    if t_only:
+        cl_ratios   = spt_x_planck["TT"] / planck_x_planck["TT"]
+        bin_centers = planck_x_planck["TT"].bin_centers
+        idx = numpy.where((bin_centers > ell_lo) & (bin_centers < ell_hi))[0]
+        average_ratio_tt = numpy.mean(cl_ratios[idx])
         
-    past_operations = [past_operations[str(oid)] for oid in past_oids[:-1]]
+        average_ratios["TT"] = average_ratio_tt
     
-    if (len(past_operations) == 0) or \
-       (len(past_operations) == past_operations.count(0.0)):
-        return "Copy"
-    else:
-        n_add = len([o for o in past_operations if o ==  1.0])
-        n_sub = len([o for o in past_operations if o == -1.0])
-        if n_add > n_sub:
-            return "Subtract"
-        else:
-            return "Add"
+    return average_ratios
 
 
 
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def calculate_noise_level(
         fr_one, fr_two, ptsrc_lst, temp_only=False,
         smaller_region=False, center_ra=None, center_dec=None,
@@ -796,36 +834,6 @@ def calculate_noise_level(
     return noise
 
 
-
-
-def calculate_average_cl_of_cross_spectrum(
-        frame_one, frame_two, ptsrc_lst, temp_only=False,
-        smaller_region=False, center_ra=None, center_dec=None):
-    
-    if smaller_region:
-        frame_one = create_new_map_frame_with_smaller_map_region(
-                        frame_one, temp_only,
-                        center_ra, center_dec)
-        frame_two = create_new_map_frame_with_smaller_map_region(
-                        frame_two, temp_only,
-                        center_ra, center_dec)
-    
-    mask = create_apodization_mask(frame_one, ptsrc_lst)
-
-    cls = map_analysis.calculateCls(
-              frame_one, cross_map=frame_two, t_only=temp_only,
-              apod_mask=mask, kspace_filt=None, tf_2d=None,
-              ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
-              return_2d=False, realimag="real", in_place=False)
-    
-    idx = numpy.where((cls["ell"]>1000) & (cls["ell"]<2500))[0]
-        
-    if temp_only:
-        rtcl = numpy.sqrt(numpy.mean(cls["TT"][idx]))
-    
-    return rtcl
-
-
 # ==============================================================================
 
 
@@ -853,7 +861,7 @@ class AnalyzeAndCoaddMaps(object):
                  calculate_noise_from_coadded_maps=False,
                  point_source_list_file=None,
                  calculate_cross_spectra_with_planck_map=False,
-                 planck_map_fits_files=None,
+                 planck_map_fits_file=None,
                  calculate_pointing_discrepancies=False,
                  logging_function=logging.info,
                  less_verbose=False):
@@ -1055,17 +1063,22 @@ class AnalyzeAndCoaddMaps(object):
         self.calc_xspec_with_plck_map = calculate_cross_spectra_with_planck_map
         
         if self.calc_xspec_with_plck_map:
-            self.planck_map_fits_files = planck_map_fits_files
+            self.planck_map_fits_file = planck_map_fits_file
             self.spt_to_planck_bands  = \
-                {"90GHz": "100GHz", "150GHz": "143GHz", "220GHz": "217GHz"}
+                {"90": "100", "150": "143", "220": "217"}
             self.mini_planck_map_frames = \
                 {band: {sub_field: None for sub_field in self.map_sources} \
                  for band in self.spt_to_planck_bands.keys()}
             
             self.av_xspec_ratio_key = "AveragesOfRatiosOfSPTxPlancktoPlckxPlck"
             
+            if self.t_only:
+                self.xspec_types = ["TT"]
+            
             self.avgs_xspec_ratios = \
-                {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
+                {xspec_type: {map_id: core.G3MapMapDouble() \
+                              for map_id in self.map_ids}   \
+                 for xspec_type in self.xspec_types}
         
         
         # - Initialize variables related to noise calculations
@@ -1358,7 +1371,7 @@ class AnalyzeAndCoaddMaps(object):
                             frame["T"].shape)
                     for b in ["90GHz", "150GHz", "220GHz"]:
                         if b in id_for_coadds:
-                            band_assoc_this_frame = b.replace("GHz", "")
+                            band = b.replace("GHz", "")
                             break
                     obs_ids_from_this_frame = \
                         {id_for_coadds: {sbfd: core.G3VectorInt([oid])}}
@@ -1449,19 +1462,18 @@ class AnalyzeAndCoaddMaps(object):
                             frame["Wunpol"]
                     tu = core.G3Units.mK
                     self.detail("$$$ t of original map @ "
-                                "the center of the full field: %7.3e "
+                                "the center of the full field: %7.3e"
                                 %(numpy.asarray(
                                   self.coadded_map_frames[id_for_coadds]["T"])\
                                   [center_y][center_x]/tu))
                     self.detail("$$$ w of original map @ "
-                                "the center of the full field: %7.3e "
+                                "the center of the full field: %7.3e"
                                 %(numpy.asarray(
                                   self.coadded_map_frames\
                                   [id_for_coadds]["Wunpol"].TT)\
                                   [center_y][center_x]*tu*tu))                    
                     self.log("* Field and weight maps were added "
                              "to the empty cache.")
-                    self.log("")
                 else:
                     self.coadded_map_frames[id_for_coadds] = \
                         add_two_map_frames(
@@ -1475,8 +1487,8 @@ class AnalyzeAndCoaddMaps(object):
                             record_weights=True,
                             logfun=self.detail,
                             iy=center_y, ix=center_x)
-                    self.log("* Done.")
-                    self.log("")
+                self.log("* Done.")
+                self.log("")
             gc.collect()
             
             
@@ -1506,7 +1518,7 @@ class AnalyzeAndCoaddMaps(object):
                     else:
                         self.log("")
                         self.log("* Gathering average numbers related to")
-                        self.log("* detector flagging  ...")
+                        self.log("* detector flagging ...")
                         avgs_flg_stats_from_this_fr = {}
                         avgs_from_each_band = \
                             collect_averages_from_flagging_info(
@@ -1565,8 +1577,7 @@ class AnalyzeAndCoaddMaps(object):
                         meds_pwks_from_this_fr = {}
                         meds_to_be_reorganized = \
                             collect_medians_of_pW_per_K_factors(
-                                self.wafers, band_assoc_this_frame,
-                                self.calframe,
+                                self.wafers, band, self.calframe,
                                 flagging_stats=self.pipe_info_frame,
                                 logfun=self.detail)
                         for wafer in meds_to_be_reorganized.keys():
@@ -1677,6 +1688,7 @@ class AnalyzeAndCoaddMaps(object):
                         time_to_analyze_maps   = True
                         summ_map_frame_individ = \
                             core.G3Frame(core.G3FrameType.Map)
+                        tu = core.G3Units.mK
                         if self.t_only:
                             summ_map_frame_individ["T"] = \
                                 mapmaker.mapmakerutils.remove_weight_t(
@@ -1684,10 +1696,10 @@ class AnalyzeAndCoaddMaps(object):
                             summ_map_frame_individ["Wunpol"] = \
                                 frame["Wunpol"]
                             self.detail("$$$ t of original map "
-                                        "@ field center: %7.3e "
+                                        "@ field center: %7.3e [mK]"
                                         %(numpy.asarray(
                                           summ_map_frame_individ["T"])\
-                                          [center_y][center_x]/core.G3Units.mK))
+                                          [center_y][center_x]/tu))
                         diff_map_frame_individ = None
                         summ_map_frame_coadded = None
                         diff_map_frame_coadded = None
@@ -1696,11 +1708,11 @@ class AnalyzeAndCoaddMaps(object):
                                 summ_map_frame_individ,
                                 center_ra, center_dec,
                                 t_only=self.t_only)
-                        self.detail("$$$ t of smaller map "
-                                    "@ field center: %7.3e "
+                        self.detail("$$$ t of smaller  map "
+                                    "@ field center: %7.3e [mK]"
                                     %(numpy.asarray(
                                       summ_map_frame_individ["T"])\
-                                      [center_y][center_x]/core.G3Units.mK))
+                                      [center_y][center_x]/tu))
                         diff_map_frame_individ_mini = \
                             summ_map_frame_individ_mini
                         summ_map_frame_coadded_mini = None
@@ -1758,7 +1770,7 @@ class AnalyzeAndCoaddMaps(object):
                                 identify_pixels_of_non_atypical_region(
                                     summ_map_frame_individ, center_dec,
                                     self.point_source_list_file)
-                            self.log("*  these will be repeated used.")
+                            self.log("*  these will be repeatedly used.)")
                         for mt in self.map_types_for_flc:
                             if mt == "IndividualSignalMaps":
                                 frame_to_use = summ_map_frame_individ
@@ -1768,11 +1780,10 @@ class AnalyzeAndCoaddMaps(object):
                                 frame_to_use = diff_map_frame_indvid
                             if mt == "CoaddedNoiseMaps":
                                 frame_to_use = diff_map_frame_coadded
-                            self.log("* Results for %s ...", mt)
+                            self.log("* Results for %s :", mt)
                             fluctuation_metrics = \
                                 calculate_map_fluctuation_metrics(
-                                    frame_to_use,
-                                    band_assoc_this_frame, sbfd,
+                                    frame_to_use, band, sbfd,
                                     pixs=self.pixels_to_use_for_flc_calc[sbfd],
                                     t_only=self.t_only)
                             tu = core.G3Units.mK
@@ -1893,10 +1904,11 @@ class AnalyzeAndCoaddMaps(object):
             if time_to_analyze_maps and self.calc_xspec_with_plck_map:
                 
                 if subtract_maps_in_this_frame:
-                    self.avgs_xspec_ratios = \
-                        self.remove_partial_mapmapdouble(
-                            self.avgs_xspec_ratios,
-                            obs_ids_from_this_frame)
+                    for x_typ in self.xspec_types:
+                        self.avgs_xspec_ratios[x_typ] = \
+                            self.remove_partial_mapmapdouble(
+                                self.avgs_xspec_ratios[x_typ],
+                                obs_ids_from_this_frame)
                 
                 else:
                     if frame_has_old_coadds:
@@ -1904,39 +1916,49 @@ class AnalyzeAndCoaddMaps(object):
                         self.log("* Gathering averages of ratios of")
                         self.log("* cross spectra (SPT x Planck / Pla x Pla)")
                         self.log("* that were calculated previously ...")
-                        self.avgs_xspec_ratios = \
-                            self.combine_mapmapdoubles(
-                                self.avgs_xspec_ratios,
-                                {id_for_coadds: frame[self.av_xspec_ratio_key]})
+                        for x_typ in self.xspec_types:
+                            xk = self.av_xspec_ratio_key + x_typ + "spectra"
+                            self.avgs_xspec_ratios[x_typ] = \
+                                self.combine_mapmapdoubles(
+                                    self.avgs_xspec_ratios[x_typ],
+                                    {id_for_coadds: frame[xk]})
                     else:
                         self.log("")
-                        self.log("* Calculating the average of the ratio of")
-                        self.log("* SPT x Planck / Planck x Planck in a")
-                        self.log("* low ell range ...")
+                        self.log("* Calculating averages of ratios of")
+                        self.log("* SPT x Planck / Planck x Planck spectra")
+                        self.log("* in a low ell range ...")
                         if self.masks_for_powspec_calculations[sbfd] is None:
                             self.masks_for_powspec_calculations[sbfd] = \
-                                create_mask_for_powspec_calc_for_small_region(
+                                create_mask_for_powspec_calc_of_small_region(
                                     summ_map_frame_individ_mini,
                                     self.point_source_list_file)
-                        if self.mini_planck_maps[band][sbfd] is None:
-                            self.mini_planck_maps[band][sbfd] = \
-                                create_a_mini_planck_map_frame(
-                                    fits_file, frame, center_ra, center_dec,
+                        if self.mini_planck_map_frames[band][sbfd] is None:
+                            self.log("* (Need to make a Planck mini map,")
+                            planck_band = self.spt_to_planck_bands[band]
+                            fits_file = \
+                                self.planck_map_fits_file.replace(
+                                    "BAND", planck_band+"GHz")
+                            self.mini_planck_map_frames[band][sbfd] = \
+                                create_mini_planck_map_frame(
+                                    fits_file, summ_map_frame_individ,
+                                    center_ra, center_dec,
                                     t_only=self.t_only)
-                        avg_xspec_ratio = \
+                            self.log("*  which will be used repeatedly.")
+                        avg_xspec_ratios = \
                             calculate_average_ratio_of_spt_planck_xspectra(
                                 summ_map_frame_individ_mini,
                                 self.mini_planck_map_frames[band][sbfd],
                                 self.masks_for_powspec_calculations[sbfd],
                                 t_only=self.t_only)
                         self.log("* ... the average was calculated to be %s.",
-                                 avg_xspec_ratio)
-                        mmd = self.create_mmd_for_one_value(
-                                  sbfd, oid, avg_xspec_ratio)
-                        self.avgs_xspec_ratios = \
-                            self.combine_mapmapdoubles(
-                                self.avgs_xspec_ratios,
-                                {id_for_coadds: mmd})
+                                 avg_xspec_ratios)
+                        for x_typ in self.xspec_types:
+                            mmd = self.create_mmd_for_one_value(
+                                      sbfd, oid, avg_xspec_ratios[x_typ])
+                            self.avgs_xspec_ratios[x_typ] = \
+                                self.combine_mapmapdoubles(
+                                    self.avgs_xspec_ratios[x_typ],
+                                    {id_for_coadds: mmd})
                     self.log("* Done.")
                     self.log("")
             
@@ -1966,7 +1988,7 @@ class AnalyzeAndCoaddMaps(object):
                                  "from this observation ...")
                         if self.masks_for_powspec_calculations[sbfd] is None:
                             self.masks_for_powspec_calculations[sbfd] = \
-                                create_mask_for_powspec_calc_for_small_region(
+                                create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_indvid_mini,
                                     self.point_source_list_file)
                         noise = calculate_noise_level(
@@ -2009,7 +2031,7 @@ class AnalyzeAndCoaddMaps(object):
                                  "from the running coadded maps ...")
                         if self.masks_for_powspec_calculations[sbfd] is None:
                             self.masks_for_powspec_calculations[sbfd] = \
-                                create_mask_for_powspec_calc_for_small_region(
+                                create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_coadded_mini,
                                     self.point_source_list_file)
                         noise = calculate_noise_level(
@@ -2205,9 +2227,11 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("# Average ratio of SxP / PxP cross spectra:")
                     self.log("")
                     
-                    k_rec = self.av_xspec_ratio_key
-                    mp_fr[k_rec] = self.avgs_xspec_ratios[map_id]
-                    self.print_mapmapdouble(mp_fr[k_rec], 1.0, 3)
+                    for x_typ in self.xspec_types:
+                        k_rec = self.av_xspec_ratio_key + x_typ + "spectra"
+                        mp_fr[k_rec] = self.avgs_xspec_ratios[x_typ][map_id]
+                        self.log("- Spectra type: %s", x_typ)
+                        self.print_mapmapdouble(mp_fr[k_rec], 1.0, 3)
                     self.log("\n")
                 
                 
@@ -2517,13 +2541,13 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
         collect_averages_from_flagging_statistics=False,
         calculate_pW_to_K_conversion_factors=False,
         calculate_map_rmss_and_weight_stats=False,
-        rmss_and_wgts_from_coadds_or_individuals="",
-        rmss_and_wgts_from_signals_or_noises="",
+        rmss_and_wgts_from_coadds_or_individuals=None,
+        rmss_and_wgts_from_signals_or_noises=None,
         calculate_noise_from_individual_maps=False,
         calculate_noise_from_coadded_maps=False,
-        point_source_list_file="",
+        point_source_list_file=None,
         calculate_cross_spectra_with_planck_map=False,
-        planck_map_fits_files=[],
+        planck_map_fits_file=None,
         calculate_pointing_discrepancies=False,
         logger_name="", less_verbose=False,
         bad_map_list_file='', log_file=None):
@@ -2655,7 +2679,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                  point_source_list_file=point_source_list_file,
                  calculate_cross_spectra_with_planck_map=\
                      calculate_cross_spectra_with_planck_map,
-                 planck_map_fits_files=planck_map_fits_files,
+                 planck_map_fits_file=planck_map_fits_file,
                  calculate_pointing_discrepancies=\
                      calculate_pointing_discrepancies,
                  logging_function=log,
@@ -2861,6 +2885,20 @@ if __name__ == '__main__':
                              "true positions of some point sources and their "
                              "measured positions.")
     
+    parser.add_argument("-x", "--calculate_cross_spectra_with_planck_map",
+                        action="store_true", default=False,
+                        help="Whether to calculate the cross spectra between "
+                             "individual maps and a Planck map.")
+    
+    parser.add_argument("-X", "--planck_map_fits_file",
+                        type=str, action="store", default=None,
+                        help="Path to FITS files that contain Planck maps. "
+                             "The path here actually does not point to any "
+                             "actual file. Instead, the path should contain "
+                             "the word 'BAND' in it so that the paths of the "
+                             "actual files can be obtained by replacing "
+                             "'BAND' with '100GHz', '143GHz', or '217GHz'.")
+    
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
                         help="Whether to calculate map noise levels from "
@@ -2880,15 +2918,6 @@ if __name__ == '__main__':
                         help="Path to a point source list, which will be used "
                              "when making a mask for calcuting power spectra "
                              "and map rms values.")
-    
-    parser.add_argument("-x", "--calculate_cross_spectra_with_planck_map",
-                        action="store_true", default=False,
-                        help="Whether to calculate the cross spectra between "
-                             "individual maps and a Planck map.")
-    
-    parser.add_argument("-X", "--planck_map_fits_files",
-                        type=str, action="store", nargs="+", default=[],
-                        help="Path to a FITS file that contains a Planck map.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
