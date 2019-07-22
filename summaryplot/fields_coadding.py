@@ -757,9 +757,6 @@ def create_mini_planck_map_frame(
     map_frame_smaller = create_new_map_frame_with_smaller_region(
                             new_map_frame, center_ra, center_dec)
     
-    assert (not map_frame_smaller["T"].is_weighted), \
-           "The temperature map is still weighted!"
-    
     del new_map_frame
     gc.collect()
     
@@ -771,22 +768,27 @@ def create_mini_planck_map_frame(
 def calculate_average_ratio_of_spt_planck_xspectra(
         spt_map_frame, planck_map_frame, mask, t_only=True):
     
+    assert (not spt_map_frame["T"].is_weighted), \
+           "The SPT T map is still weighted!"
+    assert (not planck_map_frame["T"].is_weighted), \
+           "The Planck T map is still weighted!"
+    
     average_ratios = {}
-    
-    planck_x_planck = map_analysis.calculate_powerspectra(
-                          planck_map_frame, input2=planck_map_frame,
-                          delta_l=50, l_min=300, l_max=6000,
-                          apod_mask=mask, realimag="real", flatten=False)
-    
-    spt_x_planck = map_analysis.calculate_powerspectra(
-                       spt_map_frame, input2=planck_map_frame,
-                       delta_l=50, l_min=300, l_max=6000,
-                       apod_mask=mask, realimag="real", flatten=False)
     
     ell_lo = 750
     ell_hi = 1250
     
     if t_only:
+        planck_x_planck = map_analysis.calculate_powerspectra(
+                              planck_map_frame, input2=planck_map_frame,
+                              delta_l=50, l_min=300, l_max=6000,
+                              apod_mask=mask, realimag="real", flatten=False)
+        
+        spt_x_planck = map_analysis.calculate_powerspectra(
+                           spt_map_frame, input2=planck_map_frame,
+                           delta_l=50, l_min=300, l_max=6000,
+                           apod_mask=mask, realimag="real", flatten=False)
+        
         cl_ratios   = spt_x_planck["TT"] / planck_x_planck["TT"]
         bin_centers = planck_x_planck["TT"].bin_centers
         idx = numpy.where((bin_centers > ell_lo) & (bin_centers < ell_hi))[0]
@@ -799,39 +801,29 @@ def calculate_average_ratio_of_spt_planck_xspectra(
 
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def calculate_noise_level(
-        fr_one, fr_two, ptsrc_lst, temp_only=False,
-        smaller_region=False, center_ra=None, center_dec=None,
-        map_key_suffix="", divisive_factor=1.0):
-
-    if fr_two != None:
-        mp_fr = map_analysis.subtract_two_maps(
-                    fr_one, fr_two, divide_by_two=True, in_place=False)
-    else:
-        mp_fr = fr_one
+def calculate_noise_levels(map_frame, mask, t_only=True):
     
-    if smaller_region:
-        mp_fr = create_new_map_frame_with_smaller_map_region(
-                    mp_fr, temp_only,
-                    center_ra, center_dec,
-                    map_key_suffix=map_key_suffix,
-                    divisive_factor=divisive_factor)
+    assert (not map_frame["T"].is_weighted), \
+            "The T maps is still weighted!"
     
-    mask = create_apodization_mask(mp_fr, ptsrc_lst)
+    noises = {}
     
-    cls = map_analysis.calculateCls(
-              mp_fr, cross_map=None, t_only=temp_only,
-              apod_mask=mask, kspace_filt=None, tf_2d=None,
-              ell_bins=None, ell_min=300, ell_max=6000, delta_ell=50,
-              return_2d=False, realimag="real", in_place=False)
+    ell_lo = 3000
+    ell_hi = 5000
     
-    idx = numpy.where((cls["ell"]>3000) & (cls["ell"]<5000))[0]
+    if t_only:
+        cls = map_analysis.calculate_powerspectra(
+                  map_frame, input2=None,
+                  delta_l=50, l_min=300, l_max=6000,
+                  apod_mask=mask, realimag="real", flatten=False)
         
-    if temp_only:
-        noise = numpy.sqrt(numpy.mean(cls["TT"][idx]))
+        bin_centers = cls["TT"].bin_centers
+        idx = numpy.where((bin_centers > ell_lo) & (bin_centers < ell_hi))[0]
+        noise_t = numpy.sqrt(numpy.mean(cls["TT"][idx]))
+        
+        noises["T"] = noise_t
     
-    return noise
+    return noises
 
 
 # ==============================================================================
@@ -1086,14 +1078,21 @@ class AnalyzeAndCoaddMaps(object):
         self.calc_noise_from_individ_maps = calculate_noise_from_individual_maps
         self.calc_noise_from_coadded_maps = calculate_noise_from_coadded_maps
         
+        if self.t_only:
+            self.map_types_for_noise_calc = ["T"]
+        
         if self.calc_noise_from_individ_maps:
-            self.indvid_noise_key = "NoiseFromIndividualMaps"
+            self.indvid_noise_key = "NoiseLevelsFromIndividual{}Maps"
             self.noise_from_individual_maps = \
-                {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
+                {map_type: {map_id: core.G3MapMapDouble() \
+                            for map_id in self.map_ids}   \
+                 for map_type in self.map_types_for_noise_calc}
         if self.calc_noise_from_coadded_maps:
-            self.coadds_noise_key = "NoiseFromCoaddedMaps"
+            self.coadds_noise_key = "NoiseLevelsFromCoadded{}Maps"
             self.noise_from_coadded_maps = \
-                {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
+                {map_type: {map_id: core.G3MapMapDouble() \
+                            for map_id in self.map_ids}   \
+                 for map_type in self.map_types_for_noise_calc}
         
         
         # - Initialize variables needed for most of the four analyses,
@@ -1765,12 +1764,13 @@ class AnalyzeAndCoaddMaps(object):
                         self.log("* %s ...", self.map_types_for_flc)
                         if self.pixels_to_use_for_flc_calc[sbfd] is None:
                             self.log("* (Need to figure out what pixels "
-                                     "to use for the calculations.")
+                                     "to use for the calculations,")
                             self.pixels_to_use_for_flc_calc[sbfd] = \
                                 identify_pixels_of_non_atypical_region(
                                     summ_map_frame_individ, center_dec,
                                     self.point_source_list_file)
-                            self.log("*  these will be repeatedly used.)")
+                            self.log("*  the results of which "
+                                     "will be repeatedly used later.)")
                         for mt in self.map_types_for_flc:
                             if mt == "IndividualSignalMaps":
                                 frame_to_use = summ_map_frame_individ
@@ -1968,20 +1968,23 @@ class AnalyzeAndCoaddMaps(object):
             if time_to_analyze_maps and self.calc_noise_from_individ_maps:
                 
                 if subtract_maps_in_this_frame:
-                    self.noise_from_individual_maps = \
-                        self.remove_partial_mapmapdouble(
-                            self.noise_from_individual_maps,
-                            obs_ids_from_this_frame)
+                    for mt in self.map_types_for_noise_calc:
+                        self.noise_from_individual_maps[mt] = \
+                            self.remove_partial_mapmapdouble(
+                                self.noise_from_individual_maps[mt],
+                                obs_ids_from_this_frame)
                 
                 else:
                     if frame_has_old_coadds:
                         self.log("")
                         self.log("* Gathering noise levels of individual maps ")
                         self.log("* that were calculated previously ...")
-                        self.noise_from_individual_maps = \
-                            self.combine_mapmapdoubles(
-                                self.noise_from_individual_maps,
-                                {id_for_coadds: frame[self.indvid_noise_key]})
+                        for mt in self.map_types_for_noise_calc:
+                            nk = self.indvid_noise_key.replace("{}", mt)
+                            self.noise_from_individual_maps[mt] = \
+                                self.combine_mapmapdoubles(
+                                    self.noise_from_individual_maps[mt],
+                                    {id_for_coadds: frame[nk]})
                     else:
                         self.log("")
                         self.log("* Calculating noise level "
@@ -1989,21 +1992,25 @@ class AnalyzeAndCoaddMaps(object):
                         if self.masks_for_powspec_calculations[sbfd] is None:
                             self.masks_for_powspec_calculations[sbfd] = \
                                 create_mask_for_powspec_calc_of_small_region(
-                                    diff_map_frame_indvid_mini,
-                                    self.point_source_list_file)
-                        noise = calculate_noise_level(
                                     diff_map_frame_individ_mini,
-                                    self.masks_for_powspec_calculations[sbfd],
-                                    t_only=self.t_only)
+                                    self.point_source_list_file)
+                        noises = calculate_noise_levels(
+                                     diff_map_frame_individ_mini,
+                                     self.masks_for_powspec_calculations[sbfd],
+                                     t_only=self.t_only)
                         nu = core.G3Units.uK * core.G3Units.arcmin
                         self.log("* ... the noise level was calculated to be ")
-                        self.log("* %s uK.arcmin.", noise/nu)
-                        mmd = self.create_mmd_for_one_value(
-                                  sbfd, oid, noise)
-                        self.noise_from_individual_maps = \
-                            self.combine_mapmapdoubles(
-                                self.noise_from_individual_maps,
-                                {id_for_coadds: mmd})
+                        self.log("* %s uK.arcmin.",
+                                 {k: v/nu for k, v in noises.items()})
+                        for mt in self.map_types_for_noise_calc:
+                            mmd = self.create_mmd_for_one_value(
+                                      sbfd, oid, noises[mt])
+                            self.noise_from_individual_maps[mt] = \
+                                self.combine_mapmapdoubles(
+                                    self.noise_from_individual_maps[mt],
+                                    {id_for_coadds: mmd})
+                    self.log("* Done.")
+                    self.log("")
             
             
             # --- Calculate noise levels from coadded maps
@@ -2011,20 +2018,23 @@ class AnalyzeAndCoaddMaps(object):
             if time_to_analyze_maps and self.calc_noise_from_coadded_maps:
                 
                 if subtract_maps_in_this_frame:
-                    self.noise_from_coadded_maps = \
-                        self.remove_partial_mapmapdouble(
-                            self.noise_from_coadded_maps,
-                            obs_ids_from_this_frame)
+                    for mt in self.map_types_for_noise_calc:
+                        self.noise_from_coadded_maps[mt] = \
+                            self.remove_partial_mapmapdouble(
+                                self.noise_from_coadded_maps[mt],
+                                obs_ids_from_this_frame)
                 
                 else:
                     if frame_has_old_coadds:
                         self.log("")
                         self.log("* Gathering noise levels of coadded maps ")
                         self.log("* that were calculated previously ...")
-                        self.noise_from_coadded_maps = \
-                            self.combine_mapmapdoubles(
-                                self.noise_from_coadded_maps,
-                                {id_for_coadds: frame[self.coadds_noise_key]})
+                        for mt in self.map_types_for_noise_calc:
+                            nk = self.coadds_noise_key.replace("{}", mt)
+                            self.noise_from_coadded_maps[mt] = \
+                                self.combine_mapmapdoubles(
+                                    self.noise_from_coadded_maps[mt],
+                                    {id_for_coadds: frame[nk]})
                     else:
                         self.log("")
                         self.log("* Calculating noise level "
@@ -2034,19 +2044,20 @@ class AnalyzeAndCoaddMaps(object):
                                 create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_coadded_mini,
                                     self.point_source_list_file)
-                        noise = calculate_noise_level(
-                                    diff_map_frame_coadded_mini,
-                                    self.masks_for_powspec_calculations[sbfd],
-                                    t_only=self.t_only)
+                        noises = calculate_noise_levels(
+                                     diff_map_frame_coadded_mini,
+                                     self.masks_for_powspec_calculations[sbfd],
+                                     t_only=self.t_only)
                         nu = core.G3Units.uK * core.G3Units.arcmin
                         self.log("* ... the noise level was calculated to be ")
                         self.log("* %s uK.arcmin.", noise/nu)
-                        mmd = self.create_mmd_for_one_value(
-                                  sbfd, oid, noise)
-                        self.noise_from_individual_maps = \
-                            self.combine_mapmapdoubles(
-                                self.noise_from_individual_maps,
-                                {id_for_coadds: mmd})
+                        for mt in self.map_types_for_noise_calc:
+                            mmd = self.create_mmd_for_one_value(
+                                      sbfd, oid, noise[mt])
+                            self.noise_from_individual_maps[mt] = \
+                                self.combine_mapmapdoubles(
+                                    self.noise_from_individual_maps[mt],
+                                    {id_for_coadds: mmd})
             
             
             # --- Reinitialize some of the variables used when
@@ -2197,7 +2208,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     
                     for r in self.ptsrc_ranks:
-                        self.log("- %s point source", r)
+                        self.log("- %s brightest point sources", r)
                         self.log("")
                         
                         du = core.G3Units.arcsec
@@ -2236,23 +2247,31 @@ class AnalyzeAndCoaddMaps(object):
                 
                 
                 if self.calc_noise_from_individ_maps:
-                    self.log("# Noise level from individual maps [uK.arcmin]:")
+                    self.log("# Noise levels from individual maps [uK.arcmin]:")
                     self.log("")
                     
-                    k_rec = self.indvid_noise_key
-                    mp_fr[k_rec] = self.noise_from_individual_maps
-                    du = core.G3Units.uK * core.G3Units.arcmin
-                    self.print_mapmapdouble(mp_fr[k_rec], du, 3)
+                    for m_typ in self.map_types_for_noise_calc:
+                        k_rec = self.indvid_noise_key.replace("{}", m_typ)
+                        mp_fr[k_rec] = \
+                            self.noise_from_individual_maps[m_typ][map_id]
+                        self.log("- Map type: %s", m_typ)
+                        du = core.G3Units.uK * core.G3Units.arcmin
+                        self.print_mapmapdouble(mp_fr[k_rec], du, 3)
+                    self.log("\n")
                 
                 
                 if self.calc_noise_from_coadded_maps:
-                    self.log("# Noise level from coadded maps [uK.arcmin]:")
+                    self.log("# Noise levels from coadded maps [uK.arcmin]:")
                     self.log("")
                     
-                    k_rec = self.coadds_noise_key
-                    mp_fr[k_rec] = self.noise_from_individual_maps
-                    du = core.G3Units.uK * core.G3Units.arcmin
-                    self.print_mapmapdouble(mp_fr[k_rec], du, 3)
+                    for m_typ in self.map_types_for_noise_calc:
+                        k_rec = self.coadds_noise_key.replace("{}", m_typ)
+                        mp_fr[k_rec] = \
+                            self.noise_from_coadded_maps[m_typ][map_id]
+                        self.log("- Map type: %s", m_typ)
+                        du = core.G3Units.uK * core.G3Units.arcmin
+                        self.print_mapmapdouble(mp_fr[k_rec], du, 3)
+                    self.log("\n")
                 
                 
                 meta_info_frame = core.G3Frame()
