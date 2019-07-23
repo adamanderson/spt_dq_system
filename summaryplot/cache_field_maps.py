@@ -391,7 +391,8 @@ def update(mode, action,
             ignore_coadds,  subtract_maps, \
             ids_to_exclude, id_lower_bound, id_upper_bound = \
                 decide_what_ids_to_use_and_not(
-                    existing_ids, desired_id_range, g3_file_for_coadded_maps)
+                    existing_ids, desired_obs_id_ranges[rg_idx],
+                    g3_file_for_coadded_maps)
             
             if ignore_coadds:
                 arguments['input_files'] = g3_files_for_individual_observations
@@ -416,7 +417,7 @@ def update(mode, action,
         arguments['logger_name'] = \
             '{}_{}_{}'.format(
             sub_logger_name, band, sub_field.replace('.', ''))
-        arguments['less_verbose'] = True
+        arguments['less_verbose'] = False
         
         arguments['point_source_list_file'] = point_source_list_file
         arguments['planck_map_fits_file']   = planck_map_fits_file
@@ -512,7 +513,7 @@ def update(mode, action,
                      'rmss_and_wgts_from_signals_or_noises'     : 'sn',
                      'calculate_noise_from_coadded_maps'        : True}
                 
-                anal_non_yr_args = \
+                anal_mothly_args = \
                     {'map_ids': [band],
                      'calculate_map_rmss_and_weight_stats'      : True,
                      'rmss_and_wgts_from_coadds_or_individuals' : 'i',
@@ -522,6 +523,10 @@ def update(mode, action,
                      'calculate_cross_spectra_with_planck_map'  : True,
                      'calculate_pointing_discrepancies'         : True,
                      'calculate_noise_from_individual_maps'     : True}
+                
+                anal_simple_args = \
+                    {'map_ids': [band]}
+                
                 
                 for sub_field in sub_fields:
                     log("--- %s %s ---", band, sub_field)
@@ -534,8 +539,10 @@ def update(mode, action,
                     
                     if time_interval == "yearly":
                         args_coadding.update(anal_yearly_args)
+                    elif time_interval == "monthly":
+                        args_coadding.update(anal_mothly_args)
                     else:
-                        args_coadding.update(anal_non_yr_args)
+                        args_coadding.update(anal_simple_args)
                     
                     if time_interval != 'last_n':
                         args_coadding.update({'subtract_existing_maps': False})
@@ -556,7 +563,9 @@ def update(mode, action,
                     return
                 
                 args_coadding = \
-                    {'map_ids'    : [band],
+                    {'map_ids'              : [band],
+                     'sub_fields'           : sub_fields,
+                     'temperature_maps_only': True,
                      'input_files': [os.path.join(desired_dir_names[i],
                                      'coadded_maps_from_{}_{}.g3.gz'.\
                                       format(sf, band)) for sf in sub_fields],
@@ -568,11 +577,14 @@ def update(mode, action,
                 
                 if time_interval == 'yearly':
                     args_coadding.update(anal_yearly_args)
+                elif time_interval == 'monthly':
+                    args_coadding.update(anal_mothly_args)
                 else:
-                    args_coadding.update(anal_non_yr_args)
+                    args_coadding.update(anal_simple_args)
                 
                 if time_interval == 'yearly':
-                    args_coadding.update({'combine_left_right': True})
+                    args_coadding.update({'combine_left_right': True,
+                                          'map_ids'           : [band]})
                 
                 run_coadding_or_plotting_function(
                     fields_coadding.run, args_coadding,
