@@ -133,8 +133,8 @@ if args.mode == 'maps':
     
     current_day = args.maxtime
     
-    for n in [7, 30]:
-        for mode in modes:
+    for mode in modes:
+        for n in [7, 30]:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for last_n and %s with n = %s', mode, n)
             logger.info('starting from %s (UTC) ...', current_time)
@@ -164,9 +164,9 @@ if args.mode == 'maps':
                                  'while updating maps/figures ...')
                 sys.exit()
             time.sleep(1)
-    
-    for interval in ['yearly', 'monthly', 'weekly']:
-        for mode in modes:
+        
+        
+        for interval in ['yearly', 'weekly', 'monthly']:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for %s and %s', interval, mode)
             logger.info('starting from %s (UTC) ...', current_time)
