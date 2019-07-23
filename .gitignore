@@ -18,3 +18,9 @@ hash
 
 #emacs backup files
 *~
+
+#auxiliary files for coadding
+summaryplot/fields_aux_files/*.txt
+summaryplot/fields_aux_files/*.g3
+summaryplot/fields_aux_files/*.fits
+summaryplot/fields_aux_files/*.pickle
