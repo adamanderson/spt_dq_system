@@ -2070,13 +2070,14 @@ class AnalyzeAndCoaddMaps(object):
                                      t_only=self.t_only)
                         nu = core.G3Units.uK * core.G3Units.arcmin
                         self.log("* ... the noise level was calculated to be ")
-                        self.log("* %s uK.arcmin.", noise/nu)
+                        self.log("* %s uK.arcmin.",
+                                 {k: v/nu for k, v in noises.items()})
                         for mt in self.map_types_for_noise_calc:
                             mmd = self.create_mmd_for_one_value(
-                                      sbfd, oid, noise[mt])
-                            self.noise_from_individual_maps[mt] = \
+                                      sbfd, oid, noises[mt])
+                            self.noise_from_coadded_maps[mt] = \
                                 self.combine_mapmapdoubles(
-                                    self.noise_from_individual_maps[mt],
+                                    self.noise_from_coadded_maps[mt],
                                     {id_for_coadds: mmd})
                     self.log("* Done.")
                     self.log("")
@@ -2425,28 +2426,33 @@ class FlagBadMaps(object):
                     band = b.replace("GHz", "")
                     break
             
-            map_is_bad = False
-            
-            # * Currently, the only criterion for cutting a map is
-            #   mean weight of a map
-            
-            if self.pixels_to_use_for_flc_calc[self.sb_fld] is None:
-                self.pixels_to_use_for_flc_calc[self.sb_fld] = \
-                    identify_pixels_of_non_atypical_region(
-                        frame, self.center_dec, self.p_list)
-            
             new_frame = core.G3Frame(core.G3FrameType.Map)
+            
             if self.t_only:
                 t_map_no_weights = mapmaker.mapmakerutils.remove_weight_t(
                                        frame["T"], frame["Wunpol"])
                 new_frame["T"] = t_map_no_weights
                 new_frame["Wunpol"] = frame["Wunpol"]
             
-                flc_dct = calculate_map_fluctuation_metrics(
-                              new_frame, band, self.sb_fld,
-                              pixs=self.pixels_to_use_for_flc_calc[self.sb_fld],
-                              t_only=self.t_only,
-                              logfun=self.logfun)
+            
+            # - Assume the map is not bad
+            
+            map_is_bad = False
+                        
+            # -- One criterion for cutting a map is
+            #    mean TT weight of a map
+            
+            if self.pixels_to_use_for_flc_calc[self.sb_fld] is None:
+                self.pixels_to_use_for_flc_calc[self.sb_fld] = \
+                    identify_pixels_of_non_atypical_region(
+                        frame, self.center_dec, self.p_list)
+            
+            flc_dct = calculate_map_fluctuation_metrics(
+                          new_frame, band, self.sb_fld,
+                          pixs=self.pixels_to_use_for_flc_calc[self.sb_fld],
+                          t_only=self.t_only,
+                          logfun=self.logfun)
+            
             mean_wt = flc_dct["MeansOfTTWeights"]
             bad_weights = do_weights_look_bad(
                               mean_wt, band, self.sb_fld)
@@ -2455,8 +2461,24 @@ class FlagBadMaps(object):
                                   frame["Id"], self.sb_fld, self.obs_id,
                                   "Anomalously large weights.")
             
+            # -- Another criterion is presence of NaNs
             
-            map_is_bad = bad_weights
+            has_nans = False
+            
+            if self.t_only:
+                map_types = ["T"]
+            
+            for map_type in map_types:
+                if False in numpy.isfinite(numpy.asarray(new_frame[map_type])):
+                    has_nans = True
+                    record_bad_obs_id(self.x_list,
+                                      frame["Id"], self.sb_fld, self.obs_id,
+                                      "NaNs in "+map_type+" map.")
+            
+            
+            # - Check the badness again
+            
+            map_is_bad = bad_weights or has_nans
             
             if map_is_bad:
                 frame["IgnoreThisMap"] = True
