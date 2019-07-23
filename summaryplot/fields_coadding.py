@@ -1785,9 +1785,13 @@ class AnalyzeAndCoaddMaps(object):
                         if self.pixels_to_use_for_flc_calc[sbfd] is None:
                             self.log("* (Need to figure out what pixels "
                                      "to use for the calculations,")
+                            if summ_map_frame_coadded is None:
+                                fr_for_getting_pixels = summ_map_frame_individ
+                            else:
+                                fr_for_getting_pixels = summ_map_frame_coadded
                             self.pixels_to_use_for_flc_calc[sbfd] = \
                                 identify_pixels_of_non_atypical_region(
-                                    summ_map_frame_coadded, center_dec,
+                                    fr_for_getting_pixels, center_dec,
                                     self.point_source_list_file)
                             self.log("*  the results of which "
                                      "will be repeatedly used later.)")
