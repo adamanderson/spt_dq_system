@@ -384,10 +384,12 @@ def update(mode, action,
             
             for iteration_time in range(n_iter):
                 frame = iterator.next()
-                for sf, oids in frame["CoaddedObservationIDs"].items():
-                    for oid in oids:
-                        if oid not in existing_ids:
-                            existing_ids.append(oid)
+                for obs_id_types \
+                in  ["CoaddedObservationIDs", "IgnoredObservationIDs"]:
+                    for sf, oids in frame[obs_id_types].items():
+                        for oid in oids:
+                            if oid not in existing_ids:
+                                existing_ids.append(oid)
             
             ignore_coadds,  subtract_maps, \
             ids_to_exclude, id_lower_bound, id_upper_bound = \
@@ -562,7 +564,7 @@ def update(mode, action,
                     log('There was no update to any of the sub-field,')
                     log('so, there is no need to combine the 4 g3 files again!')
                     log('\n\n')
-                    return
+                    continue
                 
                 args_coadding = \
                     {'map_ids'              : [band],
