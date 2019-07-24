@@ -87,6 +87,7 @@ import sys
 import glob
 import gc
 import numpy
+import pickle
 
 from spt3g import core
 from spt3g import mapmaker
@@ -863,12 +864,13 @@ class AnalyzeAndCoaddMaps(object):
                  calculate_map_rmss_and_weight_stats=False,
                  rmss_and_wgts_from_coadds_or_individuals="",
                  rmss_and_wgts_from_signals_or_noises="",
+                 calculate_pointing_discrepancies=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
                  point_source_list_file=None,
                  calculate_cross_spectra_with_planck_map=False,
                  planck_map_fits_file=None,
-                 calculate_pointing_discrepancies=False,
+                 auxiliary_files_directory=None,
                  logging_function=logging.info,
                  less_verbose=False):
         
@@ -1124,6 +1126,39 @@ class AnalyzeAndCoaddMaps(object):
             self.point_source_list_file       = point_source_list_file
             self.masks_for_powspec_calculations = \
                 {sub_field: None for sub_field in self.map_sources}
+            self.aux_files_dir = auxiliary_files_directory
+            
+            if self.calc_map_stddev_etc:
+                for sub_field in self.pixels_to_use_for_flc_calc.keys():
+                    pf = "pixel_numbers_for_calculating_"+\
+                         "fluctuation_metrics_of_{}_sub_field.pickle".\
+                         format(sub_field)
+                    pf = os.path.join(self.aux_files_dir, pf)
+                    if os.path.isfile(pf):
+                        with open(pf, "rb") as f_obj:
+                            indices = pickle.load(f_obj)
+                            self.pixels_to_use_for_flc_calc[sub_field] = indices
+            
+            if self.calc_xspec_with_plck_map:
+                for band in self.spt_to_planck_bands.keys():
+                    for sub_field in self.map_sources:
+                        mf = "mini_planck_map_for_spt_{}GHz_{}_sub_field.g3".\
+                             format(band, sub_field)
+                        mf = os.path.join(self.aux_files_dir, mf)
+                        if os.path.isfile(mf):
+                            fr = list(core.G3File(mf))[0]
+                            self.mini_planck_map_frames[band][sub_field] = fr
+            
+            if self.calc_xspec_with_plck_map     or \
+               self.calc_noise_from_individ_maps or \
+               self.calc_noise_from_coadded_maps:
+                for sub_field in self.map_sources:
+                    mf = "mask_for_power_spectrum_calculations_"+\
+                         "for_{}_sub_field.g3".format(sub_field)
+                    mf = os.path.join(self.aux_files_dir, mf)
+                    if os.path.isfile(mf):
+                        mask = list(core.G3File(mf))[0]["Mask"]
+                        self.masks_for_powspec_calculations[sub_field] = mask
             
             if self.maps_split_by_scan_direction:
                 self.direction_independent_map_ids = []
@@ -2392,6 +2427,7 @@ class FlagBadMaps(object):
     
     def __init__(self, map_ids="", t_only=True,
                  bad_map_list_file=None, point_source_list_file=None,
+                 auxiliary_files_directory=None,
                  logging_function=print):
         
         self.t_only = t_only
@@ -2403,12 +2439,24 @@ class FlagBadMaps(object):
         self.map_ids = map_ids
         self.p_list  = point_source_list_file
         self.x_list  = bad_map_list_file
+        self.ax_dir  = auxiliary_files_directory
         self.logfun  = logging_function
         
         self.pixels_to_use_for_flc_calc = \
             {sub_field: None for sub_field in \
              ["ra0hdec-44.75", "ra0hdec-52.25",
               "ra0hdec-59.75", "ra0hdec-67.25"]}
+        
+        for sub_field in self.pixels_to_use_for_flc_calc.keys():
+            pf = "pixel_numbers_for_calculating_"+\
+                 "fluctuation_metrics_of_{}_sub_field.pickle".\
+                 format(sub_field)
+            pf = os.path.join(self.aux_files_dir, pf)
+            if os.path.isfile(pf):
+                with open(pf, "rb") as f_obj:
+                    indices = pickle.load(f_obj)
+                    self.pixels_to_use_for_flc_calc[sub_field] = indices
+    
     
     def __call__(self, frame):
         
@@ -2638,6 +2686,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
         point_source_list_file=None,
         calculate_cross_spectra_with_planck_map=False,
         planck_map_fits_file=None,
+        auxiliary_files_directory=None,
         calculate_pointing_discrepancies=False,
         logger_name="", less_verbose=False,
         bad_map_list_file=None, log_file=None):
@@ -2739,6 +2788,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                      map_ids=ids_to_append_directions_to,
                      t_only=temperature_maps_only,
                      point_source_list_file=point_source_list_file,
+                     auxiliary_files_directory=auxiliary_files_directory,
                      bad_map_list_file=bad_map_list_file,
                      logging_function=log)
         pipeline.Add(AppendDirectionsToMapIDs,
@@ -2767,6 +2817,8 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                      rmss_and_wgts_from_coadds_or_individuals,
                  rmss_and_wgts_from_signals_or_noises=\
                      rmss_and_wgts_from_signals_or_noises,
+                 calculate_pointing_discrepancies=\
+                     calculate_pointing_discrepancies,
                  calculate_noise_from_individual_maps=\
                      calculate_noise_from_individual_maps,
                  calculate_noise_from_coadded_maps=\
@@ -2775,8 +2827,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                  calculate_cross_spectra_with_planck_map=\
                      calculate_cross_spectra_with_planck_map,
                  planck_map_fits_file=planck_map_fits_file,
-                 calculate_pointing_discrepancies=\
-                     calculate_pointing_discrepancies,
+                 auxiliary_files_directory=auxiliary_files_directory,
                  logging_function=log,
                  less_verbose=less_verbose)
     
@@ -3013,6 +3064,14 @@ if __name__ == '__main__':
                         help="Path to a point source list, which will be used "
                              "when making a mask for calcuting power spectra "
                              "and map rms values.")
+    
+    parser.add_argument("-A", "--auxiliary_files_directory",
+                        type=str, action="store", default=None,
+                        help="The path to the directory that contains "
+                             "auxiliary data such as masks for calculating "
+                             "power spectra. If the appropriate files exist, "
+                             "then the analysis module can just load them "
+                             "instead of creating them.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",

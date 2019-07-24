@@ -89,14 +89,15 @@ def update(mode, action,
     desired_time_ranges   = []
     desired_dir_names     = []
     
-    script_coadding_maps   = 'summaryplot/fields_coadding.py'
-    script_plotting_data   = 'summaryplot/fields_plotting.py'
-    bad_map_list_file      = 'summaryplot/fields_aux_files/'+\
-                             'bad_map_list.txt'
+    script_coadding_maps = 'summaryplot/fields_coadding.py'
+    script_plotting_data = 'summaryplot/fields_plotting.py'
+    
+    aux_files_directory  = 'summaryplot/fields_aux_files/'
+    bad_map_list_file    = aux_files_directory + 'bad_map_list.txt'
+    planck_map_fits_file = aux_files_directory + \
+                           'HFI_SkyMap_BAND_2048_R3.01_full_cut_C_G3Units.fits'
     point_source_list_file = 'spt3g_software/sources/'+\
                              '1500d_ptsrc_3band_50mJy.txt'
-    planck_map_fits_file = 'summaryplot/fields_aux_files/'+\
-                           'HFI_SkyMap_BAND_2048_R3.01_full_cut_C_G3Units.fits'
     
     
     # - Figure out what appropriate time intervals are and
@@ -419,6 +420,7 @@ def update(mode, action,
             sub_logger_name, band, sub_field.replace('.', ''))
         arguments['less_verbose'] = False
         
+        arguments['auxiliary_files_directory'] = aux_files_directory
         arguments['point_source_list_file'] = point_source_list_file
         arguments['planck_map_fits_file']   = planck_map_fits_file
         
@@ -573,7 +575,8 @@ def update(mode, action,
                                      'coadded_maps_{}.g3.gz'.format(band)),
                      'logger_name': '{}_{}_full_field'.\
                                      format(sub_logger_name, band),
-                     'log_file'   : log_file}
+                     'log_file'   : log_file,
+                     'auxiliary_files_directory': aux_files_directory}
                 
                 if time_interval == 'yearly':
                     args_coadding.update(anal_yearly_args)
