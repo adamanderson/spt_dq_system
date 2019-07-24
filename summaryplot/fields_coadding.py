@@ -1844,7 +1844,8 @@ class AnalyzeAndCoaddMaps(object):
                                 calculate_map_fluctuation_metrics(
                                     frame_to_use, band, sbfd,
                                     pixs=self.pixels_to_use_for_flc_calc[sbfd],
-                                    t_only=self.t_only)
+                                    t_only=self.t_only,
+                                    logfun=self.detail)
                             tu = core.G3Units.mK
                             for k, v in fluctuation_metrics.items():
                                 self.log("*  %35s : %s %s",
@@ -2451,7 +2452,7 @@ class FlagBadMaps(object):
             pf = "pixel_numbers_for_calculating_"+\
                  "fluctuation_metrics_of_{}_sub_field.pickle".\
                  format(sub_field)
-            pf = os.path.join(self.aux_files_dir, pf)
+            pf = os.path.join(self.ax_dir, pf)
             if os.path.isfile(pf):
                 with open(pf, "rb") as f_obj:
                     indices = pickle.load(f_obj)
