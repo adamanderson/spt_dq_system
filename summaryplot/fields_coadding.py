@@ -126,7 +126,12 @@ def add_two_map_frames(
     tu = core.G3Units.mK
     
     if t_only:
-                
+        
+        assert frame_one["T"].is_weighted, \
+               "T map from frame one appears to be unweighted!"
+        assert frame_two["T"].is_weighted, \
+               "T map from frame two appears to be unweighted!"
+        
         logfun("$$$ use x = %d and y = %d "
                "for the indices of a particular pixel" %(ix, iy))
         logfun("$$$ t1 initial : %+7.3e"
@@ -1750,7 +1755,7 @@ class AnalyzeAndCoaddMaps(object):
                             summ_map_frame_individ["Wunpol"] = \
                                 frame["Wunpol"]
                             self.detail("$$$ t of original map "
-                                        "@ field center: %7.3e [mK]"
+                                        "@ field center : %7.3e [mK]"
                                         %(numpy.asarray(
                                           summ_map_frame_individ["T"])\
                                           [center_y][center_x]/tu))
@@ -1763,7 +1768,7 @@ class AnalyzeAndCoaddMaps(object):
                                 center_ra, center_dec,
                                 t_only=self.t_only)
                         self.detail("$$$ t of smaller  map "
-                                    "@ field center: %7.3e [mK]"
+                                    "@ field center : %7.3e [mK]"
                                     %(numpy.asarray(
                                       summ_map_frame_individ["T"])\
                                       [center_y][center_x]/tu))
@@ -2770,6 +2775,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
     log("\n")
     
     log("- Observation IDs that were excluded:")
+    log("  (IDs that were either added or ignored previously)")
     log("")
     log(bad_obs_ids)
     log("")
