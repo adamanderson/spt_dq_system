@@ -93,11 +93,13 @@ def update(mode, action,
     script_plotting_data = 'summaryplot/fields_plotting.py'
     
     aux_files_directory  = 'summaryplot/fields_aux_files/'
-    bad_map_list_file    = aux_files_directory + 'bad_map_list.txt'
-    planck_map_fits_file = aux_files_directory + \
-                           'HFI_SkyMap_BAND_2048_R3.01_full_cut_C_G3Units.fits'
-    point_source_list_file = 'spt3g_software/sources/'+\
-                             '1500d_ptsrc_3band_50mJy.txt'
+    bad_map_list_file    = \
+        aux_files_directory + 'bad_map_list.txt'
+    planck_map_fits_file = \
+        aux_files_directory + \
+        'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits'
+    point_source_list_file = \
+        'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
     
     
     # - Figure out what appropriate time intervals are and

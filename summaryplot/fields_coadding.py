@@ -785,12 +785,23 @@ def create_mini_planck_map_frame(
 
 
 def calculate_average_ratio_of_spt_planck_xspectra(
-        spt_map_frame, planck_map_frame, mask, t_only=True):
+        spt_map_frame, planck_map_frames, mask, t_only=True):
     
     assert (not spt_map_frame["T"].is_weighted), \
            "The SPT T map is still weighted!"
-    assert (not planck_map_frame["T"].is_weighted), \
-           "The Planck T map is still weighted!"
+    
+    for mission, map_frame in planck_map_frames.items():
+        if mission == "fullmission":
+            fullmission_planck_map_frame  = map_frame
+        if mission == "halfmission-1":
+            halfmission1_planck_map_frame = map_frame
+        if mission == "halfmission-2":
+            halfmission2_planck_map_frame = map_frame
+    
+    sptmp   = numpy.asarray(spt_map_frame["T"])/core.G3Units.mK
+    plkmpf  = numpy.asarray(fullmission_planck_map_frame["T"])/core.G3Units.mK
+    plkmph1 = numpy.asarray(halfmission1_planck_map_frame["T"])/core.G3Units.mK
+    plkmph2 = numpy.asarray(halfmission2_planck_map_frame["T"])/core.G3Units.mK
     
     average_ratios = {}
     
@@ -799,12 +810,13 @@ def calculate_average_ratio_of_spt_planck_xspectra(
     
     if t_only:
         planck_x_planck = map_analysis.calculate_powerspectra(
-                              planck_map_frame, input2=planck_map_frame,
+                              halfmission1_planck_map_frame,
+                              input2=halfmission2_planck_map_frame,
                               delta_l=50, l_min=300, l_max=6000,
                               apod_mask=mask, realimag="real", flatten=False)
         
         spt_x_planck = map_analysis.calculate_powerspectra(
-                           spt_map_frame, input2=planck_map_frame,
+                           spt_map_frame, input2=fullmission_planck_map_frame,
                            delta_l=50, l_min=300, l_max=6000,
                            apod_mask=mask, realimag="real", flatten=False)
         
@@ -1079,9 +1091,13 @@ class AnalyzeAndCoaddMaps(object):
             self.planck_map_fits_file = planck_map_fits_file
             self.spt_to_planck_bands  = \
                 {"90": "100", "150": "143", "220": "217"}
+            self.planck_missions = \
+                ["fullmission", "halfmission-1", "halfmission-2"]
             self.mini_planck_map_frames = \
-                {band: {sub_field: None for sub_field in self.map_sources} \
-                 for band in self.spt_to_planck_bands.keys()}
+                {mission: {band: {sub_field: None                       \
+                                  for sub_field in self.map_sources}    \
+                           for band in self.spt_to_planck_bands.keys()} \
+                 for mission in self.planck_missions}
             
             self.av_xspec_ratio_key = "AveragesOfRatiosOfSPTxPlancktoPlckxPlck"
             
@@ -1116,7 +1132,7 @@ class AnalyzeAndCoaddMaps(object):
                  for map_type in self.map_types_for_noise_calc}
         
         
-        # - Initialize variables needed for most of the four analyses,
+        # - Initialize other variables needed for some of the four analyses,
         #   i.e., calculating basic stats of fluctuations in maps,
         #   cross spectra with Planck maps, noise levels, and pointing offsets.        
         
@@ -1146,13 +1162,16 @@ class AnalyzeAndCoaddMaps(object):
             
             if self.calc_xspec_with_plck_map:
                 for band in self.spt_to_planck_bands.keys():
-                    for sub_field in self.map_sources:
-                        mf = "mini_planck_map_for_spt_{}GHz_{}_sub_field.g3".\
-                             format(band, sub_field)
-                        mf = os.path.join(self.aux_files_dir, mf)
-                        if os.path.isfile(mf):
-                            fr = list(core.G3File(mf))[0]
-                            self.mini_planck_map_frames[band][sub_field] = fr
+                    for mission in self.planck_missions:
+                        for sub_field in self.map_sources:
+                            mf = ("mini_{}_planck_map_for_spt_"+\
+                                  "{}GHz_{}_sub_field.g3").\
+                                 format(mission, band, sub_field)
+                            mf = os.path.join(self.aux_files_dir, mf)
+                            if os.path.isfile(mf):
+                                fr = list(core.G3File(mf))[0]
+                                self.mini_planck_map_frames\
+                                    [mission][band][sub_field] = fr
             
             if self.calc_xspec_with_plck_map     or \
                self.calc_noise_from_individ_maps or \
@@ -1767,11 +1786,6 @@ class AnalyzeAndCoaddMaps(object):
                                 summ_map_frame_individ,
                                 center_ra, center_dec,
                                 t_only=self.t_only)
-                        self.detail("$$$ t of smaller  map "
-                                    "@ field center : %7.3e [mK]"
-                                    %(numpy.asarray(
-                                      summ_map_frame_individ["T"])\
-                                      [center_y][center_x]/tu))
                         diff_map_frame_individ_mini = \
                             summ_map_frame_individ_mini
                         summ_map_frame_coadded_mini = None
@@ -1997,22 +2011,30 @@ class AnalyzeAndCoaddMaps(object):
                                 create_mask_for_powspec_calc_of_small_region(
                                     summ_map_frame_individ_mini,
                                     self.point_source_list_file)
-                        if self.mini_planck_map_frames[band][sbfd] is None:
-                            self.log("* (Need to make a Planck mini map,")
-                            planck_band = self.spt_to_planck_bands[band]
-                            fits_file = \
-                                self.planck_map_fits_file.replace(
-                                    "BAND", planck_band+"GHz")
-                            self.mini_planck_map_frames[band][sbfd] = \
-                                create_mini_planck_map_frame(
-                                    fits_file, summ_map_frame_individ,
-                                    center_ra, center_dec,
-                                    t_only=self.t_only)
-                            self.log("*  which will be used repeatedly.")
+                        for mission in self.planck_missions:
+                            if self.mini_planck_map_frames\
+                               [mission][band][sbfd] is None:
+                                self.log("* (Need to make a %s "
+                                         "mini Planck map,", mission)
+                                planck_band = \
+                                    self.spt_to_planck_bands[band]
+                                fits_file = \
+                                    self.planck_map_fits_file.\
+                                    replace("BAND", planck_band+"GHz").\
+                                    replace("MISSION", mission)
+                                self.mini_planck_map_frames\
+                                [mission][band][sbfd] = \
+                                    create_mini_planck_map_frame(
+                                        fits_file, summ_map_frame_individ,
+                                        center_ra, center_dec,
+                                        t_only=self.t_only)
+                                self.log("*  which will be used repeatedly.")
                         avg_xspec_ratios = \
                             calculate_average_ratio_of_spt_planck_xspectra(
                                 summ_map_frame_individ_mini,
-                                self.mini_planck_map_frames[band][sbfd],
+                                {mission: self.mini_planck_map_frames \
+                                          [mission][band][sbfd]       \
+                                 for mission in self.planck_missions},
                                 self.masks_for_powspec_calculations[sbfd],
                                 t_only=self.t_only)
                         self.log("* ... the average was calculated to be %s.",
@@ -3048,9 +3070,11 @@ if __name__ == '__main__':
                         help="Path to FITS files that contain Planck maps. "
                              "The path here actually does not point to any "
                              "actual file. Instead, the path should contain "
-                             "the word 'BAND' in it so that the paths of the "
-                             "actual files can be obtained by replacing "
-                             "'BAND' with '100GHz', '143GHz', or '217GHz'.")
+                             "the words 'BAND' and 'MISSION' in it so that "
+                             "the paths of the actual files can be obtained "
+                             "by replacing 'BAND' with '100GHz', '143GHz', "
+                             "or '217GHz' and 'MISSION' with 'fullmission', "
+                             "halfmission-1', and halfmission-2'.")
     
     parser.add_argument("-n", "--calculate_noise_from_individual_maps",
                         action="store_true", default=False,
