@@ -381,7 +381,7 @@ function updateSummaryPlots() {
 			config.static_plot_dir,
 			config.calib_data_dir,
 			config.bolo_data_dir,
-			config.min_time_static_plots]
+			config.min_time_summary_plots]
 
 	if(config.no_data_update) {
 		args.push('--no-data-update')
@@ -410,7 +410,7 @@ function updateMapPlots() {
 			config.coadds_data_dir,
 			config.coadds_figs_dir,
 			config.coadds_logs_dir,
-			config.min_time_static_plots]
+			config.min_time_maps]
 
     if(is_map_update_running == false) {
 		is_map_update_running = true;
