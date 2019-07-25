@@ -45,10 +45,11 @@ parser.add_argument("-f", "--planck-map-fits-file",
                     action="store", type=str, default=None,
                     help="The path to the FITS files that contain Planck maps. "
                          "It actually does not point to any actual file. "
-                         "Rather, the path should contain the word 'BAND' "
-                         "in it so that the paths of the actual files can be "
-                         "obtained by replacing 'BAND' with "
-                         "'100GHz', '143GHz', or '217GHz'.")
+                         "Rather, the path should contain the words 'BAND' "
+                         "and 'MISSION' in it so that the paths of the "
+                         "actual files can be obtained by replacing 'BAND' "
+                         "with '100GHz', '143GHz', or '217GHz' and 'MISSION' "
+                         "with 'fullmission', 'halfmission-1', and so on.")
 
 parser.add_argument("-m", "--spt-map-data-file",
                     action="store", type=str, default=None,
@@ -147,32 +148,38 @@ class MakeMiniPlanckMaps(object):
 spt_to_planck_bands = {"90": "100", "150": "143", "220": "217"}
 
 for spt_band, planck_band in spt_to_planck_bands.items():
-    planck_map_fits_file = \
-        arguments.planck_map_fits_file.replace("BAND", planck_band+"GHz")
-    
-    for dec_center in dec_centers:
+    for planck_mission in ["fullmission", "halfmission-1", "halfmission-2"]:
         
-        output_file = \
-            os.path.join(arguments.directory_for_file_saving,
-                         "mini_planck_map_for_spt_{}GHz_ra0hdec{}_sub_field.g3".\
-                         format(spt_band, dec_center/deg))
+        planck_map_fits_file = \
+            arguments.planck_map_fits_file.\
+            replace("BAND", planck_band+"GHz").\
+            replace("MISSION", planck_mission)
         
-        print("- Making a mini Planck map for %sGHz of ra0hdec%s sub field ..."
-              %(spt_band, dec_center/deg))
-        
-        pipeline = core.G3Pipeline()
-        
-        pipeline.Add(core.G3Reader,
-                     filename=arguments.spt_map_data_file)
-        
-        pipeline.Add(lambda frame: frame.type == core.G3FrameType.Map)
-        
-        pipeline.Add(MakeMiniPlanckMaps)
-        
-        pipeline.Add(core.G3Writer,
-                     filename=output_file)
-        
-        pipeline.Run()
+        for dec_center in dec_centers:
+            
+            output_file = \
+                os.path.join(
+                    arguments.directory_for_file_saving,
+                    "mini_{}_planck_map_for_spt_{}GHz_ra0hdec{}_sub_field.g3".\
+                    format(planck_mission, spt_band, dec_center/deg))
+            
+            print("- Making a mini %s Planck map for "
+                  "%sGHz of ra0hdec%s sub field ..."
+                  %(planck_mission, spt_band, dec_center/deg))
+            
+            pipeline = core.G3Pipeline()
+            
+            pipeline.Add(core.G3Reader,
+                         filename=arguments.spt_map_data_file)
+            
+            pipeline.Add(lambda frame: frame.type == core.G3FrameType.Map)
+            
+            pipeline.Add(MakeMiniPlanckMaps)
+            
+            pipeline.Add(core.G3Writer,
+                         filename=output_file)
+            
+            pipeline.Run()
 
 
 print("All mini Planck maps have been made!")
