@@ -425,8 +425,7 @@ def group_suviving_detectors_by_wafer(
 
 
 def collect_medians_of_pW_per_K_factors(
-        wafers_of_interest, band_of_interest, calframe, flagging_stats=None,
-        logfun=print):
+        calframe, bolo_dict, desired_band, logfun=print):
     
     bpm = calframe["BolometerProperties"]
     flu = core.G3Units.K * core.G3Units.rad * core.G3Units.rad
@@ -438,13 +437,13 @@ def collect_medians_of_pW_per_K_factors(
                      "220": 2.1451640e-07*flu}}
            # * Copied from spt3g_software/calibration/python/apply_t_cal.py
     
-    values_by_wafer = \
-         {wafer: {"PicowattsPerKelvin": [],
+    values_by_group = \
+         {group: {"PicowattsPerKelvin": [],
                   "CalibratorResponse": [],
                   "HIIFluxCalibration": [],
                   "HIIIntegratedFluux": [],
                   "HIISkyTransmission": []} \
-          for wafer in wafers_of_interest}
+          for group in bolo_dict.keys()}
     
     for key in calframe.keys():
         if "FluxCalibration" in key:
@@ -457,65 +456,59 @@ def collect_medians_of_pW_per_K_factors(
             integral_flux_key = key
         if "SkyTransmission" in key:
             sky_transmission_key = key
-        
+    
     available_bolos = set(calframe["BolometerProperties"].keys()) & \
                       set(calframe["CalibratorResponse"].keys())  & \
                       set(calframe[flux_calibration_key].keys())  & \
                       set(calframe[integral_flux_key].keys())
     
     logfun("$$$ Recording calibration chain-related quantities ...")
-    logfun("$$$ n available bolos from calframe : %d" %(len(available_bolos)))
     
-    
-    logfun("$$$ n_available bolos after using flagging stats : %d"
-          %(len(available_bolos)))
-    
-    for bolo in available_bolos:
-        band  = bpm[bolo].band / core.G3Units.GHz
-        if not numpy.isfinite(band):
+    for group, generally_surviving_bolos in bolo_dict.items():
+        if group == "AllBolos":
             continue
-        band  = str(int(band))
-        wafer = bpm[bolo].wafer_id.upper() 
-        if (band != band_of_interest) or (wafer not in wafers_of_interest):
-            continue
+        good_bolos_with_data = set(generally_surviving_bolos) & \
+                               set(available_bolos)
+        logfun("$$$ %s : %3d detectors" %(group, len(good_bolos_with_data)))
         
-        cr = calframe["CalibratorResponse"][bolo]
-        fc = calframe[flux_calibration_key][bolo]
-        fi = calframe[integral_flux_key][bolo]
-        if band in calframe[sky_transmission_key].keys():
-            st = calframe[sky_transmission_key][band]
-            pk = cr * fc * fi * st / flx[source][band]
-        else:
-            st = numpy.nan
-            pk = numpy.nan
-        
-        values_by_wafer[wafer]["PicowattsPerKelvin"].append(pk)
-        values_by_wafer[wafer]["CalibratorResponse"].append(cr)
-        values_by_wafer[wafer]["HIIFluxCalibration"].append(fc)
-        values_by_wafer[wafer]["HIIIntegratedFluux"].append(fi)
-        values_by_wafer[wafer]["HIISkyTransmission"].append(st)
-    
-    for waf in values_by_wafer.keys():
-        for quantity, vals in values_by_wafer[waf].items():
-            try:
-                
-                if quantity == "PicowattsPerKelvin":
-                    logfun("$$$ [%s] number of collected pW/K factors : %d"
-                           %(waf, len(vals)))
-                
-                median = numpy.nanmedian(vals)
-                
-                if quantity == "PicowattsPerKelvin":
-                    u = core.G3Units.pW / core.G3Units.K
-                    logfun("$$$        median of pW/K : %7.3e" %(median/u))
+        for bolo in good_bolos_with_data:
+            cr = calframe["CalibratorResponse"][bolo]
+            fc = calframe[flux_calibration_key][bolo]
+            fi = calframe[integral_flux_key][bolo]
+            if desired_band in calframe[sky_transmission_key].keys():
+                st = calframe[sky_transmission_key][desired_band]
+                pk = cr * fc * fi * st / flx[source][desired_band]
+            else:
+                st = numpy.nan
+                pk = numpy.nan
             
-            except:
-                median = numpy.nan
-            values_by_wafer[waf][quantity] = median
+            values_by_group[group]["PicowattsPerKelvin"].append(pk)
+            values_by_group[group]["CalibratorResponse"].append(cr)
+            values_by_group[group]["HIIFluxCalibration"].append(fc)
+            values_by_group[group]["HIIIntegratedFluux"].append(fi)
+            values_by_group[group]["HIISkyTransmission"].append(st)
+            values_by_group["AllBolos"]["PicowattsPerKelvin"].append(pk)
+            values_by_group["AllBolos"]["CalibratorResponse"].append(cr)
+            values_by_group["AllBolos"]["HIIFluxCalibration"].append(fc)
+            values_by_group["AllBolos"]["HIIIntegratedFluux"].append(fi)
+            values_by_group["AllBolos"]["HIISkyTransmission"].append(st)
     
+    for group in values_by_group.keys():
+        for quantity in values_by_group[group].keys():
+            if len(values_by_group[group][quantity]) == 0:
+                values_by_group[group][quantity] = numpy.nan
+            else:
+                values_by_group[group][quantity] = \
+                    numpy.nanmedian(values_by_group[group][quantity])
+    
+    logfun("$$$ Median pW/K conversion factors:")
+    for group in values_by_group.keys():
+        u = core.G3Units.pW / core.G3Units.K
+        logfun("$$$    %s : %7.3e"
+               %(group, values_by_group[group]["PicowattsPerKelvin"]/u))
     logfun("$$$ ... that's all I wanted to check.")
     
-    return values_by_wafer
+    return values_by_group
 
 
 
@@ -1932,7 +1925,7 @@ class AnalyzeAndCoaddMaps(object):
                         meds_to_be_reorganized = \
                             collect_medians_of_pW_per_K_factors(
                                 self.cal_frame,
-                                self.wafers_and_bolos,
+                                self.wafers_and_bolos, band,
                                 logfun=self.detail)
                         for wafer in meds_to_be_reorganized.keys():
                             meds_pwks_from_this_fr[wafer] = {}
@@ -2602,16 +2595,16 @@ class AnalyzeAndCoaddMaps(object):
                 
                 
                 if self.calc_median_pW_to_K:
-                    self.log("# Medians of pW/K conversion factors:")
+                    self.log("# Medians of pW/K conversion factors [pW/K]:")
                     self.log("")
                     
                     for waf in self.wafers:
+                        self.log(" - %s: ", waf)
                         for fa in self.calfactors:
                             k_rec = self.key_prefix_pwk + waf + fa
                             mp_fr[k_rec] = self.medians_of_temp_cal_factors \
                                            [waf][fa][map_id]
-                            if waf == "AllBolos":
-                                self.log("- %s [%s]", fa, self.cal_fat_ustr[fa])
+                            if fa == "PicowattsPerKelvin":
                                 du = self.cal_fat_unis[fa]
                                 self.print_mapmapdouble(mp_fr[k_rec], du, 6)
                     self.log("\n")
@@ -2899,6 +2892,7 @@ class FlagBadMaps(object):
                 record_bad_obs_id(self.x_list,
                                   frame["Id"], self.sb_fld, self.obs_id,
                                   "Anomalously large weights.")
+            
             
             # -- Another criterion is presence of NaNs
             
