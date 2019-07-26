@@ -858,12 +858,16 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         obs_data = frame["CoaddedObservationIDs"]
         
-        if "NoiseFromIndividualMaps" in frame.keys():
+        noise_indiv_key = "NoiseLevelsFromIndividual{}Maps".\
+                          replace("{}", self.map_type)
+        noise_coadd_key = "NoiseLevelsFromCoadded{}Maps".\
+                          replace("{}", self.map_type)
+        if noise_indiv_key in frame.keys():
             noise_from_running_coadds = False
-            noise_data = frame["NoiseFromIndividualMaps"]
-        elif "NoiseFromCoaddedMaps" in frame.keys():
+            noise_data = frame[noise_indiv_key]
+        elif noise_coadd_key in frame.keys():
             noise_from_running_coadds = True
-            noise_data = frame["NoiseFromCoaddedMaps"]
+            noise_data = frame[noise_coadd_key]
             try:
                 oprts_hist   = frame["NoiseCalculationsOperationsDoneToMaps"]
                 ops_recorded = True
