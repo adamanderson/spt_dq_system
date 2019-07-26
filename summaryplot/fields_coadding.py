@@ -26,6 +26,13 @@
 #        temperature during the map-making. The average is calculated for      #
 #        each wafer.                                                           #
 #                                                                              #
+#    - Calculating changes in responsivity                                     #
+#        The script can collect the results from calibrator observations that  #
+#        were taken at the bottom, middle, and top of each sub-field as part   #
+#        part of the schedule that observed that field. Then, the fractional   #
+#        change in detectors' response to the calibrator at top with respect   #
+#        to bottom will be calculated.                                         #
+#                                                                              #
 #    - Comparing SPT maps with Planck maps                                     #
 #        The script can compare an individual SPT map with a Planck map by     #
 #        calculating the cross spectrum between the two, calculating the       #
@@ -370,6 +377,53 @@ def collect_averages_from_flagging_info(
 
 
 
+def group_suviving_detectors_by_wafer(
+        desired_band, desired_wafers, cal_frame, pipe_info_frame, logfun=print):
+    
+    bolos_used_each_scan = pipe_info_frame["SurvivingBolos"]
+    
+    """bolos_used_at_least_once = set([])
+    for scan_number, bolos_used_that_scan \
+    in  bolos_used_each_scan.iteritems():
+        bolos_used_at_least_once = \
+            bolos_used_at_least_once | set(bolos_used_that_scan)"""
+    
+    bolos_and_times_used = {}
+    
+    for scan_number, bolos_that_scan in bolos_used_each_scan.iteritems():
+        for bolo in bolos_that_scan:
+            bolos_and_times_used[bolo] = bolos_and_times_used.get(bolo, 0) + 1
+    
+    n_scans = len(bolos_used_each_scan.keys())
+    mostly_surviving_bolos = {b: t for b, t in bolos_and_times_used.items() \
+                              if t > 0.5 * n_scans}
+    
+    logfun("$$$ Number of bolos that survived at least once: %d"
+           %(len(bolos_and_times_used.keys())))
+    logfun("$$$ Number of bolos that survived more than 50%% of time: %d"
+           %(len(mostly_surviving_bolos.keys())))
+    logfun("$$$ (i.e. more than %d scans)" %(n_scans//2))
+    
+    bolo_props     = cal_frame["BolometerProperties"]
+    bolos_by_wafer = {wafer: [] for wafer in desired_wafers}
+    
+    for bolo in mostly_surviving_bolos:
+        band = bolo_props[bolo].band/core.G3Units.GHz
+        if not numpy.isfinite(band):
+            continue
+        if str(int(band)) != desired_band:
+            continue
+        wafer = bolo_props[bolo].wafer_id.upper()
+        if wafer not in desired_wafers:
+            continue
+        
+        bolos_by_wafer[wafer].append(bolo)
+    
+    return bolos_by_wafer
+
+
+
+
 def collect_medians_of_pW_per_K_factors(
         wafers_of_interest, band_of_interest, calframe, flagging_stats=None,
         logfun=print):
@@ -412,14 +466,6 @@ def collect_medians_of_pW_per_K_factors(
     logfun("$$$ Recording calibration chain-related quantities ...")
     logfun("$$$ n available bolos from calframe : %d" %(len(available_bolos)))
     
-    if flagging_stats is not None:
-        bolos_used_each_scan = flagging_stats["SurvivingBolos"]
-        bolos_used_at_least_once = set([])
-        for scan_number, bolos_used_that_scan \
-        in  bolos_used_each_scan.iteritems():
-            bolos_used_at_least_once = \
-                bolos_used_at_least_once | set(bolos_used_that_scan)
-        available_bolos = available_bolos & bolos_used_at_least_once
     
     logfun("$$$ n_available bolos after using flagging stats : %d"
           %(len(available_bolos)))
@@ -470,6 +516,167 @@ def collect_medians_of_pW_per_K_factors(
     logfun("$$$ ... that's all I wanted to check.")
     
     return values_by_wafer
+
+
+
+
+def calculate_change_in_cal_response_vs_elevation(
+        field_obs_id, dec_center, cal_obs_ids, cal_ts_dir, cal_autoproc_dir,
+        bolo_dict, logfun=print):
+    
+    response_dict = {group: {"AtBottomOfFields": [],
+                             "AtMiddleOfFields": [],
+                             "AtTopOfFields"   : [],
+                             "FractionalChangesTopToBottom": []} \
+                     for group in list(bolo_dict.keys())}
+    
+    def fill_with_nans():
+        for wafer in response_dict.keys():
+            for location in response_dict[wafer].keys():
+                response_dict[wafer][location] = numpy.nan
+    
+    
+    # - Find candidate observation IDs of the three calibrator observations
+    
+    cal_obs_ids = numpy.unique(cal_obs_ids)
+    idx_closest_cal_obs_id = numpy.argmin(numpy.abs(cal_obs_ids - field_obs_id))
+    
+    id_at_bot = cal_obs_ids[idx_closest_cal_obs_id]
+    id_at_mid = cal_obs_ids[idx_closest_cal_obs_id-1]
+    id_at_top = cal_obs_ids[idx_closest_cal_obs_id+1]
+    
+    if (id_at_bot > field_obs_id)        or \
+       (id_at_mid < field_obs_id - 1200) or \
+       (id_at_top > field_obs_id + 9000):
+        fill_with_nans()
+        logfun("$$$ One or more candidate observation ID not found!")
+        return response_dict
+    
+    cal_obs_ids = {"AtBottomOfFields": id_at_bot,
+                   "AtMiddleOfFields": id_at_mid,
+                   "AtTopOfFields"   : id_at_top}
+    
+    
+    # - Check the elevation at which each observation was taken
+    
+    elevations  = {"AtBottomOfFields": 0.0,
+                   "AtMiddleOfFields": 0.0,
+                   "AtTopOfFields"   : 0.0}
+    
+    for location, cal_id in cal_obs_ids.items():
+        cal_ts_file = os.path.join(cal_ts_dir, str(cal_id), "0000.g3")
+        try:
+            iterator = core.G3File(cal_ts_file)
+            while True:
+                fr = iterator.next()
+                if fr.type == core.G3FrameType.Scan:
+                    mean_el = numpy.mean(fr["RawBoresightEl"])/core.G3Units.deg
+                    elevations[location] = mean_el
+                    break
+        except:
+            pass
+    
+    el_center = -1 * dec_center / core.G3Units.deg
+    for location, recorded_el in elevations.items():
+        if location == "AtBottomOfFields":
+            if (recorded_el < el_center - 4.75) or \
+               (recorded_el > el_center - 2.75):
+                fill_with_nans()
+                logfun("$$$ The bottom elevation seems wrong!")
+                return response_dict
+        if location == "AtMiddleOfFields":
+            if (recorded_el < el_center - 1.0) or \
+               (recorded_el > el_center + 1.0):
+                fill_with_nans()
+                logfun("$$$ The middle elevation seems wrong!")
+                return response_dict
+        if location == "AtTopOfFields":
+            if (recorded_el > el_center + 4.75) or \
+               (recorded_el < el_center + 2.75):
+                fill_with_nans()
+                logfun("$$$ The top elevation seems wrong!")
+                return response_dict
+    
+    
+    # - Gather auto-processed CalibratorResponse 
+    
+    cal_autoproc_file_bot = \
+        os.path.join(cal_autoproc_dir,
+                     str(cal_obs_ids["AtBottomOfFields"])+".g3")
+    cal_autoproc_file_mid = \
+        os.path.join(cal_autoproc_dir,
+                     str(cal_obs_ids["AtMiddleOfFields"])+".g3")
+    cal_autoproc_file_top = \
+        os.path.join(cal_autoproc_dir,
+                     str(cal_obs_ids["AtTopOfFields"])+".g3")
+    
+    if (not os.path.isfile(cal_autoproc_file_bot)) or \
+       (not os.path.isfile(cal_autoproc_file_mid)) or \
+       (not os.path.isfile(cal_autoproc_file_top)):
+        fill_with_nans()
+        logfun("$$$ One or more calibration file not found!")
+        return response_dict
+    
+    cal_data_bot = list(core.G3File(cal_autoproc_file_bot))[0]\
+                   ["CalibratorResponse"]
+    cal_data_mid = list(core.G3File(cal_autoproc_file_mid))[0]\
+                   ["CalibratorResponse"]
+    cal_data_top = list(core.G3File(cal_autoproc_file_top))[0]\
+                   ["CalibratorResponse"]
+    
+    
+    # - Organize the data and calculate the fractional changes
+    
+    bolos_with_three_data = set(cal_data_bot.keys()) & \
+                            set(cal_data_mid.keys()) & \
+                            set(cal_data_top.keys())
+    
+    for group, generally_surviving_bolos in bolo_dict.items():
+        if group == "AllBolos":
+            continue
+        good_bolos_with_data = set(generally_surviving_bolos) & \
+                               set(bolos_with_three_data)
+        frac_key = "FractionalChangesTopToBottom"
+        for bolo in good_bolos_with_data:
+            cal_resp_bot = cal_data_bot[bolo]
+            cal_resp_mid = cal_data_mid[bolo]
+            cal_resp_top = cal_data_top[bolo]
+            try:
+                frac_dif = (cal_resp_top - cal_resp_bot) / cal_resp_bot
+            except:
+                frac_dif = numpy.nan
+            
+            response_dict[group]["AtBottomOfFields"].append(cal_resp_bot)
+            response_dict[group]["AtMiddleOfFields"].append(cal_resp_mid)
+            response_dict[group]["AtTopOfFields"].append(cal_resp_top)
+            response_dict[group][frac_key].append(frac_dif)
+            response_dict["AllBolos"]["AtBottomOfFields"].append(cal_resp_bot)
+            response_dict["AllBolos"]["AtMiddleOfFields"].append(cal_resp_mid)
+            response_dict["AllBolos"]["AtTopOfFields"].append(cal_resp_top)
+            response_dict["AllBolos"][frac_key].append(frac_dif)
+    
+    for group in response_dict.keys():
+        for location in response_dict[group].keys():
+            if len(response_dict[group][location]) == 0:
+                response_dict[group][location] = numpy.nan
+            else:
+                response_dict[group][location] = \
+                    numpy.nanmedian(response_dict[group][location])
+    
+    logfun("$$$ Observation IDs and the elvations:")
+    for location in cal_obs_ids.keys():
+        logfun("$$$    ID : %9d, Elevation : %5.2f [degree]"
+               %(cal_obs_ids[location], elevations[location]))
+    logfun("$$$ Median responses:")
+    for key, value in response_dict["AllBolos"].items():
+        if key != frac_key:
+            logfun("$$$    %-16s : %4.2f [fW]" 
+                   %(key, value/(1e-3*core.G3Units.pW)))
+        else:
+            logfun("$$$    %s : %+5.1f %%"
+                   %(key, value*1e2))
+    
+    return response_dict
 
 
 
@@ -878,9 +1085,14 @@ class AnalyzeAndCoaddMaps(object):
                  allow_subtraction=False,
                  collect_averages_from_flagging_stats=False,
                  calculate_pW_to_K_conversion_factors=False,
+                 calculate_calibrator_response_vs_el=False,
+                 calibration_data_dir=None,
+                 bolo_timestreams_dir=None,
+                 min_field_obs_id=None,
+                 max_field_obs_id=None,
                  calculate_map_rmss_and_weight_stats=False,
-                 rmss_and_wgts_from_coadds_or_individuals="",
-                 rmss_and_wgts_from_signals_or_noises="",
+                 rmss_and_wgts_from_coadds_or_individuals=None,
+                 rmss_and_wgts_from_signals_or_noises=None,
                  calculate_pointing_discrepancies=False,
                  calculate_noise_from_individual_maps=False,
                  calculate_noise_from_coadded_maps=False,
@@ -900,7 +1112,7 @@ class AnalyzeAndCoaddMaps(object):
             self.detail = self.log
         
         # - Initialize variables related to map IDs
-        
+
         self.combine_left_right = combine_left_right
         if self.combine_left_right:
             directions = ["Left", "Right"]
@@ -951,14 +1163,30 @@ class AnalyzeAndCoaddMaps(object):
         self.obs_info = None
         
         
+        # - Initialize variables related to calculating flagging stats,
+        #   calculating pW/K numbers, and calibrator response changes
+        
+        self.calc_median_pW_to_K = calculate_pW_to_K_conversion_factors
+        self.calc_cal_vs_el      = calculate_calibrator_response_vs_el
+        self.get_avgs_flagging_stats = collect_averages_from_flagging_stats
+        
+        self.collect_by_band_wafer_quantities = self.calc_median_pW_to_K or \
+                                                self.calc_cal_vs_el      or \
+                                                self.get_avgs_flagging_stats
+        
+        if self.collect_by_band_wafer_quantities:
+            self.wafers = ["W172", "W174", "W176", "W177", "W180",
+                           "W181", "W188", "W203", "W204", "W206",
+                           "AllBolos"]
+            self.pipe_info_frame  = None
+            self.cal_frame        = None
+            self.wafers_and_bolos = None
+        
+        
         # - Initialize variables related to collecting average numbers
         #   of various bolometer flagging statistics
         
-        self.get_avgs_flagging_stats = collect_averages_from_flagging_stats
-        
         if self.get_avgs_flagging_stats:
-            self.bolo_props       = None
-            self.pipe_info_frame  = None
             self.flagging_reasons = \
                 ["BadCalSn", "BadWeight",  "Glitchy", "Oscillating",
                  "Latched",  "Overbiased", "BadHk",
@@ -968,20 +1196,16 @@ class AnalyzeAndCoaddMaps(object):
             self.key_prefix_flg = "FlaggingStatisticsAverageNumbersOf"
             
             self.avgs_flagging_stats =  \
-                {flagging_related_name: \
-                 {map_id: core.G3MapMapDouble() for map_id in self.map_ids}
-                 for flagging_related_name in self.flagging_reasons}
+                {wafer: {flag_rea: {map_id: core.G3MapMapDouble() \
+                                    for map_id in self.map_ids}   \
+                         for flag_rea in self.flagging_reasons}   \
+                 for wafer in self.wafers}
         
         
         # - Initialize variables related to calculating the median value of
         #   the pW/K conversion factors for each wafer
         
-        self.calc_median_pW_to_K = calculate_pW_to_K_conversion_factors
-        
         if self.calc_median_pW_to_K:
-            self.calframe   = None
-            self.wafers     = ["W172", "W174", "W176", "W177", "W180",
-                               "W181", "W188", "W203", "W204", "W206"]
             self.calfactors = ["PicowattsPerKelvin", "CalibratorResponse",
                                "HIIFluxCalibration", "HIIIntegratedFluux",
                                "HIISkyTransmission"]
@@ -1004,6 +1228,33 @@ class AnalyzeAndCoaddMaps(object):
                 {wafer: {factor: {map_id: core.G3MapMapDouble() \
                                   for map_id in self.map_ids}   \
                          for factor in self.calfactors}         \
+                 for wafer in self.wafers}
+        
+        
+        # - Initialize variables related to calculating changeds in detectors'
+        #   response to the calibrator when the telescope elevation was at
+        #   the bottom and the top of the field.
+        
+        if self.calc_cal_vs_el:
+            self.cal_ts_dir  = \
+                os.path.join(bolo_timestreams_dir, "calibrator")
+            self.cal_autoproc_dir = \
+                os.path.join(calibration_data_dir, "calibrator")
+            self.cal_obs_ids = \
+                [int(obs_id) for obs_id in os.listdir(self.cal_ts_dir) \
+                 if (int(obs_id) >= min_field_obs_id-600) and          \
+                    (int(obs_id) <= max_field_obs_id+9000)]
+            
+            self.cal_locations = ["AtBottomOfFields",
+                                  "AtMiddleOfFields",
+                                  "AtTopOfFields",
+                                  "FractionalChangesTopToBottom"]
+            self.key_prefix_calel = "MedianCalibratorResponse"
+            
+            self.cal_resp_diffs_els = \
+                {wafer: {location: {map_id: core.G3MapMapDouble() \
+                                    for map_id in self.map_ids}   \
+                         for location in self.cal_locations}      \
                  for wafer in self.wafers}
         
         
@@ -1328,14 +1579,6 @@ class AnalyzeAndCoaddMaps(object):
     
     def __call__(self, frame):
         
-        if frame.type == core.G3FrameType.Calibration:
-            try:
-                self.bolo_props = frame["BolometerProperties"]
-                self.calframe   = frame
-            except KeyError:
-                pass
-            return []
-        
         if frame.type == core.G3FrameType.Observation:
             current_time = datetime.datetime.utcnow()
             self.log("")
@@ -1348,9 +1591,16 @@ class AnalyzeAndCoaddMaps(object):
             self.obs_info = frame
             return []
         
+        if frame.type == core.G3FrameType.Calibration:
+            if self.collect_by_band_wafer_quantities:
+                if "BolometerProperties" in frame.keys():
+                    self.cal_frame = frame
+            return []
+        
         if frame.type == core.G3FrameType.PipelineInfo:
-            if ["DroppedBolos", "SurvivingBolos"] <= frame.keys():
-                self.pipe_info_frame = frame
+            if self.collect_by_band_wafer_quantities:
+                if ["DroppedBolos", "SurvivingBolos"] <= frame.keys():
+                    self.pipe_info_frame = frame
             return []
         
         
@@ -1569,16 +1819,20 @@ class AnalyzeAndCoaddMaps(object):
             gc.collect()
             
             
-            # -- Collect averages related to detector flagging
+            # -- Collect flagging and calibration related quantities
+            #    for each wafer
+            
+            # --- Collect averages related to detector flagging
             
             if self.get_avgs_flagging_stats:
                 
                 if subtract_maps_in_this_frame:
-                    for flg_typ in self.avgs_flagging_stats.keys():
-                        self.avgs_flagging_stats[flg_typ] = \
-                            self.remove_partial_mapmapdouble(
-                                self.avgs_flagging_stats[flg_typ],
-                                obs_ids_from_this_frame)
+                    for waf in self.wafers:
+                        for flg_typ in self.avgs_flagging_stats.keys():
+                            self.avgs_flagging_stats[waf][flg_typ] = \
+                                self.remove_partial_mapmapdouble(
+                                    self.avgs_flagging_stats[waf][flg_typ],
+                                    obs_ids_from_this_frame)
                 
                 else:
                     if frame_has_old_coadds:
@@ -1589,38 +1843,61 @@ class AnalyzeAndCoaddMaps(object):
                         avgs_flg_stats_from_this_fr = {}
                         for key in frame.keys():
                             if self.key_prefix_flg in key:
-                                flg_typ = key.replace(self.key_prefix_flg, "")
-                                avgs_flg_stats_from_this_fr[flg_typ] = \
-                                    {id_for_coadds: frame[key]}
+                                for waf in self.wafers:
+                                    avgs_flg_stats_from_this_fr[waf] = {}
+                                    for fr in self.flagging_reasons:
+                                        fk = self.key_prefix_flg + waf + fr
+                                        avgs_flg_stats_from_this_fr[waf][fk] = \
+                                            {id_for_coadds: frame[key]}
                     else:
                         self.log("")
                         self.log("* Gathering average numbers related to")
                         self.log("* detector flagging ...")
                         avgs_flg_stats_from_this_fr = {}
-                        avgs_from_each_band = \
+                        avgs_from_each_wafer = \
                             collect_averages_from_flagging_info(
                                 self.pipe_info_frame,
-                                self.bolo_props,
+                                self.wafers,
                                 self.flagging_reasons)
-                        for band, flg_typs_avgs in avgs_from_each_band.items():
-                            if (band+"GHz") in id_for_coadds:
-                                for flg_typ, avg in flg_typs_avgs.items():
-                                    mmd = self.create_mmd_for_one_value(
-                                              sbfd, oid, avg)
-                                    avgs_flg_stats_from_this_fr[flg_typ] = \
-                                        {id_for_coadds: mmd}
-                                break
-                    for flg_typ in avgs_flg_stats_from_this_fr.keys():
-                        self.avgs_flagging_stats[flg_typ] = \
-                            self.combine_mapmapdoubles(
-                                self.avgs_flagging_stats[flg_typ],
-                                avgs_flg_stats_from_this_fr[flg_typ])
+                        for wafer in avgs_from_each_wafer.keys():
+                            avgs_flg_stats_from_this_fr[wafer] = {}
+                            for reason in avgs_from_each_wafer[wafer].keys():
+                                avg = avgs_from_each_wafer[wafer][reason]
+                                mmd = self.create_mmd_for_one_value(
+                                          sbfd, oid, avg)
+                                avgs_flg_stats_from_this_fr[wafer][factor] = \
+                                    {id_for_coadds: mmd}
+                    for waf in avgs_flg_stats_from_this_fr.keys():
+                        for rs in avgs_flg_stats_from_this_fr[waf].keys():
+                            self.avgs_flagging_stats[waf][rs] = \
+                                self.combine_mapmapdoubles(
+                                    self.avgs_flagging_stats[waf][rs],
+                                    avgs_flg_stats_from_this_fr[waf][rs])
                     self.log("* Done.")
                     self.log("")
             
             
-            # -- Calculate mean value of the pW/K conversion factors
-            #    for each band of each wafer
+            # --- Make a dictionary specifying which detectors
+            #     belong to which wafers so that it can be used
+            #     when collecting calibration related quantities
+            
+            if (self.calc_median_pW_to_K or self.calc_cal_vs_el) and \
+               (not frame_has_old_coadds)                        and \
+               (not subtract_maps_in_this_frame):
+                self.log("")
+                self.log("* Grouping detectors that were not flagged")
+                self.log("* during more than half of the scans by wafer ...")
+                self.wafers_and_bolos = \
+                     group_suviving_detectors_by_wafer(
+                         band, self.wafers,
+                         self.cal_frame, self.pipe_info_frame,
+                         logfun=self.detail)
+                self.log("* Done.")
+                self.log("")
+            
+            
+            # --- Calculate mean value of the pW/K conversion factors
+            #     for each band of each wafer
             
             if self.calc_median_pW_to_K:
                 
@@ -1654,8 +1931,8 @@ class AnalyzeAndCoaddMaps(object):
                         meds_pwks_from_this_fr = {}
                         meds_to_be_reorganized = \
                             collect_medians_of_pW_per_K_factors(
-                                self.wafers, band, self.calframe,
-                                flagging_stats=self.pipe_info_frame,
+                                self.cal_frame,
+                                self.wafers_and_bolos,
                                 logfun=self.detail)
                         for wafer in meds_to_be_reorganized.keys():
                             meds_pwks_from_this_fr[wafer] = {}
@@ -1675,7 +1952,73 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
             
             
-            # -- Decide whether it's time to perform some analysis on maps
+            # --- Calculate changes in detectors' response to calibrator
+            
+            if self.calc_cal_vs_el:
+                
+                if subtract_maps_in_this_frame:
+                    for waf in self.wafers:
+                        for lc in self.cal_locations:
+                            self.cal_resp_diffs_els[waf][lc] = \
+                                self.remove_partial_mapmapdouble(
+                                    self.cal_resp_diffs_els[waf][lc],
+                                    obs_ids_from_this_frame)
+                
+                else:
+                    if frame_has_old_coadds:
+                        self.log("")
+                        self.log("* Gathering the fractional changes")
+                        self.log("* in detectors' response to the calibrator")
+                        self.log("* that were calculated previously ...")
+                        frac_diffs_from_this_fr = {}
+                        for key in frame.keys():
+                            if self.key_prefix_calel in key:
+                                for waf in self.wafers:
+                                    frac_diffs_from_this_fr[waf] = {}
+                                    for lc in self.cal_locations:
+                                        ck = self.key_prefix_calel + waf + lc
+                                        frac_diffs_from_this_fr[waf][lc] = \
+                                            {id_for_coadds: frame[ck]}
+                    else:
+                        self.log("")
+                        self.log("* Gathering the fractional changes")
+                        self.log("* in detectors' response to the")
+                        self.log("* calibrator observations taken at")
+                        self.log("* the bottom and top of the field ...")
+                        frac_diffs_from_this_fr = {}
+                        fracs_to_be_reorganized = \
+                            calculate_change_in_cal_response_vs_elevation(
+                                oid, center_dec, self.cal_obs_ids,
+                                self.cal_ts_dir, self.cal_autoproc_dir,
+                                self.wafers_and_bolos,
+                                logfun=self.detail)
+                        self.log("* ... the fractional change of")
+                        self.log("* median cal. response at the top "
+                                 "with respect to the bottom")
+                        self.log("* was %7.3e.",
+                                 fracs_to_be_reorganized\
+                                 ["AllBolos"]["FractionalChangesTopToBottom"])
+                        for waf in fracs_to_be_reorganized.keys():
+                            frac_diffs_from_this_fr[waf] = {}
+                            for lc in fracs_to_be_reorganized[waf].keys():
+                                val = fracs_to_be_reorganized[waf][lc]
+                                mmd = self.create_mmd_for_one_value(
+                                          sbfd, oid, val)
+                                frac_diffs_from_this_fr[waf][lc] = \
+                                    {id_for_coadds: mmd}
+                    for waf in frac_diffs_from_this_fr.keys():
+                        for lc in frac_diffs_from_this_fr[waf].keys():
+                            self.cal_resp_diffs_els[waf][lc] = \
+                                self.combine_mapmapdoubles(
+                                    self.cal_resp_diffs_els[waf][lc],
+                                    frac_diffs_from_this_fr[waf][lc])
+                    self.log("* Done.")
+                    self.log("")
+            
+            
+            # -- Perform analysis tasks actually using the map data
+            
+            # --- Decide whether it's time to perform some analysis on maps
             
             if self.analyze_maps:
                 
@@ -2247,11 +2590,14 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("# Avg. numbers related to flagging statistics:")
                     self.log("")
                     
-                    for flg_typ in self.avgs_flagging_stats.keys():
-                        k_rec = self.key_prefix_flg + flg_typ
-                        mp_fr[k_rec] = self.avgs_flagging_stats[flg_typ][map_id]
-                        self.log("- %s", flg_typ)
-                        self.print_mapmapdouble(mp_fr[k_rec], 1.0, 3)
+                    for waf in self.wafers:
+                        for fr in self.flagging_reasons.keys():
+                            k_rec = self.key_prefix_flg + waf + fr
+                            mp_fr[k_rec] = self.avgs_flagging_stats \
+                                           [waf][fr][map_id]
+                            if waf == "AllBolos":
+                                self.log("- %s", fr)
+                                self.print_mapmapdouble(mp_fr[k_rec], 1.0, 3)
                     self.log("\n")
                 
                 
@@ -2260,17 +2606,29 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     
                     for waf in self.wafers:
-                        self.log(" - Wafer: %s", waf)
-                        self.log("")
-                        
                         for fa in self.calfactors:
                             k_rec = self.key_prefix_pwk + waf + fa
                             mp_fr[k_rec] = self.medians_of_temp_cal_factors \
                                            [waf][fa][map_id]
-                            self.log(" "*3 + " - %s [%s]",
-                                     fa, self.cal_fat_ustr[fa])
-                            du = self.cal_fat_unis[fa]
-                            self.print_mapmapdouble(mp_fr[k_rec], du, 6)
+                            if waf == "AllBolos":
+                                self.log("- %s [%s]", fa, self.cal_fat_ustr[fa])
+                                du = self.cal_fat_unis[fa]
+                                self.print_mapmapdouble(mp_fr[k_rec], du, 6)
+                    self.log("\n")
+                
+                
+                if self.calc_cal_vs_el:
+                    self.log("# Fractional change in calibrator response:")
+                    self.log("")
+                    
+                    for waf in self.wafers:
+                        self.log(" - %s: ", waf)                        
+                        for lc in self.cal_locations:
+                            k_rec = self.key_prefix_calel + waf + lc
+                            mp_fr[k_rec] = self.cal_resp_diffs_els \
+                                           [waf][lc][map_id]
+                            if lc  == "FractionalChangesTopToBottom":
+                                self.print_mapmapdouble(mp_fr[k_rec], 1.0, 3)
                     self.log("\n")
                 
                 
@@ -2490,6 +2848,7 @@ class FlagBadMaps(object):
         
         if frame.type == core.G3FrameType.Observation:
             self.sb_fld = frame["SourceName"]
+            self.obs_id = frame["ObservationID"]
             self.center_dec = \
                 core.G3Units.deg * float(self.sb_fld.replace("ra0hdec", ""))
         
@@ -2706,6 +3065,9 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
         subtract_existing_maps=False,
         collect_averages_from_flagging_statistics=False,
         calculate_pW_to_K_conversion_factors=False,
+        calculate_calibrator_response_vs_el=False,
+        calibration_data_dir=None,
+        bolo_timestreams_dir=None,
         calculate_map_rmss_and_weight_stats=False,
         rmss_and_wgts_from_coadds_or_individuals=None,
         rmss_and_wgts_from_signals_or_noises=None,
@@ -2840,6 +3202,12 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
                      collect_averages_from_flagging_statistics,
                  calculate_pW_to_K_conversion_factors=\
                      calculate_pW_to_K_conversion_factors,
+                 calculate_calibrator_response_vs_el=\
+                     calculate_calibrator_response_vs_el,
+                 calibration_data_dir=calibration_data_dir,
+                 bolo_timestreams_dir=bolo_timestreams_dir,
+                 min_field_obs_id=min_obs_id,
+                 max_field_obs_id=max_obs_id,
                  calculate_map_rmss_and_weight_stats=\
                      calculate_map_rmss_and_weight_stats,
                  rmss_and_wgts_from_coadds_or_individuals=\
@@ -3030,6 +3398,27 @@ if __name__ == '__main__':
                         help="Whether to calculate the mean value of the "
                              "pW/K absolute calibration factors for each band "
                              "of each wafer.")
+    
+    parser.add_argument("-e", "--calculate_calibrator_response_vs_el",
+                        action="store_true", default=False,
+                        help="Whether to calculate a fractional change of "
+                             "detectors' response to the calibrator at the "
+                             "top of a field with respect to the bottom.")
+    
+    parser.add_argument("-L", "--calibration_data_dir",
+                        type=str, action="store", default=None,
+                        help="Path to the directory that contain "
+                             "auto-processed calibration results, which should "
+                             "contain a directory labelled 'calibrator', "
+                             "where CalibratorResponse data will be obtained")
+    
+    parser.add_argument("-T", "--bolo_timestreams_dir",
+                        type=str, action="store", default=None,
+                        help="Path to the directory that contain "
+                             "detectors' raw timestreams, which should contain "
+                             "a directory labelled 'calibrator', where "
+                             "elevations at which some calibrator observations "
+                             "were taken will be checked.")
     
     parser.add_argument("-w", "--calculate_map_rmss_and_weight_stats",
                         action="store_true", default=False,

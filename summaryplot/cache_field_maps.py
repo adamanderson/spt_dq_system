@@ -40,7 +40,9 @@ from summaryplot import fields_plotting
 def update(mode, action,
            oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=0,
-           original_maps_dir='.', coadds_dir='.', figs_dir='.',
+           original_maps_dir='.',
+           calibration_data_dir='.', bolo_timestreams_dir='.',
+           coadds_dir='.', figs_dir='.',
            bands=['90GHz', '150GHz', '220GHz'],
            sub_fields=['ra0hdec-44.75', 'ra0hdec-52.25',
                        'ra0hdec-59.75', 'ra0hdec-67.25'],
@@ -424,9 +426,11 @@ def update(mode, action,
             sub_logger_name, band, sub_field.replace('.', ''))
         arguments['less_verbose'] = False
         
+        arguments['calibration_data_dir'] = calibration_data_dir
+        arguments['bolo_timestreams_dir'] = bolo_timestreams_dir
         arguments['auxiliary_files_directory'] = aux_files_directory
-        arguments['point_source_list_file'] = point_source_list_file
-        arguments['planck_map_fits_file']   = planck_map_fits_file
+        arguments['point_source_list_file']    = point_source_list_file
+        arguments['planck_map_fits_file']      = planck_map_fits_file
         
         return arguments
     
@@ -526,6 +530,7 @@ def update(mode, action,
                      'rmss_and_wgts_from_signals_or_noises'     : 's',
                      'collect_averages_from_flagging_statistics': True,
                      'calculate_pW_to_K_conversion_factors'     : True,
+                     'calculate_calibrator_response_vs_el'      : True,
                      'calculate_cross_spectra_with_planck_map'  : True,
                      'calculate_pointing_discrepancies'         : True,
                      'calculate_noise_from_individual_maps'     : True}
@@ -606,13 +611,15 @@ def update(mode, action,
                 log('--- %s ---', band)
                 log('')
                 
+                fig_dir = desired_dir_names[i+n_time_ranges]
+                
                 args_plotting = \
                     {'input_files': [os.path.join(desired_dir_names[i],
                                      'coadded_maps_{}.g3.gz'.format(band))],
-                     'dir_to_save_figs': desired_dir_names[i+n_time_ranges],
+                     'directory_to_save_figures'  : fig_dir,
                      'simpler_file_names'         : True,
                      'figure_title_font_size'     : 18,
-                     'map_ids'                    : [band],
+                     'map_id'                     : band,
                      'map_type'                   : 'T',
                      'coadded_data'               : True,
                      'make_figures_for_field_maps': True,
@@ -731,6 +738,22 @@ if __name__ == '__main__':
                              "each sub-directory in turn contains g3 files "
                              "named like 12345678_abc.g3, which stores "
                              "temperature maps and weight maps.")
+    
+    parser.add_argument("-C", "--calibration-data-dir",
+                        type=str, action="store", default=".",
+                        help="The path to the directory that contains "
+                             "auto-processed calibration results. The results "
+                             "from calibrator observations will be used when "
+                             "calculating how much detectors' response changed "
+                             "at the top of a field compared to the bottom.")
+    
+    parser.add_argument("-T", "--bolo-timestreams-dir",
+                        type=str, action="store", default=".",
+                        help="The path to the directory that contains "
+                             "raw timestreams. The elevation timestreams of "
+                             "calibrator observations will be used to make sure "
+                             "the observations taken at the correct elevations "
+                             "are used.")
     
     parser.add_argument("-D", "--coadds-dir",
                         type=str, action="store", default=".",

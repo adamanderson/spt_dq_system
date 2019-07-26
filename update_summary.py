@@ -32,11 +32,15 @@ parser_maps = S.add_parser('maps', help='Updates the coadd data and map '
 parser_maps.add_argument('mapsdatadir',
                          help='Path to map data.')
 parser_maps.add_argument('coaddsdatadir',
-                         help='Path to coadded maps to be created.')
+                         help='Path to coadded maps to be generated.')
 parser_maps.add_argument('coaddsfigsdir',
-                         help='Path to figures related to coadded maps.')
+                         help='Path to figures figures to coadded maps.')
 parser_maps.add_argument('coaddslogsdir',
                          help='Path to log files to be generated.')
+parser_maps.add_argument('caldatadir',
+                         help='Path to calibration data.')
+parser_maps.add_argument('bolodatadir',
+                         help='Path to raw bolometer data.')
 parser_maps.add_argument('mintime',
                          help='Time from which to care about.')
 parser_maps.add_argument('-m', '--maxtime', action='store',
@@ -154,6 +158,8 @@ if args.mode == 'maps':
                                         oldest_time_to_consider=args.mintime,
                                         current_time=current_day,
                                         original_maps_dir=args.mapsdatadir,
+                                        calibration_data_dir=args.caldatadir,
+                                        bolo_timestreams_dir=args.bolodatadir,
                                         coadds_dir=args.coaddsdatadir,
                                         figs_dir=args.coaddsfigsdir,
                                         just_see_commands=args.justseecommands,
@@ -185,6 +191,8 @@ if args.mode == 'maps':
                                         oldest_time_to_consider=args.mintime,
                                         current_time=current_day,
                                         original_maps_dir=args.mapsdatadir,
+                                        calibration_data_dir=args.caldatadir,
+                                        bolo_timestreams_dir=args.bolodatadir,
                                         coadds_dir=args.coaddsdatadir,
                                         figs_dir=args.coaddsfigsdir,
                                         just_see_commands=args.justseecommands,
