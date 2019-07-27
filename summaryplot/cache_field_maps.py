@@ -493,6 +493,46 @@ def update(mode, action,
         return rval
     
     
+    
+    def combine_all_analysis_results(
+            dummy_input, analysis_results_g3_files, output_file):
+        
+        def combine_analysis_results(frame, g3_files=[]):
+            if frame.type != core.G3FrameType.EndProcessing:
+                return []
+            else:
+                final_frame = core.G3Frame()
+                for g3_file in g3_files:
+                    iterator  = core.G3File(g3_file)
+                    new_frame = iterator.next()
+                    for k, v in new_frame.iteritems():
+                        if not isinstance(v, core.G3MapMapDouble):
+                            continue
+                        if k not in final_frame.keys():
+                            final_frame[k] = v
+                        else:
+                            old_v = {"some_id": final_frame[k]}
+                            new_v = {"some_id": new_frame[k]}
+                            combined_kv = \
+                                fields_coadding.    \
+                                AnalyzeAndCoaddMaps.\
+                                combine_mapmapdoubles(
+                                    "dummy", old_v, new_v)
+                            final_frame.pop(k)
+                            final_frame[k] = combined_kv["some_id"]
+                return [final_frame, frame]
+        
+        pipeline = core.G3Pipeline()
+        pipeline.Add(core.G3Reader,
+                     filename=dummy_input)
+        pipeline.Add(combine_analysis_results,
+                     g3_files=analysis_results_g3_files)
+        pipeline.Add(core.G3Writer,
+                     filename=output_file)
+        pipeline.Run()
+    
+    
+    
     # -- Then, call the coadding/plotting scripts by using those functions
     
     n_time_ranges = len(desired_obs_id_ranges)
@@ -585,7 +625,9 @@ def update(mode, action,
                      'logger_name': '{}_{}_full_field'.\
                                      format(sub_logger_name, band),
                      'log_file'   : log_file,
-                     'auxiliary_files_directory': aux_files_directory}
+                     'auxiliary_files_directory': aux_files_directory,
+                     'calibration_data_dir'     : calibration_data_dir,
+                     'bolo_timestreams_dir'     : bolo_timestreams_dir}
                 
                 if time_interval == 'yearly':
                     args_coadding.update(anal_yearly_args)
@@ -654,6 +696,46 @@ def update(mode, action,
                 log('\n\n')
         
         log('\n\n\n')
+    
+    
+    if (mode == 'coadding') and (time_interval == 'monthly'):
+    
+        for band in bands:
+            
+            all_months_dir = \
+                os.path.join(coadds_dir, 'monthly', 'all_months')
+            if not os.path.isdir(all_months_dir):
+                os.mkdir(all_months_dir)
+            
+            all_months_g3_files = \
+                glob.glob(os.path.join(
+                    coadds_dir, 'monthly', '*',
+                    'coadded_maps_{}.g3.gz'.format(band)))
+            dummy_input = os.path.join(
+                              aux_files_directory, 'dummy.g3')
+            output_file = \
+                os.path.join(
+                    all_months_dir,
+                    'all_analysis_results_{}.g3'.format(band))
+            
+            log('\n')
+            log('Finally, the analysis results from all months '
+                'will be combined into one file ...')
+            log('')
+            log(' * Input files:')
+            for inf in all_months_g3_files:
+                log('     %s', os.path.relpath(inf, coadds_dir))
+            log(' * Output file:')
+            log('     %s', os.path.relpath(output_file, coadds_dir))
+            
+            if not just_see_commands:
+                combine_all_analysis_results(
+                    dummy_input, all_months_g3_files, output_file)
+            
+            log('')
+            log('Done.')
+            log('\n\n')
+                
 
 # ==============================================================================
 
