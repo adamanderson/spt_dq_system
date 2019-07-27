@@ -13,6 +13,8 @@
 #  the requested analyses. The types of analyses that are available are the    #
 #  following:                                                                  #
 #                                                                              #
+#    Analyses that do not require actual map data:                             #
+#                                                                              #
 #    - Collecting flagging statistics                                          #
 #        The script can calculate the average number of detectors              #
 #        (average over all scans of an observation) that were flagged and      #
@@ -32,6 +34,8 @@
 #        part of the schedule that observed that field. Then, the fractional   #
 #        change in detectors' response to the calibrator at top with respect   #
 #        to bottom will be calculated.                                         #
+#                                                                              #
+#    Analyses that do require map data:                                        #
 #                                                                              #
 #    - Comparing SPT maps with Planck maps                                     #
 #        The script can compare an individual SPT map with a Planck map by     #
@@ -394,13 +398,6 @@ def group_suviving_detectors_by_wafer(
         desired_band, desired_wafers, cal_frame, pipe_info_frame, logfun=print):
     
     bolos_used_each_scan = pipe_info_frame["SurvivingBolos"]
-    
-    """bolos_used_at_least_once = set([])
-    for scan_number, bolos_used_that_scan \
-    in  bolos_used_each_scan.iteritems():
-        bolos_used_at_least_once = \
-            bolos_used_at_least_once | set(bolos_used_that_scan)"""
-    
     bolos_and_times_used = {}
     
     for scan_number, bolos_that_scan in bolos_used_each_scan.iteritems():
