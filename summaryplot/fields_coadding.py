@@ -263,38 +263,41 @@ def create_new_map_frame_with_smaller_region(
 
 
 
-def get_band_average(bolo_names_from_each_scan, bolo_props_map):
+def get_wafer_average_over_scans(
+        bolo_names_from_each_scan, bolo_props_map,
+        desired_band, desired_wafers):
     
     # * This one is called by the function below
     
-    n_bolos_from_each_scan = {"90": [], "150": [], "220": []}
-    bolos_with_properties  = set(bolo_props_map.keys())
+    n_bolos_from_each_scan = {wafer: [] for wafer in desired_wafers}
     
     for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
-        n_bolos_from_one_scan = {"90": 0, "150": 0, "220": 0}
-        identifiable_bolos = set(bolo_names_from_one_scan) & \
-                             bolos_with_properties
-        for bn in identifiable_bolos:
+        n_bolos_from_one_scan = {wafer: 0 for wafer in desired_wafers}
+        for bn in bolo_names_from_one_scan:
             band = bolo_props_map[bn].band / core.G3Units.GHz
             if not numpy.isfinite(band):
                 continue
             band = str(int(band))
-            if band in n_bolos_from_one_scan.keys():
-                n_bolos_from_one_scan[band] += 1
+            if band == desired_band:
+                wafer = bolo_props_map[bn].wafer_id.upper()
+                if wafer in desired_wafers:
+                    n_bolos_from_one_scan[wafer] += 1
+                    n_bolos_from_one_scan["AllBolos"] += 1
         
-        for band, n_bolos in n_bolos_from_one_scan.items():
-            n_bolos_from_each_scan[band].append(n_bolos)
+        for wafer, n_bolos in n_bolos_from_one_scan.items():
+            n_bolos_from_each_scan[wafer].append(n_bolos)
     
-    return {band: numpy.mean(ns_bolos) \
-            for band, ns_bolos in n_bolos_from_each_scan.items()}
+    return {wafer: numpy.mean(ns_bolos) \
+            for wafer, ns_bolos in n_bolos_from_each_scan.items()}
 
 
 
 
 def collect_averages_from_flagging_info(
-        pipe_info_frame, bolo_props_map, recognized_reasons):
+        pipe_info_frame, recognized_reasons,
+        desired_wafers, desired_band, bolo_props_map):
     
-    averages = {"90": {}, "150": {}, "220": {}}
+    averages = {wafer: {} for wafer in desired_wafers}
     
     # - Collect average numbers of bolos not flagged
     
@@ -303,20 +306,23 @@ def collect_averages_from_flagging_info(
     
     total_n_scans = numpy.max([len(scans) for reason, scans \
                                in pipe_info_frame["DroppedBolos"].items()])
-    n_recorded_here = len(bolos_not_flagged_each_scan.keys())
+    # * In case more scans are recorded in the DroppedBolos dictionary
     
-    diff_n_scans = total_n_scans - n_recorded_here
+    n_from_survival = len(bolos_not_flagged_each_scan.keys())
+    diff_n_scans = total_n_scans - n_from_survival
     for i in range(diff_n_scans):
         bolos_not_flagged_each_scan["Dummy"+str(i)] = core.G3VectorString()
     
-    avg_n_okay_bolos_each_band = \
-        get_band_average(bolos_not_flagged_each_scan, bolo_props_map)
-    for band, average in avg_n_okay_bolos_each_band.items():
-        averages[band]["TotalNotFlagged"] = average
+    avg_n_okay_bolos_each_wafer = \
+        get_wafer_average_over_scans(
+            bolos_not_flagged_each_scan,
+            bolo_props_map, desired_band, desired_wafers)
+    for wafer, average in avg_n_okay_bolos_each_wafer.items():
+        averages[wafer]["TotalNotFlagged"] = average
     
     # - Collect average numbers of bolos flagged for each reason
     
-    # -- Gather the numbers from all reasons
+    # -- Gather the numbers from each reason
     
     all_bolos_flagged_each_scan = pipe_info_frame["DroppedBolos"]
     # * This is a core.G3MapVectorVectorString instance
@@ -326,25 +332,28 @@ def collect_averages_from_flagging_info(
         bl_flgd_ea_sc_reorganized = core.G3MapVectorString()
         for scan_number, list_of_bolos in enumerate(bolos_flagged_each_scan):
             bl_flgd_ea_sc_reorganized[str(scan_number)] = list_of_bolos
-        avg_bad_bolos_each_band = \
-            get_band_average(bl_flgd_ea_sc_reorganized, bolo_props_map)
-        for band, average in avg_bad_bolos_each_band.items():
-            averages[band][flagging_reason] = average
+        avg_bad_bolos_each_wafer = \
+            get_wafer_average_over_scans(
+                bl_flgd_ea_sc_reorganized,
+                bolo_props_map, desired_band, desired_wafers)
+        for wafer, average in avg_bad_bolos_each_wafer.items():
+            averages[wafer][flagging_reason] = average
     
     # -- Collectively call unrecognized reasons "Others"
+    #    and assign 0 to any recognized reason that is absent
     
-    for band, reasons_and_numbers in averages.items():
-        averages[band]["Others"] = 0.0
+    for wafer, reasons_and_numbers in averages.items():
+        averages[wafer]["Others"] = 0.0
         unrecognized_reasons = []
         for reason, number in reasons_and_numbers.items():
             if reason not in recognized_reasons:
-                averages[band]["Others"] += number
+                averages[wafer]["Others"] += number
                 unrecognized_reasons.append(reason)
         for reason in unrecognized_reasons:
-            averages[band].pop(reason)
+            averages[wafer].pop(reason)
         for reason in recognized_reasons:
             if reason not in reasons_and_numbers.keys():
-                averages[band][reason] = 0.0
+                averages[wafer][reason] = 0.0
     
     # - Collect average numbers of bolos removed
     
@@ -363,10 +372,12 @@ def collect_averages_from_flagging_info(
                 pass
         bolos_removed_each_scan[str(i)] = \
             core.G3VectorString(bolos_removed_one_scan)
-    avg_n_removed_bolos_each_band = \
-        get_band_average(bolos_removed_each_scan, bolo_props_map)
-    for band, average in avg_n_removed_bolos_each_band.items():
-        averages[band]["TotalRemoved"] = average
+    avg_n_removed_bolos_each_wafer = \
+        get_wafer_average_over_scans(
+            bolos_removed_each_scan, bolo_props_map,
+            desired_band, desired_wafers)
+    for wafer, average in avg_n_removed_bolos_each_wafer.items():
+        averages[wafer]["TotalRemoved"] = average
     
     # * "TotalNotFlagged", "TotalRemoved", and "Others" keys
     #   need to be changed accordingly if the corresponding names
@@ -1821,10 +1832,10 @@ class AnalyzeAndCoaddMaps(object):
                 
                 if subtract_maps_in_this_frame:
                     for waf in self.wafers:
-                        for flg_typ in self.avgs_flagging_stats.keys():
-                            self.avgs_flagging_stats[waf][flg_typ] = \
+                        for fr in self.flagging_reasons:
+                            self.avgs_flagging_stats[waf][fr] = \
                                 self.remove_partial_mapmapdouble(
-                                    self.avgs_flagging_stats[waf][flg_typ],
+                                    self.avgs_flagging_stats[waf][fr],
                                     obs_ids_from_this_frame)
                 
                 else:
@@ -1840,8 +1851,8 @@ class AnalyzeAndCoaddMaps(object):
                                     avgs_flg_stats_from_this_fr[waf] = {}
                                     for fr in self.flagging_reasons:
                                         fk = self.key_prefix_flg + waf + fr
-                                        avgs_flg_stats_from_this_fr[waf][fk] = \
-                                            {id_for_coadds: frame[key]}
+                                        avgs_flg_stats_from_this_fr[waf][fr] = \
+                                            {id_for_coadds: frame[fk]}
                     else:
                         self.log("")
                         self.log("* Gathering average numbers related to")
@@ -1850,15 +1861,16 @@ class AnalyzeAndCoaddMaps(object):
                         avgs_from_each_wafer = \
                             collect_averages_from_flagging_info(
                                 self.pipe_info_frame,
-                                self.wafers,
-                                self.flagging_reasons)
+                                self.flagging_reasons,
+                                self.wafers, band,
+                                self.cal_frame["BolometerProperties"])
                         for wafer in avgs_from_each_wafer.keys():
                             avgs_flg_stats_from_this_fr[wafer] = {}
                             for reason in avgs_from_each_wafer[wafer].keys():
                                 avg = avgs_from_each_wafer[wafer][reason]
                                 mmd = self.create_mmd_for_one_value(
                                           sbfd, oid, avg)
-                                avgs_flg_stats_from_this_fr[wafer][factor] = \
+                                avgs_flg_stats_from_this_fr[wafer][reason] = \
                                     {id_for_coadds: mmd}
                     for waf in avgs_flg_stats_from_this_fr.keys():
                         for rs in avgs_flg_stats_from_this_fr[waf].keys():
@@ -2584,7 +2596,7 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     
                     for waf in self.wafers:
-                        for fr in self.flagging_reasons.keys():
+                        for fr in self.flagging_reasons:
                             k_rec = self.key_prefix_flg + waf + fr
                             mp_fr[k_rec] = self.avgs_flagging_stats \
                                            [waf][fr][map_id]
