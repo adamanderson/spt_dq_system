@@ -270,10 +270,13 @@ def get_wafer_average_over_scans(
     # * This one is called by the function below
     
     n_bolos_from_each_scan = {wafer: [] for wafer in desired_wafers}
+    available_bolos = bolo_props_map.keys()
     
     for bolo_names_from_one_scan in bolo_names_from_each_scan.values():
         n_bolos_from_one_scan = {wafer: 0 for wafer in desired_wafers}
         for bn in bolo_names_from_one_scan:
+            if bn not in available_bolos:
+                continue
             band = bolo_props_map[bn].band / core.G3Units.GHz
             if not numpy.isfinite(band):
                 continue
