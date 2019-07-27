@@ -484,6 +484,14 @@ def update(mode, action,
             log('  (Original name: %s' , output_file_temp)
             log('   New name     : %s)', output_file_perm)
             if not just_see_commands:
+                if os.path.getsize(output_file_temp) < 100 * 2**20:
+                    logger.exception(
+                        'The size of the output file %s seems too small!',
+                        output_file_temp)
+                    raise RuntimeError(
+                        'An error occurred! '
+                        'Please check where it occurred '
+                        'in the log file {}!'.format(log_file))
                 shutil.move(output_file_temp, output_file_perm)
             log('Done.')
         else:
