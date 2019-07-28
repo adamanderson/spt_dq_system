@@ -52,6 +52,12 @@ parser_maps.add_argument('-c', '--nocoadding',
 parser_maps.add_argument('-p', '--noplotting',
                          action='store_true', default=False,
                          help='Skip the plotting part.')
+parser_maps.add_argument('-o', '--onlymonthly',
+                         action='store_true', default=False,
+                         help='Only invoke the monthly mode of updating.')
+parser_maps.add_argument('-e', '--onlyyearly',
+                         action='store_true', default=False,
+                         help='Only invoke the yearly mode of updating.')
 parser_maps.add_argument('-r', '--rebuildinsteadofupdate',
                          action='store_true', default=False,
                          help='Rebuild maps and figures instead of update them.')
@@ -138,7 +144,11 @@ if args.mode == 'maps':
     current_day = args.maxtime
     
     for mode in modes:
-        for n in [7, 30]:
+        if args.onlymonthly or args.onlyyearly:
+            ns = []
+        else:
+            ns = [7, 30]
+        for n in ns:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for last_n and %s with n = %s',
                         mode, n)
@@ -174,7 +184,13 @@ if args.mode == 'maps':
             time.sleep(1)
         
         
-        for interval in ['weekly', 'monthly', 'yearly']:
+        if args.onlymonthly:
+            intervals = ['monthly']
+        elif args.onlyyearly:
+            intervals = ['yearly']
+        else:
+            intervals = ['weekly', 'monthly', 'yearly']
+        for interval in intervals:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for %s and %s', interval, mode)
             logger.info('starting from %s (UTC) ...', current_time)
