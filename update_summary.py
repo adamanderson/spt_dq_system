@@ -140,7 +140,8 @@ if args.mode == 'maps':
     for mode in modes:
         for n in [7, 30]:
             current_time = datetime.datetime.utcnow()
-            logger.info('Running commands for last_n and %s with n = %s', mode, n)
+            logger.info('Running commands for last_n and %s with n = %s',
+                        mode, n)
             logger.info('starting from %s (UTC) ...', current_time)
             logger.info('')
             
@@ -149,8 +150,9 @@ if args.mode == 'maps':
             if args.nologfiles:
                 log_file = None
             else:
-                log_file = os.path.join(args.coaddslogsdir,
-                                        '{}_{}'.format(time_string, logger_name))
+                log_file = \
+                    os.path.join(args.coaddslogsdir,
+                                 '{}_{}'.format(time_string, logger_name))
             
             try:
                 cache_field_maps.update(mode, action, time_interval='last_n',
@@ -172,7 +174,7 @@ if args.mode == 'maps':
             time.sleep(1)
         
         
-        for interval in ['yearly', 'weekly', 'monthly']:
+        for interval in ['weekly', 'monthly', 'yearly']:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for %s and %s', interval, mode)
             logger.info('starting from %s (UTC) ...', current_time)
@@ -183,8 +185,9 @@ if args.mode == 'maps':
             if args.nologfiles:
                 log_file = None
             else:
-                log_file = os.path.join(args.coaddslogsdir,
-                                        '{}_{}'.format(time_string, logger_name))
+                log_file = \
+                    os.path.join(args.coaddslogsdir,
+                                 '{}_{}'.format(time_string, logger_name))
             
             try:
                 cache_field_maps.update(mode, action, time_interval=interval,
