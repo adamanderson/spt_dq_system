@@ -1,4 +1,13 @@
-## ******* Always need to import modules! ******* ##
+# ============================================================================ #
+#  This script is intended to be called by                                     #
+#  spt_dq_system/summaryplot/cache_field_maps.py                               #
+#  It can also be run from command line imported by another script.            #
+#                                                                              #
+#  In any case, the purpose of this script is to make figures showing the      #
+#  analysis results obtained by fields_coadding.py. As a result, the script    #
+#  makes many assumptions about the structure and contents of the data it      #
+#  receives
+
 
 import  matplotlib
 matplotlib.use("Agg")
@@ -12,6 +21,7 @@ import  glob
 import  numpy 
 import  argparse
 import  logging
+
 from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
