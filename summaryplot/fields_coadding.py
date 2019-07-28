@@ -544,15 +544,22 @@ def calculate_change_in_cal_response_vs_elevation(
     cal_obs_ids = numpy.unique(cal_obs_ids)
     idx_closest_cal_obs_id = numpy.argmin(numpy.abs(cal_obs_ids - field_obs_id))
     
-    id_at_bot = cal_obs_ids[idx_closest_cal_obs_id]
-    id_at_mid = cal_obs_ids[idx_closest_cal_obs_id-1]
-    id_at_top = cal_obs_ids[idx_closest_cal_obs_id+1]
+    try:
+        id_at_bot = cal_obs_ids[idx_closest_cal_obs_id]
+        id_at_mid = cal_obs_ids[idx_closest_cal_obs_id-1]
+        id_at_top = cal_obs_ids[idx_closest_cal_obs_id+1]
+    except:
+        fill_with_nans()
+        logfun("$$$ One (or more) candidate calibrator observation does not "
+               "seem to have timestream files!")
+        return response_dict
     
     if (id_at_bot > field_obs_id)        or \
        (id_at_mid < field_obs_id - 1200) or \
        (id_at_top > field_obs_id + 9000):
         fill_with_nans()
-        logfun("$$$ One or more candidate observation ID not found!")
+        logfun("$$$ One (or more) candidate observation ID does not "
+               "seem to have a roughly correct number!")
         return response_dict
     
     cal_obs_ids = {"AtBottomOfFields": id_at_bot,
