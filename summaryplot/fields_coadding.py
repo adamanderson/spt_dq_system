@@ -2092,7 +2092,8 @@ class AnalyzeAndCoaddMaps(object):
                                     remove_weights_afterward=True,
                                     divide_result_by=1.0,
                                     record_weights=False,
-                                    logfun=self.detail)
+                                    logfun=self.detail,
+                                    iy=center_y, ix=center_x)
                             diff_map_frame_coadded = \
                                 add_two_map_frames(
                                     self.coadded_map_frames[idl],
@@ -2104,7 +2105,8 @@ class AnalyzeAndCoaddMaps(object):
                                     remove_weights_afterward=False,
                                     divide_result_by=2.0,
                                     record_weights=False,
-                                    logfun=self.detail)
+                                    logfun=self.detail,
+                                    iy=center_y, ix=center_x)
                             summ_map_frame_individ_mini = None
                             diff_map_frame_individ_mini = None
                             summ_map_frame_coadded_mini = None
