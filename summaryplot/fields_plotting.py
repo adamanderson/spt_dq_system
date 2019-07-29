@@ -1,12 +1,52 @@
 # ============================================================================ #
 #  This script is intended to be called by                                     #
 #  spt_dq_system/summaryplot/cache_field_maps.py                               #
-#  It can also be run from command line imported by another script.            #
+#  It can also be run from command line or imported by another script.         #
 #                                                                              #
-#  In any case, the purpose of this script is to make figures showing the      #
+#  The purpose of this script is to make figures showing the                   #
 #  analysis results obtained by fields_coadding.py. As a result, the script    #
 #  makes many assumptions about the structure and contents of the data it      #
-#  receives
+#  receives, which means it is probably not very usable in other contexts.     #
+#                                                                              #
+#  The script mainly has three parts, each of which defines a pipeline         #
+#  module. All three modules make figures, but each one make a different type  #
+#  of figures.                                                                 #
+#                                                                              #
+#  The first module, MakeFiguresForFieldMapsAndWeightMaps, generates           #
+#  colormaps from data stored in a map frame, in particular, frame["T"] and    #
+#  frame["Wunpol"].TT. It also generates a figure showing a cross section of   #
+#  the weight map. Currently, making figures for Q maps, U maps, and the       #
+#  associated weight maps is not implemented.                                  #
+#                                                                              #
+#  The second module, MakeFiguresForTimeVariationsOfMapRelatedQuantities,      #
+#  generates figures showing the time variations of those map-related          #
+#  quantities that were calculated by fields_coadding.py. The quantities are:  #
+#    (1) average numbers of detectors flagged by different reasons and         #
+#        those not flagged                                                     #
+#    (2) medians of the pW/K temperature calibration conversion factors        #
+#    (3) medians of fractional changes in detectors' response to the           #
+#        calibrator at different elevations                                    #
+#    (4) standard deviations of T maps, mean weights of TT weight maps, and    #
+#        number of pixels in TT weight maps that have good weights             #
+#    (5) ra offsets, dec offsets, fluxes, SNRs of three brightesst point       #
+#        sources from each sub-field                                           #
+#    (6) averages of ratios of SPT x Planck to Planck x Planck cross spectra   #
+#    (7) noise levels of individual or coadded maps                            #
+#    (8) observation durations                                                 #
+#  These figures can be be made so that the data points shown correspond to    #
+#  different time intervals (a week, a month, etc.).                           #
+#                                                                              #
+#  The third module, MakeFiguresForDistributionsOfMapRelatedQuantities,        #
+#  generates figures showing distributions of some of the aforementioned       #
+#  quantities by making histograms. These quantities are ra offsets,           #
+#  dec offsets, ratios of the power spectra, fractional changes in             #
+#  responsivity, noise levels of individual maps, map standard deviations,     #
+#  and mean weights.                                                           #
+#                                                                              #
+#  At the end of the script, there is a function that constructs a pipeline    #
+#  that utilizes these modules.                                                #
+#                                                                              #
+# ============================================================================ #
 
 
 import  matplotlib
@@ -105,7 +145,7 @@ def save_figure_etc(figure_obj, fig_dir, file_name):
 # ------------------------------------------------------------------------------
 
 
-class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
+class MakeFiguresForFieldMapsAndWeightMaps(object):
     
     def __init__(self,
                  fig_f=False, fig_w=False, fig_cr=False,
@@ -481,7 +521,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
 
 
 
-class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
+class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def __init__(self,
                  fig_fs=False, fig_tc=False, fig_fl=False,
