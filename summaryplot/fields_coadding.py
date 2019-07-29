@@ -26,24 +26,47 @@
 #        The script can calculate the average value of the pW/K conversion     #
 #        factors that were used to convert timestreams' units from power to    #
 #        temperature during the map-making. The average is calculated for      #
-#        each wafer.                                                           #
+#        each wafer and the whole detector array.                              #
 #                                                                              #
 #    - Calculating changes in responsivity                                     #
 #        The script can collect the results from calibrator observations that  #
 #        were taken at the bottom, middle, and top of each sub-field as part   #
-#        part of the schedule that observed that field. Then, the fractional   #
-#        change in detectors' response to the calibrator at top with respect   #
-#        to bottom will be calculated.                                         #
+#        part of the schedule for observing that field. Specifically, it       #
+#        calculates the median response to the calibrator for each wafer and   #
+#        and the whole detector array. In addtion, the median of the           #
+#        fractional change in detectors' response to the calibrator at the     #
+#        top with respect to the bottom of the field is calculated.            #
 #                                                                              #
 #    Analyses that do require map data:                                        #
+#                                                                              #
+#    - Calculating basic statistics of temperature and weight maps             #
+#        The script can calculate standard deviations of the values in         #
+#        temperature maps, mean values of weight maps, and numbers of          #
+#        pixels in weight maps whose weights are higher than some normal       #
+#        values. When these statistics are calculated, the pixels that are     #
+#        close to the periphery of a map are ignored. Specifically, these      #
+#        pixels are the ones whose RAs and DECs meet these conditions:         #
+#        RA > 48 deg or < -48 deg, DEC > field_center_dec + 3 or < -3.         #
+#        In addition, point sources are ignored when the standard deviations   #
+#        are calculated.                                                       #
+#                                                                              #
+#    - Calculating pointing discrepancies                                      #
+#        The script can calculate the differences between the true positions   #
+#        and the measured ones of three bright point sources in each of the    #
+#        four sub-fields. The measured positions are results of fitting a      #
+#        2D gaussian to a small (4 arcmin. by 4 arcmin.) region of a map       #
+#        that is roughly centered on each point source.                        #
 #                                                                              #
 #    - Comparing SPT maps with Planck maps                                     #
 #        The script can compare an individual SPT map with a Planck map by     #
 #        calculating the cross spectrum between the two, calculating the       #
 #        autospectrum of the Planck map, dividing the first spectrum by the    #
 #        second one, and calculating the average of the ratios in the ell      #
-#        range [750, 1500], i.e., average of                                   #
+#        range [750, 1250], i.e., average of                                   #
 #        Cl_(SPT x Planck) / Cl_(Planck_x_Planck).                             #
+#        (the Planck in the numerator refers to the Planck full mission map,   #
+#         and the Plancks in the denominator refer to two half mission maps;   #
+#         this way, the denominator is less biased by Planck noise)            #
 #        In order to save time and memory, only a 5 degree by 5 degree patch   #
 #        centered around the corresponding sub-field center is used instead    #
 #        of the entire sub-field.                                              #
@@ -61,31 +84,18 @@
 #        by direction, still two coadded maps will be maintained by            #
 #        alternately adding individual maps to one or the other pile, and      #
 #        the difference between them will be used for calculating the          #
-#        spectra. In order to save time and memory, the 5 degree by 5 degree   #
-#        patches mentioned above are used.                                     #
+#        noise. Once again, in order to save time and memory, only             #
+#        the 5 degree by 5 degree patches mentioned above are used.            #
 #                                                                              #
-#    - Calculating pointing discrepancies                                      #
-#        The script can calculate the differences between the true positions   #
-#        and the measured ones of three bright point sources in each of the    #
-#        four sub-fields. The measured positions are results of fitting a      #
-#        2D gaussian to a small (4 arcmin. by 4 arcmin.) region of a map       #
-#        that is roughly centered on each point source.                        #
 #                                                                              #
-#    - Calculating basic statistics of temperature and weight maps             #
-#        The script can calculate standard deviations of the values in         #
-#        temperature maps, mean values of weight maps, and numbers of          #
-#        pixels in weight maps whose weights are higher than some normal       #
-#        values. When these statistics are calculated, the pixels that are     #
-#        close to the periphery of a map are ignored. Specifically, these      #
-#        pixels are the ones whose RAs and DECs meet these conditions:         #
-#        RA > 48 deg or < -48 deg, DEC > field_center_dec + 3 or < -3.         #
-#        In addition, point sources are ignored when the standard deviations   #
-#        are calculated.                                                       #
+#  The script mainly has two parts. The first part consists of definitions of  #
+#  functions that are relevent to performing these analyses, and the second    #
+#  part defines a pipeline module (AnalyzeAndCoaddMaps) that adds maps         #
+#  together and calls those functions to perform the analyses.                 #
 #                                                                              #
-#  The first part of this script consists of definitions of functions that     #
-#  are relevent to performing these analyses, and the second part defines a    #
-#  giant (~1200 lines...) pipeline module (AnalyzeAndCoaddMaps) that           #
-#  adds maps together and performs the analyses.                               #
+#  The script is currently capable of dealing with temperature-only            #
+#  map frames only. More code would need to be written if we were to use it    #
+#  to co-add and analyze T, Q, and U maps as well.                             #
 #                                                                              #
 # ============================================================================ #
 
