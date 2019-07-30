@@ -102,6 +102,8 @@ def update(mode, action,
         'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits'
     point_source_list_file = \
         'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
+    dummy_input_file = \
+        os.path.join(aux_files_directory, 'dummy.g3')
     
     
     # - Figure out what appropriate time intervals are and
@@ -502,8 +504,32 @@ def update(mode, action,
     
     
     
+    def save_analysis_results_in_separate_file(original_file):
+        
+        def load_analysis_results_only(frame, original_file):
+            if frame.type != core.G3FrameType.EndProcessing:
+                return []
+            else:
+                final_frame = core.G3File(original_file).next()
+                return [final_frame, frame]
+        
+        output_file = original_file.\
+                          replace('coadded_maps', 'analysis_results').\
+                          replace('.gz', '')
+        
+        pipeline = core.G3Pipeline()
+        pipeline.Add(core.G3Reader,
+                     filename=dummy_input_file)
+        pipeline.Add(load_analysis_results_only,
+                     original_file=original_file)
+        pipeline.Add(core.G3Writer,
+                     filename=output_file)
+        pipeline.Run()
+    
+    
+    
     def combine_all_analysis_results(
-            dummy_input, analysis_results_g3_files, output_file):
+            analysis_results_g3_files, output_file):
         
         def combine_analysis_results(frame, g3_files=[]):
             if frame.type != core.G3FrameType.EndProcessing:
@@ -532,7 +558,7 @@ def update(mode, action,
         
         pipeline = core.G3Pipeline()
         pipeline.Add(core.G3Reader,
-                     filename=dummy_input)
+                     filename=dummy_input_file)
         pipeline.Add(combine_analysis_results,
                      g3_files=analysis_results_g3_files)
         pipeline.Add(core.G3Writer,
@@ -604,7 +630,14 @@ def update(mode, action,
                         args_coadding.update(anal_simple_args)
                     
                     if time_interval != 'last_n':
-                        args_coadding.update({'subtract_existing_maps': False})
+                        # * If existing maps are not to be subtracted,
+                        #   then there is no need to modify the id range
+                        args_coadding.update(
+                            {'subtract_existing_maps': False})
+                        args_coadding.update(
+                            {'min_obs_id': desired_obs_id_ranges[i][0]})
+                        args_coadding.update(
+                            {'max_obs_id': desired_obs_id_ranges[i][1]})
                     
                     rval = analyze_and_coadd_maps(
                                fields_coadding.run, args_coadding,
@@ -615,6 +648,7 @@ def update(mode, action,
                 
                 log('--- %s Full field ---', band)
                 log('')
+                                
                 if rvals_sum == 0:
                     log('There was no update to any of the sub-field,')
                     log('so, there is no need to combine the 4 g3 files again!')
@@ -651,6 +685,14 @@ def update(mode, action,
                 run_coadding_or_plotting_function(
                     fields_coadding.run, args_coadding,
                     logger, log_file, just_see_commands)
+                
+                log('\n')
+                log('Saving the analysis results in a separate file ...')
+                if not just_see_commands:
+                    if time_interval in ['monthly', 'yearly']:
+                        save_analysis_results_in_separate_file(
+                            args_coadding['output_file'])
+                log('')
                 
                 log('\n\n')
         
@@ -719,8 +761,7 @@ def update(mode, action,
                 glob.glob(os.path.join(
                     coadds_dir, 'monthly', '*',
                     'coadded_maps_{}.g3.gz'.format(band)))
-            dummy_input = os.path.join(
-                              aux_files_directory, 'dummy.g3')
+            
             output_file = \
                 os.path.join(
                     all_months_dir,
@@ -738,7 +779,7 @@ def update(mode, action,
             
             if not just_see_commands:
                 combine_all_analysis_results(
-                    dummy_input, all_months_g3_files, output_file)
+                    all_months_g3_files, output_file)
             
             log('')
             log('Done.')
