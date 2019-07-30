@@ -1,21 +1,44 @@
+# ============================================================================ #
+#  This script is intended to be called by db_server.js, which periodically    #
+#  calls this script to update the data products and figures used by the       #
+#  summary webpage.                                                            #
+#                                                                              #
+# ============================================================================ #
+
 import os
 import sys
-import argparse as ap
-import logging
 import time
 import datetime
+import argparse
+import logging
+
 from summaryplot import cache_timeseries_data
 from summaryplot import cache_field_maps
 
-parser = ap.ArgumentParser(description='Wrapper for updating data and plots.',
-                           formatter_class=ap.ArgumentDefaultsHelpFormatter)
 
-S = parser.add_subparsers(dest='mode', title='subcommands',
-                          help='Set of plots to update. For help, call: '
-                          '%(prog)s %(metavar)s -h')
-parser_summarystats = S.add_parser('summarystats', help='Updates skimmed data '
-                                   'and plots that appear on the `Summary '
-                                   'Stats` tab of the webpage')
+
+# ==============================================================================
+# Parse command line arguments
+# ------------------------------------------------------------------------------
+
+
+parser = argparse.ArgumentParser(
+             description='Wrapper for updating data products and figures used '
+                         'by the summary webpage.',
+             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+S = parser.add_subparsers(
+        dest='mode', title='subcommands',
+        help='Whether to update the data products and figures used for the '
+             '"summarystats" section or maps "section". For help, call: '
+             '%(prog)s %(metavar)s -h')
+
+
+parser_summarystats = \
+    S.add_parser('summarystats',
+                 help='Updates skimmed data and plots that appear on the '
+                      '"Summary Stats" tab of the webpage.')
+
 parser_summarystats.add_argument('staticplotdir',
                                  help='Path to static plots and data skims.')
 parser_summarystats.add_argument('caldatadir',
@@ -27,25 +50,41 @@ parser_summarystats.add_argument('mintime',
 parser_summarystats.add_argument('--no-data-update', action='store_true',
                                  help='Do not update the skimmed data.')
 
-parser_maps = S.add_parser('maps', help='Updates the coadd data and map '
-                           'monitoring plots.')
+
+parser_maps = \
+    S.add_parser('maps',
+                 help='Updates the coadded maps and the figures showing '
+                      'map-related quantities that appear on the "Maps" tab
+                      'of the webpage.')
+
 parser_maps.add_argument('mapsdatadir',
-                         help='Path to map data.')
+                         help='Path to the directory containing auto-processed '
+                              'maps of individual observations.')
 parser_maps.add_argument('coaddsdatadir',
-                         help='Path to coadded maps to be generated.')
+                         help='Path to the directory where coadded maps from '
+                              'different time intervals will be saved.')
 parser_maps.add_argument('coaddsfigsdir',
-                         help='Path to figures figures to coadded maps.')
+                         help='Path to the directory where figures showing '
+                              'coadded maps and map-related quantities such as '
+                              'noise levels will be saved.')
 parser_maps.add_argument('coaddslogsdir',
-                         help='Path to log files to be generated.')
+                         help='Path to the directory where the logs generated '
+                              'during the coadding and plotting processes '
+                              'will be saved.')
 parser_maps.add_argument('caldatadir',
-                         help='Path to calibration data.')
+                         help='Path to the directory where results of the '
+                              'auto-processing of the calibration observation '
+                              'are saved.')
 parser_maps.add_argument('bolodatadir',
-                         help='Path to raw bolometer data.')
+                         help='Path to the directory where raw timestreams '
+                              'are saved.')
 parser_maps.add_argument('mintime',
-                         help='Time from which to care about.')
-parser_maps.add_argument('-m', '--maxtime', action='store',
-                         type=str, default=None,
-                         help='Time up to which to care about.')
+                         help='Any maps from observations taken before this '
+                              'time will be ignored.')
+parser_maps.add_argument('-m', '--maxtime',
+                         action='store', default=None, type=str,
+                         help='Any maps from observations taken after time '
+                              'time will be ignored.')
 parser_maps.add_argument('-c', '--nocoadding',
                          action='store_true', default=False,
                          help='Skip the coadding part.')
@@ -60,18 +99,30 @@ parser_maps.add_argument('-e', '--onlyyearly',
                          help='Only invoke the yearly mode of updating.')
 parser_maps.add_argument('-r', '--rebuildinsteadofupdate',
                          action='store_true', default=False,
-                         help='Rebuild maps and figures instead of update them.')
+                         help='Remake coadded maps and relevant figures '
+                              'instead of updating the existing files.')
 parser_maps.add_argument('-l', '--nologfiles',
                          action='store_true', default=False,
-                         help='Whether to redirect stdout/err to txt files.')
+                         help='Log files are not to be generated.')
 parser_maps.add_argument('-j', '--justseecommands',
                          action='store_true', default=False,
-                         help='Whether to just see commands to be run.')
+                         help='Just see the functions that will be called and '
+                              'the arguments that will be supplied to them '
+                              'without actually invoking the functions.')
 
 args = parser.parse_args()
 
 
+# ==============================================================================
+
+
+
+# ==============================================================================
+# Update the data products and figures used by the "Summary Stats" section
+# ------------------------------------------------------------------------------
+
 if args.mode == 'summarystats':
+    
     # update data skims
     if args.no_data_update == False:
         cache_timeseries_data.update(mode='skim', action='update',
@@ -97,6 +148,11 @@ if args.mode == 'summarystats':
                                  timeinterval='3',
                                  outdir=args.staticplotdir,
                                  min_time=args.mintime)
+
+
+
+# Update the data products and figures used by the "Maps" section
+# ------------------------------------------------------------------------------
 
 if args.mode == 'maps':
     
@@ -189,7 +245,7 @@ if args.mode == 'maps':
         elif args.onlyyearly:
             intervals = ['yearly']
         else:
-            intervals = ['weekly', 'monthly', 'yearly']
+            intervals = ['weekly', 'yearly', 'monthly']
         for interval in intervals:
             current_time = datetime.datetime.utcnow()
             logger.info('Running commands for %s and %s', interval, mode)
@@ -227,3 +283,5 @@ if args.mode == 'maps':
     logger.info('All done at %s (UTC)!', current_time)
     logger.info('')
 
+
+# ==============================================================================
