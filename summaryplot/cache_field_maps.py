@@ -514,7 +514,7 @@ def update(mode, action,
                 return [final_frame, frame]
         
         output_file = original_file.\
-                          replace('coadded_maps', 'analysis_results').\
+                          replace('coadded_maps', 'some_analysis_results').\
                           replace('.gz', '')
         
         pipeline = core.G3Pipeline()
@@ -540,6 +540,9 @@ def update(mode, action,
                     iterator  = core.G3File(g3_file)
                     new_frame = iterator.next()
                     for k, v in new_frame.iteritems():
+                        if k == "Id":
+                            if "Id" not in final_frame.keys():
+                                final_frame["Id"] = new_frame["Id"]
                         if not isinstance(v, core.G3MapMapDouble):
                             continue
                         if k not in final_frame.keys():
@@ -648,7 +651,15 @@ def update(mode, action,
                 
                 log('--- %s Full field ---', band)
                 log('')
-                                
+                log('\n')
+                
+                """log('Saving the analysis results in a separate file ...')
+                if not just_see_commands:
+                    save_analysis_results_in_separate_file(
+                        os.path.join(desired_dir_names[i],
+                                     'coadded_maps_{}.g3.gz'.format(band)))
+                log('')"""
+                
                 if rvals_sum == 0:
                     log('There was no update to any of the sub-field,')
                     log('so, there is no need to combine the 4 g3 files again!')
@@ -689,9 +700,8 @@ def update(mode, action,
                 log('\n')
                 log('Saving the analysis results in a separate file ...')
                 if not just_see_commands:
-                    if time_interval in ['monthly', 'yearly']:
-                        save_analysis_results_in_separate_file(
-                            args_coadding['output_file'])
+                    save_analysis_results_in_separate_file(
+                        args_coadding['output_file'])
                 log('')
                 
                 log('\n\n')
@@ -705,9 +715,27 @@ def update(mode, action,
                 
                 fig_dir = desired_dir_names[i+n_time_ranges]
                 
+                obs_info_etc_file = \
+                    os.path.join(desired_dir_names[i],
+                                 'some_analysis_results_{}.g3'.format(band))
+                map_data_etc_file = \
+                    os.path.join(desired_dir_names[i],
+                                 'coadded_maps_{}.g3.gz'.format(band))
+                analysis_results_etc_file = \
+                    os.path.join(coadds_dir, 'monthly', 'all_months'
+                                 'all_analysis_results_{}.g3'.format(band))
+                
+                ignore_map_data = False   # * Just for temporary testing
+                if ignore_map_data:
+                    input_files = [obs_info_etc_file,
+                                   analysis_results_etc_file]
+                else:
+                    input_files = [obs_info_etc_file,
+                                   map_data_etc_file,
+                                   analysis_results_etc_file]
+                
                 args_plotting = \
-                    {'input_files': [os.path.join(desired_dir_names[i],
-                                     'coadded_maps_{}.g3.gz'.format(band))],
+                    {'input_files': input_files,
                      'directory_to_save_figures'  : fig_dir,
                      'simpler_file_names'         : True,
                      'figure_title_font_size'     : 18,
