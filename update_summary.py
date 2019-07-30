@@ -54,7 +54,7 @@ parser_summarystats.add_argument('--no-data-update', action='store_true',
 parser_maps = \
     S.add_parser('maps',
                  help='Updates the coadded maps and the figures showing '
-                      'map-related quantities that appear on the "Maps" tab
+                      'map-related quantities that appear on the "Maps" tab '
                       'of the webpage.')
 
 parser_maps.add_argument('mapsdatadir',
