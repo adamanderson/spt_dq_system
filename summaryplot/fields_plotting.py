@@ -1,6 +1,6 @@
 # ============================================================================ #
 #  This script is intended to be called by                                     #
-#  spt_dq_system/summaryplot/cache_field_maps.py                               #
+#  spt_dq_system/summaryplot/cache_field_maps.py.                              #
 #  It can also be run from command line or imported by another script.         #
 #                                                                              #
 #  The purpose of this script is to make figures showing the                   #
@@ -9,8 +9,8 @@
 #  receives, which means it is probably not very usable in other contexts.     #
 #                                                                              #
 #  The script mainly has three parts, each of which defines a pipeline         #
-#  module. All three modules make figures, but each one make a different type  #
-#  of figures.                                                                 #
+#  module. All three modules make figures, but each one makes a different      #
+#  type of figures.                                                            #
 #                                                                              #
 #  The first module, MakeFiguresForFieldMapsAndWeightMaps, generates           #
 #  colormaps from data stored in a map frame, in particular, frame["T"] and    #
@@ -19,29 +19,31 @@
 #  associated weight maps is not implemented.                                  #
 #                                                                              #
 #  The second module, MakeFiguresForTimeVariationsOfMapRelatedQuantities,      #
-#  generates figures showing the time variations of those map-related          #
+#  generates figures showing the time variations of some of the map-related    #
 #  quantities that were calculated by fields_coadding.py. The quantities are:  #
 #    (1) average numbers of detectors flagged by different reasons and         #
 #        those not flagged                                                     #
 #    (2) medians of the pW/K temperature calibration conversion factors        #
 #    (3) medians of fractional changes in detectors' response to the           #
 #        calibrator at different elevations                                    #
-#    (4) standard deviations of T maps, mean weights of TT weight maps, and    #
-#        number of pixels in TT weight maps that have good weights             #
-#    (5) ra offsets, dec offsets, fluxes, SNRs of three brightesst point       #
-#        sources from each sub-field                                           #
+#    (4) mean weights of TT weight maps                                        #
+#    (5) ra offsets and dec offsets three brightesst point sources from        #
+#        each sub-field                                                        #
 #    (6) averages of ratios of SPT x Planck to Planck x Planck cross spectra   #
 #    (7) noise levels of individual or coadded maps                            #
-#    (8) observation durations                                                 #
-#  These figures can be be made so that the data points shown correspond to    #
-#  different time intervals (a week, a month, etc.).                           #
+#  These figures will contain data points from only those maps that were used  #
+#  to form the coadded maps that were plotted by the first module (those       #
+#  coadds are supposed to contain maps from certain time interval such as one  #
+#  week, one month, and so on.                                                 #
 #                                                                              #
 #  The third module, MakeFiguresForDistributionsOfMapRelatedQuantities,        #
 #  generates figures showing distributions of some of the aforementioned       #
-#  quantities by making histograms. These quantities are ra offsets,           #
+#  quantities by making histograms of them. These quantities are ra offsets,   #
 #  dec offsets, ratios of the power spectra, fractional changes in             #
-#  responsivity, noise levels of individual maps, map standard deviations,     #
-#  and mean weights.                                                           #
+#  responsivity, noise levels of individual maps, and mean weights. These      #
+#  histograms are for the 'yearly' section of the webpage and thus will        #
+#  include all available data points from certain year instead of just         #
+#  a week, a month, and so on.                                                 #
 #                                                                              #
 #  At the end of the script, there is a function that constructs a pipeline    #
 #  that utilizes these modules.                                                #
@@ -520,13 +522,12 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
 
 
 
-
 class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def __init__(self,
+                 map_id=None, map_type=None,
                  fig_fs=False, fig_tc=False, fig_fl=False,
                  fig_pt=False, fig_ns=False,
-                 map_type=None, map_id=None,
                  xlim_left=None, xlim_right=None,
                  figure_title_font_size=11,
                  directory_to_save_figures="",
@@ -1467,6 +1468,25 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
 
 
 
+class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
+    
+    def __init__(self,
+                 map_id=None, map_type=None,
+                 fig_rc=False, fig_fl=False, fig_pt=False,
+                 fig_rp=False, fig_ns=False,
+                 figure_title_font_size=11,
+                 directory_to_save_figures=".",
+                 logging_function=print):
+        
+        self.map_id   = map_id
+        self.map_type = map_type
+    
+    def __call__(self, frame):
+        
+        return
+
+
+
 
 class RecordIDsUsedForPlotting(object):
     
@@ -1510,20 +1530,21 @@ class RecordIDsUsedForPlotting(object):
 # ------------------------------------------------------------------------------
 
 
-def run(input_files, decide_whether_to_make_figures_at_all=False,
-        make_figures_for_field_maps=False, map_id="90GHz", map_type='T',
-        coadded_data=False, color_bar_upper_limit=None,
-        color_bar_lower_limit=None, make_figures_for_entire_weight_maps=False,
-        make_figures_for_weight_maps_cross_section=False,
-        rebin_map_before_plotting=False,
-        new_map_resolution=None,
-        smooth_map_with_gaussian=False,
-        gaussian_fwhm=None,
-        make_figures_for_flagging_statistics=False,
-        make_figures_for_calibration_factors=False,
+def run(input_files=[], decide_whether_to_make_figures_at_all=False,
+        map_id=None, map_type=None,
+        make_figure_for_field_maps=False, coadded_data=False,
+        color_bar_upper_limit=None, color_bar_lower_limit=None,
+        make_figure_for_entire_weight_map=False,
+        make_figure_for_weight_map_cross_section=False,
+        rebin_map_before_plotting=False, new_map_resolution=None,
+        smooth_map_with_gaussian=False, gaussian_fwhm=None,
+        make_figure_for_flagging_statistics=False,
+        make_figures_for_pW_to_K_factors=False,
+        make_figures_for_responsivity_changes=False,
         make_figures_for_fluctuation_metrics=False,
         make_figures_for_pointing_discrepancies=False,
         make_figures_for_noise_levels=False,
+        make_figures_for_ratios_of_power_spectra=False,
         left_xlimit_for_time_variations=None,
         right_xlimit_for_time_variations=None,
         figure_title_font_size=11,
@@ -1533,14 +1554,14 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
     
     
     # - Define global variables
-
+    
     good_input_files = [input_file for input_file in input_files 
                         if os.path.isfile(input_file)]
     
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     log_format = logging.Formatter('%(message)s')
-        
+    
     if log_file is None:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
@@ -1553,18 +1574,18 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         logger.addHandler(file_handler)
         logging.captureWarnings(True)
     
-    log = logger.info    
-
+    log = logger.info
+    
     
     # - Time to start!
-
+    
     log("")
     log("# ======================= #")
     log("#  Start making figures!  #")
     log("# ======================= #")
     log("")
-
-
+    
+    
     if len(good_input_files) == 0:
         log("Actually, no applicable input files!")
         log("")
@@ -1577,100 +1598,107 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
             log(input_file.split("/")[-1])
         log("")
         log("")
-
-
-    for input_file in good_input_files:
-
-        log("-"*80)
-        log("Taking actions on %s ...", input_file)
-        log("-"*80)
-
-        if decide_whether_to_make_figures_at_all == True:
-
-            bookkeeping_file = "bookkeeping_for_plotting_" + \
-                               os.path.basename(input_file)
-            bookkeeping_file = os.path.join(directory_to_save_figures,
-                                            bookkeeping_file)
-
-            if os.path.isfile(bookkeeping_file):
-                try:
-                    previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
-                                        ["IDsUsedForMakingFiguresLastTime"])
+    
+    
+    if decide_whether_to_make_figures_at_all == True:
+        
+        bookkeeping_file = \
+            "bookkeeping_for_plotting_" + \
+            os.path.basename(good_input_files[-1]).replace(".gz", "")
+        bookkeeping_file = \
+            os.path.join(directory_to_save_figures, bookkeeping_file)
+        
+        if os.path.isfile(bookkeeping_file):
+            try:
+                previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
+                                    ["IDsUsedForMakingFiguresLastTime"])
                 except:
                     previous_ids = []
-                iterator  = core.G3File(input_file)
+                iterator  = core.G3File(input_files[0])
                 frame     = iterator.next()
                 newer_ids = []
                 for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
                     for obs_id in obs_ids:
                         newer_ids.append(obs_id)
-
+                
                 common_ids = set(list(previous_ids)) & set(list(newer_ids))
                 if len(common_ids) == len(newer_ids):
                     log("")
-                    log("* This input file does not seem to contain any")
+                    log("* This input files do not seem to contain any")
                     log("* new information, so the same set of figures")
                     log("* will not be generated again!")
                     log("")
-                    continue
-
-
-
-        pipeline = core.G3Pipeline()
-
-        pipeline.Add(core.G3Reader,
-                     filename=input_file)
-
-        pipeline.Add(PossiblyMakeFiguresForFieldMapsAndWeightMaps,
-                     fig_f=make_figures_for_field_maps,
-                     fig_w=make_figures_for_entire_weight_maps,
-                     fig_cr=make_figures_for_weight_maps_cross_section,
-                     rebin_map_before_plotting=rebin_map_before_plotting,
-                     new_map_resolution=new_map_resolution,
-                     smooth_map_with_gaussian=smooth_map_with_gaussian,
-                     gaussian_fwhm=gaussian_fwhm,
-                     map_type=map_type,
-                     map_id=map_id,
-                     coadded_data=coadded_data,
-                     custom_vmin_field_map=color_bar_lower_limit,
-                     custom_vmax_field_map=color_bar_upper_limit,
-                     figure_title_font_size=figure_title_font_size,
-                     simpler_file_names=simpler_file_names,
-                     directory_to_save_figures=directory_to_save_figures,
-                     logging_function=log)
-
-        pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
-                     fig_fs=make_figures_for_flagging_statistics,
-                     fig_tc=make_figures_for_calibration_factors,
-                     fig_fl=make_figures_for_fluctuation_metrics,
-                     fig_pt=make_figures_for_pointing_discrepancies,
-                     fig_ns=make_figures_for_noise_levels,
-                     map_id=map_id,
-                     map_type=map_type,
-                     xlim_left=left_xlimit_for_time_variations,
-                     xlim_right=right_xlimit_for_time_variations,
-                     figure_title_font_size=figure_title_font_size,
-                     directory_to_save_figures=directory_to_save_figures,
-                     logging_function=log)
-
+                    return
+    
+    
+    pipeline = core.G3Pipeline()
+    
+    pipeline.Add(core.G3Reader,
+                 filename=good_input_files)
+    
+    pipeline.Add(MakeFiguresForFieldMapsAndWeightMaps,
+                 fig_f=make_figure_for_field_maps,
+                 fig_w=make_figure_for_entire_weight_maps,
+                 fig_cr=make_figure_for_weight_map_cross_section,
+                 rebin_map_before_plotting=rebin_map_before_plotting,
+                 new_map_resolution=new_map_resolution,
+                 smooth_map_with_gaussian=smooth_map_with_gaussian,
+                 gaussian_fwhm=gaussian_fwhm,
+                 map_type=map_type,
+                 map_id=map_id,
+                 coadded_data=coadded_data,
+                 custom_vmin_field_map=color_bar_lower_limit,
+                 custom_vmax_field_map=color_bar_upper_limit,
+                 figure_title_font_size=figure_title_font_size,
+                 simpler_file_names=simpler_file_names,
+                 directory_to_save_figures=directory_to_save_figures,
+                 logging_function=log)
+    
+    pipeline.Add(MakeFiguresForTimeVariationsOfMapRelatedQuantities,
+                 map_id=map_id,
+                 map_type=map_type,
+                 fig_fs=make_figure_for_flagging_statistics,
+                 fig_tc=make_figures_for_pW_to_K_factors,
+                 fig_rc=make_figures_for_responsivity_changes,
+                 fig_fl=make_figures_for_fluctuation_metrics,
+                 fig_pt=make_figures_for_pointing_discrepancies,
+                 fig_rp=make_figures_for_ratios_of_power_spectra,
+                 fig_ns=make_figures_for_noise_levels,
+                 xlim_left=left_xlimit_for_time_variations,
+                 xlim_right=right_xlimit_for_time_variations,
+                 figure_title_font_size=figure_title_font_size,
+                 directory_to_save_figures=directory_to_save_figures,
+                 logging_function=log)
+    
+    pipeline.Add(MakeFiguresForDistributionsOfMapRelatedQuantities,
+                 map_id=map_id,
+                 map_type=map_type,
+                 fig_rc=make_figures_for_responsivity_changes,
+                 fig_fl=make_figures_for_fluctuation_metrics,
+                 fig_pt=make_figures_for_pointing_discrepancies,
+                 fig_rp=make_figures_for_ratios_of_power_spectra,
+                 fig_ns=make_figures_for_noise_levels,
+                 figure_title_font_size=figure_title_font_size,
+                 directory_to_save_figures=directory_to_save_figures,
+                 logging_function=log)
+    
+    if decide_whether_to_make_figures_at_all == True:
         pipeline.Add(RecordIDsUsedForPlotting,
                      logging_function=log)
         pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
-        
-        if decide_whether_to_make_figures_at_all == True:
-            pipeline.Add(core.G3Writer,
+        pipeline.Add(core.G3Writer,
                      filename=bookkeeping_file)
-        
-        if log_file is None:
-            profile = True
-        else:
-            profile = False
-
-        pipeline.Run(profile=profile)
-
-    log("")
-
     
+    if log_file is None:
+        profile = True
+    else:
+        profile = False
+    
+    pipeline.Run(profile=profile)
+    
+    log("\n")
+
+
 # ==============================================================================
 
 
@@ -1682,74 +1710,79 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
 
 if __name__ == '__main__':
-
+    
     parser = argparse.ArgumentParser(
-                 description="This script makes figures for maps made from "
-                             "field observations. It can handle both a map from "
-                             "a single field observation and a map from "
-                             "the coaddition of mutltple observations.",
+                 description="This script is mainly intended to be used to "
+                             "make figures showing coadded maps and relevant "
+                             "quantities such as noise levels obtained by the "
+                             "script fields_coadding.py.",
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                  epilog="Hopefully you will like the figures generated!")
-
-    parser.add_argument("input_files",
-                        action="store", type=str, nargs="+",
-                        help="G3 files that contain Map frames. The data stored "
-                             "in these frames will be plotted in the figures.")
-
+    
+    parser.add_argument("-I", "--input_files",
+                        action="store", type=str, nargs="+", default=[],
+                        help="G3 files that contain maps and map-related "
+                             "analysis results.")
+    
     parser.add_argument("-D", "--decide_whether_to_make_figures_at_all",
                         action="store_true", default=False,
                         help="Whether to check if it is actually necessary to "
-                             "make any figures at all. If figures of coadded maps "
-                             "are to be made, if the corresponding g3 file that "
-                             "contains the data also records what observations "
-                             "were used to make the coadded maps, and if there is "
-                             "another g3 file that records what observations were "
-                             "contained in the coadded maps when figures were "
-                             "made last time, then this check can be made.")
-
-    parser.add_argument("-m", "--make_figures_for_field_maps",
+                             "make any figures at all. If the input files do "
+                             "not have new data (new maps added, new analysis "
+                             "results) that were not present in them when "
+                             "figures were made last time, then there is no "
+                             "need to generate figures again.")
+    
+    parser.add_argument("-m", "--make_figure_for_field_map",
                         action="store_true", default=False,
-                        help="Whether figures showing field maps are to be made.")
-
+                        help="Whether a figure showing the coadded field map "
+                             "is to be made.")
+    
     parser.add_argument("-i", "--map_id",
                         action="store", type=str, default="90GHz",
-                        help="The ID a map frame needs to have in order for "
-                             "a figure of the maps  stored to be made.")
-
+                        help="A string indicating figures for what type of "
+                             "maps (mainly what band) are supposed to be made. "
+                             "Each data frame in the input files need to have "
+                             "an 'Id' key that stores a value that matches "
+                             "this argument in order for the data in the "
+                             "frame to be used to generate figures.")
+    
     parser.add_argument("-y", "--map_type",
                         action="store", type=str, choices=["T"], default="T",
                         help="Whether figures of T, Q, or U maps are desired. "
                              "Currently, the script is still under development "
                              "and ignores options other than 'T'.")
-
+    
     parser.add_argument("-c", "--coadded_data",
                         action="store_true", default=False,
                         help="Whether the frames contain maps resulting from "
-                             "the coaddition of multiple observations. "
+                             "the coaddition of multiple observations' maps. "
                              "The script uses different titles and file names "
                              "for the figures depending on whether this option "
                              "is True or False. The default is False.")
-
+    
     parser.add_argument("-u", "--color_bar_upper_limit",
                         action="store", type=float, default=None,
                         help="The upper limit of the values that will be used "
-                             "in the colorbar for showing a field map.")
-
+                             "in the colorbar for showing a field map, "
+                             "if a value automatically determined by the "
+                             "script is not desired.")
+    
     parser.add_argument("-l", "--color_bar_lower_limit",
                         action="store", type=float, default=None,
                         help="The lower limit of the values that will be used "
                              "in the colorbar for showing a field map.")
-
-    parser.add_argument("-w", "--make_figures_for_entire_weight_maps",
-                        action="store_true", default=False,
-                        help="Whether to make figures for entire weight maps, "
-                             "i.e. color maps showing weights at every location "
-                             "of the field.")
     
-    parser.add_argument("-W", "--make_figures_for_weight_maps_cross_section",
+    parser.add_argument("-w", "--make_figure_for_entire_weight_map",
                         action="store_true", default=False,
-                        help="Whether to make figures only showing the cross "
-                             "section of a weight map along certain RA contour.")
+                        help="Whether to make a figure for entire coadded TT "
+                             "weight map.")
+    
+    parser.add_argument("-W", "--make_figure_for_weight_map_cross_section",
+                        action="store_true", default=False,
+                        help="Whether to make a figure only showing the cross "
+                             "section of the weight map along the RA = 0h "
+                             "contour.")
     
     parser.add_argument("-b", "--rebin_map_before_plotting",
                         action="store_true", default=False,
@@ -1765,80 +1798,101 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--smooth_map_with_gaussian",
                         action="store_true", default=False,
                         help="Whether to smooth a map by convolving it with "
-                             "a Gaussian.")
+                             "a 2D Gaussian.")
     
     parser.add_argument("-T", "--gaussian_fwhm",
                         action="store", type=float, default=None,
                         help="The full width at half maximum of the Gaussian "
                              "expressed in the units of arcminute.")
-
-    parser.add_argument("-F", "--make_figures_for_flagging_statistics",
+    
+    parser.add_argument("-F", "--make_figure_for_flagging_statistics",
                         action="store_true", default=False,
-                        help="Whether to make figures showing average number "
+                        help="Whether to make figures showing average numbers "
                              "of flagged detectors over time.")
     
-    parser.add_argument("-C", "--make_figures_for_calibration_factors",
+    parser.add_argument("-C", "--make_figures_for_pW_to_K_factors",
                         action="store_true", default=False,
-                        help="Whether to make figures showing temperature "
-                             "calibration factors over time.")
+                        help="Whether to make figures showing time variations "
+                             "of the temperature calibration factors pW/K and "
+                             "their distributions.")
+    
+    parser.add_argument("-r", "--make_figures_for_responsivity_changes",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of the fractional changes in detectors' response "
+                             "to the calibrator at the top of each sub-field "
+                             "with respect to the bottom and their "
+                             "distributions.")
     
     parser.add_argument("-U", "--make_figures_for_fluctuation_metrics",
                         action="store_true", default=False,
                         help="Whether to make figures showing some basic "
-                             "metrics of fluctuations of map values.")
-
+                             "metrics of fluctuations of map values such as "
+                             "mean weights over time and their distributions.")
+    
     parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
                         action="store_true", default=False,
-                        help="Whether to make figures showing pointing "
-                             "discrepancies over time.")
-
+                        help="Whether to make figures showing time variations "
+                             "of pointing discrepancies and their "
+                             "distributions.")
+    
+    parser.add_argument("-x", "--make_figures_for_ratios_of_power_spectra",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of the ratios of the SPT x Planck power spectra "
+                             "to Planck x Planck ones and their "
+                             "distributions.")
+    
     parser.add_argument("-n", "--make_figures_for_noise_levels",
                         action="store_true", default=False,
-                        help="Whether to make figures showing noise levels "
-                             "over time.")
-
+                        help="Whether to make figures showing time variations "
+                             "of noise levels from individual observations or "
+                             "time evolution of noise levels of coadded maps, "
+                             "depending on which type of data is available. "
+                             "In the former case, figures showing "
+                             "distributions noise levels will also be made.")
+    
     parser.add_argument("-L", "--left_xlimit_for_time_variations",
                         action="store", type=int, default=None,
                         help="The observation ID that will be used as the "
-                             "lower limit of the x-axis of a figure that shows "
+                             "left limit of the x-axis of a figure that shows "
                              "time variations of certain quantity.")
-
+    
     parser.add_argument("-R", "--right_xlimit_for_time_variations",
                         action="store", type=int, default=None,
                         help="The observation ID that will be used as the "
-                             "upper limit of the x-axis of a figure that shows "
+                             "right limit of the x-axis of a figure that shows "
                              "time variations of certain quantity.")
-
+    
     parser.add_argument("-z", "--figure_title_font_size",
                         action="store", type=float, default=11,
                         help="The font size to be used for figure titles. "
-                             "Then, the font sizes of other things such as "
+                             "The font sizes of other elements such as "
                              "axis labels will be determined "
                              "based on this value.")
-
+    
     parser.add_argument("-d", "--directory_to_save_figures",
                         action="store", type=str, default=".",
-                        help="The directory where generated figures "
-                             "will be saved.")
-
+                        help="The directory where figures will be saved.")
+    
     parser.add_argument("-f", "--simpler_file_names",
                         action="store_true", default=False,
-                        help="Whether to omit infomration on source, obs. ID, "
-                             "and so on in the names of the PNG files that "
-                             "show field maps and weight maps.")
+                        help="Whether to omit infomration on sub-field, "
+                             "observation ID, and so on in the names of the "
+                             "PNG files that show field maps and weight maps.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
-                        help="The name of the logger that will be used to "+\
+                        help="The name of the logger that will be used to "
                              "record log messages.")
     
     parser.add_argument("-G", "--log_file",
                         type=str, action="store", default=None,
                         help="The file to which the logger will send messages.")
-
-
+    
+    
     arguments = parser.parse_args()
-
+    
     run(**vars(arguments))
 
     

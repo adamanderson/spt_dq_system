@@ -718,12 +718,12 @@ def update(mode, action,
                 obs_info_etc_file = \
                     os.path.join(desired_dir_names[i],
                                  'some_analysis_results_{}.g3'.format(band))
-                map_data_etc_file = \
-                    os.path.join(desired_dir_names[i],
-                                 'coadded_maps_{}.g3.gz'.format(band))
                 analysis_results_etc_file = \
                     os.path.join(coadds_dir, 'monthly', 'all_months'
                                  'all_analysis_results_{}.g3'.format(band))
+                map_data_etc_file = \
+                    os.path.join(desired_dir_names[i],
+                                 'coadded_maps_{}.g3.gz'.format(band))
                 
                 ignore_map_data = False   # * Just for temporary testing
                 if ignore_map_data:
@@ -731,8 +731,8 @@ def update(mode, action,
                                    analysis_results_etc_file]
                 else:
                     input_files = [obs_info_etc_file,
-                                   map_data_etc_file,
-                                   analysis_results_etc_file]
+                                   analysis_results_etc_file,
+                                   map_data_etc_file]
                 
                 args_plotting = \
                     {'input_files': input_files,
