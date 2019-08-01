@@ -710,9 +710,9 @@ def identify_pixels_of_non_atypical_region(
     center_dec /= core.G3Units.deg
     
     ptsrc_msk = numpy.asarray(mapspectra.apodmask.makeApodizedPointSourceMask(
-                                  map_frame, point_source_list_file,
-                                  apod_type="none", zero_border_arcmin=0.0))
-        
+                              map_frame, point_source_list_file,
+                              apod_type="none", zero_border_arcmin=0.0))
+    
     typical_pixels = numpy.where((ras > -48.0) & (ras < 48.0) &
                                  (decs < (center_dec + 3.0))  & 
                                  (decs > (center_dec - 3.0))  &
