@@ -719,7 +719,7 @@ def update(mode, action,
                     os.path.join(desired_dir_names[i],
                                  'some_analysis_results_{}.g3'.format(band))
                 analysis_results_etc_file = \
-                    os.path.join(coadds_dir, 'monthly', 'all_months'
+                    os.path.join(coadds_dir, 'monthly', 'all_months',
                                  'all_analysis_results_{}.g3'.format(band))
                 map_data_etc_file = \
                     os.path.join(desired_dir_names[i],
@@ -736,28 +736,38 @@ def update(mode, action,
                 
                 args_plotting = \
                     {'input_files': input_files,
-                     'directory_to_save_figures'  : fig_dir,
-                     'simpler_file_names'         : True,
-                     'figure_title_font_size'     : 18,
-                     'map_id'                     : band,
-                     'map_type'                   : 'T',
-                     'coadded_data'               : True,
-                     'make_figures_for_field_maps': True,
-                     'smooth_map_with_gaussian'   : True,
-                     'gaussian_fwhm'              : 1,
-                     'make_figures_for_entire_weight_maps'       : True,
-                     'make_figures_for_weight_maps_cross_section': True,
-                     'make_figures_for_noise_levels'             : True,
+                     'directory_to_save_figures': fig_dir,
+                     'simpler_file_names'       : True,
+                     'figure_title_font_size'   : 18,
+                     'map_id'                   : band,
+                     'map_type'                 : 'T',
+                     'coadded_data'             : True,
+                     'make_figure_for_field_map': True,
+                     'smooth_map_with_gaussian' : False,
+                     'gaussian_fwhm'            : 1.0,
+                     'make_figure_for_entire_weight_map'       : True,
+                     'make_figure_for_weight_map_cross_section': True,
                      'logger_name': '{}_{}'.format(sub_logger_name, band),
                      'log_file'   : log_file}
                 
-                if time_interval != 'yearly':
+                if time_interval == 'yearly':
                     args_plotting.update(
-                        {'make_figures_for_flagging_statistics'   : True,
-                         'make_figures_for_calibration_factors'   : True,
-                         'make_figures_for_cross_spectra_ratios'  : True,
+                        {'make_figures_showing_distributions'      : True,
+                         'make_figures_for_responsivity_changes'   : True,
+                         'make_figures_for_fluctuation_metrics'    : True,
+                         'make_figures_for_pointing_discrepancies' : True,
+                         'make_figures_for_ratios_of_power_spectra': True,
+                         'make_figures_for_noise_levels'           : True})
+                else:
+                    args_plotting.update(
+                        {'make_figures_showing_time_variations'   : True,
+                         'make_figure_for_flagging_statistics'    : True,
+                         'make_figure_for_pW_to_K_factors'        : True,
+                         'make_figures_for_responsivity_changes'  : True,
                          'make_figures_for_fluctuation_metrics'   : True,
                          'make_figures_for_pointing_discrepancies': True,
+                         'make_figure_for_ratios_of_power_spectra': True,
+                         'make_figure_for_noise_levels'           : True,
                          'left_xlimit_for_time_variations' : \
                               desired_obs_id_ranges[i][0],
                          'right_xlimit_for_time_variations': \
@@ -786,9 +796,9 @@ def update(mode, action,
                 os.mkdir(all_months_dir)
             
             all_months_g3_files = \
-                glob.glob(os.path.join(
-                    coadds_dir, 'monthly', '*',
-                    'coadded_maps_{}.g3.gz'.format(band)))
+                sorted(glob.glob(os.path.join(
+                           coadds_dir, 'monthly', '*',
+                           'coadded_maps_{}.g3.gz'.format(band))))
             
             output_file = \
                 os.path.join(
