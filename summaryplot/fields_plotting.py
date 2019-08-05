@@ -8,7 +8,7 @@
 #  makes many assumptions about the structure and contents of the data it      #
 #  receives, which means it is probably not very usable in other contexts.     #
 #                                                                              #
-#  The script mainly has three parts, each of which defines a pipeline         #
+#  The script mainly has four parts, each of which defines a pipeline          #
 #  module. All three modules make figures, but each one makes a different      #
 #  type of figures.                                                            #
 #                                                                              #
@@ -36,14 +36,21 @@
 #  coadds are supposed to contain maps from certain time interval such as one  #
 #  week, one month, and so on.                                                 #
 #                                                                              #
-#  The third module, MakeFiguresForDistributionsOfMapRelatedQuantities,        #
+#  The third module, MakeFiguresForTimeEvolutionOfMapRelatedQuantities,        #
+#  generates figures showing the time evolution of the noise of the running    #
+#  year-to-date coadded noise maps and those showing variances of map values   #
+#  in the running coadded signal maps and coadded noise maps. These figures    #
+#  are for the 'yearly' section of the webpage and thus will include all       #
+#  available data points from certain year instead of just a week, a month,    #
+#  and so on.                                                                  #
+#                                                                              #
+#  The fourth module, MakeFiguresForDistributionsOfMapRelatedQuantities,       #
 #  generates figures showing distributions of some of the aforementioned       #
 #  quantities by making histograms of them. These quantities are ra offsets,   #
 #  dec offsets, ratios of the power spectra, fractional changes in             #
 #  responsivity, noise levels of individual maps, and mean weights. These      #
 #  histograms are for the 'yearly' section of the webpage and thus will        #
-#  include all available data points from certain year instead of just         #
-#  a week, a month, and so on.                                                 #
+#  include all available data points.                                          #
 #                                                                              #
 #  At the end of the script, there is a function that constructs a pipeline    #
 #  that utilizes these modules.                                                #
@@ -72,6 +79,9 @@ from    spt3g       import  coordinateutils
 from    spt3g       import  std_processing
 from    scipy       import  ndimage
 from    scipy       import  linalg
+from    scipy       import  optimize
+
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
 
@@ -314,9 +324,9 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
     
     def get_colorbar_limits_from_model(self, band, n_maps_ea_fld, distro_stdev):
         
-        signal_variances = { "90GHz": 0.00115,
-                            "150GHz": 0.00130,
-                            "220GHz": 0.00265}
+        signal_variances = { "90GHz": 0.00120,
+                            "150GHz": 0.00140,
+                            "220GHz": 0.00250}
         
         predicted_variances = []
         for sub_field, obs_ids_used in n_maps_ea_fld.items():
@@ -1615,13 +1625,15 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         self.log = logging_function
         self.map_id   = map_id
         self.map_type = map_type
-        self.obs_id_list = None
+        self.obs_id_list      = None
+        self.stddevs_individs = None
         
         self.make_figs_for_fluc_metrics = fig_fl
         self.make_figs_for_noise_levels = fig_ns
         self.fig_an_made = False
         self.fig_rn_made = False
         self.fig_oa_made = False
+        self.fig_fl_made = False
         
         self.ttl_fs  = figure_title_font_size
         self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
@@ -1704,8 +1716,8 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
                            "ra0hdec-52.25": 0.88,
                            "ra0hdec-59.75": 0.82,
                            "ra0hdec-67.25": 0.76}
-            plot_obj.text(0.65, ylocs_dict[sub_field],
-                          "YTD noise: {:04.1f}".format(curr_nois),
+            plot_obj.text(0.645, ylocs_dict[sub_field],
+                          "YTD noise: {:05.2f}".format(curr_nois),
                           transform=plot_obj.transAxes,
                           horizontalalignment="left",
                           color=color, fontsize=self.lgd_fs)
@@ -1775,79 +1787,64 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         self.log("")
     
     
-# ------------------------------------------------------------------------------
-    def make_figure_for_recent_noise_levels(self, frame):
+    def make_figures_for_recent_noise_levels(self, frame):
         
-        noise_key = "NoiseFromCoaddedMaps"
-        if noise_key not in frame.keys():
-            return
+        self.log("")
+        self.log("Making figures for the time evolution of the noise in the ")
+        self.log("coadded noise maps due to recently added maps ...")
         
-        all_noise_calculated = frame[noise_key]
-        all_obs_ids_used     = frame["CoaddedObservationIDs"]
-        try:
-            all_operations_performed = frame["NoiseCalculationsOperationsDoneToMaps"]
-            ops_recorded = True
-        except KeyError:
-            ops_recorded = False
+        noise_data = frame["NoiseLevelsFromCoaddedTMaps"]
         
-        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
+        for sub_field, obs_ids_this_sf in self.obs_id_list.items():
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
-            if ops_recorded:
-                operations_this_sf = \
-                    numpy.array([all_operations_performed[sub_field][str(obs_id)] \
-                                 for obs_id in obs_ids_this_sf])
-                noise_this_sf = \
-                    numpy.array([all_noise_calculated[sub_field][str(obs_id)] \
-                                 for obs_id in obs_ids_this_sf])                
-                ok_indices   = numpy.where(operations_this_sf!=0.0)[0]
-                ok_obs_ids   = numpy.asarray(obs_ids_this_sf)[ok_indices][-50:]
-                ok_noises    = numpy.asarray(noise_this_sf)[ok_indices][-50:]
-                ok_noises   /= core.G3Units.uK * core.G3Units.arcmin
-                dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
-            else:
-                l_ids = []
-                r_ids = []
-                for obs_id in frame["CoaddedObservationIDs"][sub_field]:
-                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
-                        r_ids.append(obs_id)
-                    else:
-                        l_ids.append(obs_id)
-                ok_obs_ids = []
-                for i in range(numpy.min([len(l_ids), len(r_ids)])):
-                    ok_obs_ids.append(l_ids[i])
-                    ok_obs_ids.append(r_ids[i])
-                ok_noises = []
-                for obs_id in ok_obs_ids:
-                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
-                        noise  = frame["NoiseFromCoaddedMaps"][sub_field][str(obs_id)]
-                        noise /= core.G3Units.uK * core.G3Units.arcmin
-                        ok_noises.append(noise)
-                    else:
-                        ok_noises.append(numpy.nan)
-                ok_obs_ids = ok_obs_ids[-50:]
-                ok_noises  = ok_noises[-50:]
-                dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
+            l_ids = []
+            r_ids = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    r_ids.append(obs_id)
+                else:
+                    l_ids.append(obs_id)
+            
+            all_obs_ids = []
+            for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                all_obs_ids.append(l_ids[i])
+                all_obs_ids.append(r_ids[i])
+            
+            all_noises = []
+            for obs_id in all_obs_ids:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    noise  = noise_data[sub_field][str(obs_id)]
+                    noise /= core.G3Units.uK * core.G3Units.arcmin
+                    all_noises.append(noise)
+                else:
+                    all_noises.append(numpy.nan)
+            
+            if len(all_obs_ids) > 50:
+                all_obs_ids = all_obs_ids[-50:]
+                all_noises  = all_noises[-50:]
+            dummy_x_data = numpy.arange(len(all_obs_ids)) + 1
             
             color = self.cl_dict[sub_field]
             
-            plot_obj.plot(dummy_x_data, ok_noises,
-                          linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
+            plot_obj.plot(dummy_x_data, all_noises,
+                          linestyle=self.ln_styl, linewidth=self.ln_wdth,
                           marker=".", markersize=self.mrkrsz,
                           color=color)
             
-            max_noise = numpy.nanmax(ok_noises)
-            min_noise = numpy.nanmin(ok_noises)
+            max_noise = numpy.nanmax(all_noises)
+            min_noise = numpy.nanmin(all_noises)
             diff      = max_noise - min_noise
             ylim_top  = max_noise + 0.05 * diff
-            near_top  = max_noise + 0.02 * diff
+            near_top  = max_noise + 0.01 * diff
             
             set_lims(plot_obj, 0, dummy_x_data[-1]+1, None, ylim_top)
             
-            for index, noise in enumerate(ok_noises):
+            lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
+            for index, noise in enumerate(all_noises):
                 if not numpy.isfinite(noise):
                     plot_obj.text(dummy_x_data[index], near_top,
-                                  "N/A", color=color, fontsize=7,
+                                  "N/A", color=color, fontsize=lgd_fs*0.7,
                                   rotation="vertical",
                                   verticalalignment="center",
                                   horizontalalignment="center")
@@ -1861,64 +1858,64 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             
             xtick_labels = ["{} ({})".format(
                             str(obs_id), get_month_day_hour(obs_id)) \
-                            for obs_id in ok_obs_ids]
+                            for obs_id in all_obs_ids]
             
             set_ticks(plot_obj, dummy_x_data, [], xtick_labels,
-                      None, None, None, 8, xtrot="vertical")
+                      None, None, None, self.ttl_fs, self.ln_wdth,
+                      xtrot="vertical")
             
             xlabel = ""
             ylabel = "Noise " + r"$[{\mu}K \cdot arcmin]$"
             more_title = "Noise due to 50 recently added maps of " + sub_field 
             fig_title  = self.get_full_fig_title(more_title)
             
-            set_labels_and_title(
+            set_ax_labels_and_title(
                 plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
             
-            more_file_name = "noise_levels_from_observations_of_{}".\
+            more_file_name = "recent_noise_levels_from_observations_of_{}".\
                              format(sub_field)
             file_name = self.get_full_file_name(more_file_name)
             save_figure_etc(figure_obj, self.fig_dir, file_name)
+            
+        self.log("Done.")
+        self.log("")
     
     
-    def make_figure_for_order_of_addition(self, frame):
+    def make_figures_for_order_of_addition(self, frame):
         
-        noise_key = "NoiseFromCoaddedMaps"
+        self.log("")
+        self.log("Making figures for the order in which maps were added ...")
         
-        if noise_key not in frame.keys():
-            return
-        if "NoiseCalculationsOperationsDoneToMaps" in frame.keys():
-            easy_stuff = True
-        else:
-            easy_stuff = False
+        noise_data = frame["NoiseLevelsFromCoaddedTMaps"]
         
-        all_obs_ids_used = frame["CoaddedObservationIDs"]
-        
-        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
+        for sub_field, obs_ids_this_sf in self.obs_id_list.items():
             figure_obj, plot_obj = get_figure_and_plot_objects()
             
-            if not easy_stuff:
-                l_ids = []
-                r_ids = []
-                for obs_id in obs_ids_this_sf:
-                    if str(obs_id) in frame["NoiseFromCoaddedMaps"][sub_field].keys():
-                        r_ids.append(obs_id)
-                    else:
-                        l_ids.append(obs_id)
-                obs_ids_this_sf = []
-                for i in range(numpy.min([len(l_ids), len(r_ids)])):
-                    obs_ids_this_sf.append(l_ids[i])
-                    obs_ids_this_sf.append(r_ids[i])
+            l_ids = []
+            r_ids = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    r_ids.append(obs_id)
+                else:
+                    l_ids.append(obs_id)
             
-            plot_obj.plot(obs_ids_this_sf,
+            all_obs_ids = []
+            for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                all_obs_ids.append(l_ids[i])
+                all_obs_ids.append(r_ids[i])
+            
+            plot_obj.plot(all_obs_ids,
                           linestyle="None",
                           marker=".", markersize=self.mrkrsz,
                           color=self.cl_dict[sub_field])
             
-            min_oid = numpy.min(obs_ids_this_sf)
-            max_oid = numpy.max(obs_ids_this_sf)
+            min_oid = numpy.min(all_obs_ids)
+            max_oid = numpy.max(all_obs_ids)
             
-            ylims_dict = self.get_xlims_from_obs_id_range(
-                min_oid, max_oid, 0.0)
+            ylims_dict = \
+                MakeFiguresForTimeVariationsOfMapRelatedQuantities.\
+                get_xlims_from_obs_id_range(
+                    "dummy", min_oid, max_oid, 0.0)
             ylims_dict["bottom"] = ylims_dict.pop("left")
             ylims_dict["top"]    = ylims_dict.pop("right")
             
@@ -1926,12 +1923,13 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
                                ylims_dict["bottom"], ylims_dict["top"])
             
             ytick_locs_major, ytick_labels, ytick_locs_minor = \
-                self.get_xticks_and_labels_from_obs_id_range(
-                    plot_obj, min_oid, max_oid, no_hour=True)
+                MakeFiguresForTimeVariationsOfMapRelatedQuantities.\
+                get_xticks_and_labels_from_obs_id_range(
+                    "dummy", plot_obj, min_oid, max_oid, no_hour=True)
             
             set_ticks(plot_obj, None, None, None,
                       ytick_locs_major, ytick_locs_minor, ytick_labels,
-                      self.ttl_fs)
+                      self.ttl_fs, self.ln_wdth)
             
             xlabel = "\n" + "Number of observations added"
             ylabel = "Date of observation" + "\n"
@@ -1940,13 +1938,162 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
                          sub_field + " were added" + "\n"
             fig_title = self.get_full_fig_title(more_title)
             
-            set_labels_and_title(
+            set_ax_labels_and_title(
                 plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
             
             more_file_name = "order_of_addition_of_maps_of_" + sub_field
             file_name = self.get_full_file_name(more_file_name)
             
             save_figure_etc(figure_obj, self.fig_dir, file_name)
+            
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figures_for_variances_of_maps(self, frame):
+        
+        self.log("")
+        self.log("Making figures for variances of coadded maps ...")
+        
+        stddevs_sigs = \
+            frame["FluctuationMetricsCoaddedSignalMapsTMapStandardDeviations"]
+        stddevs_nois = \
+            frame["FluctuationMetricsCoaddedNoiseMapsTMapStandardDeviations"]
+        vu = core.G3Units.uK * core.G3Units.uK
+        
+        for sub_field, obs_ids_this_sf in self.obs_id_list:
+            figure_obj, plot_obj = get_figure_and_plot_objects(w=15.0, h=9.0)
+            
+            median_individ_vars = numpy.nanmedian(
+                numpy.asarray(self.stddevs_individs[sub_field].values())**2)/vu
+            median_individ_vars /= 2
+            
+            y_data = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in stddevs_sigs[sub_field].keys():
+                    y_data.append(stddevs_sigs[sub_field][str(obs_id)]**2/vu)
+            x_data = numpy.arange(1, len(y_data)+1, 1)
+            plot_obj.plot(x_data, y_data,
+                          label="Variances of coadded signal maps",
+                          linestyle="None", marker=".", markersize=8,
+                          color="#1f77b4", alpha=0.5)
+            
+            if len(y_data) > 40:
+                x_for_fit = x_data[20:]
+                y_for_fit = y_data[20:]
+            else:
+                x_for_fit = x_data
+                y_for_fit = y_data
+            def sig_plu_noi_mod(n_mp, sig):
+                return sig + median_individ_vars/(n_mp)
+            popt, pcov = optimize.curve_fit(
+                sig_plu_noi_mod, x_for_fit, y_for_fit, p0=[y_data[-1]])
+            
+            x_for_show = numpy.arange(1, 250, 1)
+            y_for_show = sig_plu_noi_mod(x_for_show, popt[0])
+            plot_obj.plot(x_for_show, y_for_show,
+                          label="Curve fit y = (med. blue distro.) "+\
+                                 "/ x + b"+\
+                                 "\n(b = {:4.2e})".format(popt[0]),
+                                 linewidth=1.0, color="#1f77b4", alpha=0.5)
+            
+            
+            y_data = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in stddevs_nois[sub_field].keys():
+                    y_data.append(stddevs_nois[sub_field][str(obs_id)]**2/vu)
+            x_data = numpy.arange(1, len(y_data)+1, 1)
+            plot_obj.plot(x_data, y_data,
+                          label="Variances of coadded noise maps",
+                          linestyle="None", marker=".", markersize=8,
+                          color="#ff7f0e", alpha=0.5)
+            
+            if len(y_data) > 40:
+                x_for_fit = x_data[20:]
+                y_for_fit = y_data[20:]
+            else:
+                x_for_fit = x_data
+                y_for_fit = y_data
+            def noi_mod(n_mp, power):
+                return median_individ_vars/n_mp**power
+            popt, pcov = optimize.curve_fit(
+                noi_mod, x_data[15:], y_data[15:], p0=[1.0])
+            
+            x_for_show = numpy.arange(1, 250, 1)
+            y_for_show = noi_mod(x_for_show, popt[0])
+            plot_obj.plot(x_for_show, y_for_show,
+                          label="Curve fit y = (med. blue distro.) "+\
+                                "/ "+r"$x^p$"+\
+                                "\n(p = {:4.2e})".format(popt[0]),
+                                linewidth=1.0, color="#ff7f0e", alpha=0.5)
+            
+            
+            y_data = numpy.asarray(
+                         self.stddevs_individs[sub_field].values())**2/vu
+            y_data /= 2
+            
+            bps = plot_obj.boxplot(
+                      y_data, whis=[0, 100], sym="", positions=[1], widths=0.20,
+                      patch_artist=True,
+                      boxprops=dict(facecolor="blue", alpha=0.1),
+                      medianprops=dict(linestyle="none"),
+                      capprops=dict(color="blue", alpha=0.1, linewidth=2.0),
+                      whiskerprops=dict(color="blue", alpha=0.1))
+            
+            plot_obj.set_xscale("log")
+            plot_obj.set_yscale("log")
+            plot_obj.set_xlim(left=0.8, right=260)
+            if self.map_id in ["90GHz", "150GHz"]:
+                plot_obj.set_ylim(bottom=2e2, top=2.5e5)
+            if self.map_id in ["220GHz"]:
+                plot_obj.set_ylim(bottom=2e3, top=2.5e6)
+            
+            plot_obj.tick_params(axis="both", which="major",
+                                 direction="in", labelsize=14)
+            
+            handles, labels = plot_obj.get_legend_handles_labels()
+            handles += [bps["boxes"][0]]
+            labels  += ["Variances of individual maps / 2"]
+            plot_obj.legend(handles, labels, loc="upper right",
+                            fontsize=15, framealpha=0.8)
+            
+            plot_obj.grid(axis="both", which="both",
+                          linestyle="dashed", linewidth=0.05, color="black")
+            plot_obj.set_axisbelow(True)
+            
+            plot_obj.set_xlabel("\nNumber of pairs of maps used", fontsize=16)
+            plot_obj.set_ylabel("Variance ["+r"$uK^2$"+"]\n", fontsize=16)
+            plot_obj.set_title("Variances of {} maps of {} sub-field\n".\
+                               format(self.map_id, sub_field), fontsize=18)
+            
+            
+            inset_plot = inset_axes(
+                             plot_obj, width="30%", height="35%",
+                             loc=3, borderpad=3)
+            
+            y_data = numpy.asarray(
+                         self.stddevs_individs[sub_field].values())**2/vu
+            y_data /= 2 * 1e3
+            
+            range_lo = numpy.percentile(y_data,  1)
+            range_hi = numpy.percentile(y_data, 90)
+            inset_plot.hist(y_data, bins=50, range=(range_lo, range_hi),
+                            histtype="stepfilled", color="blue", alpha=0.1)
+            
+            inset_plot.tick_params(axis="both", which="both",
+                                   direction="in", labelsize=12, left=False)
+            inset_plot.set_yticklabels([])
+            inset_plot.set_title("Blue Distribution  "+"[1000 "+r"${\mu}K^2$"+"]",
+                                 fontsize=13)
+            
+            
+            more_file_name = "variances_of_signals_and_noises_in_" + sub_field
+            file_name = self.get_full_file_name(more_file_name)
+            
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.log("Done.")
+        self.log("")
     
     
     def __call__(self, frame):
@@ -1960,17 +2107,33 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         if "CoaddedObservationIDs" in frame.keys():
             self.obs_id_list = frame["CoaddedObservationIDs"]
         
+        try:
+            k = "FluctuationMetricsIndividualSignalMapsTMapStandardDeviations"
+            self.stddevs_individs = frame[k]
+        except:
+            pass
+        
         if self.make_figs_for_noise_levels:
             if "NoiseLevelsFromCoaddedTMaps" in frame.keys():
                 if not self.fig_an_made:
                     self.make_figure_for_all_noise_levels(frame)
                     self.fig_an_made = True
-                """if not self.fig_rn_made:
-                    self.make_figure_for_recent_noise_levels(frame)
+                if not self.fig_rn_made:
+                    self.make_figures_for_recent_noise_levels(frame)
                     self.fig_rn_made = True
                 if not self.fig_oa_made:
-                    self.make_figure_for_order_of_addition(frame)
-                    self.fig_oa_made = True"""
+                    self.make_figures_for_order_of_addition(frame)
+                    self.fig_oa_made = True
+        
+        if self.make_figs_for_fluc_metrics:
+            k1 = "FluctuationMetricsCoaddedSignalMapsTMapStandardDeviations"
+            k2 = "FluctuationMetricsCoaddedNoiseMapsTMapStandardDeviations"
+            if (k1 in frame.keys())   and \
+               (k2 in frame.keys())   and \
+               (not self.fig_fl_made) and \
+               (self.stddevs_individs is not None):
+                self.make_figures_for_variances_of_maps(frame)
+                self.fig_fl_made = True
 
 
 

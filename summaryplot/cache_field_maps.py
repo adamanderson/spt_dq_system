@@ -729,7 +729,8 @@ def update(mode, action,
                 ignore_map_data = True   # * Just for temporary testing
                 if ignore_map_data:
                     input_files = [obs_info_etc_file,
-                                   analysis_results_etc_file]
+                                   analysis_results_etc_file,
+                                   obs_info_etc_file]
                 else:
                     input_files = [obs_info_etc_file,
                                    analysis_results_etc_file,
