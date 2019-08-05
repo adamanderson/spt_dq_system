@@ -726,7 +726,7 @@ def update(mode, action,
                     os.path.join(desired_dir_names[i],
                                  'coadded_maps_{}.g3.gz'.format(band))
                 
-                ignore_map_data = True   # * Just for temporary testing
+                ignore_map_data = False   # * Just for temporary testing
                 if ignore_map_data:
                     input_files = [obs_info_etc_file,
                                    analysis_results_etc_file,
