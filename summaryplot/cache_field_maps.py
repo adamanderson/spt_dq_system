@@ -123,6 +123,7 @@ def update(mode, action,
         start_time = current_time + delta_t
         if start_time < beginning_of_the_record:
             start_time = beginning_of_the_record
+        start_time = start_time.replace(minute=0, second=0, microsecond=0)
         
         end_obs_id   = convert_to_obs_id(end_time)
         start_obs_id = convert_to_obs_id(start_time)
@@ -725,7 +726,7 @@ def update(mode, action,
                     os.path.join(desired_dir_names[i],
                                  'coadded_maps_{}.g3.gz'.format(band))
                 
-                ignore_map_data = False   # * Just for temporary testing
+                ignore_map_data = True   # * Just for temporary testing
                 if ignore_map_data:
                     input_files = [obs_info_etc_file,
                                    analysis_results_etc_file]
@@ -752,12 +753,13 @@ def update(mode, action,
                 
                 if time_interval == 'yearly':
                     args_plotting.update(
-                        {'make_figures_showing_distributions'      : True,
+                        {'make_figures_showing_time_evolution'     : True,
+                         'make_figures_showing_distributions'      : True,
                          'make_figures_for_responsivity_changes'   : True,
                          'make_figures_for_fluctuation_metrics'    : True,
                          'make_figures_for_pointing_discrepancies' : True,
-                         'make_figures_for_ratios_of_power_spectra': True,
-                         'make_figures_for_noise_levels'           : True})
+                         'make_figure_for_ratios_of_power_spectra': True,
+                         'make_figure_for_noise_levels'           : True})
                 else:
                     args_plotting.update(
                         {'make_figures_showing_time_variations'   : True,
