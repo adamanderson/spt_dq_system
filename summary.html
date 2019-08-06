@@ -56,8 +56,18 @@
 			  <td>
 				<form>
 				  <fieldset>
-					<legend>Last 3 days</legend>
-					<div id="datalist">
+					<legend>Recent</legend>
+					<div id="datalist_summary_last_n">
+					</div>
+				  </fieldset>
+				  <fieldset>
+					<legend>Monthly</legend>
+					<div id="datalist_summary_monthly">
+					</div>
+				  </fieldset>
+				  <fieldset>
+					<legend>Weekly</legend>
+					<div id="datalist_summary_weekly">
 					</div>
 				  </fieldset>
 				</form>
@@ -327,62 +337,27 @@
 
 	<table>
 	  <tr>
-		<td colspan="2">
+		<td valign="top" width="175">
 		  <table>
 			<tr>
 			  <td>
-				<h2>Maps</h2>
-			  </td>
-			</tr>
-		  </table>
-		</td>
-	  </tr>
-
-	  <tr>
-		<td valign="top" width="120">
-		  <table>
-			<tr>
-			  <td>
-				<b>Last N days</b>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<div id="datalist_last_n_maps" class="datalist_last_n">
-				</div>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<b>Yearly</b>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<div id="datalist_yearly_maps" class="datalist_yearly">
-				</div>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<b>Monthly</b>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<div id="datalist_monthly_maps" class="datalist_monthly">
-				</div>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<b>Weekly</b>
-			  </td>
-			</tr>
-			<tr>
-			  <td>
-				<div id="datalist_weekly_maps" class="datalist_weekly">
-				</div>
+				<form>
+				  <fieldset>
+					<legend>Recent</legend>
+					<div id="datalist_maps_last_n">
+					</div>
+				  </fieldset>
+				  <fieldset>
+					<legend>Monthly</legend>
+					<div id="datalist_maps_monthly">
+					</div>
+				  </fieldset>
+				  <fieldset>
+					<legend>Weekly</legend>
+					<div id="datalist_maps_weekly">
+					</div>
+				  </fieldset>
+				</form>
 			  </td>
 			</tr>
 		  </table>

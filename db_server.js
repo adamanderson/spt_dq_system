@@ -98,23 +98,20 @@ if (!fs.existsSync(config.coadds_logs_dir)) {
 app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	var intervalList = ['weekly', 'monthly'];
-	var jInterval;
 	var dirlist = [];
-    for(jInterval=0; jInterval<intervalList.length; jInterval++)
-    {
-		try {
-			filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
-									  req.query.interval + '/');
-		}
-		catch(err) {
-			filelist = [];
-		}
+	console.log(config.static_plot_dir + '/' + req.query.subdirectory + '/' +
+                req.query.interval + '/');
+	try {
+		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
+								  req.query.interval + '/');
+	}
+	catch(err) {
+		filelist = [];
+	}
 
-		// get the list of directories that contain plots
-		for (jfile=0; jfile<filelist.length; jfile++) {
-			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
-		}
+	// get the list of directories that contain plots
+	for (jfile=0; jfile<filelist.length; jfile++) {
+		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 	}
 	res.send(dirlist);
 });

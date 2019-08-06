@@ -5,14 +5,15 @@ if(Cookies.get('wafer') !== undefined)
 else
 	var wafer='all';
 
-if(Cookies.get('weekdir') !== undefined) {
+if(Cookies.get('weekdir') !== undefined)
 	var weekdir = Cookies.get('weekdir', {expires: 1});
-    var mapweekdir = Cookies.get('mapweekdir', {expires: 1});
-}
-else {
+else
 	var weekdir='plots/last_n/last_3/';
+
+if(Cookies.get('mapweekdir') !== undefined)
+    var mapweekdir = Cookies.get('mapweekdir', {expires: 1});
+else
     var mapweekdir='maps/figures/last_n/last_30/';
-}
 
 
 /**
@@ -78,14 +79,6 @@ function update_figs()
   document["flagging_90"].src                     ='staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
   document["flagging_150"].src                    ='staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
   document["flagging_220"].src                    ='staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
-
-  document["weight_xsection_90"].src              ='staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
-  document["weight_xsection_150"].src             ='staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
-  document["weight_xsection_220"].src             ='staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
-
-  document["running_noise_90"].src                ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
-  document["running_noise_150"].src               ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
-  document["running_noise_220"].src               ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
 }
 
 /**
@@ -109,13 +102,13 @@ function set_variable(variable, newVal)
  *  subdirectory : subdirectory that we should traverse to get dated data
  *  tab : tab in which to add buttons, 'summary' or 'maps'
  */
-function add_date_buttons(interval, subdirectory, tab)
+function add_date_buttons(interval, subdirectory, tab, boundVar)
 {
     // now rebuild the div
 	$.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
 		  function(data, status) {
-			  div_id = '#datalist_'+interval+'_'+tab
-			  
+			  div_id = '#datalist_'+tab+'_'+interval;
+
 			  data.reverse();
 			  for (jdir=0; jdir<data.length; jdir++)
 			  {
@@ -124,13 +117,16 @@ function add_date_buttons(interval, subdirectory, tab)
 				  else if (tab == 'maps')
 					  datestring = data[jdir].split('/')[3];
 
-				  $(div_id).append("<input type='radio' id='dates-"+datestring+"' name='dates' value='" +
-								   data[jdir] + "'>\n" + 
-								   "<label for='dates-"+datestring+"'>"+datestring+"</label>");
+				  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='" +
+				  				   data[jdir] + "'>\n" + 
+				  				   "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
+
+				  // can use jquery <select ...></select> with this line instead of radio buttons
+				  // $(div_id).append("<option value='"+data[jdir]+"'>"+datestring+"</option>");
 			  }
 			  $(div_id).controlgroup();
-			  $("[id^=dates-]").click(function(event) {
-				  set_variable("weekdir", event.target.value);
+			  $("[id^=dates-"+tab+"-]").click(function(event) {
+				  set_variable(boundVar, event.target.value);
 			  });
 		  });
 }
@@ -141,7 +137,14 @@ $( document ).ready(function()
 	// Initialize jQuery UI elements and make dynamic modifications to the DOM
 	$("#tabs").tabs();
 	$("#waferlist").controlgroup();
-	add_date_buttons();
+	add_date_buttons('last_n', 'plots', 'summary', 'weekdir');
+	add_date_buttons('monthly', 'plots', 'summary', 'weekdir');
+	add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
+
+	add_date_buttons('last_n', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('monthly', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('weekly', 'maps/figures', 'maps', 'mapweekdir');
+
 	
 	// Bind the click event to the wafer buttons
 	$("[id^=wafers-]").click(function(event) {
