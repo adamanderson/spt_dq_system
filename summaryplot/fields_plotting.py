@@ -460,7 +460,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         xlim_left  = idcs[0]
         xlim_right = idcs[-1]
         
-        set_lims(plot_obj, xlim_left, xlim_right, -0.02, 1.10)
+        ytop = numpy.nanmax(normalized_weights) * 1.10
+        set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
         set_ticks(plot_obj, idcs[1:-1], None, [str(dec) for dec in decs[1:-1]],
                   None, None, None, self.ttl_fs, data_linewidth)
         set_ax_labels_and_title(
@@ -580,7 +581,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                             self.obs_fr, obs_id_list, wt_mp_str,
                             None, None, map_res, show_res=False)
                     xlabel  = "\n" + "Declination [degree]"
-                    ylabel  = "Normalized Weight [unitless]" + "\n"
+                    ylabel  = "Weight normalized @ Dec. = -70 deg." + "\n"
                     fig_ttl = self.map_id + " " + wt_mp_str + "\n" + \
                               "Cross sectional view " + \
                               "along the RA = 0h contour" + "\n"
