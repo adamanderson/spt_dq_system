@@ -1,17 +1,19 @@
 // Check if there are cookies already defined for the wafer and time interval,
 // and use them if available.
-if(typeof Cookies.get('wafer') !== undefined)
-	wafer = Cookies.get('wafer', {expires: 1});
+if(Cookies.get('wafer') !== undefined)
+	var wafer = Cookies.get('wafer', {expires: 1});
 else
-	wafer='all';
-if(typeof Cookies.get('weekdir') !== undefined) {
-	weekdir = Cookies.get('weekdir', {expires: 1});
-    mapweekdir = Cookies.get('mapweekdir', {expires: 1});
+	var wafer='all';
+
+if(Cookies.get('weekdir') !== undefined) {
+	var weekdir = Cookies.get('weekdir', {expires: 1});
+    var mapweekdir = Cookies.get('mapweekdir', {expires: 1});
 }
 else {
-	weekdir='plots/last_n/last_3/';
-    mapweekdir='maps/figures/last_n/last_30/';
+	var weekdir='plots/last_n/last_3/';
+    var mapweekdir='maps/figures/last_n/last_30/';
 }
+
 
 /**
  * Updates the source of all images defined on the summary page.
