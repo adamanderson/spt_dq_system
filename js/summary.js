@@ -68,10 +68,18 @@ function update_figs()
   document["map_t_90"].src                        ='staticimg/'+mapweekdir+'/90GHz-T_map.png'
   document["map_t_150"].src                       ='staticimg/'+mapweekdir+'/150GHz-T_map.png'
   document["map_t_220"].src                       ='staticimg/'+mapweekdir+'/220GHz-T_map.png'
+
+  document["weight_xsection_90"].src              = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_150"].src             = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
+  document["weight_xsection_220"].src             = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
   
   document["map_noise_t_90"].src                  ='staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
   document["map_noise_t_150"].src                 ='staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
   document["map_noise_t_220"].src                 ='staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+
+  document["running_noise_t_90"].src              = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_t_150"].src             = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
+  document["running_noise_t_220"].src             = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
   
   document["map_delta_ras_t_90"].src              ='staticimg/'+mapweekdir+'/90GHz-T_map_delta_Ras_from_point_sources.png'
   document["map_delta_ras_t_150"].src             ='staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources.png'
