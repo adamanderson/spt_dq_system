@@ -1,20 +1,25 @@
 // Check if there are cookies already defined for the wafer and time interval,
 // and use them if available.
 if(Cookies.get('wafer') !== undefined)
-	var wafer = Cookies.get('wafer', {expires: 1});
-else
+	var wafer = Cookies.get('wafer');
+else {
 	var wafer='all';
+	Cookies.set('wafer', wafer, {expires: 1});
+}
 
 if(Cookies.get('weekdir') !== undefined)
-	var weekdir = Cookies.get('weekdir', {expires: 1});
-else
+	var weekdir = Cookies.get('weekdir');
+else {
 	var weekdir='plots/last_n/last_3/';
+	Cookies.set('weekdir', weekdir, {expires: 1});
+}
 
 if(Cookies.get('mapweekdir') !== undefined)
-    var mapweekdir = Cookies.get('mapweekdir', {expires: 1});
-else
+    var mapweekdir = Cookies.get('mapweekdir');
+else {
     var mapweekdir='maps/figures/last_n/last_30/';
-
+	Cookies.set('mapweekdir', mapweekdir, {expires: 1});
+}
 
 /**
  * Updates the source of all images defined on the summary page.
@@ -150,6 +155,18 @@ $( document ).ready(function()
 	$("[id^=wafers-]").click(function(event) {
 		set_variable("wafer", event.target.value);
 	});
+
+	// Bind the click event to the tabs so that we can keep track of the active tab
+	$("#tabs").click(function(event) {
+		Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+	});
+
+	if(Cookies.get('activeTab') !== undefined)
+		$("#tabs").tabs("option", "active", Cookies.get('activeTab'))
+	else {
+		Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+	}
+
 
 	// Update all the figures. Need to call this on load because the values of
 	// wafer and weekdir might be pulled from a cookie, which probably differs
