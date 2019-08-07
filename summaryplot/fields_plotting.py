@@ -1214,7 +1214,11 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                     yvals = [yval/tot_n_pix[sub_field] for yval in yvals]
                     n_st_0p9 = len([yval for yval in yvals if yval < 0.9])
                     n_tot    = len(yvals)
-                    records_for_later[sub_field] = int(100.0 * n_st_0p9 / n_tot)
+                    if n_tot == 0:
+                        n_rec = 0
+                    else:
+                        n_red = int(100.0 * n_st_0p9 / n_tot)
+                    records_for_later[sub_field] = n_rec
                 if "MeansOfTTWeights" in plist["key"]:
                     records_for_later[sub_field] = numpy.median(yvals)
                 
