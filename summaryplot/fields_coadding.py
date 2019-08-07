@@ -1259,7 +1259,7 @@ class AnalyzeAndCoaddMaps(object):
             self.cal_ts_dir  = \
                 os.path.join(bolo_timestreams_dir, "calibrator")
             self.cal_autoproc_dir = \
-                os.path.join(calibration_data_dir, "calibrator")
+                os.path.join(calibration_data_dir, "calibration", "calibrator")
             self.cal_obs_ids = \
                 [int(obs_id) for obs_id in os.listdir(self.cal_ts_dir) \
                  if (int(obs_id) >= min_field_obs_id-600) and          \
