@@ -95,6 +95,20 @@ function update_figs()
 }
 
 /**
+ * Show/hide plots when switching between yearly and non-yearly view for maps
+ */
+function update_visibility() {
+	if(!window["mapweekdir"].includes('yearly')) {
+        $(".maps_yearly").hide();
+        $(".maps_non_yearly").show();
+    }
+    else {
+        $(".maps_yearly").show();
+        $(".maps_non_yearly").hide();
+    }
+}
+
+/**
  * Sets a global variable to records its value as a cookie for retrieval later.
  */
 function set_variable(variable, newVal)
@@ -102,6 +116,7 @@ function set_variable(variable, newVal)
   window[variable] = newVal;
   Cookies.set(variable, newVal, { expires: 1 });
   update_figs();
+  update_visibility();
 }
 
 /**
