@@ -701,8 +701,9 @@ def update(mode, action,
                 log('\n')
                 log('Saving the analysis results in a separate file ...')
                 if not just_see_commands:
-                    save_analysis_results_in_separate_file(
-                        args_coadding['output_file'])
+                    if os.path.isfile(args_coadding['output_file']):
+                        save_analysis_results_in_separate_file(
+                            args_coadding['output_file'])
                 log('')
                 
                 log('\n\n')
