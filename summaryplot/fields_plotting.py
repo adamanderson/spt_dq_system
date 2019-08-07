@@ -718,6 +718,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         for sub_field, oids_and_data in map_map_double.items():
             if sub_field not in desired_fields:
                 continue
+            if sub_field not in self.obs_ids_of_interest.keys():
+                continue
             relevant_ids = self.obs_ids_of_interest[sub_field]
             for oid, datum in oids_and_data.items():
                 if int(oid) not in relevant_ids:
@@ -727,6 +729,12 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 if int(oid) > self.xlim_right:
                     continue
                 xs_and_ys.append((int(oid), datum/units))
+        
+        if len(xs_and_ys) == 0:
+            xs = []
+            ys = []
+            return xs, ys
+        
         xs_and_ys = sorted(xs_and_ys, key=itemgetter(0))
         xs = [entry[0] for entry in xs_and_ys]
         ys = [entry[1] for entry in xs_and_ys]
