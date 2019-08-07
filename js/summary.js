@@ -147,6 +147,7 @@ $( document ).ready(function()
 	add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
 
 	add_date_buttons('last_n', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('yearly', 'maps/figures', 'maps', 'mapweekdir');
 	add_date_buttons('monthly', 'maps/figures', 'maps', 'mapweekdir');
 	add_date_buttons('weekly', 'maps/figures', 'maps', 'mapweekdir');
 
