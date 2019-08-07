@@ -1,16 +1,77 @@
-## ******* Always need to import modules! ******* ##
+# ============================================================================ #
+#  This script is intended to be called by                                     #
+#  spt_dq_system/summaryplot/cache_field_maps.py.                              #
+#  It can also be run from command line or imported by another script.         #
+#                                                                              #
+#  The purpose of this script is to make figures showing the                   #
+#  analysis results obtained by fields_coadding.py. As a result, the script    #
+#  makes many assumptions about the structure and contents of the data it      #
+#  receives, which means it is probably not very usable in other contexts.     #
+#                                                                              #
+#  The script mainly has four parts, each of which defines a pipeline          #
+#  module. All three modules make figures, but each one makes a different      #
+#  type of figures.                                                            #
+#                                                                              #
+#  The first module, MakeFiguresForFieldMapsAndWeightMaps, generates           #
+#  colormaps from data stored in a map frame, in particular, frame["T"] and    #
+#  frame["Wunpol"].TT. It also generates a figure showing a cross section of   #
+#  the weight map. Currently, making figures for Q maps, U maps, and the       #
+#  associated weight maps is not implemented.                                  #
+#                                                                              #
+#  The second module, MakeFiguresForTimeVariationsOfMapRelatedQuantities,      #
+#  generates figures showing the time variations of some of the map-related    #
+#  quantities that were calculated by fields_coadding.py. The quantities are:  #
+#    (1) average numbers of detectors flagged by different reasons and         #
+#        those not flagged                                                     #
+#    (2) medians of the pW/K temperature calibration conversion factors        #
+#    (3) medians of fractional changes in detectors' response to the           #
+#        calibrator at different elevations                                    #
+#    (4) mean weights of TT weight maps                                        #
+#    (5) ra offsets and dec offsets three brightesst point sources from        #
+#        each sub-field                                                        #
+#    (6) averages of ratios of SPT x Planck to Planck x Planck cross spectra   #
+#    (7) noise levels of individual or coadded maps                            #
+#  These figures will contain data points from only those maps that were used  #
+#  to form the coadded maps that were plotted by the first module (those       #
+#  coadds are supposed to contain maps from certain time interval such as one  #
+#  week, one month, and so on.                                                 #
+#                                                                              #
+#  The third module, MakeFiguresForTimeEvolutionOfMapRelatedQuantities,        #
+#  generates figures showing the time evolution of the noise of the running    #
+#  year-to-date coadded noise maps and those showing variances of map values   #
+#  in the running coadded signal maps and coadded noise maps. These figures    #
+#  are for the 'yearly' section of the webpage and thus will include all       #
+#  available data points from certain year instead of just a week, a month,    #
+#  and so on.                                                                  #
+#                                                                              #
+#  The fourth module, MakeFiguresForDistributionsOfMapRelatedQuantities,       #
+#  generates figures showing distributions of some of the aforementioned       #
+#  quantities by making histograms of them. These quantities are ra offsets,   #
+#  dec offsets, ratios of the power spectra, fractional changes in             #
+#  responsivity, noise levels of individual maps, and mean weights. These      #
+#  histograms are for the 'yearly' section of the webpage and thus will        #
+#  include all available data points.                                          #
+#                                                                              #
+#  At the end of the script, there is a function that constructs a pipeline    #
+#  that utilizes these modules.                                                #
+#                                                                              #
+# ============================================================================ #
+
 
 import  matplotlib
 matplotlib.use("Agg")
+matplotlib.rcParams["mathtext.default"] = "regular"
 from matplotlib import pyplot
 
 import  os
 import  gc
 import  sys
+import  time
 import  glob
 import  numpy 
 import  argparse
 import  logging
+
 from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
@@ -18,6 +79,9 @@ from    spt3g       import  coordinateutils
 from    spt3g       import  std_processing
 from    scipy       import  ndimage
 from    scipy       import  linalg
+from    scipy       import  optimize
+
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
 
@@ -30,7 +94,7 @@ from    scipy       import  linalg
 # Define functions related to general plotting utilities
 # ------------------------------------------------------------------------------
 
-def get_figure_and_plot_objects(w=12.0, h=7.5, dpi=None):
+def get_figure_and_plot_objects(w=12.0, h=7.5, dpi=100):
     
     figure_obj = pyplot.figure(figsize=(w, h), dpi=dpi)
     plot_obj   = figure_obj.add_subplot(1, 1, 1)
@@ -38,11 +102,20 @@ def get_figure_and_plot_objects(w=12.0, h=7.5, dpi=None):
 
 
 def determine_various_font_sizes(title_fontsize):
+    
+    labels_fs  = title_fontsize * 0.96
+    ticks_fs   = title_fontsize * 0.93
+    legends_fs = title_fontsize * 0.90
+    return labels_fs, ticks_fs, legends_fs
 
-    labels_fs = title_fontsize - 1.0
-    ticks_fs  = title_fontsize - 1.0
-    legend_fs = title_fontsize - 2.0
-    return labels_fs, ticks_fs, legend_fs
+
+def determine_various_line_widths(data_linewidth):
+    
+    ax_h_lw = data_linewidth * 0.75
+    ax_v_lw = data_linewidth * 0.75
+    major_grid_lw = data_linewidth * 0.40
+    minor_grid_lw = data_linewidth * 0.10
+    return ax_h_lw, ax_v_lw, major_grid_lw, minor_grid_lw
 
 
 def set_lims(plot_obj, l, r, b, t):
@@ -54,27 +127,37 @@ def set_lims(plot_obj, l, r, b, t):
 
 
 def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs,
-              xtrot="horizontal"):
-
+              dat_lw, xtrot="horizontal"):
+    
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
+    axh_lw, axv_lw, gda_lw, gdi_lw = determine_various_line_widths(dat_lw)
     if xta is not None: plot_obj.set_xticks(xta, minor=False)
     if xti is not None: plot_obj.set_xticks(xti, minor=True)
     if yta is not None: plot_obj.set_yticks(yta, minor=False)
     if yti is not None: plot_obj.set_yticks(yti, minor=True)
-    if xtl is not None: plot_obj.set_xticklabels(xtl, fontsize=tck_fs, rotation=xtrot)
-    if ytl is not None: plot_obj.set_yticklabels(ytl, fontsize=tck_fs)
-    plot_obj.grid(which="major", linestyle="dotted", linewidth=0.20)
-    plot_obj.grid(which="minor", linestyle="dotted", linewidth=0.10)
+    if xtl is not None:
+        plot_obj.set_xticklabels(
+            xtl, fontsize=tck_fs, rotation=xtrot, minor=False)
+    if ytl is not None:
+        plot_obj.set_yticklabels(ytl, fontsize=tck_fs, minor=False)
+    plot_obj.tick_params(
+        axis="both", which="major", direction="in", labelsize=tck_fs)
+    plot_obj.tick_params(
+        axis="both", which="minor", direction="in")
+    plot_obj.grid(axis="x", which="major",
+                  linestyle="dotted", linewidth=gda_lw)
+    plot_obj.grid(axis="x", which="minor",
+                  linestyle="dotted", linewidth=gdi_lw)
+    plot_obj.grid(axis="y", which="major",
+                  linestyle="dotted", linewidth=gda_lw)
+    plot_obj.grid(axis="y", which="minor",
+                  linestyle="dotted", linewidth=gdi_lw)
 
 
-def set_labels_and_title(plot_obj, xlabel, ylabel, title, ttl_fs):
+def set_ax_labels_and_title(plot_obj, xlabel, ylabel, title, ttl_fs):
     
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
-    plot_obj.tick_params(axis="both", which="major",
-                         direction="in", labelsize=tck_fs)
-    plot_obj.tick_params(axis="both", which="minor",
-                         direction="in")
-    plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.2)
+    plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=1.0)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
     plot_obj.set_ylabel(ylabel, fontsize=lbl_fs)
     plot_obj.set_title(title, fontsize=ttl_fs)
@@ -94,13 +177,13 @@ def save_figure_etc(figure_obj, fig_dir, file_name):
 # ------------------------------------------------------------------------------
 
 
-class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
+class MakeFiguresForFieldMapsAndWeightMaps(object):
     
     def __init__(self,
+                 map_type=None, map_id=None, coadded_data=True,
                  fig_f=False, fig_w=False, fig_cr=False,
                  rebin_map_before_plotting=False, new_map_resolution=None,
                  smooth_map_with_gaussian=False, gaussian_fwhm=None,
-                 map_type=None, map_id=None, coadded_data=True,
                  custom_vmin_field_map=None,
                  custom_vmax_field_map=None,
                  figure_title_font_size=11,
@@ -108,82 +191,84 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                  directory_to_save_figures="",
                  logging_function=logging.info):
         
+        self.map_type = map_type
+        self.map_id   = map_id
+        self.coadded_data = coadded_data
         self.make_figure_for_field_map    = fig_f
         self.make_figure_for_weight_map   = fig_w
         self.make_figure_for_w_map_cr_sec = fig_cr
         self.rebin_map_before_plotting    = rebin_map_before_plotting
-        self.new_res  = new_map_resolution
+        self.res_to_rebin = new_map_resolution
         self.smooth_map_with_gaussian = smooth_map_with_gaussian
         self.gaussian_fwhm = gaussian_fwhm
-        self.map_type = map_type
-        self.map_id   = map_id
-        self.coadded_data = coadded_data
-        self.custom_vmin  = custom_vmin_field_map
-        self.custom_vmax  = custom_vmax_field_map
+        self.custom_vmin = custom_vmin_field_map
+        self.custom_vmax = custom_vmax_field_map
         self.simpler_file_names = simpler_file_names
         self.ttl_fs = figure_title_font_size
         self.fig_dir = directory_to_save_figures
         self.log = logging_function
         self.obs_fr = None
-        
-        
+    
+    
     def rebin_map_to_diff_res(self, frame, new_res):
         
-        map_parameters = {"x_len"       : 1200,
+        map_parameters = {"x_len"       : 1800,
                           "y_len"       : 1200,
                           "res"         : new_res*core.G3Units.arcmin,
                           "proj"        : frame["T"].proj,
                           "alpha_center": frame["T"].alpha_center,
                           "delta_center": frame["T"].delta_center,
-                          "pol_type"    : frame["T"].pol_type,
                           "coord_ref"   : frame["T"].coord_ref}
         rebin_factor = int(new_res/(frame["T"].res/core.G3Units.arcmin))
         print("The rebin factor is", rebin_factor)
-
+        
         if self.map_type == "T":
-            if "Wunpol" in frame.keys():
-                new_field_map  = coordinateutils.FlatSkyMap(**map_parameters)
-                new_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
-                coordinateutils.reproj_map(frame["T"],
-                                           new_field_map,
-                                           rebin_factor)
-                coordinateutils.reproj_map(frame["Wunpol"].TT,
-                                           new_weight_map,
-                                           rebin_factor)
-                new_frame = core.G3Frame(core.G3FrameType.Map)
-                new_frame["T"]         = new_field_map
-                new_frame["Wunpol"]    = core.G3SkyMapWeights()
-                new_frame["Wunpol"].TT = new_weight_map
+            new_field_map  = coordinateutils.FlatSkyMap(**map_parameters)
+            new_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
+            coordinateutils.reproj_map(
+                frame["T"], new_field_map, rebin_factor)
+            coordinateutils.reproj_map(
+                frame["Wunpol"].TT, new_weight_map, rebin_factor)
+            new_frame = core.G3Frame(core.G3FrameType.Map)
+            new_frame["T"]         = new_field_map
+            new_frame["Wunpol"]    = core.G3SkyMapWeights()
+            new_frame["Wunpol"].TT = new_weight_map
         
         return new_frame
     
     
-    def get_field_map(self, frame, map_type):
+    def get_field_map(self, frame):
         
-        if map_type == "T":
-            if "Wunpol" in frame:
-                return frame["T"]/frame["Wunpol"].TT, "T map"
+        if self.map_type == "T":
+            t_map = mapmaker.mapmakerutils.remove_weight_t(
+                        frame["T"], frame["Wunpol"])
+            idx_zero_weights = \
+                numpy.where(numpy.asarray(frame["Wunpol"].TT)==0.0)
+            numpy.asarray(t_map)[idx_zero_weights] = numpy.nan
+            
+            return t_map, "T map"
     
     
-    def get_weight_map(self, frame, map_type):
+    def get_weight_map(self, frame):
         
-        if map_type == "T":
+        if self.map_type == "T":
             return frame["Wunpol"].TT, "TT weight map"
     
     
     def get_title_and_file_name_of_figure_for_map(
-            self, obs_fr, obs_id_list, vals_for_stats, res, mp_ty_str):
+            self, obs_fr, obs_id_list, mp_ty_str,
+            vals_for_stats, nr, map_res, show_res=True):
         
         if (obs_fr is not None) and (obs_id_list is None):
             source  = obs_fr["SourceName"]
             obs_id  = str(obs_fr["ObservationID"])
             date    = str(obs_fr["ObservationStart"]).split(".")[0]
-            resol   = str(res/core.G3Units.arcmin)+"' map"
+            resol   = str(map_res/core.G3Units.arcmin)+"' map"
             if self.smooth_map_with_gaussian:
-                resol += " smoothed w/ " + \
+                resol += " smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "  " + obs_id + " (" + date + ") " + \
-                      "   " + self.map_id + " " + mp_ty_str #+ " (" + resol + ")"
+                      "   " + self.map_id + " " + mp_ty_str
         
         elif (obs_fr is None) and (obs_id_list is not None):
             source  = "1500 square degrees field"
@@ -191,54 +276,88 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
             for oids_one_field in obs_id_list.values():
                 for oid in oids_one_field:
                     obs_ids.append(oid)
-            min_id  = str(numpy.min(obs_ids))
-            max_id  = str(numpy.max(obs_ids))
-            min_dt  = str(std_processing.obsid_to_g3time(min_id)).split(":")[0]
-            max_dt  = str(std_processing.obsid_to_g3time(max_id)).split(":")[0]
-            obs_id  = min_id + " to " + max_id
-            dt_rng  = "from " + min_dt + " to " + max_dt
-            el_dic  = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
-                       "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3"}
-            n_obss  = ["{"+str(len(obss))+" "+el_dic[source]+"}" \
-                       for source, obss in obs_id_list.items()]
-            n_obss  = " ".join(n_obss)
-            resol   = str(res/core.G3Units.arcmin)+"' map"
+            min_id = str(numpy.min(obs_ids))
+            max_id = str(numpy.max(obs_ids))
+            min_dt = "-".join(str(std_processing.obsid_to_g3time(min_id)).\
+                              split(":")[0].split("-")[0:2])
+            max_dt = "-".join(str(std_processing.obsid_to_g3time(max_id)).\
+                              split(":")[0].split("-")[0:2])
+            dt_rng = "between " + min_dt + " and " + max_dt
+            obs_id = min_id + " to " + max_id
+            el_dic = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
+                      "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3"}
+            n_obss = ",  ".join([el_dic[source] + " : " + str(len(obss)) \
+                                for source, obss in obs_id_list.items()])
+            resol  = str(map_res/core.G3Units.arcmin)+"' map"
             if self.smooth_map_with_gaussian:
-                resol += " smoothed w/ " + \
+                resol += " smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "   " + self.map_id + " coadded " + mp_ty_str + \
                       "s " + "\n" + \
-                      "(data from observations taken " + dt_rng + ":" + "\n" + \
-                      n_obss + ", " + obs_id + ")"
+                      "(data from observations taken " + dt_rng + "," + "\n" + \
+                      "{" + n_obss + "})" + "\n"
+        
         else:
             raise RuntimeError("Unclear how to build the fig. title!")
         
         if vals_for_stats is None:
-            title_b = "(No information on statistics)"
+            full_ttl = title_a
         else:
+            if show_res:
+                title_b = "(" + resol + ",  "
+                if len(resol) > 20:
+                    title_b += "\n"
+            else:
+                title_b = "("
             median  = str(numpy.round(numpy.median(vals_for_stats)))
-            pctl_10 = str(numpy.round(numpy.percentile(vals_for_stats, 15), 3))
-            pctl_90 = str(numpy.round(numpy.percentile(vals_for_stats, 85), 3))
-            title_b = "(15th pctl. = " +pctl_10+",  "+\
-                      "Median = " +median+ ",  " + "85th pctl. = " +pctl_90+ ")"
-        
-        full_ttl = title_a + "\n" + title_b + "\n"
+            pctl_15 = str(numpy.round(numpy.percentile(vals_for_stats, 15), nr))
+            pctl_85 = str(numpy.round(numpy.percentile(vals_for_stats, 85), nr))
+            title_c = "15th pctl. = " +pctl_15+",  "+ \
+                      "Med. = " +median+ ",  " + \
+                      "85th pctl. = " +pctl_85+ ")"
+            full_ttl = title_a + title_b + title_c
         file_nm  = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
         file_nm += (file_nm + ".png").replace(" ", "_")
         
         return full_ttl, file_nm
     
     
+    def get_colorbar_limits_from_model(self, band, n_maps_ea_fld, distro_stdev):
+        
+        signal_variances = { "90GHz": 0.00120,
+                            "150GHz": 0.00140,
+                            "220GHz": 0.00250}
+        
+        predicted_variances = []
+        for sub_field, obs_ids_used in n_maps_ea_fld.items():
+            median_var_one_obs  = numpy.median(distro_stdev[sub_field].values())
+            median_var_one_obs  = median_var_one_obs ** 2
+            median_var_one_obs /= core.G3Units.mK * core.G3Units.mK
+            signal_var = signal_variances[band]
+            n_map_this_fld = len(obs_ids_used)
+            predicted_var_this_fld = \
+                signal_var + median_var_one_obs / n_map_this_fld
+            predicted_variances.append(predicted_var_this_fld)
+            """print("%s %6.4f %d %6.4f %6.4f"
+                  %(sub_field, median_var_one_obs, n_map_this_fld,
+                    signal_var, predicted_var_this_fld))"""
+        
+        max_var = numpy.max(predicted_variances)
+        max_std = numpy.sqrt(max_var)
+        
+        return -2.5*max_std, 2.5*max_std
+    
+    
     def visualize_entire_map(
             self, map_to_view,
-            w=12.0, h=8.0, dpi=None, aspect="equal",
+            w=12.0, h=8.0, dpi=100, aspect="equal",
             cmap="gray", custom_vmin=None, custom_vmax=None,
             cbar_label="", fig_title="",
             fig_dir="", file_name="map.png"):
         
-        figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=100)
+        figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=dpi)
         
-        if (custom_vmin == None) or (custom_vmax == None):
+        if (custom_vmin is None) or (custom_vmax is None):
             pctl_lo = numpy.nanpercentile(numpy.asarray(map_to_view),  1)
             pctl_hi = numpy.nanpercentile(numpy.asarray(map_to_view), 99)
             larger  = numpy.max([numpy.abs(pctl_lo), numpy.abs(pctl_hi)])
@@ -255,49 +374,98 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                   cmap=cmap, vmin=vmin, vmax=vmax)
         
         cbar = figure_obj.colorbar(
-                   cax, ax=plot_obj, pad=0.01, shrink=0.75, aspect=30)
-        cbar.ax.tick_params(labelsize=self.ttl_fs-2.0)
+                   cax, ax=plot_obj, pad=0.025, shrink=0.75, aspect=30)
+        
+        lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
         
         plot_obj.tick_params(
             axis="both", which="both",
             bottom=False, top=False, labelbottom=False, labeltop=False,
             left=False, right=False, labelleft=False, labelright=False)
         
-        lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
-        cbar.ax.set_ylabel(cbar_label, fontsize=lbl_fs)
+        cbar.ax.tick_params(labelsize=tck_fs)
+        
         plot_obj.set_title(fig_title, fontsize=self.ttl_fs)
-                
+        cbar.ax.set_ylabel(cbar_label, fontsize=lbl_fs)
+        
         save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
-    def visualize_normalized_map_cross_section(
-            self, map_data,
-            fig_w=12.0, fig_h=7.5,
+    def visualize_normalized_weight_map_cross_section(
+            self, band, weight_map, n_obss,
+            w=12.0, h=7.5, dpi=100,
             xlabel="", ylabel="", fig_title="",
             fig_dir="", file_name="cross_section.png"):
         
-        figure_obj, plot_obj = get_figure_and_plot_objects()
+        figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=dpi)
+        
+        deg = core.G3Units.deg
+        ra  = 0.0
         
         vertical_cr_sec_values = \
-            numpy.asarray(map_data).transpose()[map_data.shape[1]//2]
-        vertical_cr_sec_values = \
-            vertical_cr_sec_values / numpy.max(vertical_cr_sec_values)        
+            numpy.asarray(weight_map).transpose()[weight_map.shape[1]//2]
         
-        plot_obj.plot(vertical_cr_sec_values, linewidth=0.45, color="black")
+        dec_6990_idx = numpy.unravel_index(weight_map.angle_to_pixel(
+                           0.0*deg, -69.90*deg), weight_map.shape)[0]
+        dec_7010_idx = numpy.unravel_index(weight_map.angle_to_pixel(
+                           0.0*deg, -70.10*deg), weight_map.shape)[0]
+        avg_w_el3_edge = \
+            numpy.mean(vertical_cr_sec_values[dec_7010_idx:dec_6990_idx+1])
+        normalized_weights = vertical_cr_sec_values / avg_w_el3_edge
+                
+        decs = numpy.linspace(-74.75, -37.25, 3751)
+        pids = [weight_map.angle_to_pixel(ra*deg, dec*deg) for dec in decs]
+        idcs = [numpy.unravel_index(pid, weight_map.shape)[0] for pid in pids]
         
-        deg  = core.G3Units.deg
-        ra   = 0.0
+        focal_plane_hits = numpy.zeros(len(decs))
+        for dec_center in [-44.75, -52.25, -59.75, -67.25]:
+            one_sub_field_hits = numpy.zeros(len(decs))
+            l_zero = dec_center - 4.25
+            l_edge = dec_center - 3.25
+            r_edge = dec_center + 3.25
+            r_zero = dec_center + 4.25
+            idx_lz = numpy.argmin(numpy.absolute(decs - l_zero))
+            idx_le = numpy.argmin(numpy.absolute(decs - l_edge))
+            idx_re = numpy.argmin(numpy.absolute(decs - r_edge))
+            idx_rz = numpy.argmin(numpy.absolute(decs - r_zero))
+            for i in range(idx_lz, idx_le+1):
+                one_sub_field_hits[i] = \
+                    1.0 * (i - idx_lz) / (idx_le - idx_lz)
+            for i in range(idx_le, idx_re+1):
+                one_sub_field_hits[i] = 1.0
+            for i in range(idx_re, idx_rz+1):
+                one_sub_field_hits[i] = \
+                    1.0 - 1.0 * (i - idx_re) / (idx_rz - idx_re)
+            n_obs = len(n_obss["ra0hdec"+str(dec_center)])
+            focal_plane_hits += one_sub_field_hits * n_obs
+        
+        inv_cos = 1.0 / numpy.cos(decs * numpy.pi / 180.0)
+        prediction  = focal_plane_hits * inv_cos
+        el3_edge    = numpy.where(decs==-70.00)
+        prediction /= prediction[el3_edge]
+        
+        data_linewidth = 1.50
+        color_dict = {"90GHz": "red", "150GHz": "green", "220GHz": "blue"}
+        
+        plot_obj.plot(normalized_weights, label="Actual data",
+                      linewidth=data_linewidth,
+                      color=color_dict[band], alpha=0.5)
+        plot_obj.plot(idcs, prediction, label="Simple model",
+                      linewidth=data_linewidth, color="black")
+        
         decs = numpy.linspace(-74.75, -37.25, 11)
-        pids = [map_data.angle_to_pixel(ra*deg, dec*deg) for dec in decs]
-        idcs = [pid//map_data.shape[1]-1 for pid in pids]
+        pids = [weight_map.angle_to_pixel(ra, dec * deg) for dec in decs]
+        idcs = [numpy.unravel_index(pid, weight_map.shape)[0] for pid in pids]
         
         xlim_left  = idcs[0]
         xlim_right = idcs[-1]
-                
-        set_lims(plot_obj, xlim_left, xlim_right, -0.02, 1.05)
+        
+        ytop = numpy.nanmax(normalized_weights) * 1.10
+        set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
         set_ticks(plot_obj, idcs[1:-1], None, [str(dec) for dec in decs[1:-1]],
-                  None, None, None, self.ttl_fs)
-        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+                  None, None, None, self.ttl_fs, data_linewidth)
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
         save_figure_etc(figure_obj, self.fig_dir, file_name)
     
@@ -307,29 +475,36 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
         if frame.type == core.G3FrameType.Observation:
             self.obs_fr = frame
         
+        if "FluctuationMetricsIndividualSignalMapsTMapStandardDeviations" \
+        in frame.keys():
+            self.distro_stdev = \
+                frame["FluctuationMetrics"+\
+                      "IndividualSignalMaps"+\
+                      "TMapStandardDeviations"]
+        
         if frame.type == core.G3FrameType.Map:
-            if self.map_id == frame["Id"]:
-                
+            if frame["Id"] != self.map_id:
+                return
+            
+            self.log("")
+            self.log("* Found a Map frame with ID "+self.map_id+"!")
+            self.log("* Figures will be made for this frame.")
+            self.log("")
+            
+            if self.rebin_map_before_plotting:
+                self.log("Rebinning the field map to "
+                         "%s arcminute resolution ...",
+                         self.res_to_rebin)
+                frame = self.rebin_map_to_diff_res(frame, self.res_to_rebin)
+                self.log("Done.")
                 self.log("")
-                self.log("* Found a Map frame with ID "+self.map_id+"!")
-                self.log("* Figures will possibly be made for this frame.")
-                self.log("")
-                
-                if self.make_figure_for_field_map:                    
-                    if self.rebin_map_before_plotting:
-                        self.log("Rebinning the field map to "
-                                 "%s arcminute resolution...", self.new_res)
-                        new_frame = \
-                            self.rebin_map_to_diff_res(frame, self.new_res)
-                        fd_mp, fd_mp_str = \
-                            self.get_field_map(new_frame, self.map_type)
-                        self.log("Done.")
-                        self.log("")
-                    else:
-                        fd_mp, fd_mp_str = \
-                            self.get_field_map(frame, self.map_type)
+            
+            
+            if self.make_figure_for_field_map:
+                if self.map_type == "T":
+                    fd_mp, fd_mp_str = self.get_field_map(frame)
                     
-                    self.log("Making a figure for the field map...")
+                    self.log("Making a figure for the field map ...")
                     self.log("  Some basic properties of the map:")
                     self.log(" "*4 +"Map shape    : %s", fd_mp.shape)
                     self.log(" "*4 +"Map units    : %s", fd_mp.units)
@@ -340,7 +515,7 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                              fd_mp.y_res/core.G3Units.arcmin)
                     
                     fd_mp   /= core.G3Units.mK
-                    res      = fd_mp.x_res
+                    res      = fd_mp.res
                     cbar_lbl = "\n" + r"$mK_{CMB}$"
                     
                     fd_mp = numpy.asarray(fd_mp)
@@ -349,161 +524,222 @@ class PossiblyMakeFiguresForFieldMapsAndWeightMaps(object):
                         sigma /= res
                         sigma /= 2.0 * numpy.sqrt(2.0 * numpy.log(2.0))
                         self.log("  Smoothing the map with a gaussian "
-                                 "whose sigma is %s...", sigma)
-                        fd_mp = ndimage.gaussian_filter(fd_mp, sigma, mode="nearest")
+                                 "whose sigma is %s ...", sigma)
+                        fd_mp = ndimage.gaussian_filter(
+                                    fd_mp, sigma, mode="nearest")
                     
-                    self.log("  Preparing the figure title...")
+                    self.log("  Preparing the figure title ...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
                         obs_id_list = None
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
-                            self.obs_fr, obs_id_list,
-                            fd_mp[numpy.where(numpy.isfinite(fd_mp))],
-                            res, fd_mp_str)
+                            self.obs_fr, obs_id_list, fd_mp_str,
+                            fd_mp[numpy.where(numpy.isfinite(fd_mp))], 3,
+                            res, show_res=True)
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
-                                    fd_mp_str.replace(" ", "_") + ".png"
+                                fd_mp_str.replace(" ", "_") + ".png"
                     
-                    self.log("  Actually making a figure...")
+                    if (self.custom_vmin is None) and \
+                       (self.custom_vmax is None) and \
+                       (self.coadded_data)        and \
+                       (not self.smooth_map_with_gaussian):
+                        self.log("  Deciding on the colorbar limits ...")
+                        self.custom_vmin, self.custom_vmax = \
+                            self.get_colorbar_limits_from_model(
+                                self.map_id, obs_id_list, self.distro_stdev)
+                    
+                    self.log("  Actually making a figure ...")
                     self.visualize_entire_map(
-                        fd_mp, dpi=100,
+                        fd_mp, dpi=150,
                         custom_vmin=self.custom_vmin,
                         custom_vmax=self.custom_vmax,
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
-                    self.log("Done.")
-                    self.log("")
                     del fd_mp
                     gc.collect()
-                
-                if self.make_figure_for_w_map_cr_sec:
-                    wt_mp, wt_mp_str = self.get_weight_map(frame, self.map_type)
                     
-                    res = wt_mp.x_res
+                    self.log("Done.")
+                    self.log("")
+            
+            
+            if self.make_figure_for_w_map_cr_sec:
+                if self.map_type == "T":
+                    wt_mp, wt_mp_str = self.get_weight_map(frame)
+                    
+                    self.log("Making a figure for a cross section of "
+                             "the TT weight map ...")
+                    
+                    map_res = wt_mp.res
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
                         obs_id_list = None
-                    
-                    xlabel  = "\n" + "Declination [degree]"
-                    ylabel  = "Normalized Weight [unitless]" + "\n"
-                    
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
-                                    self.obs_fr, obs_id_list,
-                                    None, res, wt_mp_str)
-                    
+                            self.obs_fr, obs_id_list, wt_mp_str,
+                            None, None, map_res, show_res=False)
+                    xlabel  = "\n" + "Declination [degree]"
+                    ylabel  = "Weight normalized @ Dec. = -70 deg." + "\n"
+                    fig_ttl = self.map_id + " " + wt_mp_str + "\n" + \
+                              "Cross sectional view " + \
+                              "along the RA = 0h contour" + "\n"
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
                                 wt_mp_str.replace(" ", "_") + \
                                 "_cross_sectional_view.png"
-                    fig_ttl = self.map_id + " " + wt_mp_str + "   " + "\n" + \
-                              "Cross sectional view " + \
-                              "along the RA = 0h contour" + "\n"
                     
-                    self.log("Making a figure for a cross section of "
-                             "the weight map...")
-                    self.visualize_normalized_map_cross_section(
-                        wt_mp, xlabel=xlabel, ylabel=ylabel,
+                    self.visualize_normalized_weight_map_cross_section(
+                        self.map_id, wt_mp, obs_id_list,
+                        xlabel=xlabel, ylabel=ylabel,
                         fig_title=fig_ttl, file_name=fl_nm)
-                    self.log("Done.")
-                    self.log("")
+                    
                     del wt_mp
                     gc.collect()
-
-                if self.make_figure_for_weight_map:
-                    if self.rebin_map_before_plotting:
-                        self.log("Rebinning the weight map to "
-                                 "%s arcminute resolution...", self.new_res)
-                        new_frame = \
-                            self.rebin_map_to_diff_res(frame, self.new_res)
-                        wt_mp, wt_mp_str = \
-                            self.get_weight_map(frame, self.map_type)
-                        self.log("Done.")
-                        self.log("")
-                    else:
-                        wt_mp, wt_mp_str = \
-                            self.get_weight_map(frame, self.map_type)
                     
-                    self.log("Making a figure for the entire weight map...")
+                    self.log("Done.")
+                    self.log("")
+            
+            
+            if self.make_figure_for_weight_map:
+                if self.map_type == "T":
+                    wt_mp, wt_mp_str = self.get_weight_map(frame)
                     
-                    res = wt_mp.x_res
+                    self.log("Making a figure for the entire weight map ...")
                     
+                    map_res = wt_mp.res
                     wt_mp  = numpy.asarray(wt_mp)
                     wt_mp /= 1.0 / (core.G3Units.mK*core.G3Units.mK)
-                    cbar_lbl = "\n" + "1 / " + r"${mK_{CMB}}^2$"
                     
-                    self.log("  Preparing the figure title...")
+                    self.log("  Preparing the figure title ...")
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
                         obs_id_list = None
                     non_zero_wghts = wt_mp[numpy.where(wt_mp!=0.0)]
-    
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
-                            self.obs_fr, obs_id_list,
-                            non_zero_wghts, res, wt_mp_str)
+                            self.obs_fr, obs_id_list, wt_mp_str,
+                            non_zero_wghts, 0, map_res, show_res=False)
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
-                                    wt_mp_str.replace(" ", "_") + ".png"
+                                wt_mp_str.replace(" ", "_") + ".png"
                     
                     wt_mp[numpy.where(wt_mp==0.0)] = numpy.nan
                     
-                    self.log("  Actually making a figure...")
+                    self.log("  Actually making a figure ...")
+                    cbar_lbl = "\n" + "1 / " + r"${mK_{CMB}}^2$"
                     self.visualize_entire_map(
-                        wt_mp, dpi=100,
-                        custom_vmin=0.0,
-                        custom_vmax=numpy.nanmax(wt_mp),
+                        wt_mp, dpi=150,
+                        custom_vmin=0.0, custom_vmax=numpy.nanmax(wt_mp),
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
                     
-                    if self.simpler_file_names:
-                        file_name = self.map_id + "-" + \
-                                    wt_mp_str.replace(" ", "_") + ".png"
-                    self.log("Done.")
-                    self.log("")
                     del wt_mp
                     gc.collect()
-                
+                    
+                    self.log("Done.")
+                    self.log("")
 
 
 
 
-class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
+class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def __init__(self,
-                 fig_fs=False, fig_pt=False, fig_ns=False,
-                 map_type=None, map_id=None,
+                 map_id=None, map_type=None,
+                 fig_fs=False, fig_tc=False, fig_rc=False,
+                 fig_fl=False, fig_pt=False,
+                 fig_rp=False, fig_ns=False,
                  xlim_left=None, xlim_right=None,
                  figure_title_font_size=11,
                  directory_to_save_figures="",
                  logging_function=logging.info):
         
-        self.make_fig_for_flggg_stats  = fig_fs
-        self.make_fig_for_ptg_offsets  = fig_pt
-        self.make_fig_for_noise_levels = fig_ns
         self.map_type = map_type
         self.map_id   = map_id
+        self.all_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
+                           "ra0hdec-59.75", "ra0hdec-67.25"]
+        self.make_fig_for_flggg_stats   = fig_fs
+        self.make_fig_for_temp_cal_facs = fig_tc
+        self.make_fig_for_frac_cal_chng = fig_rc
+        self.make_fig_for_fluc_metrics  = fig_fl
+        self.make_fig_for_ptg_offsets   = fig_pt
+        self.make_fig_for_xspec_ratios  = fig_rp
+        self.make_fig_for_noise_levels  = fig_ns
+        self.fig_fs_made = False
+        self.fig_tc_made = False
+        self.fig_rc_made = False
+        self.fig_fl_made = False
+        self.fig_pt_made = False
+        self.fig_rp_made = False
+        self.fig_ns_made = False
+        self.fig_od_made = False   # * for observation durations
         
+        self.obs_ids_of_interest  = None
         self.already_made_figures = False
-                
+        
         self.xlim_left  = xlim_left
         self.xlim_right = xlim_right
-        self.ttl_fs     = figure_title_font_size
+        self.n_rmarg_el = 3.5
+        self.n_rmarg_wf = 4.2
+        self.ttl_fs  = figure_title_font_size
         self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
                         "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3"}
         self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
                         "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728"}
-        self.ln_wdth = 0.25
-        self.ln_styl = "dotted"
-        self.mrkrsz  = 8.0
+        self.waf_cl_dict = {"W172": "#1f77b4", "W174": "#ff7f0e",
+                            "W176": "#2ca02c", "W177": "#d62728",
+                            "W180": "#9467bd", "W181": "#8c564b",
+                            "W188": "#e377c2", "W203": "#7f7f7f",
+                            "W204": "#bcbd22", "W206": "#17becf"}
+        self.typical_alpha = 0.5
         
-        self.fig_title_prefix = map_id + " " + map_type + " " + "map" + "  -  "
-        self.file_name_prefix = map_id + "-" + map_type + "_" + "map" + "_"
+        self.ln_wdth = 1.25
+        self.ln_styl = "solid"
+        self.mrkrsz  = 10.0
+        self.typical_xlabel = "\n" + "Time (UTC)"
         
         self.fig_dir = directory_to_save_figures
         self.log = logging_function
+    
+    
+    def frame_has_info(self, frame, keyword):
+        
+        if any([keyword in key for key in frame.keys()]):
+            return True
+        else:
+            return False
+        
+    
+    def get_data_points_to_plot(self, map_map_double, desired_fields, units):
+        
+        xs_and_ys = []
+        for sub_field, oids_and_data in map_map_double.items():
+            if sub_field not in desired_fields:
+                continue
+            if sub_field not in self.obs_ids_of_interest.keys():
+                continue
+            relevant_ids = self.obs_ids_of_interest[sub_field]
+            for oid, datum in oids_and_data.items():
+                if int(oid) not in relevant_ids:
+                    continue
+                if int(oid) < self.xlim_left:
+                    continue
+                if int(oid) > self.xlim_right:
+                    continue
+                xs_and_ys.append((int(oid), datum/units))
+        
+        if len(xs_and_ys) == 0:
+            xs = []
+            ys = []
+            return xs, ys
+        
+        xs_and_ys = sorted(xs_and_ys, key=itemgetter(0))
+        xs = [entry[0] for entry in xs_and_ys]
+        ys = [entry[1] for entry in xs_and_ys]
+        
+        return xs, ys
     
     
     def get_xlims_from_obs_id_range(self, min_obs_id, max_obs_id, nmarg_r):
@@ -514,19 +750,19 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                           "right": max_obs_id + margin * nmarg_r}
         else:
             xlims_dict = {"left": None, "right": None}
-
+        
         return xlims_dict
     
     
     def get_xticks_and_labels_from_obs_id_range(
             self, plot_obj, min_obs_id, max_obs_id, no_hour=False):
-
+        
         if (min_obs_id is None) or (max_obs_id is None):
             xtick_locs   = plot_obj.get_xticks()
             xtick_labels = \
                 ["/".join(str(std_processing.obsid_to_g3time(obs_id)).\
                           split(":")[0].split("-")[0:2])              \
-                 for obs_id in xtick_locs]   
+                 for obs_id in xtick_locs]
         else:
             xtick_locs_major   = []
             xtick_locs_minor   = []
@@ -537,13 +773,14 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             current_tick = min_obs_id
             while current_tick <= (max_obs_id + 5):
                 tstr  = str(std_processing.obsid_to_g3time(current_tick))
-                month = tstr.split("-")[1]
-                date  = tstr.split("-")[0]
-                hour  = tstr.split(":")[1]
+                t_obj = time.strptime(tstr, "%d-%b-%Y:%H:%M:%S.000000000")
+                month = str(t_obj.tm_mon)
+                date  = str(t_obj.tm_mday)
+                hour  = str(t_obj.tm_hour)
                 if no_hour:
-                    label = month + " " + date
+                    label = month + "/" + date
                 else:
-                    label = month + " " + date + "\n" + hour + "h"
+                    label = month + "/" + date + "\n" + hour + "h"
                 xtick_locs_major.append(current_tick)
                 xtick_labels_major.append(label)
                 if total_secs < (4 * 24 * 3600 + 10):
@@ -561,8 +798,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 else:
                     for week in [1, 2, 3]:
                         secs_weeks = week * 7 * 24 * 3600
-                        xtick_locs_minor.append(current_tick + secs_weeks)    
+                        xtick_locs_minor.append(current_tick + secs_weeks)
                     current_tick += 4 * 7 * 24 * 3600
+        
+                xtick_locs_minor = [tick for tick in xtick_locs_minor \
+                                    if tick < max_obs_id]
         
         return xtick_locs_major, xtick_labels_major, xtick_locs_minor
     
@@ -574,9 +814,11 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         ybot = ylims_dict["bottom"]
         near_ytop = ybot + 0.90 * (ytop - ybot)
         near_ybot = ybot + 0.15 * (ytop - ybot)
-        note_fs = self.ttl_fs-4
-        note_lw = 1.5*self.ln_wdth
-        note_st = "--"
+        lbl_fz, tck_fz, lgd_fz = determine_various_font_sizes(self.ttl_fs)
+        ah_lw, av_lw, ga_lw, di_lw = determine_various_line_widths(self.ln_wdth)
+        note_fs = lgd_fz
+        note_lw = av_lw
+        note_st = "dashed"
         
         for i, x_value in enumerate(x_values):
             y_value = y_values[i]
@@ -586,398 +828,124 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.text(x_value, near_ytop, "NaN", rotation="vertical",
                               color=color, fontsize=note_fs)
             elif y_value >= ytop:
-                plot_obj.scatter(x_value, ytop, color=color, marker=6)
-                plot_obj.axvline(x_value, color=color,
-                                 linewidth=note_lw, linestyle=note_st)
-                """plot_obj.text(x_value, near_ytop, "O\nu\nt\nl\ni\ne\nr",
-                                 color=color, fontsize=note_fs)"""
+                plot_obj.scatter(x_value, ytop, color=color,
+                                 marker=6, s=10*self.mrkrsz)
+                """plot_obj.axvline(x_value, color=color,
+                                 linewidth=note_lw, linestyle=note_st)"""
             elif y_value <= ybot:
-                plot_obj.scatter(x_value, ybot, color=color, marker=7)
-                plot_obj.axvline(x_value, color=color,
-                                 linewidth=note_lw, linestyle=note_st)
-                """plot_obj.text(x_value, near_ybot, "O\nu\nt\nl\ni\ne\nr",
-                                 color=color, fontsize=note_fs)"""
-                              
+                plot_obj.scatter(x_value, ybot, color=color,
+                                 marker=7, s=10*self.mrkrsz)
+                """plot_obj.axvline(x_value, color=color,
+                                 linewidth=note_lw, linestyle=note_st)"""
     
-    def get_full_fig_title(self, additional_title):
+    
+    def get_full_fig_title(self, additional_title, no_map_type=False):
         
-        return self.fig_title_prefix + additional_title
+        if no_map_type:
+            prefix = self.map_id + "  -  "
+        else:
+            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+
+        return prefix + additional_title
     
     
     def get_full_file_name(self, additional_name):
         
-        return self.file_name_prefix + additional_name + ".png"
+        prefix = self.map_id + "-" + self.map_type + "_" + "map" + "_"
+        return prefix + additional_name + ".png"
     
     
-    def make_figure_for_all_noise_levels(self, frame):
+    def make_figure_for_observation_durations(self, frame):
+        
+        if self.fig_od_made or ("ObservationDurations" not in frame):
+            return
+        
+        self.log("")
+        self.log("Making a figure for observation duration ...")
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
-        obs_data = frame["CoaddedObservationIDs"]
+        obs_dur_data = frame["ObservationDurations"]
         
-        if "NoiseFromIndividualMaps" in frame.keys():
-            noise_from_running_coadds = False
-            noise_data = frame["NoiseFromIndividualMaps"]
-        elif "NoiseFromCoaddedMaps" in frame.keys():
-            noise_from_running_coadds = True
-            noise_data = frame["NoiseFromCoaddedMaps"]
-            oprts_hist = frame["NoiseCalculationsOperationsDoneToMaps"]
-        else:
-            raise NameError("Not clear where noise data are!")
-        
-        if noise_from_running_coadds:
-            plot_obj.set_xscale("log")
-            plot_obj.set_yscale("log")
-            ylims_dict = { "90GHz": {"bottom":  5, "top": 250},
-                          "150GHz": {"bottom":  5, "top": 250},
-                          "220GHz": {"bottom": 15, "top": 700}}
-            max_n_obss = 0
-            for sub_field, noise_dict in noise_data.items():
-                n_obss = len(noise_dict.keys())
-                if n_obss > max_n_obss:
-                    max_n_obss = n_obss
-            xlims_dict = {"left" : 0.9,
-                          "right": 10**numpy.ceil(numpy.log10(max_n_obss))}
-        else:
-            ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
-                          "150GHz": {"bottom":  90, "top": 210},
-                          "220GHz": {"bottom": 300, "top": 700}}
-            xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 3.5)
-        
-        if noise_from_running_coadds:
-            n_excluded = {}
-        
-        for sub_field, obs_ids in obs_data.items():
-            if not noise_from_running_coadds:
-                obs_ids = sorted(obs_ids)
-            noise_units  = core.G3Units.uK * core.G3Units.arcmin
-            noise_levels = [noise_data[sub_field][str(obs_id)] / noise_units \
-                            for obs_id in obs_ids]
-            
+        for sub_field in self.all_fields:
+            oids, lens = self.get_data_points_to_plot(
+                             obs_dur_data, [sub_field], core.G3Units.min)
             label = self.el_dict[sub_field]
             color = self.cl_dict[sub_field]
             
-            if noise_from_running_coadds:
-                operations_performed = \
-                    numpy.array([oprts_hist[sub_field][str(obs_id)] \
-                                 for obs_id in obs_ids])
-                valid_indices = numpy.where(operations_performed==-1.0)[0]
-                bad_indices   = numpy.where(operations_performed== 0.0)[0]
-                n_excluded[sub_field] = len(bad_indices)
-                x_data = range(1, len(valid_indices)+1)
-                noise_levels = numpy.asarray(noise_levels)[valid_indices]
-            else:
-                x_data = obs_ids
             plot_obj.plot(
-                x_data, noise_levels, label=label,
-                linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
-                marker=".", markersize=self.mrkrsz,
-                color=color, alpha=0.5)
-            
-            if noise_from_running_coadds:
-                x_for_lls = numpy.log(numpy.asarray(x_data))
-                y_for_lls = numpy.log(numpy.asarray(noise_levels))
-                design_matrix = numpy.asarray(x_for_lls)\
-                                [:, numpy.newaxis]**[1.0, 0.0]
-                parameters, residues, rank, singular_values = \
-                    linalg.lstsq(design_matrix, numpy.asarray(y_for_lls))
-                power = parameters[0]
-                const = parameters[1]
-                x_for_plot = numpy.arange(1, xlims_dict["right"], 2)
-                y_for_plot = numpy.exp(const) * numpy.power(x_for_plot, power)
-                plot_obj.plot(x_for_plot, y_for_plot,
-                              color=color, alpha=0.8, linewidth=self.ln_wdth)
-                explanation = "Slope from LLS fit: " + str(power)[0:6]
-                ylocs_dict  = {"ra0hdec-44.75": 0.19,
-                               "ra0hdec-52.25": 0.14,
-                               "ra0hdec-59.75": 0.09,
-                               "ra0hdec-67.25": 0.04}
-                plot_obj.text(0.03, ylocs_dict[sub_field], explanation,
-                              transform=plot_obj.transAxes,
-                              horizontalalignment="left",
-                              color=color, fontsize=self.ttl_fs-4)
-            else:
-                self.indicate_out_of_range_values(plot_obj, x_data, noise_levels,
-                                                  ylims_dict[self.map_id], color)
-                
-        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
-                 ylims_dict[self.map_id]["bottom"],
-                 ylims_dict[self.map_id]["top"])
+                oids, lens, label=label,
+                linestyle="None", marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha*1.5)
         
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
+        ylims_dict = {"bottom": 0.0, "top": 140.0}
         
-        if noise_from_running_coadds:
-            xtick_locs_major = None
-            xtick_labels     = None
-            xtick_locs_minor = None
-        else:
-            xtick_locs_major, xtick_labels, xtick_locs_minor = \
-                self.get_xticks_and_labels_from_obs_id_range(
-                    plot_obj, self.xlim_left, self.xlim_right)
+        set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
+                           ylims_dict["bottom"], ylims_dict["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
         
         set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
-                  None, None, None, self.ttl_fs)
-
-        if noise_from_running_coadds:
-            xlabel = "\n" + "Number of pairs of difference map added"
-        else:
-            xlabel = "\n" + "Time (UTC)"
-        ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
-                 "ell range [3000, 5000]  " + r"$[{\mu}K \cdot arcmin]$" + "\n"
+                  None, None, None, self.ttl_fs, self.ln_wdth)
         
-        if noise_from_running_coadds:
-            more_title = "Noise of year-to-date coadded noise maps\n"
-            more_info  = []
-            for sub_field in sorted(n_excluded.keys()):
-                alias = self.el_dict[sub_field]
-                n_bad = n_excluded[sub_field]
-                more_info.append("{" + str(n_bad) + " " + alias + "}")
-            more_info   = "(numbers of excluded maps: " + \
-                          " ".join(more_info) + ")\n"
-            more_title += more_info
-        else:
-            more_title = "Noise (+some signal) of individual maps\n"
-        fig_title = self.get_full_fig_title(more_title)
+        xlabel = self.typical_xlabel
+        ylabel = "Observation Duration [minute]" + "\n"
+        fig_title = "Observation durations and cadence" + "\n"
         
-        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
-        if noise_from_running_coadds:
-            more_file_name = "noise_levels_from_running_coadds"
-        else:
-            more_file_name = "noise_levels_from_individual_maps"
-        file_name = self.get_full_file_name(more_file_name)
+        file_name = "observation_durations.png"
         
         save_figure_etc(figure_obj, self.fig_dir, file_name)
-    
-    
-    def make_figure_for_recent_noise_levels(self, frame):
         
-        noise_key = "NoiseFromCoaddedMaps"
-        if noise_key not in frame.keys():
-            return
-        
-        all_noise_calculated     = frame[noise_key]
-        all_obs_ids_used         = frame["CoaddedObservationIDs"]
-        all_operations_performed = frame["NoiseCalculationsOperationsDoneToMaps"] 
-        
-        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
-            figure_obj, plot_obj = get_figure_and_plot_objects()
-            
-            operations_this_sf = \
-                numpy.array([all_operations_performed[sub_field][str(obs_id)] \
-                             for obs_id in obs_ids_this_sf])
-            noise_this_sf = \
-                numpy.array([all_noise_calculated[sub_field][str(obs_id)] \
-                             for obs_id in obs_ids_this_sf])
-            
-            ok_indices   = numpy.where(operations_this_sf!=0.0)[0]
-            ok_obs_ids   = numpy.asarray(obs_ids_this_sf)[ok_indices][-50:]
-            ok_noises    = numpy.asarray(noise_this_sf)[ok_indices][-50:]
-            ok_noises   /= core.G3Units.uK * core.G3Units.arcmin
-            dummy_x_data = numpy.arange(len(ok_obs_ids)) + 1
-            
-            color = self.cl_dict[sub_field]
-            
-            plot_obj.plot(dummy_x_data, ok_noises,
-                          linestyle=self.ln_styl, linewidth=self.ln_wdth*2,
-                          marker=".", markersize=self.mrkrsz,
-                          color=color)
-            
-            max_noise = numpy.nanmax(ok_noises)
-            min_noise = numpy.nanmin(ok_noises)
-            diff      = max_noise - min_noise
-            ylim_top  = max_noise + 0.05 * diff
-            near_top  = max_noise + 0.02 * diff
-            
-            set_lims(plot_obj, 0, dummy_x_data[-1]+1, None, ylim_top)
-            
-            for index, noise in enumerate(ok_noises):
-                if not numpy.isfinite(noise):
-                    plot_obj.text(dummy_x_data[index], near_top,
-                                  "N/A", color=color, fontsize=7,
-                                  rotation="vertical",
-                                  verticalalignment="center",
-                                  horizontalalignment="center")
-            
-            def get_month_day_hour(obs_id):
-                full_tstr = str(std_processing.obsid_to_g3time(obs_id))
-                month     = full_tstr.split("-")[1]
-                date      = full_tstr.split("-")[0]
-                hour      = full_tstr.split(":")[1]
-                return "{}/{} {}h".format(month, date, hour)
-            
-            xtick_labels = ["{} ({})".format(
-                            str(obs_id), get_month_day_hour(obs_id)) \
-                            for obs_id in ok_obs_ids]
-            
-            set_ticks(plot_obj, dummy_x_data, [], xtick_labels,
-                      None, None, None, 8, xtrot="vertical")
-            
-            xlabel = ""
-            ylabel = "Noise " + r"$[{\mu}K \cdot arcmin]$"
-            more_title = "Noise due to 50 recently added maps of " + sub_field 
-            fig_title  = self.get_full_fig_title(more_title)
-            
-            set_labels_and_title(
-                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
-            
-            more_file_name = "noise_levels_from_observations_of_{}".\
-                             format(sub_field)
-            file_name = self.get_full_file_name(more_file_name)
-            save_figure_etc(figure_obj, self.fig_dir, file_name)
-    
-    
-    def make_figure_for_order_of_addition(self, frame):
-        
-        noise_key = "NoiseFromCoaddedMaps"
-        if noise_key not in frame.keys():
-            return
-        
-        all_obs_ids_used = frame["CoaddedObservationIDs"]
-        
-        for sub_field, obs_ids_this_sf in all_obs_ids_used.items():
-            figure_obj, plot_obj = get_figure_and_plot_objects()
-            
-            plot_obj.plot(obs_ids_this_sf,
-                          linestyle="None",
-                          marker=".", markersize=self.mrkrsz,
-                          color=self.cl_dict[sub_field])
-            
-            min_oid = numpy.min(obs_ids_this_sf)
-            max_oid = numpy.max(obs_ids_this_sf)
-            
-            ylims_dict = self.get_xlims_from_obs_id_range(
-                min_oid, max_oid, 0.0)
-            ylims_dict["bottom"] = ylims_dict.pop("left")
-            ylims_dict["top"]    = ylims_dict.pop("right")
-            
-            set_lims(plot_obj, 0, len(obs_ids_this_sf)+1,
-                               ylims_dict["bottom"], ylims_dict["top"])
-            
-            ytick_locs_major, ytick_labels, ytick_locs_minor = \
-                self.get_xticks_and_labels_from_obs_id_range(
-                    plot_obj, min_oid, max_oid, no_hour=True)
-            
-            set_ticks(plot_obj, None, None, None,
-                      ytick_locs_major, ytick_locs_minor, ytick_labels,
-                      self.ttl_fs)
-            
-            xlabel = "\n" + "Number of observations added"
-            ylabel = "Date of observation" + "\n"
-            
-            more_title = "Order in which observations of " + \
-                         sub_field + " were added" + "\n"
-            fig_title = self.get_full_fig_title(more_title)
-            
-            set_labels_and_title(
-                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
-            
-            more_file_name = "order_of_addition_of_maps_of_" + sub_field
-            file_name = self.get_full_file_name(more_file_name)
-            
-            save_figure_etc(figure_obj, self.fig_dir, file_name)
-    
-    
-    def make_figure_for_pointing_discrepancies(self, frame):
-        
-        marker_dict = {"1": ["*", 8], "2": ["p", 6], "3": [".", 9]}
-        
-        for coordinate in ["Ra", "Dec"]:
-            figure_obj, plot_obj = get_figure_and_plot_objects()
-            
-            xlims_dict = self.get_xlims_from_obs_id_range(
-                             self.xlim_left, self.xlim_right, 5.4)
-            ylims_dict = {"bottom": -45, "top": 45}
-
-            for source_rank in ["1", "2", "3"]:
-                key  = "Delta" + coordinate + "s" + "FromSources" + source_rank
-                data = frame[key]
-                
-                for sub_field, ids_and_offsets in data.items():
-                    obs_ids = sorted(ids_and_offsets.keys())
-                    offsets = [ids_and_offsets[oid]/core.G3Units.arcsec \
-                               for oid in obs_ids]
-                    obs_ids = [int(oid) for oid in obs_ids]
-                    
-                    plot_obj.plot(
-                        obs_ids, offsets,
-                        label=self.el_dict[sub_field]+" src "+source_rank,
-                        linestyle="", linewidth=self.ln_wdth,
-                        marker=marker_dict[source_rank][0],
-                        markersize=marker_dict[source_rank][1],
-                        color=self.cl_dict[sub_field], alpha=0.8)
-                    
-                    self.indicate_out_of_range_values(
-                        plot_obj, obs_ids, offsets, ylims_dict,
-                        self.cl_dict[sub_field])
-                        
-            set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
-                               ylims_dict["bottom"], ylims_dict["top"])
-            
-            xtick_locs_major, xtick_labels, xtick_locs_minor = \
-                self.get_xticks_and_labels_from_obs_id_range(
-                    plot_obj, self.xlim_left, self.xlim_right)
-            
-            set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
-                      None, None, None, self.ttl_fs)
-            
-            xlabel = "\n" + "Time (UTC)"
-            if coordinate == "Ra":
-                ylabel = "(Measured R.A. - True R.A.) " + \
-                         r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
-            else:
-                ylabel = "(Measured Dec. - True Dec.)" + ' ["]' + "\n"
-            more_title = "Difference between measured and true " + \
-                         coordinate + " of point sources" + "\n"
-            
-            fig_title = self.get_full_fig_title(more_title)
-            
-            set_labels_and_title(
-                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
-            
-            more_file_name = "delta_" + coordinate + "s_from_point_sources"
-            file_name = self.get_full_file_name(more_file_name)
-            
-            save_figure_etc(figure_obj, self.fig_dir, file_name)
+        self.fig_od_made = True
+        self.log("Done.")
+        self.log("")
     
     
     def make_figure_for_flagging_statistics(self, frame):
         
+        key_prefix = "FlaggingStatisticsAverageNumbersOfAllBolos"
+        info_contained = self.frame_has_info(frame, key_prefix)
+        if (not info_contained) or (self.fig_fs_made):
+            return
+        self.log("")
+        self.log("Making a figure for the flagging statistics ...")
+        
         figure_obj, plot_obj = get_figure_and_plot_objects()
-        #1f77b4 2ca02c d62728 9467bd
+        
         cl_mk_lbl_dict  = \
             {"BadHk"                  : ["#1f77b4" , "Bad HK"      , "." , 8],
-             "Latched"                : ["#1f77b4" , "Latched"     , "p" , 5],
-             "Overbiased"             : ["#1f77b4" , "Saturated"   , "s" , 5],
-             "Oscillating"            : ["#9467bd" , "Oscillating" , "v" , 5],
-             "Glitchy"                : ["#9467bd" , "Glitchy"     , "^" , 6],
-             "UnphysicalLowVariance"  : ["#9467bd" , "Low Var."    , "D" , 4],
-             "BadCalSn"               : ["#1fbecf" , "Low Cal S/N" , "1" , 8],
-             "MissingFluxCalibration" : ["#1fbecf" , "No Fluxcal"  , "2" , 8],
-             "PostCalibrationNaNs"    : ["#1fbecf" , "Has NaNs"    , "3" , 8],
-             "BadWeight"              : ["#1fbecf" , "Bad Weight"  , "4" , 8],
-             "Others"                 : ["black"   , "Others"      , "." , 6],
-             "TotalNotFlagged"        : ["green"   , "Survived"    , "*" , 8],
-             "TotalRemoved"           : ["red"     , "Removed"     , "x" , 6]}
+             "Latched"                : ["#ff7f0e" , "Latched"     , "." , 8],
+             "Overbiased"             : ["#2ca02c" , "Saturated"   , "." , 8],
+             "Oscillating"            : ["#1f77b4" , "Oscillating" , "d" , 6],
+             "Glitchy"                : ["#ff7f0e" , "Glitchy"     , "d" , 6],
+             "UnphysicalLowVariance"  : ["#2ca02c" , "Low Var."    , "d" , 6],
+             "BadCalSn"               : ["#1f77b4" , "Low Cal S/N" , "v" , 6],
+             "MissingFluxCalibration" : ["#ff7f0e" , "No Fluxcal"  , "v" , 6],
+             "PostCalibrationNaNs"    : ["#2ca02c" , "Has NaNs"    , "v" , 6],
+             "BadWeight"              : ["#d62728" , "Bad Weight"  , "v" , 6],
+             # "Others"                 : ["black"   , "Others"      , "." , 8],
+             "TotalNotFlagged"        : ["green"   , "Survived"    , "*" , 9],
+             "TotalRemoved"           : ["red"     , "Removed"     , "x" , 8]}
         
         for flag_type in cl_mk_lbl_dict.keys():
-            key_name = "FlaggingStatisticsAverageNumberOf" + flag_type
+            key_name = key_prefix + flag_type
             averages = frame[key_name]
-            
-            times_and_averages = []
-            for sub_field, oids_and_avgs in averages.items():
-                for oid, avg in oids_and_avgs.items():
-                    times_and_averages.append((int(oid), avg))
-            times_and_averages = sorted(times_and_averages, key=itemgetter(0))
-            times    = [entry[0] for entry in times_and_averages]
-            averages = [entry[1] for entry in times_and_averages]
+            obs_ids, averages = \
+                self.get_data_points_to_plot(averages, self.all_fields, 1.0)
             
             plot_obj.plot(
-                times, averages, label=cl_mk_lbl_dict[flag_type][1],
+                obs_ids, averages, label=cl_mk_lbl_dict[flag_type][1],
                 linestyle=self.ln_styl, linewidth=self.ln_wdth,
                 marker=cl_mk_lbl_dict[flag_type][2],
                 markersize=cl_mk_lbl_dict[flag_type][3],
-                color=cl_mk_lbl_dict[flag_type][0], alpha=0.8)
+                color=cl_mk_lbl_dict[flag_type][0], alpha=self.typical_alpha)
         
         plot_obj.set_yscale("symlog", linthreshy=150,
                             subsy=[2, 3, 4, 5, 6, 7, 8, 9])
@@ -994,55 +962,1214 @@ class PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj, self.xlim_left, self.xlim_right)
         
         set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
-                  None, None, None, self.ttl_fs)
+                  None, None, None, self.ttl_fs, self.ln_wdth)
         
-        xlabel = "\n" + "Time (UTC)"
-        ylabel = "Averages (over all scans of an obs.)" + "\n"
-        more_title = "Average number of flagged detectors" + "\n"
-        fig_title  = self.get_full_fig_title(more_title)
+        xlabel = self.typical_xlabel
+        ylabel = "Average (over all scans of an obs.)" + "\n"
+        more_title = "Average numbers related to detector flagging" + "\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=True)
         
-        set_labels_and_title(plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
         more_file_name = "average_numbers_of_flagged_detectors"
         file_name = self.get_full_file_name(more_file_name)
         
         save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_fs_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_calibration_factors(self, frame):
+        
+        key_prefix = "MediansOfTemperatureCalRelatedFactors"
+        info_contained = self.frame_has_info(frame, key_prefix)
+        if (not info_contained) or (self.fig_tc_made):
+            return
+        self.log("")
+        self.log("Making figures for the pW/K factors ...")
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        cal_uni = core.G3Units.pW / core.G3Units.K        
+        ylims_dict = { "90GHz": {"bottom": -0.16, "top": -0.00},
+                      "150GHz": {"bottom": -0.28, "top": -0.00},
+                      "220GHz": {"bottom": -0.06, "top": -0.00}}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_wf)
+        
+        for wafer, color in self.waf_cl_dict.items():
+            cal_data = frame[key_prefix + wafer + "PicowattsPerKelvin"]
+            obs_ids, cals = self.get_data_points_to_plot(
+                              cal_data, self.all_fields, cal_uni)
+            
+            plot_obj.plot(
+                obs_ids, cals, label=wafer,
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha)
+            
+            self.indicate_out_of_range_values(
+                plot_obj, obs_ids, cals, ylims_dict[self.map_id], color)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        xlabel = self.typical_xlabel
+        ylabel = "Median pW/K calibration factor" + "\n"
+        more_title = "Medians of temperature calibration factors by wafer"+"\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=True)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "median_temperature_calibration_factors_by_wafer"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_tc_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_responsivity_change(self, frame):
+        
+        key_prefix = "MedianCalibratorResponse"
+        info_contained = self.frame_has_info(frame, key_prefix)
+        if (not info_contained) or (self.fig_rc_made):
+            return
+        self.log("")
+        self.log("Making figures for the responsivity changes ...")
+                
+        # - Make a figure showing variations among wafers
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        ylims_dict = { "90GHz": {"bottom": -5, "top": 15},
+                      "150GHz": {"bottom": -5, "top": 20},
+                      "220GHz": {"bottom": -2, "top":  6}}
+        
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_wf)
+        
+        for wafer, color in self.waf_cl_dict.items():
+            full_key  = key_prefix + wafer + "FractionalChangesTopToBottom"
+            frac_chgs = frame[full_key]
+            obs_ids, changes = self.get_data_points_to_plot(
+                                 frac_chgs, self.all_fields, 0.01)
+            
+            plot_obj.plot(
+                obs_ids, changes, label=wafer,
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha)
+            
+            self.indicate_out_of_range_values(
+                plot_obj, obs_ids, changes, ylims_dict[self.map_id], color)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        xlabel = self.typical_xlabel
+        ylabel = "Median percentage change" + "\n"
+        more_title = "Median percentage changes in calibrator response" +"\n"+\
+                     "(@ top of the field w.r.t. @ bottom) by wafer" + "\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=True)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "median_cal_resp_percentage_changes_by_wafer"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        
+        # - Make a figure showing variations among fields
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        ylims_dict = { "90GHz": {"bottom": -1, "top": 6},
+                      "150GHz": {"bottom": -1, "top": 8},
+                      "220GHz": {"bottom": -1, "top": 4}}
+        
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
+        
+        for sub_field in self.all_fields:
+            full_key  = key_prefix + "AllBolosFractionalChangesTopToBottom"
+            frac_chgs = frame[full_key]
+            obs_ids, changes = self.get_data_points_to_plot(
+                                 frac_chgs, [sub_field], 0.01)
+            
+            color = self.cl_dict[sub_field]
+            plot_obj.plot(
+                obs_ids, changes, label=self.el_dict[sub_field],
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha)
+            
+            self.indicate_out_of_range_values(
+                plot_obj, obs_ids, changes, ylims_dict[self.map_id], color)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        xlabel = self.typical_xlabel
+        ylabel = "Median percentage change" + "\n"
+        more_title = "Median percentage changes in calibrator response" +"\n"+\
+                     "(@ top of the field w.r.t. @ bottom) by sub-field" + "\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=True)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "median_cal_resp_percentage_changes_by_field"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_rc_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_map_fluctuation_metrics(self, frame):
+        
+        key_prefix = "FluctuationMetricsIndividualSignalMaps"
+        param_lists = \
+            [{"key"   : key_prefix + "MeansOfTTWeights",
+              "ylims" : { "90GHz": {"bottom": 20, "top": 100},
+                         "150GHz": {"bottom": 30, "top": 170},
+                         "220GHz": {"bottom":  1, "top":  15}},
+              "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
+              "lnstyl": self.ln_styl,
+              "ylabel": "Mean weight  " + \
+                        "[1 / " + r"${mK_{CMB}}^2$" + "]" + "\n",
+              "title" : "Means of TT weight maps" + "\n",
+              "file"  : "mean_of_tt_weight_map_values"},
+             {"key"   : key_prefix + "NumbersOfPixelsWithGoodTTWeights",
+              "ylims" : { "90GHz": {"bottom": -0.01, "top": 1.10},
+                         "150GHz": {"bottom": -0.01, "top": 1.10},
+                         "220GHz": {"bottom": -0.01, "top": 1.10}},
+              "yunits": 1.0,
+              "lnstyl": "None",
+              "ylabel": "Fraction" + "\n",
+              "title" : "Fractions of pixels having nominal weights" + "\n",
+              "file"  : "fractional_coverage_in_tt_weight_maps"}]
+        
+        
+        info_contained = self.frame_has_info(frame, key_prefix)
+        if (not info_contained) or (self.fig_fl_made):
+            return
+        self.log("")
+        self.log("Making figures for some fluctuation metrics ...")
+        
+        for plist in param_lists:
+            
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            fluc_data = frame[plist["key"]]
+            
+            ylims = plist["ylims"]
+            xlims = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
+            
+            records_for_later = {}
+            for sub_field in self.all_fields:
+                xvals, yvals = self.get_data_points_to_plot(
+                                   fluc_data, [sub_field], plist["yunits"])
+                if "NumbersOfPixelsWithGoodTTWeights" in plist["key"]:
+                    tot_n_pix = {"ra0hdec-44.75": 23493916,
+                                 "ra0hdec-52.25": 20249796,
+                                 "ra0hdec-59.75": 16651643,
+                                 "ra0hdec-67.25": 12786678}
+                    yvals = [yval/tot_n_pix[sub_field] for yval in yvals]
+                    n_st_0p9 = len([yval for yval in yvals if yval < 0.9])
+                    n_tot    = len(yvals)
+                    records_for_later[sub_field] = int(100.0 * n_st_0p9 / n_tot)
+                if "MeansOfTTWeights" in plist["key"]:
+                    records_for_later[sub_field] = numpy.median(yvals)
+                
+                label = self.el_dict[sub_field]
+                color = self.cl_dict[sub_field]
+                plot_obj.plot(
+                    xvals, yvals, label=label,
+                    linestyle=plist["lnstyl"], linewidth=self.ln_wdth,
+                    marker=".", markersize=self.mrkrsz,
+                    color=color, alpha=self.typical_alpha)
+                
+                self.indicate_out_of_range_values(
+                    plot_obj, xvals, yvals, ylims[self.map_id], color)
+            
+            set_lims(plot_obj, xlims["left"], xlims["right"],
+                     ylims[self.map_id]["bottom"], ylims[self.map_id]["top"])
+            
+            xtick_locs_major, xtick_labels, xtick_locs_minor = \
+                self.get_xticks_and_labels_from_obs_id_range(
+                    plot_obj, self.xlim_left, self.xlim_right)
+            
+            set_ticks(
+                plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                None, None, None, self.ttl_fs, self.ln_wdth)
+            
+            lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
+            if "NumbersOfPixelsWithGoodTTWeights" in plist["key"]:
+                for counter, sub_field in enumerate(self.all_fields):
+                    good_pc = records_for_later[sub_field]
+                    plot_obj.text(0.98, 0.65-counter*0.06,
+                                  "{:2d}% maps".format(good_pc),
+                                  transform=plot_obj.transAxes,
+                                  color=self.cl_dict[sub_field],
+                                  alpha=2.0*self.typical_alpha,
+                                  fontsize=0.9*lgd_fs,
+                                  horizontalalignment="right")
+                plot_obj.text(0.98, 0.40, "< 0.9",
+                              transform=plot_obj.transAxes,
+                              color="black", alpha=2.0*self.typical_alpha,
+                              fontsize=0.9*lgd_fs, horizontalalignment="right")
+            if "MeansOfTTWeights" in plist["key"]:
+                el3_median = records_for_later["ra0hdec-67.25"]
+                el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_median
+                el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_median
+                el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_median
+                text_kargs = {"transform": plot_obj.transAxes,
+                              "color"    : "black",
+                              "alpha"    : 2.0*self.typical_alpha,
+                              "fontsize" : 0.90*lgd_fs,
+                              "horizontalalignment": "right"}
+                plot_obj.text(0.98, 0.62,
+                              "w0 / w3\n= {:4.2f}".format(el0_to_el3),
+                              **text_kargs)
+                plot_obj.text(0.98, 0.52,
+                              "w1 / w3\n= {:4.2f}".format(el1_to_el3),
+                              **text_kargs)
+                plot_obj.text(0.98, 0.42,
+                              "w2 / w3\n= {:4.2f}".format(el2_to_el3),
+                              **text_kargs)
+                plot_obj.text(0.98, 0.30,
+                              "cos3 / cos0\n= 0.54", **text_kargs)
+                plot_obj.text(0.98, 0.20,
+                              "cos3 / cos1\n= 0.63", **text_kargs)
+                plot_obj.text(0.98, 0.10,
+                              "cos3 / cos2\n= 0.77", **text_kargs)
+            
+            xlabel = self.typical_xlabel
+            ylabel = plist["ylabel"]
+            more_title = plist["title"]
+            fig_title  = self.get_full_fig_title(more_title)
+            
+            set_ax_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = plist["file"]
+            file_name = self.get_full_file_name(more_file_name)
+            
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_fl_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_pointing_discrepancies(self, frame):
+        
+        key_prefix = "Delta"
+        info_contained = self.frame_has_info(frame, key_prefix)
+        if (not info_contained) or (self.fig_pt_made):
+            return
+        self.log("")
+        self.log("Making figures for pointing discrepancies ...")
+        
+        xlims_dict  = self.get_xlims_from_obs_id_range(
+                          self.xlim_left, self.xlim_right, 6.4)
+        ylims_dict  = {"bottom": -45, "top": 45}
+        srccl_dict  = {"1st": "red",    "2nd": "blue",   "3rd": "green"}
+        marker_dict = {"1st": ["*", 9], "2nd": ["p", 7], "3rd": [".", 10]}
+        
+        for sub_field in self.all_fields:
+            for coordinate in ["Ra", "Dec"]:
+                
+                figure_obj, plot_obj = get_figure_and_plot_objects()
+                
+                all_offsets = {"1st": None, "2nd": None, "3rd": None}
+                
+                for source_rank in all_offsets.keys():
+                    key  = "Delta" + coordinate + "s" + "Of" + \
+                           source_rank + "BrightestSourceFromEachSubfield"
+                    data = frame[key]
+                    
+                    obs_ids, offsets = \
+                        self.get_data_points_to_plot(
+                            data, [sub_field], core.G3Units.arcsec)
+                    all_offsets[source_rank] = offsets
+                
+                avgs = numpy.nanmean(list(all_offsets.values()), axis=0)
+                
+                for source_rank, offsets in all_offsets.items():
+                    plot_obj.plot(
+                        obs_ids, offsets,
+                        label="Source. "+source_rank[0],
+                        linewidth=0.2*self.ln_wdth,
+                        marker=marker_dict[source_rank][0],
+                        markersize=marker_dict[source_rank][1],
+                        color=srccl_dict[source_rank],
+                        alpha=self.typical_alpha)
+                    
+                    self.indicate_out_of_range_values(
+                        plot_obj, obs_ids, offsets, ylims_dict,
+                        srccl_dict[source_rank])
+                
+                plot_obj.plot(
+                    obs_ids, avgs, label="Avg. offsets",
+                    linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                    color="black", alpha=self.typical_alpha)
+                
+                set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
+                                   ylims_dict["bottom"], ylims_dict["top"])
+                
+                text_tr = 0.70
+                separat = 0.05
+                counter = 0
+                lbl_fs, tck_fs, lgd_fs = \
+                    determine_various_font_sizes(self.ttl_fs)
+                for source_rank, offsets in all_offsets.items():
+                    avg = numpy.nanmean(offsets)
+                    plot_obj.text(0.98, text_tr-counter*separat,
+                                  "Src. {}, avg.: {:+05.1f}".\
+                                  format(source_rank[0], avg),
+                                  transform=plot_obj.transAxes,
+                                  horizontalalignment="right",
+                                  verticalalignment="top",
+                                  color=srccl_dict[source_rank],
+                                  fontsize=lgd_fs)
+                    std = numpy.nanstd(offsets)
+                    plot_obj.text(0.98, text_tr-(counter+4)*separat,
+                                  "Src. {}, std.: {:04.1f}".\
+                                  format(source_rank[0], std),
+                                  transform=plot_obj.transAxes,
+                                  horizontalalignment="right",
+                                  verticalalignment="top",
+                                  color=srccl_dict[source_rank],
+                                  fontsize=lgd_fs)
+                    counter += 1
+                
+                avg_avgs = numpy.nanmean(avgs)
+                std_avgs = numpy.nanstd(avgs)
+                plot_obj.text(0.98, text_tr-8*separat,
+                              "Avg., avg.: {:+05.1f}".format(avg_avgs),
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="right",
+                              verticalalignment="top",
+                              color="black",
+                              fontsize=lgd_fs)
+                plot_obj.text(0.98, text_tr-9*separat,
+                              "Avg., std.: {:04.1f}".format(std_avgs),
+                              transform=plot_obj.transAxes,
+                              horizontalalignment="right",
+                              verticalalignment="top",
+                              color="black",
+                              fontsize=lgd_fs)
+                
+                xtick_locs_major, xtick_labels, xtick_locs_minor = \
+                    self.get_xticks_and_labels_from_obs_id_range(
+                        plot_obj, self.xlim_left, self.xlim_right)
+                
+                set_ticks(plot_obj,
+                          xtick_locs_major, xtick_locs_minor, xtick_labels,
+                          None, None, None, self.ttl_fs, self.ln_wdth)
+                
+                xlabel = self.typical_xlabel
+                if coordinate == "Ra":
+                    ylabel = "(Measured R.A. - True R.A.) " + \
+                             r"$\times$" + " cos(True Dec.)"+ ' ["]' + "\n"
+                else:
+                    ylabel = "Measured Dec. - True Dec." + ' ["]' + "\n"
+                more_title = coordinate + " offsets of point sources " + \
+                             "in " + sub_field + "\n"
+                
+                fig_title = self.get_full_fig_title(more_title)
+                
+                set_ax_labels_and_title(
+                    plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+                
+                more_file_name = "delta_" + coordinate + \
+                                 "s_from_point_sources_in_" + sub_field
+                file_name = self.get_full_file_name(more_file_name)
+                
+                save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_pt_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_xspec_ratios(self, frame):
+        
+        rat_key = "AveragesOfRatiosOfSPTxPlancktoPlckxPlckTTspectra"
+        info_contained = self.frame_has_info(frame, rat_key)
+        if (not info_contained) or (self.fig_rp_made):
+            return
+        self.log("")
+        self.log("Making a figure for the ratios of the SPTxPlanck / PxP ...")
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        ylims_dict = { "90GHz": {"bottom": 0.5, "top": 2.0},
+                      "150GHz": {"bottom": 0.4, "top": 1.6},
+                      "220GHz": {"bottom": 0.1, "top": 1.9}}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
+        
+        for sub_field in self.all_fields:
+            data = frame[rat_key]
+            obs_ids, ratios = self.get_data_points_to_plot(
+                                 data, [sub_field], 1.0)
+            
+            color = self.cl_dict[sub_field]
+            plot_obj.plot(
+                obs_ids, ratios, label=self.el_dict[sub_field],
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha)
+            
+            self.indicate_out_of_range_values(
+                plot_obj, obs_ids, ratios, ylims_dict[self.map_id], color)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        xlabel = self.typical_xlabel
+        ylabel = "Average of S x P / P x P" + "\n" +\
+                 "in the ell range [750, 1250]" + "\n"
+        more_title = "Averages of ratios of SPT x Planck to " +\
+                     "Planck x Planck spectra" + "\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=False)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "averages_of_power_spectra_ratios"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_rp_made = True
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figure_for_noise_levels(self, frame):
+        
+        noise_key = "NoiseLevelsFromIndividualTMaps"
+        info_contained = self.frame_has_info(frame, noise_key)
+        if (not info_contained) or (self.fig_ns_made):
+            return
+        self.log("")
+        self.log("Making a figure for noise levels ...")
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
+                      "150GHz": {"bottom":  90, "top": 210},
+                      "220GHz": {"bottom": 300, "top": 700}}
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, 3.5)
+        
+        records_for_later = {}
+        for sub_field in self.all_fields:
+            data = frame[noise_key]
+            nuni = core.G3Units.uK * core.G3Units.arcmin
+            obs_ids, noises = self.get_data_points_to_plot(
+                                  data, [sub_field], nuni)
+            records_for_later[sub_field] = numpy.nanmedian(noises)**2
+            
+            color = self.cl_dict[sub_field]
+            plot_obj.plot(
+                obs_ids, noises, label=self.el_dict[sub_field],
+                linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=self.typical_alpha)
+            
+            self.indicate_out_of_range_values(
+                plot_obj, obs_ids, noises, ylims_dict[self.map_id], color)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+        
+        xtick_locs_major, xtick_labels, xtick_locs_minor = \
+            self.get_xticks_and_labels_from_obs_id_range(
+                plot_obj, self.xlim_left, self.xlim_right)
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
+        el3_value  = records_for_later["ra0hdec-67.25"]
+        el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_value
+        el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_value
+        el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_value
+        text_kargs = {"transform": plot_obj.transAxes,
+                      "color"    : "black",
+                      "alpha"    : 2.0*self.typical_alpha,
+                      "fontsize" : 0.90*lgd_fs,
+                      "horizontalalignment": "right"}
+        plot_obj.text(0.98, 0.62,
+                      "(n0/n3)^2\n= {:4.2f}".format(el0_to_el3),
+                      **text_kargs)
+        plot_obj.text(0.98, 0.52,
+                      "(n1/n3)^2\n= {:4.2f}".format(el1_to_el3),
+                              **text_kargs)
+        plot_obj.text(0.98, 0.42,
+                      "(n2/n3)^2\n= {:4.2f}".format(el2_to_el3),
+                      **text_kargs)
+        plot_obj.text(0.98, 0.30,
+                      "cos0/cos3\n= 1.84", **text_kargs)
+        plot_obj.text(0.98, 0.20,
+                      "cos1/cos3\n= 1.58", **text_kargs)
+        plot_obj.text(0.98, 0.10,
+                      "cos2/cos3\n= 1.30", **text_kargs)
+        
+        xlabel = self.typical_xlabel
+        ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
+                 "ell range [3000, 5000]  " + r"$[{\mu}K \cdot arcmin]$" + "\n"
+        more_title = "Noise (+ a little signal) of individual maps" + "\n"
+        fig_title  = self.get_full_fig_title(more_title, no_map_type=False)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "noise_levels_from_individual_maps"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.fig_ns_made = True
+        self.log("Done.")
+        self.log("")
     
     
     def __call__(self, frame):
         
-        if self.already_made_figures:
+        if "Id" not in frame:
             return
         
-        elif (frame.type  == core.G3FrameType.Map) and \
-             (self.map_id == frame["Id"]):
-            
-            if self.make_fig_for_flggg_stats:
-                self.log("Making a figure for flagging statistics...")
-                self.make_figure_for_flagging_statistics(frame)
-                self.log("Done.\n")
-            
-            if self.make_fig_for_ptg_offsets:
-                self.log("Making a figure for pointing discrepancies...")
-                self.make_figure_for_pointing_discrepancies(frame)
-                self.log("Done.\n")
-            
-            if self.make_fig_for_noise_levels:
-                self.log("Making figures for noise levels...")
-                self.make_figure_for_all_noise_levels(frame)
-                self.make_figure_for_recent_noise_levels(frame)
-                self.make_figure_for_order_of_addition(frame)
-                self.log("Done.\n")
-            
-            self.already_made_figures = True
+        if frame["Id"] != self.map_id:
+            return
+                
+        if "CoaddedObservationIDs" in frame:
+            self.obs_ids_of_interest = frame["CoaddedObservationIDs"]
+        
+        self.make_figure_for_observation_durations(frame)
+        
+        if self.make_fig_for_flggg_stats:
+            self.make_figure_for_flagging_statistics(frame)
+        
+        if self.make_fig_for_temp_cal_facs:
+            self.make_figure_for_calibration_factors(frame)
+        
+        if self.make_fig_for_frac_cal_chng:
+            self.make_figure_for_responsivity_change(frame)
+        
+        if self.make_fig_for_fluc_metrics:
+            self.make_figure_for_map_fluctuation_metrics(frame)
+        
+        if self.make_fig_for_ptg_offsets:
+            self.make_figure_for_pointing_discrepancies(frame)
+        
+        if self.make_fig_for_xspec_ratios:
+            self.make_figure_for_xspec_ratios(frame)
+        
+        if self.make_fig_for_noise_levels:
+            self.make_figure_for_noise_levels(frame)
 
+
+
+
+class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
+    
+    def __init__(self,
+                 map_id=None, map_type=None,
+                 fig_fl=False, fig_ns=False,
+                 figure_title_font_size=11,
+                 directory_to_save_figures=".",
+                 logging_function=logging.info):
+        
+        self.log = logging_function
+        self.map_id   = map_id
+        self.map_type = map_type
+        self.obs_id_list      = None
+        self.stddevs_individs = None
+        
+        self.make_figs_for_fluc_metrics = fig_fl
+        self.make_figs_for_noise_levels = fig_ns
+        self.fig_an_made = False
+        self.fig_rn_made = False
+        self.fig_oa_made = False
+        self.fig_fl_made = False
+        
+        self.ttl_fs  = figure_title_font_size
+        self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
+                        "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3"}
+        self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
+                        "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728"}
+        self.ln_wdth = 1.25
+        self.ln_styl = "solid"
+        self.mrkrsz  = 10.0
+        self.fig_dir = directory_to_save_figures
+        self.lbl_fs, self.tck_fs, self.lgd_fs = \
+            determine_various_font_sizes(self.ttl_fs)
+    
+    
+    def get_full_fig_title(self, additional_title, no_map_type=False):
+        
+        if no_map_type:
+            prefix = self.map_id + "  -  "
+        else:
+            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+
+        return prefix + additional_title
+    
+    
+    def get_full_file_name(self, additional_name):
+        
+        prefix = self.map_id + "-" + self.map_type + "_" + "map" + "_"
+        return prefix + additional_name + ".png"
+    
+    
+    def make_figure_for_all_noise_levels(self, frame):
+        
+        self.log("")
+        self.log("Making a figure for noise levels of coadded maps ...")
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        noise_data = frame["NoiseLevelsFromCoaddedTMaps"]
+        
+        plot_obj.set_xscale("log")
+        plot_obj.set_yscale("log")
+        ylims_dict = { "90GHz": {"bottom":  5, "top": 200},
+                      "150GHz": {"bottom":  5, "top": 200},
+                      "220GHz": {"bottom": 15, "top": 600}}
+        
+        max_n_obss = 0
+        for sub_field, noise_dict in noise_data.items():
+            n_obss = len(noise_dict.keys())
+            if n_obss > max_n_obss:
+                max_n_obss = n_obss
+        xlims_dict = {"left" : 0.9,
+                      "right": 10**numpy.ceil(numpy.log10(max_n_obss))}
+        
+        n_excluded = {}
+        bad_ids = frame["IgnoredObservationIDs"]
+        for sub_field in self.el_dict.keys():
+            if sub_field in bad_ids.keys():
+                n_excluded[sub_field] = len(bad_ids[sub_field])
+            else:
+                n_excluded[sub_field] = 0
+        
+        for sub_field, obs_ids in self.obs_id_list.items():
+            noise_units  = core.G3Units.uK * core.G3Units.arcmin
+            noise_levels = [noise_data[sub_field][str(obs_id)] / noise_units \
+                            for obs_id in obs_ids \
+                            if str(obs_id) in noise_data[sub_field].keys()]
+            x_data = range(1, len(noise_levels)+1)
+            
+            label = self.el_dict[sub_field]
+            color = self.cl_dict[sub_field]
+            
+            plot_obj.plot(
+                x_data, noise_levels, label=label,
+                linestyle="None",
+                marker=".", markersize=self.mrkrsz,
+                color=color, alpha=0.5)
+            
+            curr_nois = noise_levels[-1]
+            ylocs_dict  = {"ra0hdec-44.75": 0.94,
+                           "ra0hdec-52.25": 0.88,
+                           "ra0hdec-59.75": 0.82,
+                           "ra0hdec-67.25": 0.76}
+            plot_obj.text(0.645, ylocs_dict[sub_field],
+                          "YTD noise: {:05.2f}".format(curr_nois),
+                          transform=plot_obj.transAxes,
+                          horizontalalignment="left",
+                          color=color, fontsize=self.lgd_fs)
+            
+            if len(x_data) > 20:
+                x_for_lls = numpy.log(numpy.asarray(x_data[11:]))
+                y_for_lls = numpy.log(numpy.asarray(noise_levels[11:]))
+            else:
+                x_for_lls = numpy.log(numpy.asarray(x_data))
+                y_for_lls = numpy.log(numpy.asarray(noise_levels))
+            design_matrix = numpy.asarray(x_for_lls)\
+                            [:, numpy.newaxis]**[1.0, 0.0]
+            parameters, residues, rank, singular_values = \
+                linalg.lstsq(design_matrix, numpy.asarray(y_for_lls))
+            power = parameters[0]
+            const = parameters[1]
+            x_for_plot = numpy.arange(1, xlims_dict["right"], 2)
+            y_for_plot = numpy.exp(const) * numpy.power(x_for_plot, power)
+            plot_obj.plot(x_for_plot, y_for_plot,
+                          color=color, alpha=0.8, linewidth=0.4*self.ln_wdth)
+            explanation = "Slope: " + str(power)[0:6]
+            ylocs_dict  = {"ra0hdec-44.75": 0.22,
+                           "ra0hdec-52.25": 0.16,
+                           "ra0hdec-59.75": 0.10,
+                           "ra0hdec-67.25": 0.04}
+            plot_obj.text(0.03, ylocs_dict[sub_field],
+                          explanation,
+                          transform=plot_obj.transAxes,
+                          horizontalalignment="left",
+                          color=color, fontsize=self.lgd_fs)
+        
+        set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
+                 ylims_dict[self.map_id]["bottom"],
+                 ylims_dict[self.map_id]["top"])
+       
+        xtick_locs_major = None
+        xtick_labels     = None
+        xtick_locs_minor = None
+        
+        set_ticks(plot_obj, xtick_locs_major, xtick_locs_minor, xtick_labels,
+                  None, None, None, self.ttl_fs, self.ln_wdth)
+        
+        xlabel = "\n" + "Number of pairs of difference map added"
+        ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
+                 "ell range [3000, 5000]  " + r"$[{\mu}K \cdot arcmin]$" + "\n"
+        
+        more_title = "Noise in the running coadded noise maps\n"
+        more_info  = []
+        for sub_field in sorted(n_excluded.keys()):
+            alias = self.el_dict[sub_field]
+            n_bad = n_excluded[sub_field]
+            more_info.append(alias + ": " + str(n_bad))
+        more_info   = "(numbers of excluded maps: {" + \
+                      ",  ".join(more_info) + "})\n"
+        more_title += more_info
+        fig_title = self.get_full_fig_title(more_title)
+        
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+        
+        more_file_name = "noise_levels_from_running_coadds"
+        file_name = self.get_full_file_name(more_file_name)
+        
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figures_for_recent_noise_levels(self, frame):
+        
+        self.log("")
+        self.log("Making figures for the time evolution of the noise in the ")
+        self.log("coadded noise maps due to recently added maps ...")
+        
+        noise_data = frame["NoiseLevelsFromCoaddedTMaps"]
+        
+        for sub_field, obs_ids_this_sf in self.obs_id_list.items():
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            l_ids = []
+            r_ids = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    r_ids.append(obs_id)
+                else:
+                    l_ids.append(obs_id)
+            
+            all_obs_ids = []
+            for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                all_obs_ids.append(l_ids[i])
+                all_obs_ids.append(r_ids[i])
+            
+            all_noises = []
+            for obs_id in all_obs_ids:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    noise  = noise_data[sub_field][str(obs_id)]
+                    noise /= core.G3Units.uK * core.G3Units.arcmin
+                    all_noises.append(noise)
+                else:
+                    all_noises.append(numpy.nan)
+            
+            if len(all_obs_ids) > 50:
+                all_obs_ids = all_obs_ids[-50:]
+                all_noises  = all_noises[-50:]
+            dummy_x_data = numpy.arange(len(all_obs_ids)) + 1
+            
+            color = self.cl_dict[sub_field]
+            
+            plot_obj.plot(dummy_x_data, all_noises,
+                          linestyle=self.ln_styl, linewidth=self.ln_wdth,
+                          marker=".", markersize=self.mrkrsz,
+                          color=color)
+            
+            max_noise = numpy.nanmax(all_noises)
+            min_noise = numpy.nanmin(all_noises)
+            diff      = max_noise - min_noise
+            ylim_top  = max_noise + 0.05 * diff
+            near_top  = max_noise + 0.01 * diff
+            
+            set_lims(plot_obj, 0, dummy_x_data[-1]+1, None, ylim_top)
+            
+            lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
+            for index, noise in enumerate(all_noises):
+                if not numpy.isfinite(noise):
+                    plot_obj.text(dummy_x_data[index], near_top,
+                                  "N/A", color=color, fontsize=lgd_fs*0.7,
+                                  rotation="vertical",
+                                  verticalalignment="center",
+                                  horizontalalignment="center")
+            
+            def get_month_day_hour(obs_id):
+                full_tstr = str(std_processing.obsid_to_g3time(obs_id))
+                month     = full_tstr.split("-")[1]
+                date      = full_tstr.split("-")[0]
+                hour      = full_tstr.split(":")[1]
+                return "{}/{} {}h".format(month, date, hour)
+            
+            xtick_labels = ["{} ({})".format(
+                            str(obs_id), get_month_day_hour(obs_id)) \
+                            for obs_id in all_obs_ids]
+            
+            set_ticks(plot_obj, dummy_x_data, [], xtick_labels,
+                      None, None, None, self.ttl_fs, self.ln_wdth,
+                      xtrot="vertical")
+            
+            xlabel = ""
+            ylabel = "Noise " + r"$[{\mu}K \cdot arcmin]$"
+            more_title = "Noise due to 50 recently added maps of " + sub_field 
+            fig_title  = self.get_full_fig_title(more_title)
+            
+            set_ax_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = "recent_noise_levels_from_observations_of_{}".\
+                             format(sub_field)
+            file_name = self.get_full_file_name(more_file_name)
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+            
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figures_for_order_of_addition(self, frame):
+        
+        self.log("")
+        self.log("Making figures for the order in which maps were added ...")
+        
+        noise_data = frame["NoiseLevelsFromCoaddedTMaps"]
+        
+        for sub_field, obs_ids_this_sf in self.obs_id_list.items():
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            l_ids = []
+            r_ids = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in noise_data[sub_field].keys():
+                    r_ids.append(obs_id)
+                else:
+                    l_ids.append(obs_id)
+            
+            all_obs_ids = []
+            for i in range(numpy.min([len(l_ids), len(r_ids)])):
+                all_obs_ids.append(l_ids[i])
+                all_obs_ids.append(r_ids[i])
+            
+            plot_obj.plot(all_obs_ids,
+                          linestyle="None",
+                          marker=".", markersize=self.mrkrsz,
+                          color=self.cl_dict[sub_field])
+            
+            min_oid = numpy.min(all_obs_ids)
+            max_oid = numpy.max(all_obs_ids)
+            
+            ylims_dict = \
+                MakeFiguresForTimeVariationsOfMapRelatedQuantities.\
+                get_xlims_from_obs_id_range(
+                    "dummy", min_oid, max_oid, 0.0)
+            ylims_dict["bottom"] = ylims_dict.pop("left")
+            ylims_dict["top"]    = ylims_dict.pop("right")
+            
+            set_lims(plot_obj, 0, len(obs_ids_this_sf)+1,
+                               ylims_dict["bottom"], ylims_dict["top"])
+            
+            ytick_locs_major, ytick_labels, ytick_locs_minor = \
+                MakeFiguresForTimeVariationsOfMapRelatedQuantities.\
+                get_xticks_and_labels_from_obs_id_range(
+                    "dummy", plot_obj, min_oid, max_oid, no_hour=True)
+            
+            set_ticks(plot_obj, None, None, None,
+                      ytick_locs_major, ytick_locs_minor, ytick_labels,
+                      self.ttl_fs, self.ln_wdth)
+            
+            xlabel = "\n" + "Number of observations added"
+            ylabel = "Date of observation" + "\n"
+            
+            more_title = "Order in which observations of " + \
+                         sub_field + " were added" + "\n"
+            fig_title = self.get_full_fig_title(more_title)
+            
+            set_ax_labels_and_title(
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+            
+            more_file_name = "order_of_addition_of_maps_of_" + sub_field
+            file_name = self.get_full_file_name(more_file_name)
+            
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+            
+        self.log("Done.")
+        self.log("")
+    
+    
+    def make_figures_for_variances_of_maps(self, frame):
+        
+        self.log("")
+        self.log("Making figures for variances of coadded maps ...")
+        
+        stddevs_sigs = \
+            frame["FluctuationMetricsCoaddedSignalMapsTMapStandardDeviations"]
+        stddevs_nois = \
+            frame["FluctuationMetricsCoaddedNoiseMapsTMapStandardDeviations"]
+        vu = core.G3Units.uK * core.G3Units.uK
+        
+        for sub_field, obs_ids_this_sf in self.obs_id_list:
+            figure_obj, plot_obj = get_figure_and_plot_objects(w=15.0, h=9.0)
+            
+            median_individ_vars = numpy.nanmedian(
+                numpy.asarray(self.stddevs_individs[sub_field].values())**2)/vu
+            median_individ_vars /= 2
+            
+            y_data = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in stddevs_sigs[sub_field].keys():
+                    y_data.append(stddevs_sigs[sub_field][str(obs_id)]**2/vu)
+            x_data = numpy.arange(1, len(y_data)+1, 1)
+            plot_obj.plot(x_data, y_data,
+                          label="Variances of coadded signal maps",
+                          linestyle="None", marker=".", markersize=8,
+                          color="#1f77b4", alpha=0.5)
+            
+            if len(y_data) > 40:
+                x_for_fit = x_data[20:]
+                y_for_fit = y_data[20:]
+            else:
+                x_for_fit = x_data
+                y_for_fit = y_data
+            def sig_plu_noi_mod(n_mp, sig):
+                return sig + median_individ_vars/(n_mp)
+            popt, pcov = optimize.curve_fit(
+                sig_plu_noi_mod, x_for_fit, y_for_fit, p0=[y_data[-1]])
+            
+            x_for_show = numpy.arange(1, 250, 1)
+            y_for_show = sig_plu_noi_mod(x_for_show, popt[0])
+            plot_obj.plot(x_for_show, y_for_show,
+                          label="Curve fit y = (med. blue distro.) "+\
+                                 "/ x + b"+\
+                                 "\n(b = {:4.2e})".format(popt[0]),
+                                 linewidth=1.0, color="#1f77b4", alpha=0.5)
+            
+            
+            y_data = []
+            for obs_id in obs_ids_this_sf:
+                if str(obs_id) in stddevs_nois[sub_field].keys():
+                    y_data.append(stddevs_nois[sub_field][str(obs_id)]**2/vu)
+            x_data = numpy.arange(1, len(y_data)+1, 1)
+            plot_obj.plot(x_data, y_data,
+                          label="Variances of coadded noise maps",
+                          linestyle="None", marker=".", markersize=8,
+                          color="#ff7f0e", alpha=0.5)
+            
+            if len(y_data) > 40:
+                x_for_fit = x_data[20:]
+                y_for_fit = y_data[20:]
+            else:
+                x_for_fit = x_data
+                y_for_fit = y_data
+            def noi_mod(n_mp, power):
+                return median_individ_vars/n_mp**power
+            popt, pcov = optimize.curve_fit(
+                noi_mod, x_data[15:], y_data[15:], p0=[1.0])
+            
+            x_for_show = numpy.arange(1, 250, 1)
+            y_for_show = noi_mod(x_for_show, popt[0])
+            plot_obj.plot(x_for_show, y_for_show,
+                          label="Curve fit y = (med. blue distro.) "+\
+                                "/ "+r"$x^p$"+\
+                                "\n(p = {:4.2e})".format(popt[0]),
+                                linewidth=1.0, color="#ff7f0e", alpha=0.5)
+            
+            
+            y_data = numpy.asarray(
+                         self.stddevs_individs[sub_field].values())**2/vu
+            y_data /= 2
+            
+            bps = plot_obj.boxplot(
+                      y_data, whis=[0, 100], sym="", positions=[1], widths=0.20,
+                      patch_artist=True,
+                      boxprops=dict(facecolor="blue", alpha=0.1),
+                      medianprops=dict(linestyle="none"),
+                      capprops=dict(color="blue", alpha=0.1, linewidth=2.0),
+                      whiskerprops=dict(color="blue", alpha=0.1))
+            
+            plot_obj.set_xscale("log")
+            plot_obj.set_yscale("log")
+            plot_obj.set_xlim(left=0.8, right=260)
+            if self.map_id in ["90GHz", "150GHz"]:
+                plot_obj.set_ylim(bottom=2e2, top=2.5e5)
+            if self.map_id in ["220GHz"]:
+                plot_obj.set_ylim(bottom=2e3, top=2.5e6)
+            
+            plot_obj.tick_params(axis="both", which="major",
+                                 direction="in", labelsize=14)
+            
+            handles, labels = plot_obj.get_legend_handles_labels()
+            handles += [bps["boxes"][0]]
+            labels  += ["Variances of individual maps / 2"]
+            plot_obj.legend(handles, labels, loc="upper right",
+                            fontsize=15, framealpha=0.8)
+            
+            plot_obj.grid(axis="both", which="both",
+                          linestyle="dashed", linewidth=0.05, color="black")
+            plot_obj.set_axisbelow(True)
+            
+            plot_obj.set_xlabel("\nNumber of pairs of maps used", fontsize=16)
+            plot_obj.set_ylabel("Variance ["+r"$uK^2$"+"]\n", fontsize=16)
+            plot_obj.set_title("Variances of {} maps of {} sub-field\n".\
+                               format(self.map_id, sub_field), fontsize=18)
+            
+            
+            inset_plot = inset_axes(
+                             plot_obj, width="30%", height="35%",
+                             loc=3, borderpad=3)
+            
+            y_data = numpy.asarray(
+                         self.stddevs_individs[sub_field].values())**2/vu
+            y_data /= 2 * 1e3
+            
+            range_lo = numpy.percentile(y_data,  1)
+            range_hi = numpy.percentile(y_data, 90)
+            inset_plot.hist(y_data, bins=50, range=(range_lo, range_hi),
+                            histtype="stepfilled", color="blue", alpha=0.1)
+            
+            inset_plot.tick_params(axis="both", which="both",
+                                   direction="in", labelsize=12, left=False)
+            inset_plot.set_yticklabels([])
+            inset_plot.set_title("Blue Distribution  "+"[1000 "+r"${\mu}K^2$"+"]",
+                                 fontsize=13)
+            
+            
+            more_file_name = "variances_of_signals_and_noises_in_" + sub_field
+            file_name = self.get_full_file_name(more_file_name)
+            
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+        
+        self.log("Done.")
+        self.log("")
+    
+    
+    def __call__(self, frame):
+        
+        if "Id" not in frame.keys():
+            return
+        
+        if frame["Id"] != self.map_id:
+            return
+        
+        if "CoaddedObservationIDs" in frame.keys():
+            self.obs_id_list = frame["CoaddedObservationIDs"]
+        
+        try:
+            k = "FluctuationMetricsIndividualSignalMapsTMapStandardDeviations"
+            self.stddevs_individs = frame[k]
+        except:
+            pass
+        
+        if self.make_figs_for_noise_levels:
+            if "NoiseLevelsFromCoaddedTMaps" in frame.keys():
+                if not self.fig_an_made:
+                    self.make_figure_for_all_noise_levels(frame)
+                    self.fig_an_made = True
+                if not self.fig_rn_made:
+                    self.make_figures_for_recent_noise_levels(frame)
+                    self.fig_rn_made = True
+                if not self.fig_oa_made:
+                    self.make_figures_for_order_of_addition(frame)
+                    self.fig_oa_made = True
+        
+        if self.make_figs_for_fluc_metrics:
+            k1 = "FluctuationMetricsCoaddedSignalMapsTMapStandardDeviations"
+            k2 = "FluctuationMetricsCoaddedNoiseMapsTMapStandardDeviations"
+            if (k1 in frame.keys())   and \
+               (k2 in frame.keys())   and \
+               (not self.fig_fl_made) and \
+               (self.stddevs_individs is not None):
+                self.make_figures_for_variances_of_maps(frame)
+                self.fig_fl_made = True
+
+
+
+
+class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
+    
+    def __init__(self,
+                 map_id=None, map_type=None,
+                 fig_rc=False, fig_fl=False, fig_pt=False,
+                 fig_rp=False, fig_ns=False,
+                 figure_title_font_size=11,
+                 directory_to_save_figures=".",
+                 logging_function=logging.info):
+        
+        self.map_id   = map_id
+        self.map_type = map_type
+    
+    def __call__(self, frame):
+        
+        return
 
 
 
 
 class RecordIDsUsedForPlotting(object):
     
-    def __init__(self, logging_function=logging.info):
+    def __init__(self, logging_function=print):
         
         self.already_recorded = False
         self.log = logging_function
@@ -1072,6 +2199,7 @@ class RecordIDsUsedForPlotting(object):
 
 
 
+
 # ==============================================================================
 
 
@@ -1082,18 +2210,24 @@ class RecordIDsUsedForPlotting(object):
 # ------------------------------------------------------------------------------
 
 
-def run(input_files, decide_whether_to_make_figures_at_all=False,
-        make_figures_for_field_maps=False, map_id="90GHz", map_type='T',
-        coadded_data=False, color_bar_upper_limit=None,
-        color_bar_lower_limit=None, make_figures_for_entire_weight_maps=False,
-        make_figures_for_weight_maps_cross_section=False,
-        rebin_map_before_plotting=False,
-        new_map_resolution=None,
-        smooth_map_with_gaussian=False,
-        gaussian_fwhm=None,
-        make_figures_for_flagging_statistics=False,
+def run(input_files=[], decide_whether_to_make_figures_at_all=False,
+        map_id=None, map_type=None, coadded_data=True,
+        make_figure_for_field_map=False,
+        rebin_map_before_plotting=False, new_map_resolution=None,
+        smooth_map_with_gaussian=False, gaussian_fwhm=None,
+        color_bar_upper_limit=None, color_bar_lower_limit=None,
+        make_figure_for_entire_weight_map=False,
+        make_figure_for_weight_map_cross_section=False,
+        make_figures_showing_time_variations=False,
+        make_figures_showing_time_evolution=False,
+        make_figures_showing_distributions=False,
+        make_figure_for_flagging_statistics=False,
+        make_figure_for_pW_to_K_factors=False,
+        make_figures_for_responsivity_changes=False,
+        make_figures_for_fluctuation_metrics=False,
         make_figures_for_pointing_discrepancies=False,
-        make_figures_for_noise_levels=False,
+        make_figure_for_ratios_of_power_spectra=False,
+        make_figure_for_noise_levels=False,
         left_xlimit_for_time_variations=None,
         right_xlimit_for_time_variations=None,
         figure_title_font_size=11,
@@ -1103,14 +2237,14 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
     
     
     # - Define global variables
-
+    
     good_input_files = [input_file for input_file in input_files 
                         if os.path.isfile(input_file)]
     
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     log_format = logging.Formatter('%(message)s')
-        
+    
     if log_file is None:
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.DEBUG)
@@ -1123,18 +2257,18 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
         logger.addHandler(file_handler)
         logging.captureWarnings(True)
     
-    log = logger.info    
-
+    log = logger.info
+    
     
     # - Time to start!
-
+    
     log("")
     log("# ======================= #")
     log("#  Start making figures!  #")
     log("# ======================= #")
     log("")
-
-
+    
+    
     if len(good_input_files) == 0:
         log("Actually, no applicable input files!")
         log("")
@@ -1147,98 +2281,116 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
             log(input_file.split("/")[-1])
         log("")
         log("")
-
-
-    for input_file in good_input_files:
-
-        log("-"*80)
-        log("Taking actions on %s ...", input_file)
-        log("-"*80)
-
-        if decide_whether_to_make_figures_at_all == True:
-
-            bookkeeping_file = "bookkeeping_for_plotting_" + \
-                               os.path.basename(input_file)
-            bookkeeping_file = os.path.join(directory_to_save_figures,
-                                            bookkeeping_file)
-
-            if os.path.isfile(bookkeeping_file):
-                try:
-                    previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
-                                        ["IDsUsedForMakingFiguresLastTime"])
-                except:
-                    previous_ids = []
-                iterator  = core.G3File(input_file)
-                frame     = iterator.next()
-                newer_ids = []
-                for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
-                    for obs_id in obs_ids:
-                        newer_ids.append(obs_id)
-
-                common_ids = set(list(previous_ids)) & set(list(newer_ids))
-                if len(common_ids) == len(newer_ids):
-                    log("")
-                    log("* This input file does not seem to contain any")
-                    log("* new information, so the same set of figures")
-                    log("* will not be generated again!")
-                    log("")
-                    continue
-
-
-
-        pipeline = core.G3Pipeline()
-
-        pipeline.Add(core.G3Reader,
-                     filename=input_file)
-
-        pipeline.Add(PossiblyMakeFiguresForFieldMapsAndWeightMaps,
-                     fig_f=make_figures_for_field_maps,
-                     fig_w=make_figures_for_entire_weight_maps,
-                     fig_cr=make_figures_for_weight_maps_cross_section,
-                     rebin_map_before_plotting=rebin_map_before_plotting,
-                     new_map_resolution=new_map_resolution,
-                     smooth_map_with_gaussian=smooth_map_with_gaussian,
-                     gaussian_fwhm=gaussian_fwhm,
-                     map_type=map_type,
+    
+    
+    if decide_whether_to_make_figures_at_all == True:
+        
+        bookkeeping_file = \
+            "bookkeeping_for_plotting_" + \
+            os.path.basename(good_input_files[-1]).replace(".gz", "")
+        bookkeeping_file = \
+            os.path.join(directory_to_save_figures, bookkeeping_file)
+        
+        if os.path.isfile(bookkeeping_file):
+            previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
+                                    ["IDsUsedForMakingFiguresLastTime"])
+            iterator  = core.G3File(good_input_files[0])
+            frame     = iterator.next()
+            newer_ids = []
+            for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
+                for obs_id in obs_ids:
+                    newer_ids.append(obs_id)
+            
+            common_ids = set(list(previous_ids)) & set(list(newer_ids))
+            if len(common_ids) == len(newer_ids):
+                log("")
+                log("* The input files do not seem to contain any")
+                log("* new information, so the same set of figures")
+                log("* will not be generated again!")
+                log("")
+                return
+    
+    
+    pipeline = core.G3Pipeline()
+    
+    pipeline.Add(core.G3Reader,
+                 filename=good_input_files)
+    
+    pipeline.Add(MakeFiguresForFieldMapsAndWeightMaps,
+                 fig_f=make_figure_for_field_map,
+                 fig_w=make_figure_for_entire_weight_map,
+                 fig_cr=make_figure_for_weight_map_cross_section,
+                 rebin_map_before_plotting=rebin_map_before_plotting,
+                 new_map_resolution=new_map_resolution,
+                 smooth_map_with_gaussian=smooth_map_with_gaussian,
+                 gaussian_fwhm=gaussian_fwhm,
+                 map_type=map_type,
+                 map_id=map_id,
+                 coadded_data=coadded_data,
+                 custom_vmin_field_map=color_bar_lower_limit,
+                 custom_vmax_field_map=color_bar_upper_limit,
+                 figure_title_font_size=figure_title_font_size,
+                 simpler_file_names=simpler_file_names,
+                 directory_to_save_figures=directory_to_save_figures,
+                 logging_function=log)
+    
+    if make_figures_showing_time_variations:
+        pipeline.Add(MakeFiguresForTimeVariationsOfMapRelatedQuantities,
                      map_id=map_id,
-                     coadded_data=coadded_data,
-                     custom_vmin_field_map=color_bar_lower_limit,
-                     custom_vmax_field_map=color_bar_upper_limit,
-                     figure_title_font_size=figure_title_font_size,
-                     simpler_file_names=simpler_file_names,
-                     directory_to_save_figures=directory_to_save_figures,
-                     logging_function=log)
-
-        pipeline.Add(PossiblyMakeFiguresForTimeVariationsOfMapRelatedQuantities,
-                     fig_fs=make_figures_for_flagging_statistics,
+                     map_type=map_type,
+                     fig_fs=make_figure_for_flagging_statistics,
+                     fig_tc=make_figure_for_pW_to_K_factors,
+                     fig_rc=make_figures_for_responsivity_changes,
+                     fig_fl=make_figures_for_fluctuation_metrics,
                      fig_pt=make_figures_for_pointing_discrepancies,
-                     fig_ns=make_figures_for_noise_levels,
-                     map_id=map_id,
-                     map_type=map_type,
+                     fig_rp=make_figure_for_ratios_of_power_spectra,
+                     fig_ns=make_figure_for_noise_levels,
                      xlim_left=left_xlimit_for_time_variations,
                      xlim_right=right_xlimit_for_time_variations,
                      figure_title_font_size=figure_title_font_size,
                      directory_to_save_figures=directory_to_save_figures,
                      logging_function=log)
-
+    
+    if make_figures_showing_time_evolution:
+        pipeline.Add(MakeFiguresForTimeEvolutionOfMapRelatedQuantities,
+                     map_id=map_id,
+                     map_type=map_type,
+                     fig_fl=make_figures_for_fluctuation_metrics,
+                     fig_ns=make_figure_for_noise_levels,
+                     figure_title_font_size=figure_title_font_size,
+                     directory_to_save_figures=directory_to_save_figures,
+                     logging_function=log)
+    
+    if make_figures_showing_distributions:
+        pipeline.Add(MakeFiguresForDistributionsOfMapRelatedQuantities,
+                     map_id=map_id,
+                     map_type=map_type,
+                     fig_rc=make_figures_for_responsivity_changes,
+                     fig_fl=make_figures_for_fluctuation_metrics,
+                     fig_pt=make_figures_for_pointing_discrepancies,
+                     fig_rp=make_figure_for_ratios_of_power_spectra,
+                     fig_ns=make_figure_for_noise_levels,
+                     figure_title_font_size=figure_title_font_size,
+                     directory_to_save_figures=directory_to_save_figures,
+                     logging_function=log)
+    
+    if decide_whether_to_make_figures_at_all == True:
         pipeline.Add(RecordIDsUsedForPlotting,
                      logging_function=log)
         pipeline.Add(lambda frame: "IDsUsedForMakingFiguresLastTime" in frame)
-        
-        if decide_whether_to_make_figures_at_all == True:
-            pipeline.Add(core.G3Writer,
+        pipeline.Add(core.G3Writer,
                      filename=bookkeeping_file)
-        
-        if log_file is None:
-            profile = True
-        else:
-            profile = False
-
-        pipeline.Run(profile=profile)
-
-    log("")
-
     
+    if log_file is None:
+        profile = True
+    else:
+        profile = False
+    
+    pipeline.Run(profile=profile)
+    
+    log("\n")
+
+
 # ==============================================================================
 
 
@@ -1250,74 +2402,68 @@ def run(input_files, decide_whether_to_make_figures_at_all=False,
 
 
 if __name__ == '__main__':
-
+    
     parser = argparse.ArgumentParser(
-                 description="This script makes figures for maps made from "
-                             "field observations. It can handle both a map from "
-                             "a single field observation and a map from "
-                             "the coaddition of mutltple observations.",
+                 description="This script is mainly intended to be used to "
+                             "make figures showing coadded maps and relevant "
+                             "quantities such as noise levels obtained by the "
+                             "script fields_coadding.py.",
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                  epilog="Hopefully you will like the figures generated!")
-
-    parser.add_argument("input_files",
-                        action="store", type=str, nargs="+",
-                        help="G3 files that contain Map frames. The data stored "
-                             "in these frames will be plotted in the figures.")
-
-    parser.add_argument("-D", "--decide_whether_to_make_figures_at_all",
+    
+    parser.add_argument("-I", "--input_files",
+                        action="store", type=str, nargs="+", default=[],
+                        help="G3 files that contain maps and map-related "
+                             "analysis results.")
+    
+    parser.add_argument("-A", "--decide_whether_to_make_figures_at_all",
                         action="store_true", default=False,
                         help="Whether to check if it is actually necessary to "
-                             "make any figures at all. If figures of coadded maps "
-                             "are to be made, if the corresponding g3 file that "
-                             "contains the data also records what observations "
-                             "were used to make the coadded maps, and if there is "
-                             "another g3 file that records what observations were "
-                             "contained in the coadded maps when figures were "
-                             "made last time, then this check can be made.")
-
-    parser.add_argument("-m", "--make_figures_for_field_maps",
+                             "make any figures at all. If the input files do "
+                             "not have new data (new maps added, new analysis "
+                             "results) that were not present in them when "
+                             "figures were made last time, then there is no "
+                             "need to generate figures again.")
+    
+    parser.add_argument("-m", "--make_figure_for_field_map",
                         action="store_true", default=False,
-                        help="Whether figures showing field maps are to be made.")
-
+                        help="Whether a figure showing the coadded field map "
+                             "is to be made.")
+    
     parser.add_argument("-i", "--map_id",
                         action="store", type=str, default="90GHz",
-                        help="The ID a map frame needs to have in order for "
-                             "a figure of the maps  stored to be made.")
-
+                        help="A string indicating figures for what type of "
+                             "maps (mainly what band) are supposed to be made. "
+                             "Each data frame in the input files need to have "
+                             "an 'Id' key that stores a value that matches "
+                             "this argument in order for the data in the "
+                             "frame to be used to generate figures.")
+    
     parser.add_argument("-y", "--map_type",
                         action="store", type=str, choices=["T"], default="T",
                         help="Whether figures of T, Q, or U maps are desired. "
                              "Currently, the script is still under development "
                              "and ignores options other than 'T'.")
-
+    
     parser.add_argument("-c", "--coadded_data",
                         action="store_true", default=False,
                         help="Whether the frames contain maps resulting from "
-                             "the coaddition of multiple observations. "
+                             "the coaddition of multiple observations' maps. "
                              "The script uses different titles and file names "
                              "for the figures depending on whether this option "
                              "is True or False. The default is False.")
-
+    
     parser.add_argument("-u", "--color_bar_upper_limit",
                         action="store", type=float, default=None,
                         help="The upper limit of the values that will be used "
-                             "in the colorbar for showing a field map.")
-
+                             "in the colorbar for showing a field map, "
+                             "if a value automatically determined by the "
+                             "script is not desired.")
+    
     parser.add_argument("-l", "--color_bar_lower_limit",
                         action="store", type=float, default=None,
                         help="The lower limit of the values that will be used "
                              "in the colorbar for showing a field map.")
-
-    parser.add_argument("-w", "--make_figures_for_entire_weight_maps",
-                        action="store_true", default=False,
-                        help="Whether to make figures for entire weight maps, "
-                             "i.e. color maps showing weights at every location "
-                             "of the field.")
-    
-    parser.add_argument("-W", "--make_figures_for_weight_maps_cross_section",
-                        action="store_true", default=False,
-                        help="Whether to make figures only showing the cross "
-                             "section of a weight map along certain RA contour.")
     
     parser.add_argument("-b", "--rebin_map_before_plotting",
                         action="store_true", default=False,
@@ -1333,68 +2479,129 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--smooth_map_with_gaussian",
                         action="store_true", default=False,
                         help="Whether to smooth a map by convolving it with "
-                             "a Gaussian.")
+                             "a 2D Gaussian.")
     
     parser.add_argument("-T", "--gaussian_fwhm",
                         action="store", type=float, default=None,
                         help="The full width at half maximum of the Gaussian "
                              "expressed in the units of arcminute.")
-
-    parser.add_argument("-F", "--make_figures_for_flagging_statistics",
+    
+    parser.add_argument("-w", "--make_figure_for_entire_weight_map",
                         action="store_true", default=False,
-                        help="Whether to make figures showing average number of "
-                             "flagged detectors over time.")
-
+                        help="Whether to make a figure for entire coadded TT "
+                             "weight map.")
+    
+    parser.add_argument("-W", "--make_figure_for_weight_map_cross_section",
+                        action="store_true", default=False,
+                        help="Whether to make a figure only showing the cross "
+                             "section of the weight map along the RA = 0h "
+                             "contour.")
+    
+    parser.add_argument("-V", "--make_figures_showing_time_variations",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of several map-related quantities.")
+    
+    parser.add_argument("-E", "--make_figures_showing_time_evolution",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time evolution "
+                             "of a few map-related quantities.")
+    
+    parser.add_argument("-D", "--make_figures_showing_distributions",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing distributions "
+                             "of several map-related quantities.")
+    
+    parser.add_argument("-F", "--make_figure_for_flagging_statistics",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of average numbers of flagged detectors "
+                             "over time.")
+    
+    parser.add_argument("-C", "--make_figures_for_pW_to_K_factors",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of the temperature calibration factors pW/K or "
+                             "their distributions.")
+    
+    parser.add_argument("-r", "--make_figures_for_responsivity_changes",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of the fractional changes in detectors' response "
+                             "to the calibrator at the top of each sub-field "
+                             "with respect to the bottom or their "
+                             "distributions.")
+    
+    parser.add_argument("-U", "--make_figures_for_fluctuation_metrics",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations, "
+                             "time evolution, and/or distributions of some "
+                             "basic metrics of fluctuations of map values, "
+                             "such as variances and mean weights.")
+    
     parser.add_argument("-p", "--make_figures_for_pointing_discrepancies",
                         action="store_true", default=False,
-                        help="Whether to make figures showing pointing "
-                             "discrepancies over time.")
-
-    parser.add_argument("-n", "--make_figures_for_noise_levels",
+                        help="Whether to make figures showing time variations "
+                             "of pointing discrepancies and/or their "
+                             "distributions.")
+    
+    parser.add_argument("-x", "--make_figure_for_ratios_of_power_spectra",
                         action="store_true", default=False,
-                        help="Whether to make figures showing noise levels "
-                             "over time.")
-
+                        help="Whether to make figures showing time variations "
+                             "of the ratios of the SPT x Planck power spectra "
+                             "to Planck x Planck ones and/or their "
+                             "distributions.")
+    
+    parser.add_argument("-n", "--make_figure_for_noise_levels",
+                        action="store_true", default=False,
+                        help="Whether to make figures showing time variations "
+                             "of noise levels from individual observations or "
+                             "time evolution of noise levels of coadded maps, "
+                             "depending on which type of data is available. "
+                             "In the former case, figures showing "
+                             "distributions noise levels will also be made.")
+    
     parser.add_argument("-L", "--left_xlimit_for_time_variations",
                         action="store", type=int, default=None,
                         help="The observation ID that will be used as the "
-                             "lower limit of the x-axis of a figure that shows "
+                             "left limit of the x-axis of a figure that shows "
                              "time variations of certain quantity.")
-
+    
     parser.add_argument("-R", "--right_xlimit_for_time_variations",
                         action="store", type=int, default=None,
                         help="The observation ID that will be used as the "
-                             "upper limit of the x-axis of a figure that shows "
+                             "right limit of the x-axis of a figure that shows "
                              "time variations of certain quantity.")
-
+    
     parser.add_argument("-z", "--figure_title_font_size",
                         action="store", type=float, default=11,
                         help="The font size to be used for figure titles. "
-                             "Then, the font sizes of other things such as "
-                             "axis labels will be determined based on this value.")
-
+                             "The font sizes of other elements such as "
+                             "axis labels will be determined "
+                             "based on this value.")
+    
     parser.add_argument("-d", "--directory_to_save_figures",
                         action="store", type=str, default=".",
-                        help="The directory where generated figures will be saved.")
-
+                        help="The directory where figures will be saved.")
+    
     parser.add_argument("-f", "--simpler_file_names",
                         action="store_true", default=False,
-                        help="Whether to omit infomration on source, obs. ID, "
-                             "and so on in the names of the PNG files that show "
-                             "field maps and weight maps.")
+                        help="Whether to omit infomration on sub-field, "
+                             "observation ID, and so on in the names of the "
+                             "PNG files that show field maps and weight maps.")
     
     parser.add_argument("-g", "--logger_name",
                         type=str, action="store", default="",
-                        help="The name of the logger that will be used to "+\
+                        help="The name of the logger that will be used to "
                              "record log messages.")
     
     parser.add_argument("-G", "--log_file",
                         type=str, action="store", default=None,
                         help="The file to which the logger will send messages.")
-
-
+    
+    
     arguments = parser.parse_args()
-
+    
     run(**vars(arguments))
 
     
