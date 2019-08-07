@@ -237,4 +237,5 @@ $( document ).ready(function()
 	// wafer and weekdir might be pulled from a cookie, which probably differs
 	// from the default values.
 	update_figs();
+	update_visibility();
 });
