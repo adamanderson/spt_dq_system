@@ -736,6 +736,11 @@ def update(mode, action,
                     input_files = [obs_info_etc_file,
                                    analysis_results_etc_file,
                                    map_data_etc_file]
+                    if not os.path.isfile(map_data_etc_file):
+                        log('The file that is supposed to contain maps '
+                            'does not exist yet, so nothing to do!')
+                        log('\n\n')
+                        continue
                 
                 args_plotting = \
                     {'input_files': input_files,

@@ -411,7 +411,17 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                            0.0*deg, -70.10*deg), weight_map.shape)[0]
         avg_w_el3_edge = \
             numpy.mean(vertical_cr_sec_values[dec_7010_idx:dec_6990_idx+1])
-        normalized_weights = vertical_cr_sec_values / avg_w_el3_edge
+        if avg_w_el3_edge != 0.0:
+            hard_to_normalize  = False
+            normalized_weights = vertical_cr_sec_values / avg_w_el3_edge
+        else:
+            hard_to_normalize  = True
+            normalized_weights = \
+                vertical_cr_sec_values / numpy.max(vertical_cr_sec_values)
+            max_idx = int(numpy.argmax(vertical_cr_sec_values))
+            max_ra, max_dec = \
+                weight_map.pixel_to_angle(weight_map.shape[1]//2, max_idx)
+            max_dec /= core.G3Units.deg
                 
         decs = numpy.linspace(-74.75, -37.25, 3751)
         pids = [weight_map.angle_to_pixel(ra*deg, dec*deg) for dec in decs]
@@ -436,13 +446,20 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             for i in range(idx_re, idx_rz+1):
                 one_sub_field_hits[i] = \
                     1.0 - 1.0 * (i - idx_re) / (idx_rz - idx_re)
-            n_obs = len(n_obss["ra0hdec"+str(dec_center)])
+            try:
+                n_obs = len(n_obss["ra0hdec"+str(dec_center)])
+            except KeyError:
+                n_obs = 0
             focal_plane_hits += one_sub_field_hits * n_obs
         
         inv_cos = 1.0 / numpy.cos(decs * numpy.pi / 180.0)
         prediction  = focal_plane_hits * inv_cos
         el3_edge    = numpy.where(decs==-70.00)
-        prediction /= prediction[el3_edge]
+        if hard_to_normalize:
+            max_w = prediction[numpy.argmin(numpy.abs(decs-max_dec))]
+        else:
+            max_w = prediction[el3_edge]
+        prediction /= max_w
         
         data_linewidth = 1.50
         color_dict = {"90GHz": "red", "150GHz": "green", "220GHz": "blue"}
@@ -581,7 +598,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                             self.obs_fr, obs_id_list, wt_mp_str,
                             None, None, map_res, show_res=False)
                     xlabel  = "\n" + "Declination [degree]"
-                    ylabel  = "Weight normalized @ Dec. = -70 deg." + "\n"
+                    ylabel  = "Weight normalized @ Dec. = -70 deg." + "\n" +\
+                              "(or @ the max weight Dec. if W[-70) = 0)" + "\n"
                     fig_ttl = self.map_id + " " + wt_mp_str + "\n" + \
                               "Cross sectional view " + \
                               "along the RA = 0h contour" + "\n"
@@ -2296,23 +2314,26 @@ def run(input_files=[], decide_whether_to_make_figures_at_all=False,
             os.path.join(directory_to_save_figures, bookkeeping_file)
         
         if os.path.isfile(bookkeeping_file):
-            previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
-                                    ["IDsUsedForMakingFiguresLastTime"])
-            iterator  = core.G3File(good_input_files[0])
-            frame     = iterator.next()
-            newer_ids = []
-            for sub_field, obs_ids in frame["CoaddedObservationIDs"].items():
-                for obs_id in obs_ids:
-                    newer_ids.append(obs_id)
-            
-            common_ids = set(list(previous_ids)) & set(list(newer_ids))
-            if len(common_ids) == len(newer_ids):
-                log("")
-                log("* The input files do not seem to contain any")
-                log("* new information, so the same set of figures")
-                log("* will not be generated again!")
-                log("")
-                return
+            try:
+                previous_ids = list(list(core.G3File(bookkeeping_file))[0] \
+                                        ["IDsUsedForMakingFiguresLastTime"])
+                iterator  = core.G3File(good_input_files[0])
+                frame     = iterator.next()
+                newer_ids = []
+                for sub_field, obs_ids \
+                in  frame["CoaddedObservationIDs"].items():
+                    for obs_id in obs_ids:
+                        newer_ids.append(obs_id)
+                common_ids = set(list(previous_ids)) & set(list(newer_ids))
+                if len(common_ids) == len(newer_ids):
+                    log("")
+                    log("* The input files do not seem to contain any")
+                    log("* new information, so the same set of figures")
+                    log("* will not be generated again!")
+                    log("")
+                    return
+            except:
+                pass
     
     
     pipeline = core.G3Pipeline()
