@@ -1,240 +1,83 @@
 <html>
 
 <head>
-  <title>SPT-3G Data Quality Summary</title>
-  
-  <link rel="stylesheet" href="css/default-skin/default-skin.css" />
-  <link rel="stylesheet" href="css/default.css" />
-  
-  <script src="js/jquery-1.12.4.js"></script>
-  <script src="js/jquery-ui.js"></script>
-  <script src="js/summary.js"></script>
-  <script type="text/javascript" src="js/moment.min.js"></script>
-  <script>
-    wafer='all';
-    weekdir='plots/last_n/last_3'
-    mapweekdir='maps/figures/last_n/last_7'
-    
-    function update_figs() {
-      document["ts_median_cal_sn_highel"].src        = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
-      document["ts_median_cal_response_highel"].src  = 'staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
-      document["ts_alive_bolos_cal_highel"].src      = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png';
-      
-      document["ts_median_cal_sn_lowel"].src         = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png';
-      document["ts_median_cal_response_lowel"].src   = 'staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
-      document["ts_alive_bolos_cal_lowel"].src       = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
-      
-      document["ts_median_elnod_sn"].src             = 'staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
-      document["ts_median_elnod_iq"].src             = 'staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
-      document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
-      
-      document["ts_rcw38_sky_transmission"].src      = 'staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
-      
-      document["ts_median_rcw38_fluxcal"].src        = 'staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
-      document["ts_median_rcw38_intflux"].src        = 'staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
-      document["ts_alive_bolos_rcw38"].src           = 'staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
-      
-      document["ts_mat5a_sky_transmission"].src      = 'staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
-      
-      document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
-      document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
-      document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
-      
-      document["ts_median_net_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
-      document["ts_median_net_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
-      document["ts_median_net_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
-      document["ts_median_net_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png';
-      
-      document["ts_median_nep_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png';
-      document["ts_median_nep_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png';
-      document["ts_median_nep_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png';
-      document["ts_median_nep_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png';
-      
-      document["ts_median_nei_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png';
-      document["ts_median_nei_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
-      document["ts_median_nei_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
-      document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
-      
-      document["map_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map.png'
-      document["map_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map.png'
-      document["map_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map.png'
-      
-      document["map_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png'  
-      document["map_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png'
-      document["map_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png'
-      
-      document["weight_xsection_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
-      document["weight_xsection_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
-      document["weight_xsection_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
-      
-      document["map_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
-      document["map_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
-      document["map_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
-      
-      document["mean_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_mean_of_tt_weight_map_values.png'
-      document["mean_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_mean_of_tt_weight_map_values.png'
-      document["mean_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_mean_of_tt_weight_map_values.png'
-      
-      document["running_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
-      document["running_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
-      document["running_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
-      
-      document["ra_offsets_el0"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png'
-      document["ra_offsets_el1"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png'
-      document["ra_offsets_el2"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'
-      document["ra_offsets_el3"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'
-      
-      document["dec_offsets_el0"].src = 'staticimg/'+mapweekdir+
-                                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'
-      document["dec_offsets_el1"].src = 'staticimg/'+mapweekdir+
-                                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png'
-      document["dec_offsets_el2"].src = 'staticimg/'+mapweekdir+
-                                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png'
-      document["dec_offsets_el3"].src = 'staticimg/'+mapweekdir+
-                                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'
-      
-      document["flagging_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
-      document["flagging_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
-      document["flagging_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
-      
-      document["fractional_coverage_90"].src = 'staticimg/'+mapweekdir+
-                                               '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
-      document["fractional_coverage_150"].src = 'staticimg/'+mapweekdir+
-                                                '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
-      document["fractional_coverage_220"].src = 'staticimg/'+mapweekdir+
-                                                '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
-      
-      document["xspec_ratio_90"].src = 'staticimg/'+mapweekdir+'/90GHz-T_map_averages_of_power_spectra_ratios.png'
-      document["xspec_ratio_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_averages_of_power_spectra_ratios.png'
-      document["xspec_ratio_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_averages_of_power_spectra_ratios.png'
-      
-      document["observation_durations"].src = 'staticimg/'+mapweekdir+'/observation_durations.png'
-      
-      document["cal_vs_el_by_field_90"].src  = 'staticimg/'+mapweekdir+
-                                               '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
-      document["cal_vs_el_by_field_150"].src = 'staticimg/'+mapweekdir+
-                                               '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
-      document["cal_vs_el_by_field_220"].src = 'staticimg/'+mapweekdir+
-                                               '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
-      
-      document["cal_vs_el_by_wafer_90"].src  = 'staticimg/'+mapweekdir+
-                                               '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
-      document["cal_vs_el_by_wafer_150"].src = 'staticimg/'+mapweekdir+
-                                               '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
-      document["cal_vs_el_by_wafer_220"].src = 'staticimg/'+mapweekdir+
-                                               '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
-    }
-    
-    function update_visibility() {
-      if(!window["mapweekdir"].includes('yearly')) {
-        $(".maps_yearly").hide();
-        $(".maps_non_yearly").show();
-      }
-      else {
-        $(".maps_yearly").show();
-        $(".maps_non_yearly").hide();
-      }
-    }
-    
-    function set_variable(variable, newVal) {
-      window[variable]=newVal;
-      update_figs();
-      update_visibility();
-    }
-    
-    function load_plots_timeseries() {
-      get_old_timeseries_plotdirs('last_n');
-      get_old_timeseries_plotdirs('monthly');
-      get_old_timeseries_plotdirs('weekly');
-    }
-    
-    function load_plots_maps() {
-      get_old_map_plotdirs('last_n');
-      get_old_map_plotdirs('yearly');
-      get_old_map_plotdirs('monthly');
-      get_old_map_plotdirs('weekly');
-    }
-    
-    function open_tab(tabId) {
-      $("#summarystats").hide();
-      $("#maps").hide();
-      $("#readme").hide();
-      $("#"+tabId).show();
-      update_visibility();
-    }
-  </script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/jquery-1.12.4.js"></script>
+<script type="text/javascript" src="js/jquery-ui.js"></script>
+<script type="text/javascript" src="js/moment.min.js"></script>
+<script type="text/javascript" src="js/summary.js"></script>
 </head>
 
+<body>
 
-<body onload="load_plots_timeseries();">
+<div id="tabs">
+  <ul>
+    <li><a href="#tabs-summarystats">Calibration Observations</a></li>
+    <li><a href="#tabs-maps">Field Observations</a></li>
+    <li><a href="#tabs-readme">Read Me</a></li>
+  </ul>
 
-  <div class="tab">
-    <button class="tablink" onclick="open_tab('summarystats'); load_plots_timeseries()">Calibration Observations</button>
-    <button class="tablink" onclick="open_tab('maps'); load_plots_maps()">Field Observations</button>
-    <button class="tablink" onclick="open_tab('readme')">Read Me</button>
-  </div>
+  <div id="tabs-summarystats">
+    <h2>Calibration Observations</h2>
+    <form>
+      <fieldset>
+        <legend>Select a wafer:</legend>
+        <div id="waferlist">
+          <input type="radio" id="wafers-w172" name="wafers" value="w172">
+          <label for="wafers-w172">w172</label>
+          <input type="radio" id="wafers-w174" name="wafers" value="w174">
+          <label for="wafers-w174">w174</label>
+          <input type="radio" id="wafers-w176" name="wafers" value="w176">
+          <label for="wafers-w176">w176</label>
+          <input type="radio" id="wafers-w177" name="wafers" value="w177">
+          <label for="wafers-w177">w177</label>
+          <input type="radio" id="wafers-w180" name="wafers" value="w180">
+          <label for="wafers-w180">w180</label>
+          <input type="radio" id="wafers-w181" name="wafers" value="w181">
+          <label for="wafers-w181">w181</label>
+          <input type="radio" id="wafers-w188" name="wafers" value="w188">
+          <label for="wafers-w188">w188</label>
+          <input type="radio" id="wafers-w203" name="wafers" value="w203">
+          <label for="wafers-w203">w203</label>
+          <input type="radio" id="wafers-w204" name="wafers" value="w204">
+          <label for="wafers-w204">w204</label>
+          <input type="radio" id="wafers-w206" name="wafers" value="w206">
+          <label for="wafers-w206">w206</label>
+          <input type="radio" id="wafers-all" name="wafers" value="all">
+          <label for="wafers-all">all</label>
+        </div>
+      </fieldset>
+    </form>
 
-  <div id="summarystats" class="tabcontent">
-    <table>
+    <table cellspacing="20">
       <tr>
-        <td colspan="2">
+        <td valign="top" width="175">
           <table>
             <tr>
               <td>
-                <h2>Calibration Observations</h2>
-                <button class="btn" onclick="set_variable('wafer','w172')">w172</button>
-                <button class="btn" onclick="set_variable('wafer','w174')">w174</button>
-                <button class="btn" onclick="set_variable('wafer','w176')">w176</button>
-                <button class="btn" onclick="set_variable('wafer','w177')">w177</button>
-                <button class="btn" onclick="set_variable('wafer','w180')">w180</button>
-                <button class="btn" onclick="set_variable('wafer','w181')">w181</button>
-                <button class="btn" onclick="set_variable('wafer','w188')">w188</button>
-                <button class="btn" onclick="set_variable('wafer','w203')">w203</button>
-                <button class="btn" onclick="set_variable('wafer','w204')">w204</button>
-                <button class="btn" onclick="set_variable('wafer','w206')">w206</button>
-                <button class="btn" onclick="set_variable('wafer','all')">all</button>
+                <form>
+                  <fieldset>
+                    <legend>Recent</legend>
+                    <div id="datalist_summary_last_n">
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Monthly</legend>
+                    <div id="datalist_summary_monthly">
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Weekly</legend>
+                    <div id="datalist_summary_weekly">
+                    </div>
+                  </fieldset>
+                </form>
               </td>
             </tr>
           </table>
         </td>
-      </tr>
-      
-      <tr>
-        <td valign="top" width="120">
-          <table>
-            <tr>
-              <td>
-                <b>Last N days</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_last_n_stats" class="datalist_last_n" />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <b>Monthly</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_monthly_stats" class="datalist_monthly" />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <b>Weekly</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_weekly_stats" class="datalist_weekly" />
-              </td>
-            </tr>
-          </table>
-        </td>
-  
+        
         <td>
           <table style="table-layout:fixed">
             <tr>
@@ -251,20 +94,19 @@
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_cal_sn_lowel' 
+                  <img style="display:block;" width="100%" name='ts_median_cal_sn_lowel'
                        src='staticimg/plots/last_n/last_3/median_cal_sn_4Hz_lowel_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_alive_bolos_cal_lowel' 
+                  <img style="display:block;" width="100%" name='ts_alive_bolos_cal_lowel'
                        src='staticimg/plots/last_n/last_3/alive_bolos_cal_4Hz_lowel_all.png'>
                 </a>
               </td>
             </tr>
           </table>
           <br>
-          
           <table style="table-layout:fixed">
             <tr>
               <td colspan=3>
@@ -274,26 +116,25 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_cal_response_highel' 
+                  <img style="display:block;" width="100%" name='ts_median_cal_response_highel'
                        src='staticimg/plots/last_n/last_3/median_cal_response_4Hz_highel_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_cal_sn_highel' 
+                  <img style="display:block;" width="100%" name='ts_median_cal_sn_highel'
                        src='staticimg/plots/last_n/last_3/median_cal_sn_4Hz_highel_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_alive_bolos_cal_highel' 
+                  <img style="display:block;" width="100%" name='ts_alive_bolos_cal_highel'
                        src='staticimg/plots/last_n/last_3/alive_bolos_cal_4Hz_highel_all.png'>
                 </a>
               </td>
             </tr>
           </table>
           <br>
-        
           <table style="table-layout:fixed">
             <tr>
               <td colspan=3>
@@ -303,27 +144,26 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_elnod_sn' 
+                  <img style="display:block;" width="100%" name='ts_median_elnod_sn'
                        src='staticimg/plots/last_n/last_3/median_elnod_sn_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_elnod_iq' 
+                  <img style="display:block;" width="100%" name='ts_median_elnod_iq'
                        src='staticimg/plots/last_n/last_3/median_elnod_iq_phase_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_alive_bolos_elnod' 
+                  <img style="display:block;" width="100%" name='ts_alive_bolos_elnod'
                        src='staticimg/plots/last_n/last_3/alive_bolos_elnod_all.png'>
                 </a>
               </td>
             </tr>
           </table>
           <br>
-          
-          <table style="table-layout:fixed" width="66%">
+          <table style="table-layout:fixed">
             <tr>
               <td colspan=3>
                 <h2>RCW38 Fast Point</h2>
@@ -332,44 +172,45 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal' 
+                  <img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal'
                        src='staticimg/plots/last_n/last_3/median_rcw38_fluxcal_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_rcw38_intflux' 
+                  <img style="display:block;" width="100%" name='ts_median_rcw38_intflux'
                        src='staticimg/plots/last_n/last_3/median_rcw38_intflux_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_alive_bolos_rcw38' 
+                  <img style="display:block;" width="100%" name='ts_alive_bolos_rcw38'
                        src='staticimg/plots/last_n/last_3/alive_bolos_rcw38_all.png'>
                 </a>
               </td>
             </tr>
           </table>
-          <br>
-          
-          <table style="table-layout:fixed" width="33%">
+          <table style="table-layout:fixed" width="100%">
             <tr>
               <td colspan=3>
                 <h2>RCW38 Very Fast Point</h2>
               </td>
             </tr>
             <tr>
-              <td>
+              <td width="33%">
                 <a href="javascript:location.href='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' 
+                  <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission'
                        src='staticimg/plots/last_n/last_3/rcw38_sky_transmission_all.png'>
                 </a>
+              </td>
+              <td width="33%">
+              </td>
+              <td width="33%">
               </td>
             </tr>
           </table>
           <br>
-          
-          <table style="table-layout:fixed" width="66%">
+          <table style="table-layout:fixed">
             <tr>
               <td colspan=3>
                 <h2>MAT5A Fast Point</h2>
@@ -378,43 +219,44 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal' 
+                  <img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal'
                        src='staticimg/plots/last_n/last_3/median_mat5a_fluxcal_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_mat5a_intflux' 
+                  <img style="display:block;" width="100%" name='ts_median_mat5a_intflux'
                        src='staticimg/plots/last_n/last_3/median_mat5a_intflux_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_alive_bolos_mat5a' 
+                  <img style="display:block;" width="100%" name='ts_alive_bolos_mat5a'
                        src='staticimg/plots/last_n/last_3/alive_bolos_mat5a_all.png'>
                 </a>
               </td>
             </tr>
           </table>
-          <br>
-          
-          <table style="table-layout:fixed" width="33%">
+          <table style="table-layout:fixed" width="100%">
             <tr>
               <td colspan=3>
                 <h2>MAT5A Very Fast Point</h2>
               </td>
             </tr>
             <tr>
-              <td>
+              <td width="33%">
                 <a href="javascript:location.href='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' 
+                  <img style="display:block;" width="100%" name='ts_mat5a_sky_transmission'
                        src='staticimg/plots/last_n/last_3/mat5a_sky_transmission_all.png'>
                 </a>
+              </td>
+              <td width="33%">
+              </td>
+              <td width="33%">
               </td>
             </tr>
           </table>
           <br>
-          
           <table style="table-layout:fixed">
             <tr>
               <td colspan=4>
@@ -424,32 +266,31 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_net_01Hz_to_05Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_net_01Hz_to_05Hz'
                        src='staticimg/plots/last_n/last_3/median_NET_0.1Hz_to_0.5Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_net_1Hz_to_2Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_net_1Hz_to_2Hz'
                        src='staticimg/plots/last_n/last_3/median_NET_1.0Hz_to_2.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_net_3Hz_to_5Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_net_3Hz_to_5Hz'
                        src='staticimg/plots/last_n/last_3/median_NET_3.0Hz_to_5.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_net_10Hz_to_15Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_net_10Hz_to_15Hz'
                        src='staticimg/plots/last_n/last_3/median_NET_10.0Hz_to_15.0Hz_all.png'>
                 </a>
               </td>
             </tr>
           </table>
           <br>
-          
           <table style="table-layout:fixed">
             <tr>
               <td colspan=4>
@@ -459,32 +300,31 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nep_01Hz_to_05Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nep_01Hz_to_05Hz'
                        src='staticimg/plots/last_n/last_3/median_NEP_0.1Hz_to_0.5Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nep_1Hz_to_2Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nep_1Hz_to_2Hz'
                        src='staticimg/plots/last_n/last_3/median_NEP_1.0Hz_to_2.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nep_3Hz_to_5Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nep_3Hz_to_5Hz'
                        src='staticimg/plots/last_n/last_3/median_NEP_3.0Hz_to_5.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nep_10Hz_to_15Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nep_10Hz_to_15Hz'
                        src='staticimg/plots/last_n/last_3/median_NEP_10.0Hz_to_15.0Hz_all.png'>
                 </a>
               </td>
             </tr>
           </table>
           <br>
-          
           <table style="table-layout:fixed">
             <tr>
               <td colspan=4>
@@ -494,98 +334,71 @@
             <tr>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nei_01Hz_to_05Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nei_01Hz_to_05Hz'
                        src='staticimg/plots/last_n/last_3/median_NEI_0.1Hz_to_0.5Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nei_1Hz_to_2Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nei_1Hz_to_2Hz'
                        src='staticimg/plots/last_n/last_3/median_NEI_1.0Hz_to_2.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nei_3Hz_to_5Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nei_3Hz_to_5Hz'
                        src='staticimg/plots/last_n/last_3/median_NEI_3.0Hz_to_5.0Hz_all.png'>
                 </a>
               </td>
               <td>
                 <a href="javascript:location.href='staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png'">
-                  <img style="display:block;" width="100%" name='ts_median_nei_10Hz_to_15Hz' 
+                  <img style="display:block;" width="100%" name='ts_median_nei_10Hz_to_15Hz'
                        src='staticimg/plots/last_n/last_3/median_NEI_10.0Hz_to_15.0Hz_all.png'>
                 </a>
               </td>
             </tr>
           </table>
-          <br>
-        
         </td>
       </tr>
     </table>
   </div>
-  
-  
-  <div id="maps" class="tabcontent" style="display: none">
-    <table>
+
+  <div id="tabs-maps">
+    <h2>Field Observations</h2>
+
+    <table cellspacing="20">
       <tr>
-        <td colspan="2">
+        <td valign="top" width="175">
           <table>
             <tr>
               <td>
-                <h2>Field Observations</h2>
-              </td>
-            </tr>
-           </table>
-          </td>
-      </tr>
-      
-      <tr>
-        <td valign="top" width="120">
-          <table>
-            <tr>
-              <td>
-                <b>Last N days</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_last_n_maps" class="datalist_last_n" />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <b>Yearly</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_yearly_maps" class="datalist_yearly" />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <b>Monthly</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_monthly_maps" class="datalist_monthly" />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <b>Weekly</b>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div id="datalist_weekly_maps" class="datalist_weekly" />
+                <form>
+                  <fieldset>
+                    <legend>Recent</legend>
+                    <div id="datalist_maps_last_n">
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Yearly</legend>
+                    <div id="datalist_maps_yearly">
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Monthly</legend>
+                    <div id="datalist_maps_monthly">
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Weekly</legend>
+                    <div id="datalist_maps_weekly">
+                    </div>
+                  </fieldset>
+                </form>
               </td>
             </tr>
           </table>
         </td>
-        
+
         <td valign="top">
           <table style="table-layout:fixed">
             <tr>
@@ -773,6 +586,7 @@
                 </a>
               </td>
             </tr>
+
             <tr class="maps_yearly">
               <td><br></td>
             </tr>
@@ -1138,7 +952,7 @@
     </table>
   </div>
   
-  <div id="readme" class="tabcontent" style="display: none">
+  <div id="tabs-readme">
     <table>
       <tr>
         <td>

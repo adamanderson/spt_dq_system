@@ -1,120 +1,241 @@
-function get_old_timeseries_plotdirs(interval) {
-    // clear contents of the datalist div before we rebuild
-    $('#datalist_'+interval+'_stats').empty()
+// Check if there are cookies already defined for the wafer and time interval,
+// and use them if available.
+if(Cookies.get('wafer') !== undefined)
+	var wafer = Cookies.get('wafer');
+else {
+	var wafer='all';
+	Cookies.set('wafer', wafer, {expires: 1});
+}
 
+if(Cookies.get('weekdir') !== undefined)
+	var weekdir = Cookies.get('weekdir');
+else {
+	var weekdir='plots/last_n/last_3/';
+	Cookies.set('weekdir', weekdir, {expires: 1});
+}
+
+if(Cookies.get('mapweekdir') !== undefined)
+    var mapweekdir = Cookies.get('mapweekdir');
+else {
+    var mapweekdir='maps/figures/last_n/last_30/';
+	Cookies.set('mapweekdir', mapweekdir, {expires: 1});
+}
+
+/**
+ * Updates the source of all images defined on the summary page.
+ */
+function update_figs() {
+    document["ts_median_cal_sn_highel"].src        = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
+    document["ts_median_cal_response_highel"].src  = 'staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
+    document["ts_alive_bolos_cal_highel"].src      = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png';
+      
+    document["ts_median_cal_sn_lowel"].src         = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png';
+    document["ts_median_cal_response_lowel"].src   = 'staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
+    document["ts_alive_bolos_cal_lowel"].src       = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
+    
+    document["ts_median_elnod_sn"].src             = 'staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
+    document["ts_median_elnod_iq"].src             = 'staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
+    document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
+    
+    document["ts_rcw38_sky_transmission"].src      = 'staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
+    
+    document["ts_median_rcw38_fluxcal"].src        = 'staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
+    document["ts_median_rcw38_intflux"].src        = 'staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
+    document["ts_alive_bolos_rcw38"].src           = 'staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
+    
+    document["ts_mat5a_sky_transmission"].src      = 'staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
+    
+    document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
+    document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
+    document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
+    
+    document["ts_median_net_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
+    document["ts_median_net_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
+    document["ts_median_net_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
+    document["ts_median_net_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png';
+    
+    document["ts_median_nep_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png';
+    document["ts_median_nep_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png';
+    document["ts_median_nep_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png';
+    document["ts_median_nep_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png';
+    
+    document["ts_median_nei_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png';
+    document["ts_median_nei_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
+    document["ts_median_nei_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
+    document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
+    
+    document["map_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map.png'
+    document["map_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map.png'
+    document["map_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map.png'
+    
+    document["map_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png'  
+    document["map_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png'
+    document["map_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png'
+    
+    document["weight_xsection_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
+    document["weight_xsection_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
+    document["weight_xsection_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
+    
+    document["map_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
+    document["map_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
+    document["map_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+    
+    document["mean_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_mean_of_tt_weight_map_values.png'
+    document["mean_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_mean_of_tt_weight_map_values.png'
+    document["mean_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_mean_of_tt_weight_map_values.png'
+    
+    document["running_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png'
+    document["running_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png'
+    document["running_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png'
+    
+    document["ra_offsets_el0"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png'
+    document["ra_offsets_el1"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png'
+    document["ra_offsets_el2"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'
+    document["ra_offsets_el3"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'
+    
+    document["dec_offsets_el0"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'
+    document["dec_offsets_el1"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png'
+    document["dec_offsets_el2"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png'
+    document["dec_offsets_el3"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'
+    
+    document["flagging_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
+    document["flagging_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'
+    document["flagging_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png'
+    
+    document["fractional_coverage_90"].src = 'staticimg/'+mapweekdir+
+        '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
+    document["fractional_coverage_150"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
+    document["fractional_coverage_220"].src = 'staticimg/'+mapweekdir+
+        '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'
+    
+    document["xspec_ratio_90"].src = 'staticimg/'+mapweekdir+'/90GHz-T_map_averages_of_power_spectra_ratios.png'
+    document["xspec_ratio_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_averages_of_power_spectra_ratios.png'
+    document["xspec_ratio_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_averages_of_power_spectra_ratios.png'
+    
+    document["observation_durations"].src = 'staticimg/'+mapweekdir+'/observation_durations.png'
+    
+    document["cal_vs_el_by_field_90"].src  = 'staticimg/'+mapweekdir+
+        '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
+    document["cal_vs_el_by_field_150"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
+    document["cal_vs_el_by_field_220"].src = 'staticimg/'+mapweekdir+
+        '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'
+    
+    document["cal_vs_el_by_wafer_90"].src  = 'staticimg/'+mapweekdir+
+        '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
+    document["cal_vs_el_by_wafer_150"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
+    document["cal_vs_el_by_wafer_220"].src = 'staticimg/'+mapweekdir+
+        '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
+}
+
+
+/**
+ * Show/hide plots when switching between yearly and non-yearly view for maps
+ */
+function update_visibility() {
+	if(!window["mapweekdir"].includes('yearly')) {
+        $(".maps_yearly").hide();
+        $(".maps_non_yearly").show();
+    }
+    else {
+        $(".maps_yearly").show();
+        $(".maps_non_yearly").hide();
+    }
+}
+
+/**
+ * Sets a global variable to records its value as a cookie for retrieval later.
+ */
+function set_variable(variable, newVal)
+{
+  window[variable] = newVal;
+  Cookies.set(variable, newVal, { expires: 1 });
+  update_figs();
+  update_visibility();
+}
+
+/**
+ * Builds the buttons on the summary page that select different time intervals
+ * of data to display. These are constructed by appending the DOM directly.
+ * Note also that this function also initializes the jQuery UI "controlgroup"
+ * and binds the click event to it after appending all the buttons.
+ * 
+ * Arguments:
+ *  interval : time interval to traverse, 'weekly' or 'monthly'
+ *  subdirectory : subdirectory that we should traverse to get dated data
+ *  tab : tab in which to add buttons, 'summary' or 'maps'
+ */
+function add_date_buttons(interval, subdirectory, tab, boundVar)
+{
     // now rebuild the div
-    $.get('/oldstaticdirs', {subdirectory:"plots", interval:interval}, function(data, status) {
-	    data.reverse();
-	    for (jdir=0; jdir<data.length; jdir++) {
-			datestring = data[jdir].split('/')[2];
-			$('#datalist_'+interval+'_stats').append("<button class='btn' onclick=\"javascript:set_variable('weekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
-	    }
-	});
+	$.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
+		  function(data, status) {
+			  div_id = '#datalist_'+tab+'_'+interval;
+
+			  data.reverse();
+			  for (jdir=0; jdir<data.length; jdir++)
+			  {
+				  if (tab === 'summary')
+					  datestring = data[jdir].split('/')[2];
+				  else if (tab == 'maps')
+					  datestring = data[jdir].split('/')[3];
+
+				  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='" +
+				  				   data[jdir] + "'>\n" + 
+				  				   "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
+
+				  // can use jquery <select ...></select> with this line instead of radio buttons
+				  // $(div_id).append("<option value='"+data[jdir]+"'>"+datestring+"</option>");
+			  }
+			  $(div_id).controlgroup();
+			  $("[id^=dates-"+tab+"-]").click(function(event) {
+				  set_variable(boundVar, event.target.value);
+			  });
+		  });
 }
 
-function get_old_map_plotdirs(interval) {
-    // clear contents of the datalist div before we rebuild
-    $('#datalist_'+interval+'_maps').empty()
+// Page initialization
+$( document ).ready(function()
+{
+	// Initialize jQuery UI elements and make dynamic modifications to the DOM
+	$("#tabs").tabs();
+	$("#waferlist").controlgroup();
+	add_date_buttons('last_n', 'plots', 'summary', 'weekdir');
+	add_date_buttons('monthly', 'plots', 'summary', 'weekdir');
+	add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
 
-    // now rebuild the div
-    $.get('/oldstaticdirs', {subdirectory:"maps/figures", interval:interval}, function(data, status) {
-	    data.reverse();
-	    for (jdir=0; jdir<data.length; jdir++) {
-			datestring = data[jdir].split('/')[3];
-			$('#datalist_'+interval+'_maps').append("<button class='btn' onclick=\"javascript:set_variable('mapweekdir', '" + data[jdir] + "')\";>" + datestring + "</button>");
-	    }
+	add_date_buttons('last_n', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('yearly', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('monthly', 'maps/figures', 'maps', 'mapweekdir');
+	add_date_buttons('weekly', 'maps/figures', 'maps', 'mapweekdir');
+
+	
+	// Bind the click event to the wafer buttons
+	$("[id^=wafers-]").click(function(event) {
+		set_variable("wafer", event.target.value);
 	});
-}
 
-
-// create sse listener
-var es = new EventSource("/sse");
-
-// loads the database information for recent data of a given type
-function load_db_for_latestobs(sources, fcallback_on_output, rangetype) {
-    $.each(sources, function(sourcename, plots) {
-	    var plot_mode;
-	    if (rangetype == 'lastobs') {
-		querydata = {search: {date: "latest",
-				      source: sourcename},
-			     dbname: "scanify"};
-		plot_mode = 'individual';
-	    }
-	    else if (rangetype == 'lastweek') {
-		time_lastweek = moment().add(-14, 'days');
-		time_now = moment();
-		querydata = {search: {date: {min: time_lastweek.format('YYYY-MM-DD'),
-					     max: time_now.format('YYYY-MM-DD')},
-				      source: sourcename},
-			     dbname: "scanify"};
-		plot_mode = 'timeseries';
-	    }
-	    $.get('/dbpage', querydata, function(data, status) {
-		    observation_list = [];
-		    $.each(data, function(jobs, obsdata) {
-			    observation_list.push(obsdata.observation.toString());
-			});
-		    console.log(data);
-		    datareq = [];
-		    $.each(plots, function(i, plot) {
-			    datareq.push({observation: observation_list.join(' '),
-					source: data[0].source,
-					table: 'scanify',
-					plot_type: plot,
-					func: plot_mode});
-			});
-		    console.log(datareq);
-		    fcallback_on_output(datareq);
-		});
+	// Bind the click event to the tabs so that we can keep track of the active tab
+	$("#tabs").click(function(event) {
+		Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
 	});
-}
+
+	if(Cookies.get('activeTab') !== undefined)
+		$("#tabs").tabs("option", "active", Cookies.get('activeTab'))
+	else {
+		Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+	}
 
 
-// loads the plots for the latest set of observations of a given type
-function load_plots(datareq) {
-    var items = [];
-    var nTotalPlots = 0;
-    var sseid;
-
-    // gets the IDs for each plot to be produced and keeps track of the number
-    // that have been created
-    $.get("sseid", function(id, status) {
-	    sseid = id;
-	    // counts the images that have finished being created         
-	    var plot_ctr = 0;
-
-	    es.addEventListener('out' + sseid, function (event) {
-		    if (event.data.split('fln').length == 2) {
-			path =  event.data.split('fln')[1].slice(0,-1);
-			items.push({src: 'img/' + path, w: 0, h: 0});
-		    }
-		    else if (event.data.slice(1, 4) == 'plt') {
-			plot_ctr++;
-			if (nTotalPlots == plot_ctr) {
-			    $.each(items, function(i, img) {
-				    // this is a horrible kludge; solve with
-				    // better message passing
-				    for (iplot = 0; iplot < datareq.length; iplot++) {
-					if (img.src.indexOf(datareq[iplot].plot_type) != -1) {
-					    $('#'+datareq[iplot].plot_type).attr('src', img.src);
-					}
-				    }
-				});
-			}
-		    }
-		});
-	    es.addEventListener('err' + sseid, function (event) {
-		    console.log(event.data);
-		});
-
-	    // loop over each observation
-	    $.each(datareq, function(i, obsdata) {
-		    obsdata['sseid'] = sseid;
-		    
-		    // request the plots
-		    $.get("data_req", obsdata, function(data, status) {
-			    nTotalPlots += 1
-			});
-		});
-	});
-}
+	// Update all the figures. Need to call this on load because the values of
+	// wafer and weekdir might be pulled from a cookie, which probably differs
+	// from the default values.
+	update_figs();
+	update_visibility();
+});

@@ -95,9 +95,10 @@ if (!fs.existsSync(config.coadds_logs_dir)) {
 }
 
 // get subdirectory information for previous plots
-app.get('/oldstaticdirs', function(req, res) {
+app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
+	var dirlist = [];
 	try {
 		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
 								  req.query.interval + '/');
@@ -105,13 +106,11 @@ app.get('/oldstaticdirs', function(req, res) {
 	catch(err) {
 		filelist = [];
 	}
-	
+
 	// get the list of directories that contain plots
-	dirlist = [];
 	for (jfile=0; jfile<filelist.length; jfile++) {
 		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 	}
-
 	res.send(dirlist);
 });
 
