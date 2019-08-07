@@ -158,6 +158,7 @@
     function open_tab(tabId) {
       $("#summarystats").hide();
       $("#maps").hide();
+      $("#readme").hide();
       $("#"+tabId).show();
       update_visibility();
     }
@@ -170,6 +171,7 @@
   <div class="tab">
     <button class="tablink" onclick="open_tab('summarystats'); load_plots_timeseries()">Calibration Observations</button>
     <button class="tablink" onclick="open_tab('maps'); load_plots_maps()">Field Observations</button>
+    <button class="tablink" onclick="open_tab('readme')">Read Me</button>
   </div>
 
   <div id="summarystats" class="tabcontent">
@@ -1135,6 +1137,16 @@
       </tr>
     </table>
   </div>
+  
+  <div id="readme" class="tabcontent" style="display: none">
+    <table>
+      <tr>
+        <td>
+          Please ignore me for now...
+        </td>
+      </tr>
+    </table>
+  </div>  
 
 </body>
 
