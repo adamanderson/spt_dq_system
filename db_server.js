@@ -99,8 +99,6 @@ app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
 	var dirlist = [];
-	console.log(config.static_plot_dir + '/' + req.query.subdirectory + '/' +
-                req.query.interval + '/');
 	try {
 		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
 								  req.query.interval + '/');
