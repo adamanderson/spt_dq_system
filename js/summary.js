@@ -68,7 +68,7 @@ function update_figs() {
     document["map_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map.png'
     document["map_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map.png'
     
-    document["map_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png'  
+    document["map_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png'
     document["map_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png'
     document["map_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png'
     
