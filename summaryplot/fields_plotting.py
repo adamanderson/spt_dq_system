@@ -154,10 +154,12 @@ def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs,
                   linestyle="dotted", linewidth=gdi_lw)
 
 
-def set_ax_labels_and_title(plot_obj, xlabel, ylabel, title, ttl_fs):
+def set_ax_labels_and_title(
+        plot_obj, xlabel, ylabel, title, ttl_fs, add_legend=True):
     
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
-    plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=1.0)
+    if add_legend:
+        plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=1.0)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
     plot_obj.set_ylabel(ylabel, fontsize=lbl_fs)
     plot_obj.set_title(title, fontsize=ttl_fs)
@@ -1901,7 +1903,8 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             fig_title  = self.get_full_fig_title(more_title)
             
             set_ax_labels_and_title(
-                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs,
+                add_legend=False)
             
             more_file_name = "recent_noise_levels_from_observations_of_{}".\
                              format(sub_field)
@@ -1970,7 +1973,8 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             fig_title = self.get_full_fig_title(more_title)
             
             set_ax_labels_and_title(
-                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
+                plot_obj, xlabel, ylabel, fig_title, self.ttl_fs,
+                add_legend=False)
             
             more_file_name = "order_of_addition_of_maps_of_" + sub_field
             file_name = self.get_full_file_name(more_file_name)
