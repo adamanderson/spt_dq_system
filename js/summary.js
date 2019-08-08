@@ -17,7 +17,7 @@ else {
 if(Cookies.get('mapweekdir') !== undefined)
     var mapweekdir = Cookies.get('mapweekdir');
 else {
-    var mapweekdir='maps/figures/last_n/last_30/';
+    var mapweekdir='maps/figures/last_n/last_7/';
 	Cookies.set('mapweekdir', mapweekdir, {expires: 1});
 }
 
@@ -132,6 +132,13 @@ function update_figs() {
         '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
     document["cal_vs_el_by_wafer_220"].src = 'staticimg/'+mapweekdir+
         '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'
+    
+    document["pw_per_k_by_field_90"].src  = 'staticimg/'+mapweekdir+
+        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
+    document["pw_per_k_by_field_150"].src = 'staticimg/'+mapweekdir+
+        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
+    document["pw_per_k_by_field_220"].src = 'staticimg/'+mapweekdir+
+        '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
 }
 
 
