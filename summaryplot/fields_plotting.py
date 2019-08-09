@@ -2302,6 +2302,40 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
                           **opkwargs)
     
     
+    def make_figure_for_distributions_of_cal_vs_el(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        original_frac_changes_data = \
+            frame["MedianCalibratorResponseAllBolos"+\
+                  "FractionalChangesTopToBottom"]
+        data_reorganized = {}
+        for sub_field, map_double in original_frac_changes_data.items():
+            data_reorganized[sub_field] = \
+                numpy.asarray(map_double.values()) * 100
+        
+        xlim_lefts  = {"90GHz": -1, "150GHz": -2, "220GHz": -1}
+        xlim_rights = {"90GHz":  6, "150GHz": 12, "220GHz":  6}
+        
+        self.draw_histograms(
+            plot_obj, data_reorganized,
+            xlim_lefts[self.map_id], xlim_rights[self.map_id])
+        
+        self.indicate_histogram_statistics(plot_obj, data_reorganized)
+        
+        xlabel = "\n" + "Median percentage change in CalibratorResponse"
+        ylabel = ""
+        title  = self.get_full_fig_title(
+                     "Distributions of medians of percentage changes in\n"+\
+                     "CalibratorResponse from bottom to top of each field\n")
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, title, self.ttl_fs)
+        
+        file_name = self.get_full_file_name(
+                        "distributions_of_cal_response_changes")
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
     def make_figure_for_distributions_of_mean_weights(self, frame):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
@@ -2375,6 +2409,39 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
             save_figure_etc(figure_obj, self.fig_dir, file_name)
     
     
+    def make_figure_for_distributions_of_avg_xspc_ratios(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        original_noise_data = \
+            frame["AveragesOfRatiosOfSPTxPlancktoPlckxPlckTTspectra"]
+        data_reorganized = {}
+        for sub_field, map_double in original_noise_data.items():
+            data_reorganized[sub_field] = \
+                numpy.asarray(map_double.values())
+        
+        xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.4, "220GHz": 0.1}
+        xlim_rights = {"90GHz": 2.0, "150GHz": 1.6, "220GHz": 2.0}
+        
+        self.draw_histograms(
+            plot_obj, data_reorganized,
+            xlim_lefts[self.map_id], xlim_rights[self.map_id])
+        
+        self.indicate_histogram_statistics(plot_obj, data_reorganized)
+        
+        xlabel = "\n" + "Average of SPT x Planck / Planck x Planck"
+        ylabel = ""
+        title  = self.get_full_fig_title(
+                     "Distributions of averages of ratios of\n"+\
+                     "SPT x Planck to Planck x Planck spectra")
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, title, self.ttl_fs)
+        
+        file_name = self.get_full_file_name(
+                        "distributions_of_crass_spectra_ratios")
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
     def make_figure_for_distributions_of_noise_levels(self, frame):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
@@ -2415,6 +2482,18 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         if frame["Id"] != self.map_id:
             return
         
+        if self.make_fig_for_frac_cal_chng:
+            if not self.fig_rc_made:
+                if "MedianCalibratorResponseAllBolos"+\
+                   "FractionalChangesTopToBottom" in frame.keys():
+                    self.log("")
+                    self.log("Makding a figure for "
+                             "distributions of responsivity change ...")
+                    self.make_figure_for_distributions_of_cal_vs_el(frame)
+                    self.fig_rc_made = True
+                    self.log("Done.")
+                    self.log("")
+        
         if self.make_fig_for_fluc_metrics:
             if not self.fig_fl_made:
                 if "FluctuationMetricsIndividualSignalMapsMeansOfTTWeights" \
@@ -2436,6 +2515,18 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
                              "distributions of pointing offsets ...")
                     self.make_figure_for_distributions_of_pntng_offsets(frame)
                     self.fig_pt_made = True
+                    self.log("Done.")
+                    self.log("")
+        
+        if self.make_fig_for_xspec_ratios:
+            if not self.fig_rp_made:
+                if "AveragesOfRatiosOfSPTxPlancktoPlckxPlckTTspectra" \
+                in frame.keys():
+                    self.log("")
+                    self.log("Making a figure for "
+                             "distributions of avgs. of X spectra ratios ...")
+                    self.make_figure_for_distributions_of_avg_xspc_ratios(frame)
+                    self.fig_rp_made = True
                     self.log("Done.")
                     self.log("")
         
