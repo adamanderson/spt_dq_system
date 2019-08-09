@@ -572,7 +572,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                     
                     self.log("  Actually making a figure ...")
                     self.visualize_entire_map(
-                        fd_mp, dpi=150,
+                        fd_mp, dpi=150, cmap="bwr",
                         custom_vmin=self.custom_vmin,
                         custom_vmax=self.custom_vmax,
                         cbar_label=cbar_lbl, fig_title=fig_ttl, file_name=fl_nm)
@@ -1289,7 +1289,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                               "alpha"    : 2.0*self.typical_alpha,
                               "fontsize" : 0.90*lgd_fs,
                               "horizontalalignment": "right"}
-                plot_obj.text(0.98, 0.62,
+                """plot_obj.text(0.98, 0.62,
                               "w0 / w3\n= {:4.2f}".format(el0_to_el3),
                               **text_kargs)
                 plot_obj.text(0.98, 0.52,
@@ -1303,7 +1303,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.text(0.98, 0.20,
                               "cos3 / cos1\n= 0.63", **text_kargs)
                 plot_obj.text(0.98, 0.10,
-                              "cos3 / cos2\n= 0.77", **text_kargs)
+                              "cos3 / cos2\n= 0.77", **text_kargs)"""
             
             xlabel = self.typical_xlabel
             ylabel = plist["ylabel"]
@@ -1574,7 +1574,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                       "alpha"    : 2.0*self.typical_alpha,
                       "fontsize" : 0.90*lgd_fs,
                       "horizontalalignment": "right"}
-        plot_obj.text(0.98, 0.62,
+        """plot_obj.text(0.98, 0.62,
                       "(n0/n3)^2\n= {:4.2f}".format(el0_to_el3),
                       **text_kargs)
         plot_obj.text(0.98, 0.52,
@@ -1588,7 +1588,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         plot_obj.text(0.98, 0.20,
                       "cos1/cos3\n= 1.58", **text_kargs)
         plot_obj.text(0.98, 0.10,
-                      "cos2/cos3\n= 1.30", **text_kargs)
+                      "cos2/cos3\n= 1.30", **text_kargs)"""
         
         xlabel = self.typical_xlabel
         ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
@@ -2118,7 +2118,8 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             inset_plot.tick_params(axis="both", which="both",
                                    direction="in", labelsize=12, left=False)
             inset_plot.set_yticklabels([])
-            inset_plot.set_title("Blue Distribution  "+"[1000 "+r"${\mu}K^2$"+"]",
+            inset_plot.set_title("Blue Distribution  "+\
+                                 "[1000 "+r"${\mu}K^2$"+"]",
                                  fontsize=13)
             
             
@@ -2183,10 +2184,271 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
                  directory_to_save_figures=".",
                  logging_function=logging.info):
         
+        self.log = logging_function
         self.map_id   = map_id
         self.map_type = map_type
+        
+        self.make_fig_for_frac_cal_chng = fig_rc
+        self.make_fig_for_fluc_metrics  = fig_fl
+        self.make_fig_for_ptg_offsets   = fig_pt
+        self.make_fig_for_xspec_ratios  = fig_rp
+        self.make_fig_for_noise_levels  = fig_ns
+        
+        self.fig_rc_made = False
+        self.fig_fl_made = False
+        self.fig_pt_made = False
+        self.fig_rp_made = False
+        self.fig_ns_made = False
+        
+        self.ttl_fs  = figure_title_font_size
+        font_sizes = determine_various_font_sizes(self.ttl_fs)
+        self.lbl_fs = font_sizes[0]
+        self.tck_fs = font_sizes[1]
+        self.lgd_fs = font_sizes[2]
+        
+        self.fields  = ["ra0hdec-44.75", "ra0hdec-52.25",
+                        "ra0hdec-59.75", "ra0hdec-67.25"]
+        self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
+                        "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3"}
+        self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
+                        "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728"}
+        
+        self.alpha   = 0.5
+        self.ln_wdth = 1.25
+        self.ln_styl = "solid"
+        
+        self.fig_dir = directory_to_save_figures
+    
+    
+    def get_full_fig_title(self, additional_title, no_map_type=False):
+        
+        if no_map_type:
+            prefix = self.map_id + "  -  "
+        else:
+            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+        return prefix + additional_title
+    
+    
+    def get_full_file_name(self, additional_name):
+        
+        prefix = self.map_id + "-" + self.map_type + "_" + "map" + "_"
+        return prefix + additional_name + ".png"
+    
+    
+    def determine_histogram_range(self, map_vector):
+        
+        pctl_los = []
+        pctl_his = []
+        for sub_field, data in map_vector.items():
+            pctl_los.append(numpy.nanpercentile(data,  1))
+            pctl_his.append(numpy.nanpercentile(data, 99))
+        lo_of_lo = numpy.nanmin(pctl_los)
+        hi_of_hi = numpy.nanmax(pctl_his)
+        
+        return lo_of_lo, hi_of_hi
+    
+    
+    def draw_histograms(self, plot_obj, map_vector, xlim_left, xlim_right):
+        
+        xlim_right += 0.2 * (xlim_right - xlim_left)
+        max_occurs = []
+        
+        for sub_field, data in map_vector.items():
+            n, bins, patches = \
+                plot_obj.hist(data, bins=50, range=(xlim_left, xlim_right),
+                              label=sub_field,
+                              histtype="step",
+                              linewidth=self.ln_wdth, linestyle=self.ln_styl,
+                              color=self.cl_dict[sub_field], alpha=self.alpha)
+            mode = (bins[numpy.argmax(n)] + bins[numpy.argmax(n)+1]) / 2.0
+            plot_obj.axvline(mode, linestyle="dotted", linewidth=self.ln_wdth,
+                             label="Mode = {:4.2e}".format(mode),
+                             color=self.cl_dict[sub_field], alpha=self.alpha)
+            max_occurs.append(numpy.max(n))
+        
+        max_of_max_n = numpy.max(max_occurs)
+        plot_obj.set_ylim(bottom=-0.02*max_of_max_n, top=1.08*max_of_max_n)
+        plot_obj.set_xlim(left=xlim_left, right=xlim_right)
+                
+        bin_size = bins[1] - bins[0]
+        plot_obj.text(0.02, 0.97, s="bin size\n = {:4.2e}".format(bin_size),
+                      horizontalalignment="left", verticalalignment="top",
+                      transform=plot_obj.transAxes,
+                      color="black", fontsize=self.lgd_fs)
+
+        plot_obj.tick_params(axis="x", labelsize=self.tck_fs)
+        plot_obj.tick_params(axis="y", left=False, labelleft=False)
+    
+    
+    def indicate_histogram_statistics(self, plot_obj, map_vector):
+        
+        start_ht = 0.60
+        counter  = 0
+        n_fld    = len(map_vector.keys())
+        for sub_field, data in map_vector.items():
+            counter += 1
+            med = numpy.nanmedian(data)
+            mad = numpy.nanmedian(numpy.absolute(data-med))
+            opkwargs = {"transform": plot_obj.transAxes,
+                        "horizontalalignment": "right",
+                        "verticalalignment": "top",
+                        "color": self.cl_dict[sub_field],
+                        "fontsize": self.lgd_fs*0.9}
+            plot_obj.text(0.99, start_ht-counter*0.11,
+                          s="MED = {:4.2e}".format(med),
+                          **opkwargs)
+            plot_obj.text(0.99, start_ht-(counter*0.11+0.05),
+                          s="MAD = {:4.2e}".format(mad),
+                          **opkwargs)
+    
+    
+    def make_figure_for_distributions_of_mean_weights(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        original_mean_weights_data = \
+            frame["FluctuationMetricsIndividualSignalMapsMeansOfTTWeights"]
+        wu = 1 / (core.G3Units.mK * core.G3Units.mK)
+        data_reorganized = {}
+        for sub_field, map_double in original_mean_weights_data.items():
+            data_reorganized[sub_field] = \
+                numpy.asarray(map_double.values()) / wu
+        
+        xlim_lefts  = {"90GHz":  20.0, "150GHz":  30.0, "220GHz":  1.0}
+        xlim_rights = {"90GHz": 100.0, "150GHz": 170.0, "220GHz": 15.0}
+        
+        self.draw_histograms(
+            plot_obj, data_reorganized,
+            xlim_lefts[self.map_id], xlim_rights[self.map_id])
+        
+        self.indicate_histogram_statistics(plot_obj, data_reorganized)
+        
+        xlabel = "\n" + "Mean TT weights  " + "[1 / " + r"${mK_{CMB}}^2$" + "]"
+        ylabel = ""
+        title  = self.get_full_fig_title(
+                     "Distributions of mean TT weights of individual maps\n")
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, title, self.ttl_fs)
+        
+        file_name = self.get_full_file_name(
+                        "distributions_of_individual_mean_tt_weights")
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
+    def make_figure_for_distributions_of_pntng_offsets(self, frame):
+        
+        for coordinate in ["Ra", "Dec"]:
+            figure_obj, plot_obj = get_figure_and_plot_objects()
+            
+            original_offsets_data_sets = \
+                [frame["Delta"+coordinate+"sOf"+\
+                       rank+"BrightestSourceFromEachSubfield"] \
+                 for rank in ["1st", "2nd", "3rd"]]
+            
+            data_reorganized = {}
+            for sub_field, map_double in original_offsets_data_sets[0].items():
+                three_offsets_all_obss = \
+                    [[ds[sub_field][obs_id] \
+                      for ds in original_offsets_data_sets] \
+                     for obs_id in map_double.keys()]
+                avgs_offsets = [numpy.nanmean(three_offsets_one_obs) \
+                                for three_offsets_one_obs            \
+                                in  three_offsets_all_obss]
+                data_reorganized[sub_field] = \
+                    numpy.asarray(avgs_offsets)/core.G3Units.arcsec
+            
+            self.draw_histograms(
+                plot_obj, data_reorganized, -45, 45)
+            
+            self.indicate_histogram_statistics(plot_obj, data_reorganized)
+            
+            xlabel = "\n" + "The average " + coordinate + " offset [arcsec.]"
+            ylabel = ""
+            title  = self.get_full_fig_title(
+                         "Distributions of average "+coordinate+" offsets "+\
+                         "of point sources\n")
+            set_ax_labels_and_title(
+                plot_obj, xlabel, ylabel, title, self.ttl_fs)
+            
+            file_name = self.get_full_file_name(
+                            "distribution_of_average_"+coordinate+"_offsets")
+            save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
+    
+    def make_figure_for_distributions_of_noise_levels(self, frame):
+        
+        figure_obj, plot_obj = get_figure_and_plot_objects()
+        
+        original_noise_data = frame["NoiseLevelsFromIndividualTMaps"]
+        nu = core.G3Units.uK * core.G3Units.arcmin
+        data_reorganized = {}
+        for sub_field, map_double in original_noise_data.items():
+            data_reorganized[sub_field] = \
+                numpy.asarray(map_double.values())/nu
+        
+        xlim_lefts  = {"90GHz": 100, "150GHz":  80, "220GHz": 300}
+        xlim_rights = {"90GHz": 200, "150GHz": 160, "220GHz": 650}
+        
+        self.draw_histograms(
+            plot_obj, data_reorganized,
+            xlim_lefts[self.map_id], xlim_rights[self.map_id])
+        
+        self.indicate_histogram_statistics(plot_obj, data_reorganized)
+        
+        xlabel = "\n" + "Noise level  " + r"$[{\mu}K \cdot arcmin]$"
+        ylabel = ""
+        title  = self.get_full_fig_title(
+                     "Distributions of noise levels of individual maps\n")
+        set_ax_labels_and_title(
+            plot_obj, xlabel, ylabel, title, self.ttl_fs)
+        
+        file_name = self.get_full_file_name(
+                        "distributions_of_individual_noise_levels")
+        save_figure_etc(figure_obj, self.fig_dir, file_name)
+    
     
     def __call__(self, frame):
+        
+        if "Id" not in frame.keys():
+            return
+        
+        if frame["Id"] != self.map_id:
+            return
+        
+        if self.make_fig_for_fluc_metrics:
+            if not self.fig_fl_made:
+                if "FluctuationMetricsIndividualSignalMapsMeansOfTTWeights" \
+                in frame.keys():
+                    self.log("")
+                    self.log("Making a figure for "
+                             "distributions of mean TT weights ...")
+                    self.make_figure_for_distributions_of_mean_weights(frame)
+                    self.fig_fl_made = True
+                    self.log("Done.")
+                    self.log("")
+        
+        if self.make_fig_for_ptg_offsets:
+            if not self.fig_pt_made:
+                if "DeltaRasOf1stBrightestSourceFromEachSubfield" \
+                in frame.keys():
+                    self.log("")
+                    self.log("Making a figure for "
+                             "distributions of pointing offsets ...")
+                    self.make_figure_for_distributions_of_pntng_offsets(frame)
+                    self.fig_pt_made = True
+                    self.log("Done.")
+                    self.log("")
+        
+        if self.make_fig_for_noise_levels:
+            if not self.fig_ns_made:
+                if "NoiseLevelsFromIndividualTMaps" in frame.keys():
+                    self.log("")
+                    self.log("Making a figure for "
+                             "distributions of noise levels ...")
+                    self.make_figure_for_distributions_of_noise_levels(frame)
+                    self.fig_ns_made = True
+                    self.log("Done.")
+                    self.log("")
         
         return
 
