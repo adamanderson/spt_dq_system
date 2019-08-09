@@ -13,7 +13,6 @@
     display: flex;
     align-items: left;
     justify-content: center;
-    background-color: hsla(45, 100%, 75%, 0.10);
     position: relative;
     height: 75px;
     z-index: 10;
@@ -37,11 +36,14 @@
   }
   .time-intervals {
     width: 14%;
-    background-color: hsla(165, 100%, 75%, 0.10);
   }
   .figures {
     width: 86%;
-    background-color: hsla(285, 100%, 75%, 0.10);
+  }
+  .border-figs {
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.1);
+    border-style: solid;
   }
   </style>
 </head>
@@ -399,11 +401,12 @@
     </table>
   </div>
 
-  <div id="tabs-maps">
-    <div class="header"><h2>Field Observations</h2></div>
+  <div id="tabs-maps" style="padding:10px 10px 10px 10px;">
+    <div class="header" style="background-color:hsla(45, 100%, 75%, 0.05);">
+      <h2>Field Observations</h2>
+    </div>
     <div class="container">
-    
-      <div class="time-intervals">
+      <div class="time-intervals" style="background-color:hsla(165, 100%, 75%, 0.05);">
         <table>
           <tr>
             <td>
@@ -437,35 +440,35 @@
         </table>
       </div>
       
-      <div class="figures">
-        <table style="table-layout:fixed">
+      <div class="figures" style="background-color:hsla(285, 100%, 75%, 0.05);">
+        <table style="table-layout:fixed;" cellpadding="5">
           <tr>
             <td colspan="3">
-              <h2><u>Maps</u></h2>
+              <h2 style="font-weight:lighter;"><u>Maps</u></h2>
             </td>
           </tr>
           
           <tr>
             <td colspan="3">
-              <h3>T Maps</h3>
+              <h3 style="font-weight:lighter;">T Maps</h3>
             </td>
           </tr>  
           <tr>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-T_map.png'">
-                <img style="display:block;" width="100%" name='map_t_90'
+                <img style="display:block;" width="100%" name='map_t_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-T_map.png'">
-                <img style="display:block;" width="100%" name='map_t_150'
+                <img style="display:block;" width="100%" name='map_t_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-T_map.png'">
-                <img style="display:block;" width="100%" name='map_t_220'
+                <img style="display:block;" width="100%" name='map_t_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map.png'>
               </a>
             </td>
@@ -474,25 +477,25 @@
           
           <tr>
             <td colspan="3">
-              <h3>TT Weight Maps</h3>
+              <h3 style="font-weight:lighter;">TT Weight Maps</h3>
             </td>
             </tr>  
           <tr>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png'">
-                <img style="display:block;" width="100%" name='map_tt_90'
+                <img style="display:block;" width="100%" name='map_tt_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-TT_weight_map.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png'">
-                <img style="display:block;" width="100%" name='map_tt_150'
+                <img style="display:block;" width="100%" name='map_tt_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-TT_weight_map.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png'">
-                <img style="display:block;" width="100%" name='map_tt_220'
+                <img style="display:block;" width="100%" name='map_tt_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-TT_weight_map.png'>
               </a>
             </td>
@@ -501,25 +504,25 @@
           
           <tr>
             <td colspan="3">
-              <h3>TT Weight Map Cross Sections</h3>
+              <h3 style="font-weight:lighter;">TT Weight Map Cross Sections</h3>
             </td>
           </tr>
           <tr>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png">
-                <img style="display:block;" width="100%" name='weight_xsection_90' 
+                <img style="display:block;" width="100%" name='weight_xsection_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-TT_weight_map_cross_sectional_view.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'">
-                <img style="display:block;" width="100%" name='weight_xsection_150' 
+                <img style="display:block;" width="100%" name='weight_xsection_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-TT_weight_map_cross_sectional_view.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'">
-                <img style="display:block;" width="100%" name='weight_xsection_220' 
+                <img style="display:block;" width="100%" name='weight_xsection_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-TT_weight_map_cross_sectional_view.png'>
               </a>
             </td>
@@ -528,34 +531,34 @@
           
           <tr>
             <td colspan="3">
-              <br><h2><u>Fluctuations in Maps</u></h2>
+              <br><h2 style="font-weight:lighter;"><u>Fluctuations in Maps</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>T Map Noise Levels</h3>
+              <h3 style="font-weight:lighter;">T Map Noise Levels</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_noise_levels_from_individual_maps.png">
-                <img style="display:block;" width="100%" name='map_noise_t_90' 
+                <img style="display:block;" width="100%" name='map_noise_t_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_noise_levels_from_individual_maps.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_noise_levels_from_individual_maps.png'">
-                <img style="display:block;" width="100%" name='map_noise_t_150' 
+                <img style="display:block;" width="100%" name='map_noise_t_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_noise_levels_from_individual_maps.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_noise_levels_from_individual_maps.png'">
-                <img style="display:block;" width="100%" name='map_noise_t_220' 
+                <img style="display:block;" width="100%" name='map_noise_t_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_noise_levels_from_individual_maps.png'>
               </a>
             </td>
@@ -566,28 +569,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Mean TT Weights</h3>
+              <h3 style="font-weight:lighter;">Mean TT Weights</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_mean_of_tt_weight_map_values.png">
-                <img style="display:block;" width="100%" name='mean_tt_90' 
+                <img style="display:block;" width="100%" name='mean_tt_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_mean_of_tt_weight_map_values.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_mean_of_tt_weight_map_values.png'">
-                <img style="display:block;" width="100%" name='mean_tt_150' 
+                <img style="display:block;" width="100%" name='mean_tt_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_mean_of_tt_weight_map_values.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_mean_of_tt_weight_map_values.png'">
-                <img style="display:block;" width="100%" name='mean_tt_220' 
+                <img style="display:block;" width="100%" name='mean_tt_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_mean_of_tt_weight_map_values.png'>
               </a>
             </td>
@@ -598,28 +601,28 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Noise Levels in Running Coadded T Maps</h3>
+              <h3 style="font-weight:lighter;">Noise Levels of Running Coadded T Maps</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_noise_levels_from_running_coadds.png'">
-                <img style="display:block;" width="100%" name='running_noise_t_90'
+                <img style="display:block;" width="100%" name='running_noise_t_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_noise_levels_from_running_coadds.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_noise_levels_from_running_coadds.png'">
-                <img style="display:block;" width="100%" name='running_noise_t_150'
+                <img style="display:block;" width="100%" name='running_noise_t_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_noise_levels_from_running_coadds.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_noise_levels_from_running_coadds.png'">
-                <img style="display:block;" width="100%" name='running_noise_t_220'
+                <img style="display:block;" width="100%" name='running_noise_t_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_noise_levels_from_running_coadds.png'>
               </a>
             </td>
@@ -630,28 +633,28 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Distributions of Noise Levels of Individual T Maps</h3>
+              <h3 style="font-weight:lighter;">Distributions of the Noise Levels of Individual T Maps</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_distributions_of_individual_noise_levels.png'">
-                <img style="display:block;" width="100%" name='distro_noise_t_90'
+                <img style="display:block;" width="100%" name='distro_noise_t_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_distributions_of_individual_noise_levels.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distributions_of_individual_noise_levels.png'">
-                <img style="display:block;" width="100%" name='distro_noise_t_150'
+                <img style="display:block;" width="100%" name='distro_noise_t_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distributions_of_individual_noise_levels.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_distributions_of_individual_noise_levels.png'">
-                <img style="display:block;" width="100%" name='distro_noise_t_220'
+                <img style="display:block;" width="100%" name='distro_noise_t_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_distributions_of_individual_noise_levels.png'>
               </a>
             </td>
@@ -662,28 +665,28 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Distributions of Mean TT Weights of Individual Maps</h3>
+              <h3 style="font-weight:lighter;">Distributions of the Mean TT Weights</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
-                <img style="display:block;" width="100%" name='distro_mean_tt_90'
+                <img style="display:block;" width="100%" name='distro_mean_tt_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
-                <img style="display:block;" width="100%" name='distro_mean_tt_150'
+                <img style="display:block;" width="100%" name='distro_mean_tt_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
-                <img style="display:block;" width="100%" name='distro_mean_tt_220'
+                <img style="display:block;" width="100%" name='distro_mean_tt_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
               </a>
             </td>
@@ -694,27 +697,27 @@
           
           <tr>
             <td colspan="3">
-              <br><h2><u>Pointing</u></h2>
+              <br><h2 style="font-weight:lighter;"><u>Pointing</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>RA Offsets Of Points Sources</h3>
+              <h3 style="font-weight:lighter;">RA Offsets Of Points Sources</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png'">
-                <img style="display:block;" width="100%" name='ra_offsets_el0'
+                <img style="display:block;" width="100%" name='ra_offsets_el0' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png'">
-                <img style="display:block;" width="100%" name='ra_offsets_el1'
+                <img style="display:block;" width="100%" name='ra_offsets_el1' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png'>
               </a>
             </td>
@@ -723,14 +726,14 @@
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'">
-                <img style="display:block;" width="100%" name='ra_offsets_el2'
+                <img style="display:block;" width="100%" name='ra_offsets_el2' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'">
-                <img style="display:block;" width="100%" name='ra_offsets_el3'
+                <img style="display:block;" width="100%" name='ra_offsets_el3' class="border-figs"
                  src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'>
               </a>
             </td>
@@ -741,21 +744,21 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Dec Offsets Of Points Sources</h3>
+              <h3 style="font-weight:lighter;">Dec Offsets Of Points Sources</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'">
-                <img style="display:block;" width="100%" name='dec_offsets_el0'
+                <img style="display:block;" width="100%" name='dec_offsets_el0' class="border-figs"
               src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png'">
-                <img style="display:block;" width="100%" name='dec_offsets_el1'
+                <img style="display:block;" width="100%" name='dec_offsets_el1' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png'>
               </a>
             </td>
@@ -764,14 +767,14 @@
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png'">
-                <img style="display:block;" width="100%" name='dec_offsets_el2'
+                <img style="display:block;" width="100%" name='dec_offsets_el2' class="border-figs"
               src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
-                       '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25png'">
-                <img style="display:block;" width="100%" name='dec_offsets_el3'
+                       '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'">
+                <img style="display:block;" width="100%" name='dec_offsets_el3' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'>
               </a>
             </td>
@@ -782,21 +785,21 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Disributions of Pointing Offsets</h3>
+              <h3 style="font-weight:lighter;">Disributions of the Pointing Offsets</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distribution_of_average_Ra_offsets.png'">
-                <img style="display:block;" width="100%" name='distro_ra_offsets'
+                <img style="display:block;" width="100%" name='distro_ra_offsets' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distribution_of_average_Ra_offsets.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distribution_of_average_Dec_offsets.png'">
-                <img style="display:block;" width="100%" name='distro_dec_offsets'
+                <img style="display:block;" width="100%" name='distro_dec_offsets' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distribution_of_average_Dec_offsets.png'>
               </a>
             </td>
@@ -807,34 +810,34 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <br><h2><u>Completeness of Observations</u></h2>
+              <br><h2 style="font-weight:lighter;"><u>Completeness of Observations</u></h2>
              </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>In Terms of Numbers of Bolometers Not Flagged</h3>
+              <h3 style="font-weight:lighter;">In Terms of Numbers of Bolometers Not Flagged</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_average_numbers_of_flagged_detectors.png'">
-                <img style="display:block;" width="100%" name='flagging_90'
+                <img style="display:block;" width="100%" name='flagging_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_average_numbers_of_flagged_detectors.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_average_numbers_of_flagged_detectors.png'">
-                <img style="display:block;" width="100%" name='flagging_150'
+                <img style="display:block;" width="100%" name='flagging_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_average_numbers_of_flagged_detectors.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_average_numbers_of_flagged_detectors.png'">
-                <img style="display:block;" width="100%" name='flagging_220'
+                <img style="display:block;" width="100%" name='flagging_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_average_numbers_of_flagged_detectors.png'>
               </a>
             </td>
@@ -845,28 +848,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>In Terms of Fractions of Pixels Having Nominal Weights</h3>
+              <h3 style="font-weight:lighter;">In Terms of Fractions of Pixels Having Nominal Weights</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
-                <img style="display:block;" width="100%" name='fractional_coverage_90'
+                <img style="display:block;" width="100%" name='fractional_coverage_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
-                <img style="display:block;" width="100%" name='fractional_coverage_150'
+                <img style="display:block;" width="100%" name='fractional_coverage_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
-                <img style="display:block;" width="100%" name='fractional_coverage_220'
+                <img style="display:block;" width="100%" name='fractional_coverage_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
               </a>
             </td>
@@ -877,14 +880,14 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>In Terms of Recorded Observation Durations</h3>
+              <h3 style="font-weight:lighter;">In Terms of Recorded Observation Durations</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/observation_durations.png'">
-                <img style="display:block;" width="100%" name='observation_durations'
+                <img style="display:block;" width="100%" name='observation_durations' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/observation_durations.png'>
               </a>
             </td>
@@ -895,34 +898,34 @@
           
           <tr>
             <td colspan="3">
-              <br><h2><u>Temperature Calibration</u></h2>
+              <br><h2 style="font-weight:lighter;"><u>Temperature Calibration</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Averages of Ratios of SPT x Planck / Planck x Planck Spectra</h3>
+              <h3 style="font-weight:lighter;">Averages of Ratios of SPT x Planck / Planck x Planck Spectra</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_averages_of_power_spectra_ratios.png'">
-                <img style="display:block;" width="100%" name='xspec_ratio_90'
+                <img style="display:block;" width="100%" name='xspec_ratio_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_averages_of_power_spectra_ratios.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_averages_of_power_spectra_ratios.png'">
-                <img style="display:block;" width="100%" name='xspec_ratio_150'
+                <img style="display:block;" width="100%" name='xspec_ratio_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_averages_of_power_spectra_ratios.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_averages_of_power_spectra_ratios.png'">
-                <img style="display:block;" width="100%" name='xspec_ratio_220'
+                <img style="display:block;" width="100%" name='xspec_ratio_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_averages_of_power_spectra_ratios.png'>
               </a>
             </td>
@@ -933,28 +936,28 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Disributions of Averages of Ratios of SPT x Planck / Planck x Planck</h3>
+              <h3 style="font-weight:lighter;">Disributions of the Cross Spectra Ratios</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_distributions_of_crass_spectra_ratios.png'">
-                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_90'
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_90' class="border-figs"
                       src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_distributions_of_crass_spectra_ratios.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distributions_of_crass_spectra_ratios.png'">
-                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_150'
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_150' class="border-figs"
                       src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distributions_of_crass_spectra_ratios.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_distributions_of_crass_spectra_ratios.png'">
-                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_220'
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_220' class="border-figs"
                       src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_distributions_of_crass_spectra_ratios.png'>
               </a>
             </td>
@@ -965,28 +968,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Medians of Percentage Changes in CalibratorResponse by Sub-field</h3>
+              <h3 style="font-weight:lighter;">Medians of Percentage Changes in CalibratorResponse by Sub-field</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_field_90'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_field_150'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_field_220'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
               </a>
             </td>
@@ -997,28 +1000,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Medians of Percentage Changes in CalibratorResponse by Wafer</h3>
+              <h3 style="font-weight:lighter;">Medians of Percentage Changes in CalibratorResponse by Wafer</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_90'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_150'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
-                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_220'
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
               </a>
             </td>
@@ -1029,28 +1032,28 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3>Disributions of Percentage Changes in CalibratorResponse by Sub-field</h3>
+              <h3 style="font-weight:lighter;">Disributions of the Median Percentage Changes</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_distributions_of_cal_response_changes.png'">
-                <img style="display:block;" width="100%" name='distro_cal_vs_el_90'
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_90' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_distributions_of_cal_response_changes.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_distributions_of_cal_response_changes.png'">
-                <img style="display:block;" width="100%" name='distro_cal_vs_el_150'
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_150' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_distributions_of_cal_response_changes.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/220GHz-T_map_distributions_of_cal_response_changes.png'">
-                <img style="display:block;" width="100%" name='distro_cal_vs_el_220'
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_220' class="border-figs"
                      src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_distributions_of_cal_response_changes.png'>
               </a>
             </td>
@@ -1061,28 +1064,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3>Medians of pW/K Calibration Factors by Wafer</h3>
+              <h3 style="font-weight:lighter;">Medians of pW/K Calibration Factors by Wafer</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_90'
+                <img style="display:block;" width="100%" name='pw_per_k_by_field_90' class="border-figs"
                  src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_150'
+                <img style="display:block;" width="100%" name='pw_per_k_by_field_150' class="border-figs"
                  src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                       '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_220'
+                <img style="display:block;" width="100%" name='pw_per_k_by_field_220' class="border-figs"
                  src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
