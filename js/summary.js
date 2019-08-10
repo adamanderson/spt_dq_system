@@ -72,13 +72,13 @@ function update_figs() {
     document["map_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png'
     document["map_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png'
     
-    document["weight_xsection_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
-    document["weight_xsection_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
-    document["weight_xsection_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
+    document["xsec_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png'
+    document["xsec_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png'
+    document["xsec_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png'
     
-    document["map_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
-    document["map_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
-    document["map_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
+    document["individ_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png'
+    document["individ_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png'
+    document["individ_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png'
     
     document["mean_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_mean_of_tt_weight_map_values.png'
     document["mean_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_mean_of_tt_weight_map_values.png'
