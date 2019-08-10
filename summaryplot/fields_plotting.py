@@ -159,7 +159,7 @@ def set_ax_labels_and_title(
     
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
     if add_legend:
-        plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=1.0)
+        plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.1)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
     plot_obj.set_ylabel(ylabel, fontsize=lbl_fs)
     plot_obj.set_title(title, fontsize=ttl_fs)
@@ -170,7 +170,7 @@ def save_figure_etc(figure_obj, fig_dir, file_name,
     
     figure_obj.tight_layout(rect=rect)
     fig_path = os.path.join(fig_dir, file_name)
-    figure_obj.savefig(fig_path, bbox_inches=bbox)
+    figure_obj.savefig(fig_path, bbox_inches=bbox, transparent=True)
     pyplot.close(figure_obj)
 
 
@@ -2279,7 +2279,7 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         plot_obj.tick_params(axis="x", labelsize=self.tck_fs)
         plot_obj.tick_params(axis="y", left=False, labelleft=False)
         plot_obj.legend(loc="upper right",
-                        fontsize=self.lgd_fs, framealpha=1.0)
+                            fontsize=self.lgd_fs, framealpha=0.1)
     
     
     def indicate_histogram_statistics(self, plot_obj, map_vector):
