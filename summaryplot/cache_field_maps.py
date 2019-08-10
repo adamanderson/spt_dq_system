@@ -752,11 +752,15 @@ def update(mode, action,
                      'coadded_data'             : True,
                      'make_figure_for_field_map': True,
                      'smooth_map_with_gaussian' : False,
-                     'gaussian_fwhm'            : 1.0,
                      'make_figure_for_entire_weight_map'       : True,
                      'make_figure_for_weight_map_cross_section': True,
                      'logger_name': '{}_{}'.format(sub_logger_name, band),
                      'log_file'   : log_file}
+                
+                if time_interval in ["last_n", "weekly"]:
+                    args_plotting.update(
+                        {'smooth_map_with_gaussian': True,
+                         'gaussian_fwhm'           : 1.0})
                 
                 if time_interval == 'yearly':
                     args_plotting.update(

@@ -268,7 +268,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             date    = str(obs_fr["ObservationStart"]).split(".")[0]
             resol   = str(map_res/core.G3Units.arcmin)+"' map"
             if self.smooth_map_with_gaussian:
-                resol += " smoothed with " + \
+                resol += " map smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "  " + obs_id + " (" + date + ") " + \
                       "   " + self.map_id + " " + mp_ty_str
@@ -293,7 +293,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                                 for source, obss in obs_id_list.items()])
             resol  = str(map_res/core.G3Units.arcmin)+"'"
             if self.smooth_map_with_gaussian:
-                resol += " smoothed with " + \
+                resol += " map smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "   " + self.map_id + " coadded " + mp_ty_str + \
                       "s " + "\n" + \
@@ -304,7 +304,11 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             raise RuntimeError("Unclear how to build the fig. title!")
         
         if vals_for_stats is None:
-            full_ttl = title_a
+            if show_res:
+                title_b = "(" + resol + ")" + "\n"
+            else:
+                title_b = ""
+            full_ttl = title_a + title_b
         else:
             if show_res:
                 title_b = "(" + resol + ",  "
@@ -365,7 +369,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             larger  = numpy.max([numpy.abs(pctl_lo), numpy.abs(pctl_hi)])
             vmin = -1.0 * larger
             vmax =  1.0 * larger
-            cbar_label += "  ( 1 to 99 percentile range )"
+            cbar_label += "  ( 1 to 99 pctl. range)"
         else:
             vmin = custom_vmin
             vmax = custom_vmax
@@ -554,11 +558,14 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                         obs_id_list = frame["CoaddedObservationIDs"]
                     else:
                         obs_id_list = None
+                    if self.smooth_map_with_gaussian:
+                        vals_stats = None
+                    else:
+                        vals_stats = fd_mp[numpy.where(numpy.isfinite(fd_mp))]
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
                             self.obs_fr, obs_id_list, fd_mp_str,
-                            fd_mp[numpy.where(numpy.isfinite(fd_mp))], 3,
-                            res, show_res=True)
+                            vals_stats, 3, res, show_res=True)
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
                                 fd_mp_str.replace(" ", "_") + ".png"
