@@ -11,8 +11,8 @@
 <style>
   .container-wafer-selector {
     display: flex;
-    height: 50px;
-    padding: 2%;
+    height: 70px;
+    padding: 1%;
     align-items: center;
   }
   .container-all-figs {
@@ -37,6 +37,10 @@
     border-color: rgba(0, 0, 0, 0.1);
     border-style: solid;
   }
+  .field-with-border {
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.2);
+  }
 </style>
 </head>
 
@@ -51,8 +55,8 @@
   <div id="tabs-summarystats" style="padding:10px 10px 10px 10px;">
     <div class="container-wafer-selector" style="background-color:hsla(120, 100%, 75%, 0.02);">
       <form>
-        <fieldset>
-          <legend>Select a wafer:</legend>
+        <fieldset class="field-with-border">
+          <legend>Wafer</legend>
           <div id="waferlist">
             <input type="radio" id="wafers-w172" name="wafers" value="w172">
             <label for="wafers-w172">w172</label>
@@ -84,19 +88,19 @@
     <div class="container-all-figs" style="height:70vh;">
       <div class="container-time-interval-selector" style="background-color:hsla(210, 100%, 75%, 0.01);">
         <form>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Recent</legend>
             <div id="datalist_summary_last_n">
             </div>
           </fieldset>
           <br>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Monthly</legend>
             <div id="datalist_summary_monthly">
             </div>
           </fieldset>
           <br>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Weekly</legend>
             <div id="datalist_summary_weekly">
             </div>
@@ -376,25 +380,25 @@
     <div class="container-all-figs" style="height:85vh;">
       <div class="container-time-interval-selector" style="background-color:hsla(165, 100%, 75%, 0.01);">
         <form>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Recent</legend>
             <div id="datalist_maps_last_n">
             </div>
           </fieldset>
           <br>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Yearly</legend>
             <div id="datalist_maps_yearly">
             </div>
           </fieldset>
           <br>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Monthly</legend>
             <div id="datalist_maps_monthly">
             </div>
           </fieldset>
           <br>
-          <fieldset>
+          <fieldset class="field-with-border">
             <legend>Weekly</legend>
             <div id="datalist_maps_weekly">
             </div>
