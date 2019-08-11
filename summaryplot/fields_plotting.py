@@ -152,6 +152,8 @@ def set_ticks(plot_obj, xta, xti, xtl, yta, yti, ytl, ttl_fs,
                   linestyle="dotted", linewidth=gda_lw)
     plot_obj.grid(axis="y", which="minor",
                   linestyle="dotted", linewidth=gdi_lw)
+    plot_obj.spines["right"].set_visible(False)
+    plot_obj.spines["top"].set_visible(False)
 
 
 def set_ax_labels_and_title(
@@ -159,7 +161,7 @@ def set_ax_labels_and_title(
     
     lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(ttl_fs)
     if add_legend:
-        plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.1)
+        plot_obj.legend(loc="upper right", fontsize=lgd_fs, framealpha=0.2)
     plot_obj.set_xlabel(xlabel, fontsize=lbl_fs)
     plot_obj.set_ylabel(ylabel, fontsize=lbl_fs)
     plot_obj.set_title(title, fontsize=ttl_fs)
@@ -170,7 +172,7 @@ def save_figure_etc(figure_obj, fig_dir, file_name,
     
     figure_obj.tight_layout(rect=rect)
     fig_path = os.path.join(fig_dir, file_name)
-    figure_obj.savefig(fig_path, bbox_inches=bbox, transparent=True)
+    figure_obj.savefig(fig_path, bbox_inches=bbox, transparent=False)
     pyplot.close(figure_obj)
 
 
@@ -709,7 +711,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         self.xlim_left  = xlim_left
         self.xlim_right = xlim_right
         self.n_rmarg_el = 4.8
-        self.n_rmarg_wf = 5.2
+        self.n_rmarg_wf = 6.0
         self.ttl_fs  = figure_title_font_size
         self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
                         "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3"}
@@ -957,7 +959,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
              "MissingFluxCalibration" : ["#ff7f0e" , "No Fluxcal"  , "v" , 6],
              "PostCalibrationNaNs"    : ["#2ca02c" , "Has NaNs"    , "v" , 6],
              "BadWeight"              : ["#d62728" , "Bad Weight"  , "v" , 6],
-             # "Others"                 : ["black"   , "Others"      , "." , 8],
+             "Others"                 : ["black"   , "Others"      , "." , 8],
              "TotalNotFlagged"        : ["green"   , "Survived"    , "*" , 9],
              "TotalRemoved"           : ["red"     , "Removed"     , "x" , 8]}
         
@@ -979,7 +981,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         ylims_dict = {"bottom": -10, "top": 5000}
         xlims_dict = self.get_xlims_from_obs_id_range(
-                         self.xlim_left, self.xlim_right, 8.0)
+                         self.xlim_left, self.xlim_right, 9.0)
         
         set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                            ylims_dict["bottom"], ylims_dict["top"])
@@ -2286,7 +2288,7 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         plot_obj.tick_params(axis="x", labelsize=self.tck_fs)
         plot_obj.tick_params(axis="y", left=False, labelleft=False)
         plot_obj.legend(loc="upper right",
-                            fontsize=self.lgd_fs, framealpha=0.1)
+                            fontsize=self.lgd_fs, framealpha=0.2)
     
     
     def indicate_histogram_statistics(self, plot_obj, map_vector):
