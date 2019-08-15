@@ -264,6 +264,11 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             self, obs_fr, obs_id_list, mp_ty_str,
             vals_for_stats, nr, map_res, show_res=True):
         
+        if self.map_id == "90GHz":
+            map_id_for_fig = "95GHz"
+        else:
+            map_id_for_fig = self.map_id
+        
         if (obs_fr is not None) and (obs_id_list is None):
             source  = obs_fr["SourceName"]
             obs_id  = str(obs_fr["ObservationID"])
@@ -273,7 +278,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                 resol += " map smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
             title_a = source + "  " + obs_id + " (" + date + ") " + \
-                      "   " + self.map_id + " " + mp_ty_str
+                      "   " + map_id_for_fig + " " + mp_ty_str
         
         elif (obs_fr is None) and (obs_id_list is not None):
             source  = "1500 sq. deg. field"
@@ -297,8 +302,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             if self.smooth_map_with_gaussian:
                 resol += " map smoothed with " + \
                          str(self.gaussian_fwhm) + "' Gaussian"
-            title_a = source + "   " + self.map_id + " coadded " + mp_ty_str + \
-                      "s " + "\n" + \
+            title_a = source + "   " + map_id_for_fig + \
+                      " coadded " + mp_ty_str + "s " + "\n" + \
                       "(observations taken " + dt_rng + "," + "\n" + \
                       "{" + n_obss + "})" + "\n"
         
@@ -324,6 +329,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             title_c = "15th pctl. = " +pctl_15+",  "+ \
                       "85th = " +pctl_85+ ")"
             full_ttl = title_a + title_b + title_c + "\n"
+        
         file_nm  = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
         file_nm += (file_nm + ".png").replace(" ", "_")
         
@@ -612,7 +618,11 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                             None, None, map_res, show_res=False)
                     xlabel  = "\n" + "Declination [degree]"
                     ylabel  = "Normalized weight" + "\n"
-                    fig_ttl = self.map_id + " " + wt_mp_str + "\n" + \
+                    if self.map_id == "90GHz":
+                        map_id_for_fig = "95GHz"
+                    else:
+                        map_id_for_fig = self.map_id
+                    fig_ttl = map_id_for_fig + " " + wt_mp_str + "\n" + \
                               "Cross sectional view " + \
                               "along the RA = 0h contour" + "\n"
                     if self.simpler_file_names:
@@ -870,10 +880,15 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
     
     def get_full_fig_title(self, additional_title, no_map_type=False):
         
-        if no_map_type:
-            prefix = self.map_id + "  -  "
+        if self.map_id == "90GHz":
+            map_id_for_fig = "95GHz"
         else:
-            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+            map_id_for_fig = self.map_id
+        
+        if no_map_type:
+            prefix = map_id_for_fig + "  -  "
+        else:
+            prefix = map_id_for_fig + " " + self.map_type + " map" + "  -  "
 
         return prefix + additional_title
     
@@ -896,9 +911,16 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         obs_dur_data = frame["ObservationDurations"]
         
+        xlims_dict = self.get_xlims_from_obs_id_range(
+                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
+        ylims_dict = {"bottom": 0.0, "top": 140.0}
+        
+        total_obs_time = 0
         for sub_field in self.all_fields:
             oids, lens = self.get_data_points_to_plot(
                              obs_dur_data, [sub_field], core.G3Units.min)
+            for one_obs_len in lens:
+                total_obs_time += one_obs_len * 60
             label = self.el_dict[sub_field]
             color = self.cl_dict[sub_field]
             
@@ -906,13 +928,25 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 oids, lens, label=label,
                 linestyle="None", marker=".", markersize=self.mrkrsz,
                 color=color, alpha=self.typical_alpha*1.5)
-        
-        xlims_dict = self.get_xlims_from_obs_id_range(
-                         self.xlim_left, self.xlim_right, self.n_rmarg_el)
-        ylims_dict = {"bottom": 0.0, "top": 140.0}
-        
+            
+            self.indicate_out_of_range_values(
+                plot_obj, oids, lens, ylims_dict, color)
+                
         set_lims(plot_obj, xlims_dict["left"],   xlims_dict["right"],
                            ylims_dict["bottom"], ylims_dict["top"])
+        
+        total_elapsed_time = self.xlim_right - self.xlim_left
+        obs_eff = 100 * total_obs_time / total_elapsed_time
+        
+        lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
+        text_kargs = {"transform": plot_obj.transAxes,
+                      "color"    : "black",
+                      "alpha"    : 2.0*self.typical_alpha,
+                      "fontsize" : 0.90*lgd_fs,
+                      "horizontalalignment": "right"}
+        plot_obj.text(0.98, 0.52,
+                      "Observing\nefficiency:\n  {:4.1f}%".format(obs_eff),
+                      **text_kargs)
         
         xtick_locs_major, xtick_labels, xtick_locs_minor = \
             self.get_xticks_and_labels_from_obs_id_range(
@@ -1692,10 +1726,15 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
     
     def get_full_fig_title(self, additional_title, no_map_type=False):
         
-        if no_map_type:
-            prefix = self.map_id + "  -  "
+        if self.map_id == "90GHz":
+            map_id_for_fig = "95GHz"
         else:
-            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+            map_id_for_fig = self.map_id
+        
+        if no_map_type:
+            prefix = map_id_for_fig + "  -  "
+        else:
+            prefix = map_id_for_fig + " " + self.map_type + " map" + "  -  "
 
         return prefix + additional_title
     
@@ -2231,10 +2270,15 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
     
     def get_full_fig_title(self, additional_title, no_map_type=False):
         
-        if no_map_type:
-            prefix = self.map_id + "  -  "
+        if self.map_id == "90GHz":
+            map_id_for_fig = "95GHz"
         else:
-            prefix = self.map_id + " " + self.map_type + " " + "map" + "  -  "
+            map_id_for_fig = self.map_id
+        
+        if no_map_type:
+            prefix = map_id_for_fig + "  -  "
+        else:
+            prefix = map_id_for_fig + " " + self.map_type + " map" + "  -  "
         return prefix + additional_title
     
     
