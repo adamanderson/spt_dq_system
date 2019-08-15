@@ -177,8 +177,12 @@ function update_visibility() {
 
 function update_lastmodified() {
 	$.get('/lastmodified_calibration', function(data) {
-		$("#lastmodified").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+		$("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
 	});
+	$.get('/lastmodified_maps', function(data) {
+		$("#lastmodified_maps").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+	});
+
 }
 
 /**

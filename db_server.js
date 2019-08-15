@@ -114,12 +114,33 @@ app.get('/staticdirs', function(req, res) {
 	res.send(dirlist);
 });
 
-// get time that plots were last updated
+// get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
 	var lastupdate_time;
 
 	var stat_dir = config.static_plot_dir + '/plots/last_n/last_3/';
-	filelist = fs.readdirSync(config.static_plot_dir + '/plots/last_n/last_3/');
+	filelist = fs.readdirSync(stat_dir);
+	for(var jfile=0; jfile < filelist.length; jfile++) {
+		file_info = fs.statSync(stat_dir + filelist[jfile]);
+		if(typeof lastupdate_time !== 'undefined') {
+			if(file_info.mtime > lastupdate_time) {
+				lastupdate_time = file_info.mtime;
+			}
+		}
+		else {
+			lastupdate_time = file_info.mtime;
+		}
+	}
+
+	res.send({time:lastupdate_time});
+});
+
+// get time that calibration plots were lastmodified
+app.get('/lastmodified_maps', function(req, res) {
+	var lastupdate_time;
+
+	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
+	filelist = fs.readdirSync(stat_dir);
 	for(var jfile=0; jfile < filelist.length; jfile++) {
 		file_info = fs.statSync(stat_dir + filelist[jfile]);
 		if(typeof lastupdate_time !== 'undefined') {
