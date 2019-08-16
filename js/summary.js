@@ -175,6 +175,16 @@ function update_visibility() {
     }
 }
 
+function update_lastmodified() {
+	$.get('/lastmodified_calibration', function(data) {
+		$("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+	});
+	$.get('/lastmodified_maps', function(data) {
+		$("#lastmodified_maps").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+	});
+
+}
+
 /**
  * Sets a global variable to records its value as a cookie for retrieval later.
  */
@@ -264,4 +274,5 @@ $( document ).ready(function()
 	// from the default values.
 	update_figs();
 	update_visibility();
+	update_lastmodified();
 });

@@ -11,7 +11,7 @@ npm install
 
 # get local copy of js dependencies (client-side)
 cd js
-wget https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css
+wget https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css
 mv jquery-ui.css ../css
 wget https://code.jquery.com/jquery-1.12.4.js
 wget https://code.jquery.com/ui/1.12.1/jquery-ui.js
