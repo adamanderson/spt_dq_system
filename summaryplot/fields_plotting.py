@@ -920,7 +920,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             oids, lens = self.get_data_points_to_plot(
                              obs_dur_data, [sub_field], core.G3Units.min)
             for one_obs_len in lens:
-                total_obs_time += one_obs_len * 60
+                total_obs_time += one_obs_len * 60 * 0.965
             label = self.el_dict[sub_field]
             color = self.cl_dict[sub_field]
             
