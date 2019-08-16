@@ -760,14 +760,19 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             if sub_field not in self.obs_ids_of_interest.keys():
                 continue
             relevant_ids = self.obs_ids_of_interest[sub_field]
-            for oid, datum in oids_and_data.items():
+            for oid in relevant_ids:
+                try:
+                    xs_and_ys.append((int(oid), oids_and_data[oid]/units))
+                except:
+                    xs_and_ys.append((int(oid), numpy.nan))
+            """for oid, datum in oids_and_data.items():
                 if int(oid) not in relevant_ids:
                     continue
                 if int(oid) < self.xlim_left:
                     continue
                 if int(oid) > self.xlim_right:
                     continue
-                xs_and_ys.append((int(oid), datum/units))
+                xs_and_ys.append((int(oid), datum/units))"""
         
         if len(xs_and_ys) == 0:
             xs = []
