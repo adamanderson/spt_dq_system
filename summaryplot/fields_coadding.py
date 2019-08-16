@@ -764,18 +764,18 @@ def calculate_map_fluctuation_metrics(
         
         wu = 1 / (core.G3Units.mK * core.G3Units.mK)
         nominal_weights_dict = \
-            { "90": {"ra0hdec-44.75": 30.0 * wu,
-                     "ra0hdec-52.25": 34.0 * wu,
-                     "ra0hdec-59.75": 36.0 * wu,
-                     "ra0hdec-67.25": 50.0 * wu},
-             "150": {"ra0hdec-44.75": 45.0 * wu,
-                     "ra0hdec-52.25": 51.0 * wu,
-                     "ra0hdec-59.75": 54.0 * wu,
-                     "ra0hdec-67.25": 75.0 * wu},
-             "220": {"ra0hdec-44.75":  3.5 * wu,
-                     "ra0hdec-52.25":  3.8 * wu,
-                     "ra0hdec-59.75":  4.5 * wu,
-                     "ra0hdec-67.25":  6.5 * wu}}
+            { "90": {"ra0hdec-44.75": 14.0 * wu,
+                     "ra0hdec-52.25": 16.0 * wu,
+                     "ra0hdec-59.75": 18.0 * wu,
+                     "ra0hdec-67.25": 21.0 * wu},
+             "150": {"ra0hdec-44.75": 20.0 * wu,
+                     "ra0hdec-52.25": 24.0 * wu,
+                     "ra0hdec-59.75": 27.0 * wu,
+                     "ra0hdec-67.25": 36.0 * wu},
+             "220": {"ra0hdec-44.75":  1.4 * wu,
+                     "ra0hdec-52.25":  1.8 * wu,
+                     "ra0hdec-59.75":  2.1 * wu,
+                     "ra0hdec-67.25":  2.4 * wu}}
         
         t_vals = numpy.asarray(map_frame["T"])
         
@@ -802,11 +802,16 @@ def calculate_map_fluctuation_metrics(
             better_t_vals = good_t_vals[inx]
             better_w_vals = good_w_vals[inx]
         else:
-            better_t_vals = t_vals[pixs]
+            good_t_vals = t_vals[pixs]
             if w_vals is None:
+                better_t_vals = good_t_vals
                 better_w_vals = None
             else:
-                better_w_vals = w_vals[pixs]
+                good_w_vals = w_vals[pixs]
+                igw = numpy.where((good_w_vals>0.0) &
+                                   numpy.isfinite(good_w_vals))
+                better_t_vals = good_t_vals[igw]
+                better_w_vals = good_w_vals[igw]
         
         map_stdddev = numpy.std(better_t_vals)
         if better_w_vals is None:
