@@ -492,7 +492,9 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         xlim_left  = idcs[0]
         xlim_right = idcs[-1]
         
-        ytop = numpy.nanmax(normalized_weights) * 1.10
+        larger_max = numpy.max([numpy.nanmax(normalized_weights),
+                                numpy.nanmax(prediction)])
+        ytop = larger_max * 1.23
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
         set_ticks(plot_obj, idcs[1:-1], None, [str(dec) for dec in decs[1:-1]],
                   None, None, None, self.ttl_fs, data_linewidth)
