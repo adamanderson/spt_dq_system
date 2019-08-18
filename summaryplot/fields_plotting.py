@@ -764,7 +764,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             relevant_ids = self.obs_ids_of_interest[sub_field]
             for oid in relevant_ids:
                 try:
-                    xs_and_ys.append((int(oid), oids_and_data[oid]/units))
+                    xs_and_ys.append((int(oid), oids_and_data[str(oid)]/units))
                 except:
                     xs_and_ys.append((int(oid), numpy.nan))
             """for oid, datum in oids_and_data.items():
