@@ -152,11 +152,11 @@ function update_figs() {
     document["distro_cal_vs_el_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distributions_of_cal_response_changes.png'
     document["distro_cal_vs_el_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_distributions_of_cal_response_changes.png'
     
-    document["pw_per_k_by_field_90"].src  = 'staticimg/'+mapweekdir+
+    document["pw_per_k_by_wafer_90"].src  = 'staticimg/'+mapweekdir+
         '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
-    document["pw_per_k_by_field_150"].src = 'staticimg/'+mapweekdir+
+    document["pw_per_k_by_wafer_150"].src = 'staticimg/'+mapweekdir+
         '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
-    document["pw_per_k_by_field_220"].src = 'staticimg/'+mapweekdir+
+    document["pw_per_k_by_wafer_220"].src = 'staticimg/'+mapweekdir+
         '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
 }
 
