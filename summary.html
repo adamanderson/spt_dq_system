@@ -1118,7 +1118,7 @@
         There are some additional suggestions in
         <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/SuggestionsForUsingTheDataQualitySummaryWebpageEtc">
          this wiki page</a> as to what is considered as abnormal. Also, if you want to know the current status of the
-        norther shifts for data quality monitoring,
+        northern shifts for data quality monitoring,
         please check <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>.</p>
     <p> With this tool, we hope that any potentially serious problem will be detected early on!
         The following sections have some explanations on the figures shown on this webpage. </p><br>
@@ -1288,41 +1288,61 @@
         where weights sharply decrease toward zero are ignored.
         The figures below show the mask used for each of the sub-field and the
         effect of masking the sources on the autospectrum calculation
-        (the spectra shown there are not from co-adds but from random). </p>
+        (the maps shown here are not from co-adds but just from some random single-observation maps).
+        The reason the masking makes a much bigger difference for the ra0hdec-52.25 sub-field seems to be because
+        the point sources in the field are much brighter. </p>
     <table style="table-layout:fixed;" cellpadding="5">
       <tr>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
+               src="staticimg/readme_figs/central_region_of_ra0hdec-44.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%"
+               src="staticimg/readme_figs/central_region_of_ra0hdec-52.25.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%"
+               src="staticimg/readme_figs/central_region_of_ra0hdec-59.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%"
+               src="staticimg/readme_figs/central_region_of_ra0hdec-67.25.png">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/mask_used_for_ra0hdec-44.75.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/mask_used_for_ra0hdec-52.25.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/mask_used_for_ra0hdec-59.75.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/mask_used_for_ra0hdec-67.25.png">
         </td>
       </tr>
       <tr>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-44.75.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-52.25.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-59.75.png">
         </td>
         <td>
-          <img style="display:block;" width="100%" class="fig-with-border"
+          <img style="display:block;" width="100%"
                src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-67.25.png">
         </td>
       </tr>
@@ -1368,9 +1388,10 @@
         Since one bolometer can be flagged for different reasons, 
         the sum of the average numbers of bolometers flagged by individual reasons
         exceed the average number of flagged and removed bolometers (the red crosses) for each observation.
-        As for the numbers of removed bolometers, it seems that most of them are just those bolometers that
-        we do not attempt to tune. Thus, the figures do not indicate that there are typically about one thousand
-        tuned bolometers from each band that have bad data. </p>
+        As for the numbers of removed bolometers, most of them are just those bolometers that
+        we do not attempt to tune to begin with. This can be seen from the more or less constant levels of "BadHK".
+        Thus, the figures do not indicate that there are typically about one thousand
+        bolometers from each band that were initially tuned successfully but later produced bad data during observing. </p>
     <p> The figures in the second row show fractions of pixels in TT weight maps that have nominal weights.
         Currently, there are suggestions that the criteria used to determine whether a weight value is nominal or not
         are too strict and should be loosened, and these figures will be regenerated soon,
@@ -1396,7 +1417,7 @@
         The SPT map used here is not a co-add but just a random single-observation map. <br><br>
         <img class="fig-with-border" style="width:500px;height:300px;"
              src="staticimg/readme_figs/spt_cross_planck_spectra.png"></p>
-    <p> The second and third rows show by how much bolometer's response to the calibrator vary
+    <p> The second and third rows show by how much bolometers' response to the calibrator varies
         as the telescope elevation changes. As part of the schedule to observe a sub-field, we take a calibrator stare
         at the bottom elevation of that field before observing it and then take another calibrator stare at the top elevation
         of that field after observing it. From the auto-processed results of these two calibrator stares,
@@ -1422,13 +1443,18 @@
         scripts in the <code>spt_dq_system/summaryplot</code> directory that do the actual work of updating
         relevant data products and figures. </p>
     <p> This updating actually happens only at Pole; the data products, such as pickle files storing the medians of the
-        calibration quantities and g3 files storing co-added maps, are updated periodically at Pole,
-        and the figures made from them are transferred to the north and shown on this webpage.
-        There is also
+        calibration quantities and g3 files storing co-added maps and analysis results,
+        are updated automatically and periodically only at Pole.
+        As for the calibration observations, the pickle files are transferred to Amundsen/Scott and stored in
+        <code>/spt/data/rsync/spt_dq_data/</code>. Then, the figures are made from these pickles in the north.
+        As for the field observations, though, the g3 files are not transferred due to their sizes;
+        it is only the figures that are transferred, which are located in
+        <code>/spt/data/rsync/spt_dq_maps_figures/</code>. However, there is
         <a href="http://amundsen.grid.uchicago.edu:5000/summary.html"> a test version</a> of the webpage running on Amundsen.
         Even though the updating is only done occasionally for this version,
-        the data products and figures are saved on Amundsen and thus readily accessible to
-        anyone in the north who is interested in using them. </p><br>
+        the g3 files are made on Amundsen and thus readily accessible to
+        anyone in the north who is interested in using them. They are located in
+        <code>/spt/user/weiquan/map_quality/hi_res_maps/</code>. </p><br>
     
     <h3> 5. Finally... </h3>
     <p> Thank you again for reading the documentation. If you have any questions on anything written here,
