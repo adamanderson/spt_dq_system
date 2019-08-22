@@ -13,7 +13,6 @@
     display: flex;
     height: 70px;
     padding: 1%;
-    align-items: center;
   }
   .container-all-figs {
     display: flex;
@@ -41,8 +40,23 @@
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.2);
   }
+  h2, h3, h4 {
+    font-weight: lighter;
+  }
+  h2 {
+    font-size: 1.30em;
+  }
+  h3 {
+    font-size: 1.15em;
+  }
+  h4 {
+    font-size: 1.05em;
+  }
   p {
-    line-height: 1.4;
+    line-height: 1.4em;
+  }
+  code {
+    font-size: 1.15em
   }
 </style>
 </head>
@@ -115,7 +129,7 @@
         <table style="table-layout:fixed;" cellpadding="5">
           <tr>
             <td colspan="1">
-              <h2 style="font-weight:lighter;"><u>Calibrator</u></h2>
+              <h2><u>Calibrator</u></h2>
             </td>
             <td colspan="2" align="right" valign="top">
               <div id="lastmodified_calibration">
@@ -124,8 +138,8 @@
           </tr>
 
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">Low elevation</h3>
+            <td>
+              <h3>Low elevation</h3>
             </td>
           </tr>
           <tr>
@@ -150,8 +164,8 @@
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">High elevation</h3>
+            <td>
+              <h3>High elevation</h3>
               </td>
             </tr>
           <tr>
@@ -177,8 +191,8 @@
           <tr><td><br></td></tr>
           
           <tr>
-            <td colspan="3">
-              <h2 style="font-weight:lighter;"><u>Elnod</u></h2>
+            <td>
+              <h2><u>Elnod</u></h2>
             </td>
           </tr>
           <tr>
@@ -204,14 +218,14 @@
           <tr><td><br></td></tr>
           
           <tr>
-            <td colspan="3">
-              <h2 style="font-weight:lighter;"><u>HII Regions</u></h2>
+            <td>
+              <h2><u>HII Regions</u></h2>
             </td>
           </tr>
 
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">RCW38 Fast Point</h3>
+            <td>
+              <h3>RCW38 Fast Point</h3>
             </td>
           </tr>
           <tr>
@@ -236,26 +250,22 @@
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">RCW38 Very Fast Point</h3>
+            <td>
+              <h3>RCW38 Very Fast Point</h3>
             </td>
           </tr>
           <tr>
-            <td width="33%">
+            <td>
               <a href="javascript:location.href='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' class="fig-with-border"
                      src='staticimg/plots/last_n/last_3/rcw38_sky_transmission_all.png'>
               </a>
             </td>
-            <td width="33%">
-            </td>
-            <td width="33%">
-            </td>
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">MAT5A Fast Point</h3>
+            <td>
+              <h3>MAT5A Fast Point</h3>
             </td>
           </tr>
           <tr>
@@ -280,33 +290,31 @@
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=3>
-              <h3 style="font-weight:lighter;">MAT5A Very Fast Point</h3>
+            <td>
+              <h3>MAT5A Very Fast Point</h3>
             </td>
           </tr>
           <tr>
-            <td width="33%">
+            <td>
               <a href="javascript:location.href='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' class="fig-with-border"
                      src='staticimg/plots/last_n/last_3/mat5a_sky_transmission_all.png'>
               </a>
             </td>
-            <td width="33%">
-            </td>
-            <td width="33%">
-            </td>
           </tr>
           <tr><td><br></td></tr>
-          
+        </table>
+        
+        <table style="table-layout:fixed;" cellpadding="5">
           <tr>
-            <td colspan="3">
-              <h2 style="font-weight:lighter;"><u>Noise</u></h2>
+            <td>
+              <h2><u>Noise</u></h2>
             </td>
           </tr>
 
           <tr>
-            <td colspan=4>
-              <h3 style="font-weight:lighter;">NET</h3>
+            <td>
+              <h3>NET</h3>
             </td>
           </tr>
           <tr>
@@ -337,8 +345,8 @@
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=4>
-              <h3 style="font-weight:lighter;">NEP</h3>
+            <td>
+              <h3>NEP</h3>
             </td>
           </tr>
           <tr>
@@ -369,8 +377,8 @@
           </tr>
           <tr><td><br></td></tr>
           <tr>
-            <td colspan=4>
-              <h3 style="font-weight:lighter;">NEI</h3>
+            <td>
+              <h3>NEI</h3>
             </td>
           </tr>
           <tr>
@@ -438,7 +446,7 @@
         <table style="table-layout:fixed;" cellpadding="5">
           <tr>
             <td colspan="1">
-              <h2 style="font-weight:lighter;"><u>Maps</u></h2>
+              <h2><u>Maps</u></h2>
             </td>
             <td colspan="2" align="right" valign="top">
               <div id="lastmodified_maps">
@@ -448,7 +456,7 @@
           
           <tr>
             <td colspan="3">
-              <h3 style="font-weight:lighter;">T Maps</h3>
+              <h3>T Maps</h3>
             </td>
           </tr>  
           <tr>
@@ -475,7 +483,7 @@
           
           <tr>
             <td colspan="3">
-              <h3 style="font-weight:lighter;">TT Weight Maps</h3>
+              <h3>TT Weight Maps</h3>
             </td>
           </tr>  
           <tr>
@@ -502,7 +510,7 @@
           
           <tr>
             <td colspan="3">
-              <h3 style="font-weight:lighter;">TT Weight Map Cross Sections</h3>
+              <h3>TT Weight Map Cross Sections</h3>
             </td>
           </tr>
           <tr>
@@ -529,13 +537,13 @@
           
           <tr>
             <td colspan="3">
-              <br><h2 style="font-weight:lighter;"><u>Fluctuations in Maps</u></h2>
+              <br><h2><u>Fluctuations in Maps</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Noise Levels of T Maps</h3>
+              <h3>Noise Levels of T Maps</h3>
             </td>  
           </tr>
           <tr class="maps_non_yearly">
@@ -564,7 +572,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Means of TT Weight Maps</h3>
+              <h3>Means of TT Weight Maps</h3>
             </td>  
           </tr>
           <tr class="maps_non_yearly">
@@ -593,7 +601,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Noise Levels of Running Coadded T Maps</h3>
+              <h3>Noise Levels of Running Coadded T Maps</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -625,7 +633,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Noise Levels of Individual T Maps</h3>
+              <h3>Noise Levels of Individual T Maps</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -657,7 +665,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Means of TT Weights</h3>
+              <h3>Means of TT Weights</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -689,13 +697,13 @@
           
           <tr>
             <td colspan="3">
-              <br><h2 style="font-weight:lighter;"><u>Pointing</u></h2>
+              <br><h2><u>Pointing</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">RA Offsets Of Points Sources</h3>
+              <h3>RA Offsets of Points Sources</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -736,7 +744,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Dec Offsets Of Points Sources</h3>
+              <h3>Dec Offsets of Points Sources</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -777,7 +785,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Averages of Pointing Offsets</h3>
+              <h3>Averages of Pointing Offsets</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -802,13 +810,13 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <br><h2 style="font-weight:lighter;"><u>Completeness of Observations</u></h2>
+              <br><h2><u>Completeness of Observations</u></h2>
              </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">In Terms of Numbers of Bolometers Not Flagged</h3>
+              <h3>Numbers of Bolometers Not Flagged</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -840,7 +848,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">In Terms of Fractions of Pixels Having Nominal Weights</h3>
+              <h3>Fractions of Pixels Having Nominal Weights</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -872,7 +880,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">In Terms of Recorded Observation Durations</h3>
+              <h3>Observation Durations</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -890,13 +898,13 @@
           
           <tr>
             <td colspan="3">
-              <br><h2 style="font-weight:lighter;"><u>Temperature Calibration</u></h2>
+              <br><h2><u>Temperature Calibration</u></h2>
             </td>
           </tr>
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Ratios of SPT x Planck / Planck x Planck</h3>
+              <h3>Ratios of SPT x Planck / Planck x Planck</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -928,7 +936,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">Cross Spectra Ratios</h3>
+              <h3>Cross Spectra Ratios</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -960,7 +968,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">CalibratorResponse v.s. Elevation</h3>
+              <h3>CalibratorResponse v.s. Elevation</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -992,7 +1000,7 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">CalibratorResponse v.s. Elevation</h3>
+              <h3>CalibratorResponse v.s. Elevation</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -1024,7 +1032,7 @@
           
           <tr class="maps_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">CalibratorResponse v.s. Elevation</h3>
+              <h3>CalibratorResponse v.s. Elevation</h3>
             </td>
           </tr>
           <tr class="maps_yearly">
@@ -1056,28 +1064,28 @@
           
           <tr class="maps_non_yearly">
             <td colspan="3">
-              <h3 style="font-weight:lighter;">pW/K Conversion Factors</h3>
+              <h3>pW/K Conversion Factors</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_90' class="fig-with-border"
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_90' class="fig-with-border"
                  src='staticimg/maps/figures/last_n/last_7/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_150' class="fig-with-border"
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_150' class="fig-with-border"
                  src='staticimg/maps/figures/last_n/last_7/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
             <td>
               <a href="javascript:location.href='staticimg/'+mapweekdir+
                       '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
-                <img style="display:block;" width="100%" name='pw_per_k_by_field_220' class="fig-with-border"
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_220' class="fig-with-border"
                  src='staticimg/maps/figures/last_n/last_7/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
               </a>
             </td>
@@ -1090,16 +1098,341 @@
     </div>
   </div>
   
-  <div id="tabs-readme" style="height:85vh;">
-    <p> Hello! Thank you for visiting the SPT-3G data quality summary webpage. </p>
-    <p> The Calibration Observations tab mainly contains figures showing time variations of the median values of
-        various calibration quantities calculated by the auto-processing.
-        The Field Observations tab mainly contains figures showing co-added maps and time variations of several quantities
-        calculated from the maps. The maps used for the co-addition and analysis are the ones generated by the
-        auto-mapmaker running at Pole. </p>
-    <p> If you have any questions or suggestions about the contents, please feel free to contact Adam and Wei.
-        More documention is coming soon! </p>
+  <div id="tabs-readme" style="height:85vh;overflow:scroll;">
+    <p> Hello! Thank you for visiting the SPT-3G data quality summary webpage and for reading the documentation here.
+        If you notice that the figures in either the Calibration Observations tab or the Field Observations tab
+        have not been updated for the last three days (but have not heard of any issues with the operation of
+        the telescope and the camera), or if you have some questions or suggestions on the webpage,
+        please let Adam and Wei know! </p><br>
+    
+    <h3> 1. Overview </h3>
+    <p> This webpage is meant to be used to monitor how stable the results of various observations have been over time,
+        especially for the last several days. Each figure (except for some figures in the Field Observations tab)
+        shows the time variations of certain quantity during certain time interval. If the operation of the telescope
+        and the camera was normal during that time interval, then the data points plotted there should show a flat trend;
+        the presence of any abnormal data point indicates that there was some issue with the operation
+        (or perhaps some bug in our analysis pipeline that calculated that data point). </p>
+    <p> There are not any strict definitions on what is considered as abnormal, but,
+        if you notice that almost all the results from last few days' observations deviate from
+        the general trends over the past month by more than 50%, then that is propably something worth investigating.  
+        There are some additional suggestions in
+        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/SuggestionsForUsingTheDataQualitySummaryWebpageEtc">
+         this wiki page</a> as to what is considered as abnormal. Also, if you want to know the current status of the
+        norther shifts for data quality monitoring,
+        please check <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>.</p>
+    <p> With this tool, we hope that any potentially serious problem will be detected early on!
+        The following sections have some explanations on the figures shown on this webpage. </p><br>
+    
+    <h3> 2. <i>Calibration Observations</i> tab </h3>
+    <p> This tab contains figures showing the time variations of various calibration quantities' medians
+        from different observing bands of different wafers during different time intervals.
+        These calibration quantities are simply the ones that are computed by the auto-processing pipeline.
+        By default, the medians from all wafers are shown. The presence of a red triangle near either the top or bottom
+        of a plot indicates that there is a data point that lies outside the range,
+        and the presence of a vertical red line indicates that there is a NaN. </p>
+    <p> If you are not familiar with what types of calibration observations are taken,
+        you may find the following resources useful:
+        <a href="https://github.com/SouthPoleTelescope/spt3g_software/blob/master/calibration/README.rst">
+         the documentation on calibration in the <code>spt3g_software</code> repository</a>,
+        <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20170718_calstatus.pdf">Nathan's slides</a>,
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Calibration_Pipeline">Daniel's wiki page</a>, and
+        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/CalNotesTcDontLookHere"> Tom's wiki page</a>.</p><br>
+      
+    <h4> 2.1. <i>Calibrator</i> section </h4>
+    <p> The figures in the left column show the quantity <code>CalibratorResponse</code> computed by the auto-processing,
+        those in the center column show <code>CalibratorResponseSN</code>,
+        and those in the right colunm show numbers of bolometers whose <code>CalibratorResponseSN</code> were above 20,
+        which is the threshold used in our map-making pipeline
+        to remove bolometers that had low response to the calibrator. </p>
+    <p> Results from calibrator stares are separated according to the telescope elevation at which each stare took place.
+        The figures in the first (second) row show the results from those stares that were taken
+        within the range of the elevation covered in a "low-el" observing "day" ("high-el" observing "day"),
+        in which we observe the ra0hdec-44.75 and ra0hdec-52.25 sub-fields
+        (ra0hdec-59.75 and ra0hdec-67.25 sub-fields).
+        Here, "low-el" and "high-el" refer to the ranges [40, 56] and [56, 72] degrees, respectively,
+        and a "day" lasts for about 20 hours (fridge cycle time plus fridge hold time). </p>
+    <p> (One minor complication to what is stated in the previous paragraph is that
+        the figures in the first row actually show some results from high-el observing days as well,
+        and, likewise, the figures from the second row show some results from low-el observing days.
+        This is because we take a calibrator stare at the bottom elevation of a sub-field
+        right before observing that field and then another calibrator stare at the top elevation
+        right after finishing observing that field.
+        Since the top elevation of the ra0hdec-52.25 sub-field is slightly above 56 degrees, and
+        the bottom elevation of the ra0hdec-59.75 sub-field is slightly below 56 degrees,
+        the figures in both rows end up showing results from both types of observing days.) </p>
+    <p> In addition to the separation by elevation,
+        the results from those special calibrator stares that were taken at unusual elevations
+        (i.e. any elevation higher than 72 or lower than 40 degrees) or
+        with unsual chopper frequencies (i.e. any frequency other than 4 Hz) are excluded.
+        This is to avoid potential confusions caused by
+        showing results from standard stares and non-standard ones together.
+        The end result of this filtering is that each data point shown here corresponds to a standard calibrator stare
+        that was taken as part of a normal schedule to observe a sub-field. </p><br>
         
+    <h4> 2.2. <i>Elnod</i> section </h4>
+    <p> The left figure shows the quantity <code>ElnodSNSlopes</code> from the auto-processing, 
+        the middle one shows the IQ phase angle, which is given by
+        <code>arctan(ElnodEigenvalueDominantVectorQ / ElnodEigenvalueDominantVectorI)</code>,
+        and the right one shows numbers of bolometers whose <code>ElnodSNSlopes</code> were larger than 20.
+        The periodic variations of <code>ElnodSNSlopes</code> seem to be closely related to
+        the elevations at which the elnods were taken; the values are larger on low-el observing days
+        and smaller on high-el observing days. The reason <code>ElnodSNSlopes</code> are larger for elnods taken at
+        lower elevations is perhaps because there is more change in airmass during an elnod taken at a lower elevation
+        than at a higher one. </p><br>
+    
+    <h4> 2.3. <i>HII Regions</i> section </h4>
+    <p> The figures in this section show the quantities <code>SourceFluxCalibration</code>,
+        <code>SourceIntegralFlux</code>, and <code>SourceSkyTransmission</code>, where <code>Source</code>
+        can be either <code>RCW38</code> or <code>MAT5A</code>.
+        The first two quantites are computed from fast-point observations,
+        and the last one from very-fast-point observations. <code>RCW38</code> is used to calibrate observations of the
+        two low-el fields, and <code>MAT5A</code> for the two high-el fields. </p>
+    <p> Fast-point observations provide the main ingredient we need to calibrate bolometer timestreams into K_CMB units.
+        Given that these observations are taken only once in about a week,
+        it is very important to make sure that the results from each fast-point do not look bad.
+        The medians of <code>IntegralFlux</code> and <code>FluxCalibration</code> should not look abnormal.
+        In addition, the numbers of detectors whose <code>FluxCalibration</code> have negative values
+        should not be much smaller than usual (since <code>FluxCalibration</code> is defined as
+        a bolometer's peak response to the source
+        (the most negative value in its map of the source expressed in some units of electrical bias power)
+        divided by its reaponse to the calibrator (a positive quantity),
+        this number at least needs to be negative for it to be considered as reasonable). </p><br>
+    
+    <h4> 2.4. <i>Noise</i> section </h4>
+    <p> This section shows bolometers' noise levels in three different units
+        (noise equivalent temperature (NET), noise equivalent power (NEP), and noise equivalent current (NEI))
+        within four different frequency ranges ([0.1, 0.5], [1.0, 2.0], [3.0, 5.0], and [10.0, 15.0] Hz).
+        These numbers come from the auto-processing of the daily noise stares' timestreams.
+        The noise levels in the lowest frequency range are more susceptible to weather than
+        those in the other three ranges, and thus they are expected to show more variations. </p><br>
+    
+    <h4> 2.5. Figures for individual observations </h4>
+    <p> In every figure shown in the <i>Calibration Observations</i> tab,
+        one observation's results are reduced to one data point (for each observing band).
+        If you are interested in checking the details of the results from certain observation,
+        say, the distribution of <code>CalibratorResponse</code> from a particular calibrator stare,
+        you may find the <a href="http://spt3g-dq.grid.uchicago.edu/">per-observation plotter</a> useful.
+        Instructions on how to use this webpage can be found in
+        <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20190513_hackathon_dq.pdf">Adam's slides</a>.</p><br>
+    
+    <h3> 3. <i>Field Observations</i> tab </h3>
+    <p> In this tab, for each time interval listed on the left, you can find figures showing co-added maps from that interval
+        and figures showing time variations of several map-related quantities such as map noise level during the same interval.
+        In the latter type of figure, one data point corresponds to one field observation.
+        The yearly intervals actually have different types of figures, which are explained in the following sections. </p>
+    <p> Most of the figures have the notations
+        "el0", "el1", "el2", and "el3" in their legends and/or titles, 
+        and these are simply shorthands for the
+        ra0hdec-44.75, ra0hdec-52.25, ra0hdec-59.75, and ra0hdec-67.25 sub-fields, respectively.
+        The figure below shows the extent of the 1500 square degrees field in RA and Dec. The three constant-Dec contours
+        separate the full field into four sub-fields, the top of which is the "el0", and the bottom of which is the "el3".
+        The shaded regions are the ones used for auto and cross spectrum calculations, which are explained more later. <br><br>
+        <img style="width:750px;height:450px;"
+             src="staticimg/readme_figs/locations_of_smaller_regions.png">
+        </p><br>
+    
+    <h4> 3.1. <i>Maps</i> section </h4>
+    <p> The figures in the first row show co-added temperature maps from each of the three observing bands.
+        The lower and upper limits of the color bars are determined
+        in different ways for different types of time intervals. </p>
+    <p> For the Recent and Weekly time intervals,
+        a map, which has 0.25 arcminute resolution, is first smoothed with a 1.0 arcminute FWHM Gaussian,
+        and then the 1st and 99th percentile values in the smoothed map are used as the
+        lower and upper limits of the color bar, respectively. The smoothing is done because, if the original map,
+        which has 18000 by 12000 pixels, is shown in an image that has about 1500 by 1000 pixels,
+        the map in the resultant image seems to look too noisy to serve useful purposes such as
+        revealing some strange features if they exist. </p>
+    <p> For the Yearly and Monthly time intervals, the map does not look noisy enough in the resultant image to require
+        smoothing, so that processing is not done.
+        As for the color bar limits, they are determined not directly from the actual values in a map but from expectations.
+        The expectations are based on a model that the variance of the values in a map is equal to
+        the variance from the noise plus the variance from the signal. While the former should be
+        inversely proportional to the number of maps added together, the latter should be a constant.
+        From a typical noise variance, an educated guess for the signal variance, the number of maps added together,
+        and this model, an expected variance is calculated for a co-add,
+        and the color bar limits are set to be +/- 2.5 times the corresponding standard deviation. </p>
+    <p> The image below shows an example of how the expected variance is determined.
+        The blue data points show how the variance of a 2019 co-added signal (plus noise) map changed
+        everytime two new maps were added, and the orange data points show how the variance of the corresponding
+        co-added noise map changed. The blue box, whisker, and caps in the upper left corner show a distribution of
+        variances of individual maps divided by two. The blue and orange curves are the results of curve fittings
+        to the data points, and the models used in the fittings are shown in the legend. <br><br>
+        <img class="fig-with-border" style="width:500px;height:300px;"
+             src="staticimg/readme_figs/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png">
+        <br><br>
+        The median of the blue distribution is used as the "typical noise variance" mentioned in the previous paragraph,
+        and the asymptote of the blue curve is used as the "educated guess for the signal variance".
+        These fittings are done for each observing band and each sub-field, and all of these results are
+        taken into account when an expected variance of a full-field co-add is calculated. </p>
+    <p> The figures in the second row show co-added TT weight maps. The lower and upper limits of a color bar
+        in this type of figures simply correspond to the minimum and maximum of the values in a weight map, respectively.
+        The figures in the third row show cross sections of these weight maps, and the values are normalized to
+        the weight at Dec = -70 degrees. The cross section is along the RA = 0 degree contour,
+        which corresponds to the vertical line that bisects a map. Along with the actual data, expected cross sections are
+        also shown, which are based on a simple model that the weight of a pixel is proportional to the amount of time
+        the telescope spends on staring at the sky area that corresponds to the pixel.
+        Since our scans have the same duration and cover the same RA range regardless of declination
+        (or the telescope elevation), the time spent on a pixel is
+        inversely proportional to cosine of the declination of that pixel. This time spent is also proportional to
+        the number of observations that covered that pixel. As a result, the expected cross section shown in a figure is
+        basically equal to secant of declination multiplied by number of observation. </p><br>
+    
+    <h4> 3.2. <i>Fluctuations in Maps</i> section </h4>
+    <p> For non-yearly time intervals, there are two rows of figures in this section. The first row shows noise levels,
+        and the second row shows averages of TT weights. The noise level of a temperature map is defined here as
+        the average of square root of C_l of the autospectrum in the ell range [3000, 5000].
+        In order to save time and reduce memory usage, only the data within a 5 degrees by 5 degrees patch
+        located around the center of a sub-field are used for calculating the noise.
+        These small patches do contain bright point sources, which are masked during the calculations. As for calculating
+        an average of a TT weight map, the peripheral regions of the map
+        where weights sharply decrease toward zero are ignored.
+        The figures below show the mask used for each of the sub-field and the
+        effect of masking the sources on the autospectrum calculation
+        (the spectra shown there are not from co-adds but from random). </p>
+    <table style="table-layout:fixed;" cellpadding="5">
+      <tr>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/mask_used_for_ra0hdec-44.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/mask_used_for_ra0hdec-52.25.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/mask_used_for_ra0hdec-59.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/mask_used_for_ra0hdec-67.25.png">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-44.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-52.25.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-59.75.png">
+        </td>
+        <td>
+          <img style="display:block;" width="100%" class="fig-with-border"
+               src="staticimg/readme_figs/effect_of_mask_on_tt_spectrum_calculation_for_ra0hdec-67.25.png">
+        </td>
+      </tr>
+    </table>
+    <p> For yearly time intervals, there are three rows of figures in this section. The second row shows histograms of the
+        noise levels of individual temperature maps, which is a complementary way of visualizing the data shown
+        in the non-yearly time intervals. The third row shows histograms of the averages of individual weight maps. 
+        In these figures, the mode, median (MED), and median absolute deviation (MAD) of each histogram are printed. <p>
+    <p> The first row is somewhat unique; it shows the time evolution of the noise levels of the running year-to-date
+        co-added temperature maps. The data points shown there are calculated as follows: existing maps are separated
+        into two groups to form two co-adds, and newly made maps are alternately added to one of these two co-adds; then,
+        whenever both co-adds have the same number of maps, their weights are removed, the difference between the two is
+        taken, and noise is calculated from the difference map after it is divided by two. This procedure is somewhat
+        similar to making a co-add by alternately adding and subtracting maps, which is how the x-axis label got its name.
+        The noise levels in the running year-to-date co-adds are expected to be inversely proportional to square root of
+        the number of maps used, which is why log-log plots are used here, and also results from linear least squares
+        fitting to the logarithm of the data are shown. </p><br>
+    
+    <h4> 3.3. <i>Pointing</i> section </h4>
+    <p> For non-yearly time intervals, time variations of discrepancies between measured positions and true possitions
+        of three bright point sources from each sub-field are shown. The measured positions are results of 2D Gaussian
+        fittings to small map regions around the sources, and the true positions are from the ATCA20G catalog.
+        The image below shows the locations of these point sources. <br><br>
+        <img style="width:750px;height:450px;"
+             src="staticimg/readme_figs/locations_of_bright_sources.png"></p>
+    <p> The signal-to-noise ratios of these sources are smaller in 220 GHz maps than in 95 and 150 GHz, but the numbers
+        are nearly the same in 95 GHz and 150 GHz, and figures for the latter are chosen to be shown.
+        Of these twelve sources, the brightest one is in the ra0hdec-52.25 sub-field and has SNR of a few hundreds.
+        The dimmest one is in the ra0hdec-67.25 sub-field and has SNR of about 15. The other ten sources' SNRs are
+        roughly in the range between 25 and 70 (SNR here is defined as the peak value of a source divided by
+        a standard deviation of the sub-field map to which the source belongs, and the standard deviation is calculated
+        by masking point sources). </p>
+    <p> There are four figures for RA offsets (one for each sub-field) and four for Dec offsets. In each figure,
+        along with the offsets from the three sources, the average offset of these three sources is also shown.
+        For yearly time intervals, there are figures showing distributions of the average offsets. </p><br>
+    
+    <h4> 3.4. <i>Completeness of Observations</i> section </h4>
+    <p> This section exists for non-yearly time intervals only. The first row shows average numbers of bolometers
+        that were not flagged and thus used for map-making, bolometers that were flagged and removed from map-making,
+        and bolometers that were flagged for different reasons.
+        The map-making pipeline does bolometer flagging on a scan-by-scan basis,
+        so here an average number refers to the average over all scans of an observation.
+        Since one bolometer can be flagged for different reasons, 
+        the sum of the average numbers of bolometers flagged by individual reasons
+        exceed the average number of flagged and removed bolometers (the red crosses) for each observation.
+        As for the numbers of removed bolometers, it seems that most of them are just those bolometers that
+        we do not attempt to tune. Thus, the figures do not indicate that there are typically about one thousand
+        tuned bolometers from each band that have bad data. </p>
+    <p> The figures in the second row show fractions of pixels in TT weight maps that have nominal weights.
+        Currently, there are suggestions that the criteria used to determine whether a weight value is nominal or not
+        are too strict and should be loosened, and these figures will be regenerated soon,
+        so please ignore them for now. </p>
+    <p> The figure in the third row shows the duration of each observation as recorded in its g3 files.
+        This figure also happens to show our observing cadence in a colorful way. The printed observing efficiency is
+        calculated by dividing the total observation duration from that time interval by
+        the length of the entire interval. </p><br>
+    
+    <h4> 3.5. <i>Temperature Calibration</i> section </h4>
+    <p> For a non-yearly time interval, there are four rows of figures in this section. The first row compares
+        the temperature calibration of each of our maps against that of Planck's maps. Specifically,
+        for each temperature map, the average ratio of two spectra in the ell range [750, 1250] is calculated;
+        the numerator is the cross spectrum between a T map of ours and the Planck's full mission map,
+        and the denominator is the cross spectrum between one of Planck's half mission map and the other half mission map.
+        If our temperature calibration is reasonably close to that of Planck's, this ratio should be close to 1.0.
+        Since this calculation is not sophisticated enough to apply corrections due to our beams, etc.,
+        how close the numbers are to 1.0 is perhaps not a very meaningful aspect to pay attention to.
+        However, the figures should still be useful to catch those maps that have abnormal calibration.
+        Like the noise calculations, in order to save time and memory usage,
+        only the small regions around the cetners of the sub-field are used for these cross spectrum calculations
+        (points sources are masked as well). The figure below shows an example of calculating this ratio.
+        The SPT map used here is not a co-add but just a random single-observation map. <br><br>
+        <img class="fig-with-border" style="width:500px;height:300px;"
+             src="staticimg/readme_figs/spt_cross_planck_spectra.png"></p>
+    <p> The second and third rows show by how much bolometer's response to the calibrator vary
+        as the telescope elevation changes. As part of the schedule to observe a sub-field, we take a calibrator stare
+        at the bottom elevation of that field before observing it and then take another calibrator stare at the top elevation
+        of that field after observing it. From the auto-processed results of these two calibrator stares,
+        the percentage change in the quantity <code>CalibratorResponse</code> at the top of the field with respect to
+        the bottom is calculated for each bolometer. Then, the figures in the second row show the median percentage change
+        from all bolometers of each observing band, and the figures in the third row show the median from each wafer and
+        each observing band. </p>
+    <p> The figures in the fourth row show the conversion factors we use to calibrate bolometers' timestreams
+        from some units of power into K_CMB. The median value of pW/K from each wafer is shown. A pW/K conversion factor is
+        equal to the product of <code>CalibratorResponse</code>, <code>FluxCalibration</code>, <code>IntegralFlux</code>,
+        and <code>SkyTransmission</code> divided by some constant. If a figure here shows that
+        certain observation had abnormal pW/K conversion factors, you may be able to find out which of the four factors
+        led to the abonrmality by checking the figures in the <i>Calibration Observations</i> tab. </p>
+    <p> For a yearly time interval, there are two rows of figures in this section. The first row shows histograms of
+        the ratios of the cross spectra, and the second row shows the median percentage changes in bolometers' response to
+        the calibrator. </p><br>
+    
+    <h3> 4. Repository </h3>
+    <p> All the relevant scripts that work together to make this webpage run are located in the
+        <code>spt_dq_system</code> repository. <code>db_server.js</code> is the Java script that starts a server
+        that serves this webpage. It calls the python script <code>update_summary.py</code> periodically to
+        update the figures shown in this webpage. When <code>update_summary.py</code> is invoked, it in turn calls the
+        scripts in the <code>spt_dq_system/summaryplot</code> directory that do the actual work of updating
+        relevant data products and figures. </p>
+    <p> This updating actually happens only at Pole; the data products, such as pickle files storing the medians of the
+        calibration quantities and g3 files storing co-added maps, are updated periodically at Pole,
+        and the figures made from them are transferred to the north and shown on this webpage.
+        There is also
+        <a href="http://amundsen.grid.uchicago.edu:5000/summary.html"> a test version</a> of the webpage running on Amundsen.
+        Even though the updating is only done occasionally for this version,
+        the data products and figures are saved on Amundsen and thus readily accessible to
+        anyone in the north who is interested in using them. </p><br>
+    
+    <h3> 5. Finally... </h3>
+    <p> Thank you again for reading the documentation. If you have any questions on anything written here,
+        please let me know! (Read Me author: Wei) </p><br>
   </div>
 
 </div>
