@@ -1152,14 +1152,14 @@
         Here, "low-el" and "high-el" refer to the ranges [40, 56] and [56, 72] degrees, respectively,
         and a "day" lasts for about 20 hours (fridge cycle time plus fridge hold time). </p>
     <p> (One minor complication to what is stated in the previous paragraph is that
-        the figures in the first row actually show some results from high-el observing days as well,
-        and, likewise, the figures from the second row show some results from low-el observing days.
-        This is because we take a calibrator stare at the bottom elevation of a sub-field
+        figures in the first row may show some results from high-el observing days as well,
+        and, likewise, the figures from the second row may show some results from low-el observing days.
+        This seems to be because we take a calibrator stare at the bottom elevation of a sub-field
         right before observing that field and then another calibrator stare at the top elevation
         right after finishing observing that field.
-        Since the top elevation of the ra0hdec-52.25 sub-field is slightly above 56 degrees, and
-        the bottom elevation of the ra0hdec-59.75 sub-field is slightly below 56 degrees,
-        the figures in both rows end up showing results from both types of observing days.) </p>
+        Since the top elevation of the ra0hdec-52.25 sub-field can be slightly above 56 degrees, and
+        the bottom elevation of the ra0hdec-59.75 sub-field can be slightly below 56 degrees (depending on dither steps),
+        the figures in both rows may end up showing results from both types of observing days.) </p>
     <p> In addition to the separation by elevation,
         the results from those special calibrator stares that were taken at unusual elevations
         (i.e. any elevation higher than 72 or lower than 40 degrees) or
@@ -1226,7 +1226,7 @@
         ra0hdec-44.75, ra0hdec-52.25, ra0hdec-59.75, and ra0hdec-67.25 sub-fields, respectively.
         The figure below shows the extent of the 1500 square degrees field in RA and Dec. The three constant-Dec contours
         separate the full field into four sub-fields, the top of which is the "el0", and the bottom of which is the "el3".
-        The shaded regions are the ones used for auto and cross spectrum calculations, which are explained more later. <br><br>
+        The shaded regions are the ones used for auto and cross spectrum calculations, which are explained more later. <br>
         <img style="width:750px;height:450px;"
              src="readmeimg/locations_of_smaller_regions.png">
         </p><br>
@@ -1257,9 +1257,10 @@
         co-added noise map changed. The blue box, whisker, and caps in the upper left corner show a distribution of
         variances of individual maps divided by two. The blue and orange curves are the results of curve fittings
         to the data points, and the models used in the fittings are shown in the legend. <br><br>
-        <img class="fig-with-border" style="width:500px;height:300px;"
-             src="readmeimg/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png">
-        <br><br>
+        <a href="javascript:location.href='readmeimg/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png'">
+          <img class="fig-with-border" style="width:500px;height:300px;"
+               src="readmeimg/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png">
+        </a><br><br>
         The median of the blue distribution is used as the "typical noise variance" mentioned in the previous paragraph,
         and the asymptote of the blue curve is used as the "educated guess for the signal variance".
         These fittings are done for each observing band and each sub-field, and all of these results are
@@ -1366,8 +1367,10 @@
         of three bright point sources from each sub-field are shown. The measured positions are results of 2D Gaussian
         fittings to small map regions around the sources, and the true positions are from the ATCA20G catalog.
         The image below shows the locations of these point sources. <br><br>
-        <img style="width:750px;height:450px;"
-             src="readmeimg/locations_of_bright_sources.png"></p>
+        <a href="javascript:location.href='readmeimg/locations_of_bright_sources.png'">
+          <img style="width:750px;height:450px;"
+               src="readmeimg/locations_of_bright_sources.png">
+        </a></p>
     <p> The signal-to-noise ratios of these sources are smaller in 220 GHz maps than in 95 and 150 GHz, but the numbers
         are nearly the same in 95 GHz and 150 GHz, and figures for the latter are chosen to be shown.
         Of these twelve sources, the brightest one is in the ra0hdec-52.25 sub-field and has SNR of a few hundreds.
