@@ -16,6 +16,7 @@ var SSE = require('express-sse');
 var sse = new SSE();
 var yaml = require('yamljs');
 var serveIndex = require('serve-index')
+var path = require('path');
 
 // TODO error handling
 
@@ -88,6 +89,7 @@ if (!fs.existsSync(config.static_plot_dir)) {
     fs.mkdirSync(config.static_plot_dir);
 }
 app.use('/staticimg', express.static(config.static_plot_dir));
+app.use('/readmeimg', express.static(path.join(__dirname, 'READMEfigs')));
 
 // make directory for log files if it doesn't already exist
 if (!fs.existsSync(config.coadds_logs_dir)) {
