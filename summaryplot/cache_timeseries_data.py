@@ -63,7 +63,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
     # check --max-time argument
     if max_time == None:
         if timeinterval == 'monthly':
-            max_time = timenow.replace(month=timenow.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            if timenow.month != 12:
+                max_time = timenow.replace(month=timenow.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            else:
+                max_time = timenow.replace(year=timenow.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         elif timeinterval == 'weekly':
             max_time = (timenow + datetime.timedelta(days=7-timenow.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
         else:
