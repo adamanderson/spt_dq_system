@@ -155,10 +155,16 @@ def update(mode, action,
             if time_interval == "yearly":
                 end_time_at_start_of_loop = current_time
             if time_interval == "monthly":
-                beginning_of_next_month = \
-                    current_time.replace(
-                        month=current_time.month+1, day=1,
-                        hour=0, minute=0, second=0, microsecond=0)
+                if current_time.month != 12:
+                    beginning_of_next_month = \
+                        current_time.replace(
+                            month=current_time.month+1, day=1,
+                            hour=0, minute=0, second=0, microsecond=0)
+                else:
+                    beginning_of_next_month = \
+                        current_time.replace(year=current_time.year+1,
+                            month=1, day=1,
+                            hour=0, minute=0, second=0, microsecond=0)
                 end_of_this_month = \
                     beginning_of_next_month + \
                     datetime.timedelta(seconds=-1)
