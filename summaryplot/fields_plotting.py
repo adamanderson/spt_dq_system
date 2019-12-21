@@ -9,7 +9,7 @@
 #  receives, which means it is probably not very usable in other contexts.     #
 #                                                                              #
 #  The script mainly has four parts, each of which defines a pipeline          #
-#  module. All three modules make figures, but each one makes a different      #
+#  module. All four modules make figures, but each module makes a different    #
 #  type of figures.                                                            #
 #                                                                              #
 #  The first module, MakeFiguresForFieldMapsAndWeightMaps, generates           #
@@ -330,8 +330,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                       "85th = " +pctl_85+ ")"
             full_ttl = title_a + title_b + title_c + "\n"
         
-        file_nm  = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
-        file_nm += (file_nm + ".png").replace(" ", "_")
+        file_nm = source + "-" + obs_id + self.map_id + "_" + mp_ty_str
+        file_nm = (file_nm + ".png").replace(" ", "_")
         
         return full_ttl, file_nm
     
@@ -2965,7 +2965,7 @@ if __name__ == '__main__':
                              "of average numbers of flagged detectors "
                              "over time.")
     
-    parser.add_argument("-C", "--make_figures_for_pW_to_K_factors",
+    parser.add_argument("-C", "--make_figure_for_pW_to_K_factors",
                         action="store_true", default=False,
                         help="Whether to make figures showing time variations "
                              "of the temperature calibration factors pW/K or "
