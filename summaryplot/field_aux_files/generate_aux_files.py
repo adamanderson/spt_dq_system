@@ -13,6 +13,7 @@
 import argparse
 import pickle
 import os
+import shutil
 
 from spt3g       import core
 from summaryplot import fields_coadding
@@ -108,6 +109,20 @@ dec_centers = [-44.75 * deg, -52.25 * deg,
                -59.75 * deg, -67.25 * deg]
 ra_center = 0.0 * deg
 
+
+
+# Generate a text file used for recording bad maps found
+# when making year-to-date coadded maps.
+# ------------------------------------------------------------------------------
+
+if os.path.isfile("summaryplot/field_aux_files/bad_map_list.txt"):
+    pass
+else:
+    print("")
+    print("Preparing a text file to potentially record bad maps later!")
+    shutil.copy("summaryplot/field_aux_files/bad_map_list_template.txt",
+                "summaryplot/field_aux_files/bad_map_list.txt")
+    
 
 
 # Generate pickle files storing which pixels should be used when calculating
