@@ -115,14 +115,32 @@ ra_center = 0.0 * deg
 # when making year-to-date coadded maps.
 # ------------------------------------------------------------------------------
 
-if os.path.isfile("summaryplot/field_aux_files/bad_map_list.txt"):
+if os.path.isfile("summaryplot/fields_aux_files/bad_map_list.txt"):
     pass
 else:
     print("")
     print("Preparing a text file to potentially record bad maps later!")
     shutil.copy("summaryplot/field_aux_files/bad_map_list_template.txt",
                 "summaryplot/field_aux_files/bad_map_list.txt")
-    
+
+
+
+# Generate a dummy g3 file used for some silly pipelines invoked by
+# cache_field_maps.py
+# ------------------------------------------------------------------------------
+
+if os.path.isfile("summaryplot/fields_aux_files/dummy.g3"):
+    pass
+else:
+    print("")
+    print("Creating a dummy g3 file for some silly pipelines used later!")
+    pipeline = core.G3Pipeline()
+    pipeline.Add(core.G3InfiniteSource,
+                 n=1)
+    pipeline.Add(core.G3Writer,
+                 filename="summaryplot/fields_aux_files/dummy.g3")
+    pipeline.Run()
+
 
 
 # Generate pickle files storing which pixels should be used when calculating
