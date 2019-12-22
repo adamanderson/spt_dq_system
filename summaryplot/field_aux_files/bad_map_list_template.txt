@@ -1,0 +1,10 @@
+# ==============================================================================
+# This text file lists possibly bad observations that were identified through
+# making the year-to-date coadded field maps and calculating the time evolution
+# of the noise in the year-to-date noise maps (done by fields_coadding.py).
+# ==============================================================================
+
+
+#  Map ID |    Sub-field    |   Obs. ID   |               Reason
+# ------------------------------------------------------------------------------
+
