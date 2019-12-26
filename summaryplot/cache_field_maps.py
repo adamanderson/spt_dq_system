@@ -687,7 +687,8 @@ def update(mode, action,
                      'log_file'   : log_file,
                      'auxiliary_files_directory': aux_files_directory,
                      'calibration_data_dir'     : calibration_data_dir,
-                     'bolo_timestreams_dir'     : bolo_timestreams_dir}
+                     'bolo_timestreams_dir'     : bolo_timestreams_dir,
+                     'bad_map_list_file'        : bad_map_list_file}
                 
                 if time_interval == 'yearly':
                     args_coadding.update(anal_yearly_args)

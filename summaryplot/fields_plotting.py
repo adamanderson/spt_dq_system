@@ -2107,7 +2107,7 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             def noi_mod(n_mp, power):
                 return median_individ_vars/n_mp**power
             popt, pcov = optimize.curve_fit(
-                noi_mod, x_data[15:], y_data[15:], p0=[1.0])
+                noi_mod, x_for_fit, y_for_fit, p0=[1.0])
             
             x_for_show = numpy.arange(1, 250, 1)
             y_for_show = noi_mod(x_for_show, popt[0])

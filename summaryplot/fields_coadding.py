@@ -187,7 +187,7 @@ def add_two_map_frames(
         gc.collect()
         w_map  = frame_one["Wunpol"].TT + \
                  frame_two["Wunpol"].TT * multiply_2nd_weights_by
-        w_maps = core.G3SkyMapWeights()
+        w_maps = coordinateutils.G3SkyMapWeights()
         w_maps.TT = w_map
         del w_map
         gc.collect()
@@ -269,7 +269,7 @@ def create_new_map_frame_with_smaller_region(
             smaller_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
             coordinateutils.reproj_map(
                 map_frame["Wunpol"].TT, smaller_weight_map, 1)
-            new_map_frame["Wunpol"] = core.G3SkyMapWeights()
+            new_map_frame["Wunpol"] = coordinateutils.G3SkyMapWeights()
             new_map_frame["Wunpol"].TT = smaller_weight_map
     
     return new_map_frame
@@ -709,7 +709,7 @@ def identify_pixels_of_non_atypical_region(
     decs = numpy.asarray(decs/core.G3Units.deg)
     center_dec /= core.G3Units.deg
     
-    ptsrc_msk = numpy.asarray(mapspectra.apodmask.makeApodizedPointSourceMask(
+    ptsrc_msk = numpy.asarray(mapspectra.apodmask.make_apodized_ptsrc_mask(
                               map_frame, point_source_list_file,
                               apod_type="none", zero_border_arcmin=0.0))
     
@@ -960,7 +960,7 @@ def calculate_pointing_discrepancies(
 
 def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
     
-    ptsrc_mask  = mapspectra.apodmask.makeApodizedPointSourceMask(
+    ptsrc_mask  = mapspectra.apodmask.make_apodized_ptsrc_mask(
                     map_frame, point_source_file)
     
     edge_mask = coordinateutils.FlatSkyMap(
@@ -989,7 +989,7 @@ def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
 def create_mini_planck_map_frame(
         fits_file, spt_map_frame, center_ra, center_dec, t_only=True):
     
-    planck_healpix_maps = mapmaker.load_spt3g_map(fits_file)
+    planck_healpix_maps = coordinateutils.fitsio.load_skymap_fits(fits_file)
     
     if t_only:
         planck_flatsky_map = coordinateutils.maputils.healpix_to_flatsky(
@@ -1044,12 +1044,12 @@ def calculate_average_ratio_of_spt_planck_xspectra(
         planck_x_planck = map_analysis.calculate_powerspectra(
                               halfmission1_planck_map_frame,
                               input2=halfmission2_planck_map_frame,
-                              delta_l=50, l_min=300, l_max=6000,
+                              delta_l=50, lmin=300, lmax=6000,
                               apod_mask=mask, realimag="real", flatten=False)
         
         spt_x_planck = map_analysis.calculate_powerspectra(
                            spt_map_frame, input2=fullmission_planck_map_frame,
-                           delta_l=50, l_min=300, l_max=6000,
+                           delta_l=50, lmin=300, lmax=6000,
                            apod_mask=mask, realimag="real", flatten=False)
         
         cl_ratios   = spt_x_planck["TT"] / planck_x_planck["TT"]
@@ -1077,7 +1077,7 @@ def calculate_noise_levels(map_frame, mask, t_only=True):
     if t_only:
         cls = map_analysis.calculate_powerspectra(
                   map_frame, input2=None,
-                  delta_l=50, l_min=300, l_max=6000,
+                  delta_l=50, lmin=300, lmax=6000,
                   apod_mask=mask, realimag="real", flatten=False)
         
         bin_centers = cls["TT"].bin_centers
@@ -2856,6 +2856,8 @@ class FlagBadMaps(object):
         self.ax_dir  = auxiliary_files_directory
         self.logfun  = logging_function
         
+        assert self.x_list is not None, "File to record bad maps not supplied!"
+        
         self.pixels_to_use_for_flc_calc = \
             {sub_field: None for sub_field in \
              ["ra0hdec-44.75", "ra0hdec-52.25",
@@ -2898,6 +2900,8 @@ class FlagBadMaps(object):
             if self.t_only:
                 t_map_no_weights = mapmaker.mapmakerutils.remove_weight_t(
                                        frame["T"], frame["Wunpol"])
+                numpy.asarray(t_map_no_weights)\
+                    [numpy.asarray(frame["Wunpol"].TT)==0.0] = 0.0
                 new_frame["T"] = t_map_no_weights
                 new_frame["Wunpol"] = frame["Wunpol"]
             
