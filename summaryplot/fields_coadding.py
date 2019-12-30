@@ -126,6 +126,16 @@ from spt3g.mapspectra import map_analysis
 # ------------------------------------------------------------------------------
 
 
+def get_season_based_on_fields(vector_string):
+    
+    winter_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
+                     "ra0hdec-59.75", "ra0hdec-67.25"]
+    if set(vector_string) <= set(winter_fields):
+        return "winter"
+
+
+
+
 def add_two_map_frames(
         frame_one, frame_two, t_only=True,
         remove_weights_beforehand=False,
@@ -702,7 +712,7 @@ def calculate_change_in_cal_response_vs_elevation(
 
 
 def identify_pixels_of_non_atypical_region(
-        map_frame, center_dec, point_source_list_file):
+        field_name, map_frame, point_source_list_file):
     
     ras, decs = coordinateutils.maputils.get_ra_dec_map(map_frame["T"])
     ras  = numpy.asarray(ras/core.G3Units.deg)
@@ -713,9 +723,15 @@ def identify_pixels_of_non_atypical_region(
                               map_frame, point_source_list_file,
                               apod_type="none", zero_border_arcmin=0.0))
     
-    typical_pixels = numpy.where((ras > -48.0) & (ras < 48.0) &
-                                 (decs < (center_dec + 3.0))  & 
-                                 (decs > (center_dec - 3.0))  &
+    if get_season_based_on_fields([field_name]) == "winter":
+        ra_max =  40.0
+        ra_min = -40.0
+        dccntr = float(field_name[-6:])
+        de_max = dccntr + 3.0
+        de_min = dccntr - 3.0
+
+    typical_pixels = numpy.where((ras  > ra_min) & (ras  < ra_max) &
+                                 (decs > de_min) & (decs < de_max) &
                                  (ptsrc_msk == 1.0))
     
     del ras, decs, ptsrc_msk
@@ -1664,8 +1680,10 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     return []
                 else:
-                    center_ra  = core.G3Units.deg *   0.0
-                    center_dec = core.G3Units.deg * -56.0
+                    if get_season_based_on_fields(
+                            frame["CoaddedObservationIDs"].keys()) == "winter":
+                        center_ra  = core.G3Units.deg *   0.0
+                        center_dec = core.G3Units.deg * -56.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1713,8 +1731,9 @@ class AnalyzeAndCoaddMaps(object):
                     d_i  = std_processing.time_to_obsid(t_i)
                     d_f  = std_processing.time_to_obsid(t_f)
                     dura = {str(oid): (d_f - d_i) * core.G3Units.s}
-                    center_ra  = core.G3Units.deg * 0.0
-                    center_dec = core.G3Units.deg * float(sbfd[-6:])
+                    if get_season_based_on_fields([sbfd]) == "winter":
+                        center_ra  = core.G3Units.deg * 0.0
+                        center_dec = core.G3Units.deg * float(sbfd[-6:])
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -2216,7 +2235,7 @@ class AnalyzeAndCoaddMaps(object):
                                 fr_for_getting_pixels = summ_map_frame_coadded
                             self.pixels_to_use_for_flc_calc[sbfd] = \
                                 identify_pixels_of_non_atypical_region(
-                                    fr_for_getting_pixels, center_dec,
+                                    sbfd, fr_for_getting_pixels,
                                     self.point_source_list_file)
                             self.log("*  the results of which "
                                      "will be repeatedly used later.)")
@@ -2916,7 +2935,7 @@ class FlagBadMaps(object):
             if self.pixels_to_use_for_flc_calc[self.sb_fld] is None:
                 self.pixels_to_use_for_flc_calc[self.sb_fld] = \
                     identify_pixels_of_non_atypical_region(
-                        frame, self.center_dec, self.p_list)
+                        self.sb_fld, frame, self.p_list)
             
             flc_dct = calculate_map_fluctuation_metrics(
                           new_frame, band, self.sb_fld,

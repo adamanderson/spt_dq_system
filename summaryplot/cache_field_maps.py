@@ -37,7 +37,7 @@ from summaryplot import fields_plotting
 # ------------------------------------------------------------------------------
 
 
-def update(mode, action,
+def update(season, mode, action,
            oldest_time_to_consider=None, current_time=None,
            time_interval=None, last_how_many_days=0,
            original_maps_dir='.',
@@ -76,7 +76,7 @@ def update(mode, action,
     log("# --------------------------------------------- #")
     log("")
     
-    # -- Variables related to other things
+    # -- Variables related to file i/o
     
     if current_time is None:
         current_time = datetime.datetime.utcnow()
@@ -96,14 +96,25 @@ def update(mode, action,
     
     aux_files_directory  = 'summaryplot/fields_aux_files/'
     bad_map_list_file    = \
-        aux_files_directory + 'bad_map_list.txt'
+        os.path.join(aux_files_directory, 'bad_map_list.txt')
     planck_map_fits_file = \
-        aux_files_directory + \
-        'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits'
+        os.path.join(aux_files_directory,
+                    'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
     point_source_list_file = \
         'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
     dummy_input_file = \
         os.path.join(aux_files_directory, 'dummy.g3')
+    
+    # -- Variables that depend on the season
+    
+    if season == 'summer':
+        sub_fields = ['ra0hdec-59.75', 'ra0hdec-67.25']
+        planck_map_fits_file = \
+            os.path.join(
+                aux_files_directory,
+                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
+        point_source_list_file = \
+            'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
     
     
     # - Figure out what appropriate time intervals are and
@@ -226,6 +237,8 @@ def update(mode, action,
     
     
     for root_directory in [coadds_dir, figs_dir]:
+        if not os.path.isdir(root_directory):
+            os.mkdir(root_directory)
         if time_interval not in os.listdir(root_directory):
             os.mkdir(os.path.join(root_directory, time_interval))
         for time_range in desired_time_ranges:
@@ -718,11 +731,11 @@ def update(mode, action,
         
         elif mode == 'plotting':
             
+            fig_dir = desired_dir_names[i+n_time_ranges]
+            
             for band in bands:
                 log('--- %s ---', band)
                 log('')
-                
-                fig_dir = desired_dir_names[i+n_time_ranges]
                 
                 obs_info_etc_file = \
                     os.path.join(desired_dir_names[i],
@@ -802,7 +815,10 @@ def update(mode, action,
                     logger, log_file, just_see_commands)
                 
                 log('\n\n')
-        
+            
+            if len(os.listdir(fig_dir)) == 0:
+                os.rmdir(fig_dir)
+            
         log('\n\n\n')
     
     
@@ -864,10 +880,21 @@ if __name__ == '__main__':
                  formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                  epilog="Hopefully this works well! (Wei)")
     
+    parser.add_argument("-s", "--season",
+                        type=str, action="store",
+                        choices=["winter", "summer"], default="winter",
+                        help="If we want to analyze the maps from "
+                             "the 1500 square degrees field, "
+                             "we should choose 'winter'. If we want to anayze "
+                             "the summer fields, we should choose 'summer'."
+                             "This choice affects some of the "
+                             "hardcoded variables used in the script.")
+    
     parser.add_argument("-m", "--mode",
                         type=str, action="store",
                         choices=["coadding", "plotting"], default="plotting",
-                        help="Two modes are available: coadding and plotting. "
+                        help="For each of the two seasons, "
+                             "two modes are available: coadding and plotting. "
                              "In the former mode, this script will run another "
                              "script that coadds maps. In the latter mode, "
                              "a different script that makes figures for maps "

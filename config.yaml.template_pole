@@ -1,4 +1,5 @@
 site: pole
+season: winter
 
 scanify_db_path: /poleanalysis/sptdaq/db/db/scanify.db
 auxtransfer_db_path: /poleanalysis/sptdaq/db/db/aux_transfer.db
