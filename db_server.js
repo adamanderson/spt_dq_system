@@ -161,8 +161,12 @@ app.get('/lastmodified_maps', function(req, res) {
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
 	var lastupdate_time;
-
-	var stat_dir = config.coadds_figs_dir + '_summer'  + '/last_n/last_7/';
+        
+        if (config.coadds_figs_dir.endsWith('/')) {
+            var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
+        } else {
+	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_7/';
+        }
 	filelist = fs.readdirSync(stat_dir);
 	for(var jfile=0; jfile < filelist.length; jfile++) {
 		file_info = fs.statSync(stat_dir + filelist[jfile]);
