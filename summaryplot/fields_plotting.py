@@ -94,6 +94,14 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 # Define functions related to general plotting utilities
 # ------------------------------------------------------------------------------
 
+def get_season_based_on_fields(vector_string):
+    
+    winter_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
+                     "ra0hdec-59.75", "ra0hdec-67.25"]
+    if set(vector_string) <= set(winter_fields):
+        return "winter"
+                    
+
 def get_figure_and_plot_objects(w=12.0, h=9.0, dpi=100):
     
     figure_obj = pyplot.figure(figsize=(w, h), dpi=dpi)
@@ -281,7 +289,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                       "   " + map_id_for_fig + " " + mp_ty_str
         
         elif (obs_fr is None) and (obs_id_list is not None):
-            source  = "1500 sq. deg. field"
+            if get_season_based_on_fields(obs_id_list.keys()) == "winter":
+                source  = "1500 sq. deg. field"
             obs_ids = []
             for oids_one_field in obs_id_list.values():
                 for oid in oids_one_field:
@@ -415,40 +424,57 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         figure_obj, plot_obj = get_figure_and_plot_objects(w=w, h=h, dpi=dpi)
         
         deg = core.G3Units.deg
-        ra  = 0.0
+        
+        if get_season_based_on_fields(n_obss.keys()) == "winter":
+            center_ra   =   0.0
+            cen_ra_str  = "0h"
+            norm_dec_l  = -70.10
+            norm_dec_r  = -69.90
+            most_neg_d  = -74.75
+            most_pos_d  = -37.25
+            center_decs = [-44.75, -52.25, -59.75, -67.25]
+            one_fld_uni = 3.25
+            one_fld_zr  = 4.25
+            n_flds      = 4
+        
         
         vertical_cr_sec_values = \
             numpy.asarray(weight_map).transpose()[weight_map.shape[1]//2]
         
-        dec_6990_idx = numpy.unravel_index(weight_map.angle_to_pixel(
-                           0.0*deg, -69.90*deg), weight_map.shape)[0]
-        dec_7010_idx = numpy.unravel_index(weight_map.angle_to_pixel(
-                           0.0*deg, -70.10*deg), weight_map.shape)[0]
-        avg_w_el3_edge = \
-            numpy.mean(vertical_cr_sec_values[dec_7010_idx:dec_6990_idx+1])
-        if avg_w_el3_edge != 0.0:
+        norm_dec_r_idx = numpy.unravel_index(
+                             weight_map.angle_to_pixel(
+                                 center_ra*deg, norm_dec_r*deg),
+                             weight_map.shape)[0]
+        norm_dec_l_idx = numpy.unravel_index(
+                             weight_map.angle_to_pixel(
+                                 center_ra*deg, norm_dec_l*deg),
+                                 weight_map.shape)[0]
+        avg_w_hi_el = \
+            numpy.mean(vertical_cr_sec_values[norm_dec_l_idx:norm_dec_r_idx+1])
+        if avg_w_hi_el != 0.0:
             hard_to_normalize  = False
-            normalized_weights = vertical_cr_sec_values / avg_w_el3_edge
+            normalized_weights = vertical_cr_sec_values / avg_w_hi_el
         else:
             hard_to_normalize  = True
             normalized_weights = \
                 vertical_cr_sec_values / numpy.max(vertical_cr_sec_values)
             max_idx = int(numpy.argmax(vertical_cr_sec_values))
-            max_ra, max_dec = \
+            max_w_ra, max_w_dec = \
                 weight_map.pixel_to_angle(weight_map.shape[1]//2, max_idx)
-            max_dec /= core.G3Units.deg
+            max_w_dec /= core.G3Units.deg
                 
-        decs = numpy.linspace(-74.75, -37.25, 3751)
-        pids = [weight_map.angle_to_pixel(ra*deg, dec*deg) for dec in decs]
+        decs = numpy.linspace(most_neg_d, most_pos_d,
+                              (most_pos_d-most_neg_d)*1000+1)
+        pids = [weight_map.angle_to_pixel(center_ra*deg, d*deg) for d in decs]
         idcs = [numpy.unravel_index(pid, weight_map.shape)[0] for pid in pids]
         
         focal_plane_hits = numpy.zeros(len(decs))
-        for dec_center in [-44.75, -52.25, -59.75, -67.25]:
+        for center_dec in center_decs:
             one_sub_field_hits = numpy.zeros(len(decs))
-            l_zero = dec_center - 4.25
-            l_edge = dec_center - 3.25
-            r_edge = dec_center + 3.25
-            r_zero = dec_center + 4.25
+            l_zero = center_dec - one_fld_zr
+            l_edge = center_dec - one_fld_uni
+            r_edge = center_dec + one_fld_uni
+            r_zero = center_dec + one_fld_zr
             idx_lz = numpy.argmin(numpy.absolute(decs - l_zero))
             idx_le = numpy.argmin(numpy.absolute(decs - l_edge))
             idx_re = numpy.argmin(numpy.absolute(decs - r_edge))
@@ -462,18 +488,18 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                 one_sub_field_hits[i] = \
                     1.0 - 1.0 * (i - idx_re) / (idx_rz - idx_re)
             try:
-                n_obs = len(n_obss["ra0hdec"+str(dec_center)])
+                n_obs = len(n_obss["ra"+cen_ra_str+"dec"+str(center_dec)])
             except KeyError:
                 n_obs = 0
             focal_plane_hits += one_sub_field_hits * n_obs
         
         inv_cos = 1.0 / numpy.cos(decs * numpy.pi / 180.0)
-        prediction  = focal_plane_hits * inv_cos
-        el3_edge    = numpy.where(decs==-70.00)
+        prediction = focal_plane_hits * inv_cos
+        hi_el_edge = numpy.where(decs==numpy.mean([norm_dec_l, norm_dec_r]))
         if hard_to_normalize:
-            max_w = prediction[numpy.argmin(numpy.abs(decs-max_dec))]
+            max_w = prediction[numpy.argmin(numpy.abs(decs-max_w_dec))]
         else:
-            max_w = prediction[el3_edge]
+            max_w = prediction[hi_el_edge]
         prediction /= max_w
         
         data_linewidth = 1.50
@@ -485,8 +511,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         plot_obj.plot(idcs, prediction, label="Simple model",
                       linewidth=data_linewidth, color="black")
         
-        decs = numpy.linspace(-74.75, -37.25, 11)
-        pids = [weight_map.angle_to_pixel(ra, dec * deg) for dec in decs]
+        decs = numpy.linspace(most_neg_d, most_pos_d, 2*n_flds+3)
+        pids = [weight_map.angle_to_pixel(center_ra, dec * deg) for dec in decs]
         idcs = [numpy.unravel_index(pid, weight_map.shape)[0] for pid in pids]
         
         xlim_left  = idcs[0]
@@ -1268,7 +1294,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             fluc_data = frame[plist["key"]]
             
-            ylims = plist["ylims"]
+            if get_season_based_on_fields(fluc_data.keys()) == "winter":
+                ylims = plist["ylims"]
             xlims = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
             
@@ -1330,7 +1357,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                               color="black", alpha=2.0*self.typical_alpha,
                               fontsize=0.9*lgd_fs, horizontalalignment="right")
             if "MeansOfTTWeights" in plist["key"]:
-                el3_median = records_for_later["ra0hdec-67.25"]
+                """el3_median = records_for_later["ra0hdec-67.25"]
                 el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_median
                 el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_median
                 el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_median
@@ -1339,7 +1366,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                               "alpha"    : 2.0*self.typical_alpha,
                               "fontsize" : 0.90*lgd_fs,
                               "horizontalalignment": "right"}
-                """plot_obj.text(0.98, 0.62,
+                plot_obj.text(0.98, 0.62,
                               "w0 / w3\n= {:4.2f}".format(el0_to_el3),
                               **text_kargs)
                 plot_obj.text(0.98, 0.52,
@@ -1579,9 +1606,10 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
-        ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
-                      "150GHz": {"bottom":  90, "top": 210},
-                      "220GHz": {"bottom": 300, "top": 700}}
+        if get_season_based_on_fields(frame[noise_key].keys()) == "winter":
+            ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
+                          "150GHz": {"bottom":  90, "top": 210},
+                          "220GHz": {"bottom": 300, "top": 700}}
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
         
@@ -1615,7 +1643,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                   None, None, None, self.ttl_fs, self.ln_wdth)
         
         lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
-        el3_value  = records_for_later["ra0hdec-67.25"]
+        """el3_value  = records_for_later["ra0hdec-67.25"]
         el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_value
         el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_value
         el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_value
@@ -1624,7 +1652,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                       "alpha"    : 2.0*self.typical_alpha,
                       "fontsize" : 0.90*lgd_fs,
                       "horizontalalignment": "right"}
-        """plot_obj.text(0.98, 0.62,
+        plot_obj.text(0.98, 0.62,
                       "(n0/n3)^2\n= {:4.2f}".format(el0_to_el3),
                       **text_kargs)
         plot_obj.text(0.98, 0.52,
@@ -1763,9 +1791,10 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         
         plot_obj.set_xscale("log")
         plot_obj.set_yscale("log")
-        ylims_dict = { "90GHz": {"bottom":  5, "top": 200},
-                      "150GHz": {"bottom":  5, "top": 200},
-                      "220GHz": {"bottom": 15, "top": 600}}
+        if get_season_based_on_fields(noise_data.keys()) == "winter":
+            ylims_dict = { "90GHz": {"bottom":  5, "top": 200},
+                          "150GHz": {"bottom":  5, "top": 200},
+                          "220GHz": {"bottom": 15, "top": 600}}
         
         max_n_obss = 0
         for sub_field, noise_dict in noise_data.items():
@@ -2484,8 +2513,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
             data_reorganized[sub_field] = \
                 numpy.asarray(map_double.values())
         
-        xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.4, "220GHz": 0.1}
-        xlim_rights = {"90GHz": 2.0, "150GHz": 1.6, "220GHz": 2.0}
+        if get_season_based_on_fields(data_reorganized.keys()) == "winter":
+            xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.4, "220GHz": 0.1}
+            xlim_rights = {"90GHz": 2.0, "150GHz": 1.6, "220GHz": 2.0}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2517,8 +2547,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
             data_reorganized[sub_field] = \
                 numpy.asarray(map_double.values())/nu
         
-        xlim_lefts  = {"90GHz": 100, "150GHz":  80, "220GHz": 280}
-        xlim_rights = {"90GHz": 220, "150GHz": 180, "220GHz": 650}
+        if get_season_based_on_fields(data_reorganized.keys()) == "winter":
+            xlim_lefts  = {"90GHz": 100, "150GHz":  80, "220GHz": 280}
+            xlim_rights = {"90GHz": 220, "150GHz": 180, "220GHz": 650}
         
         self.draw_histograms(
             plot_obj, data_reorganized,

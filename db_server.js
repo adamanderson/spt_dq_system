@@ -137,11 +137,32 @@ app.get('/lastmodified_calibration', function(req, res) {
 	res.send({time:lastupdate_time});
 });
 
-// get time that calibration plots were lastmodified
+// get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps', function(req, res) {
 	var lastupdate_time;
 
 	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
+	filelist = fs.readdirSync(stat_dir);
+	for(var jfile=0; jfile < filelist.length; jfile++) {
+		file_info = fs.statSync(stat_dir + filelist[jfile]);
+		if(typeof lastupdate_time !== 'undefined') {
+			if(file_info.mtime > lastupdate_time) {
+				lastupdate_time = file_info.mtime;
+			}
+		}
+		else {
+			lastupdate_time = file_info.mtime;
+		}
+	}
+
+	res.send({time:lastupdate_time});
+});
+
+// get time that summer fields related plots  were lastmodified
+app.get('/lastmodified_maps_summer', function(req, res) {
+	var lastupdate_time;
+
+	var stat_dir = config.coadds_figs_dir + '_summer'  + '/last_n/last_7/';
 	filelist = fs.readdirSync(stat_dir);
 	for(var jfile=0; jfile < filelist.length; jfile++) {
 		file_info = fs.statSync(stat_dir + filelist[jfile]);
@@ -449,6 +470,7 @@ function updateSummaryPlots() {
 function updateMapPlots() {
 	args = ['-B', 'update_summary.py',
 			'maps',
+                        config.season,
 			config.maps_data_dir,
 			config.coadds_data_dir,
 			config.coadds_figs_dir,
@@ -473,7 +495,7 @@ function updateMapPlots() {
     }
 }
 
-// update both types of plots in parallel every 10 minutes
+update both types of plots in parallel every 10 minutes
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') // only update map plots at pole
-	setInterval(updateMapPlots, 600000);
+    setInterval(updateMapPlots, 600000);

@@ -57,6 +57,13 @@ parser_maps = \
                       'map-related quantities that appear on the "Maps" tab '
                       'of the webpage.')
 
+parser_maps.add_argument('season',
+                         help='Season from which the field maps are '
+                              'to be monitored. Available choices are '
+                              '"winter" and "summer". If "winter" is chosen, '
+                              'then the maps of the 1500 square degrees '
+                              'will be analyzed. If "summer" is chosen, '
+                              'then maps of the summer fields will be analyzed.')
 parser_maps.add_argument('mapsdatadir',
                          help='Path to the directory containing auto-processed '
                               'maps of individual observations.')
@@ -157,6 +164,22 @@ if args.mode == 'summarystats':
 if args.mode == 'maps':
     
     # update coadded maps
+    
+    if args.season == 'summer':
+        def get_summer_path(p):
+            if p[-1] == '/':
+                p = p[0:-1]
+            sp = os.path.join(os.path.dirname(p),
+                              os.path.basename(p)+'_summer')
+            return sp
+        args.coaddsdatadir = get_summer_path(args.coaddsdatadir)
+        args.coaddsfigsdir = get_summer_path(args.coaddsfigsdir)
+        args.coaddslogsdir = get_summer_path(args.coaddslogsdir)
+    
+    for d in [args.coaddsdatadir, args.coaddsfigsdir, args.coaddslogsdir]:
+        if not os.path.isdir(d):
+            os.mkdir(d)
+    
     current_time = datetime.datetime.utcnow()
     
     logger_name = "overall_progress"
@@ -221,7 +244,8 @@ if args.mode == 'maps':
                                  '{}_{}'.format(time_string, logger_name))
             
             try:
-                cache_field_maps.update(mode, action, time_interval='last_n',
+                cache_field_maps.update(args.season,
+                                        mode, action, time_interval='last_n',
                                         last_how_many_days=n,
                                         oldest_time_to_consider=args.mintime,
                                         current_time=current_day,
@@ -262,7 +286,8 @@ if args.mode == 'maps':
                                  '{}_{}'.format(time_string, logger_name))
             
             try:
-                cache_field_maps.update(mode, action, time_interval=interval,
+                cache_field_maps.update(args.season,
+                                        mode, action, time_interval=interval,
                                         oldest_time_to_consider=args.mintime,
                                         current_time=current_day,
                                         original_maps_dir=args.mapsdatadir,
