@@ -296,8 +296,8 @@ function update_lastmodified() {
 	$.get('/lastmodified_calibration', function(data) {
 		$("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
 	});
-	$.get('/lastmodified_maps', function(data) {
-		$("#lastmodified_maps").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+	$.get('/lastmodified_maps_winter', function(data) {
+		$("#lastmodified_maps_winter").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
 	});
 	$.get('/lastmodified_maps_summer', function(data) {
 		$("#lastmodified_maps_summer").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
