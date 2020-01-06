@@ -32,6 +32,11 @@ parser = argparse.ArgumentParser(
              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
              epilog="This should save time! (Wei)")
 
+parser.add_argument("-s", "--season",
+                    action="store", type=str, default=None,
+                    help="The observing season for which "
+                         "auxiliary files are to be made.")
+
 parser.add_argument("-d", "--directory-for-file-saving",
                     action="store", type=str, default=None,
                     help="The directory in which the auxiliary files "
@@ -105,9 +110,21 @@ arguments = parser.parse_args()
 # ------------------------------------------------------------------------------
 
 deg = core.G3Units.degrees
-dec_centers = [-44.75 * deg, -52.25 * deg,
-               -59.75 * deg, -67.25 * deg]
-ra_center = 0.0 * deg
+
+if arguments.season == "winter":
+    dec_centers = [-44.75 * deg, -52.25 * deg,
+                   -59.75 * deg, -67.25 * deg]
+    ra_center   =    0.0 * deg
+    field_names = ["ra0hdec-44.75", "ra0hdec-52.25",
+                   "ra0hdec-59.75", "ra0hdec-67.25"]
+elif arguments.season == "summer":
+    dec_centers = [-24.50 * deg, -31.50 * deg,
+                   -38.50 * deg, -45.50 * deg,
+                   -52.50 * deg, -59.50 * deg]
+    ra_center   =   75.0 * deg
+    field_names = ["ra5hdec-24.5", "ra5hdec-31.5",
+                   "ra5hdec-38.5", "ra5hdec-45.5",
+                   "ra5hdec-52.5", "ra5hdec-59.5"]
 
 
 
@@ -156,20 +173,20 @@ if arguments.identify_pixels_of_uniform_coverage_regions:
     
     spt_map_frame = list(core.G3File(arguments.spt_map_data_file))[-1]
     
-    for dec_center in dec_centers:
+    for field_name in field_names:
         
         output_file = \
             os.path.join(arguments.directory_for_file_saving,
                          ("pixel_numbers_for_calculating_"+\
                           "fluctuation_metrics_of_" + \
-                          "ra0hdec{}_sub_field.pickle").format(dec_center/deg))
+                          "{}_sub_field.pickle").format(field_name))
         
-        print("- Identifying the pixels for the ra0hdec%s sub field ..."
-              %(dec_center/deg))
+        print("- Identifying the pixels for the %s sub field ..."
+              %(field_name))
         
         pixels_to_use = \
             fields_coadding.identify_pixels_of_non_atypical_region(
-                spt_map_frame, dec_center, arguments.point_source_list_file)
+                field_name, spt_map_frame, arguments.point_source_list_file)
         
         with open(output_file, "wb") as f_obj:
             pickle.dump(pixels_to_use, f_obj)
@@ -192,9 +209,11 @@ if arguments.generate_mini_planck_maps:
     
     class MakeMiniPlanckMaps(object):
         
-        def __init__(self):
+        def __init__(self, ra_center, dec_center):
             
             self.spt_map_frame = None
+            self.ra_center     = ra_center
+            self.dec_center    = dec_center
         
         def __call__(self, frame):
             
@@ -212,7 +231,7 @@ if arguments.generate_mini_planck_maps:
                     fields_coadding.create_mini_planck_map_frame(
                         planck_map_fits_file,
                         self.spt_map_frame,
-                        ra_center, dec_center, t_only=True)
+                        self.ra_center, self.dec_center, t_only=True)
                 return [mini_planck_map_frame, frame]
     
     
@@ -226,18 +245,18 @@ if arguments.generate_mini_planck_maps:
                 replace("BAND", planck_band+"GHz").\
                 replace("MISSION", planck_mission)
             
-            for dec_center in dec_centers:
+            for counter, field_name in enumerate(field_names):
                 
                 output_file = \
                     os.path.join(
                         arguments.directory_for_file_saving,
                         ("mini_{}_planck_map_for_"+\
-                         "spt_{}GHz_ra0hdec{}_sub_field.g3").\
-                        format(planck_mission, spt_band, dec_center/deg))
+                         "spt_{}GHz_{}_sub_field.g3").\
+                        format(planck_mission, spt_band, field_name))
                 
                 print("- Making a mini %s Planck map for "
-                      "%sGHz of ra0hdec%s sub field ..."
-                      %(planck_mission, spt_band, dec_center/deg))
+                      "%sGHz of %s sub field ..."
+                      %(planck_mission, spt_band, field_name))
                 
                 pipeline = core.G3Pipeline()
                 
@@ -246,7 +265,9 @@ if arguments.generate_mini_planck_maps:
                 
                 pipeline.Add(lambda frame: frame.type == core.G3FrameType.Map)
                 
-                pipeline.Add(MakeMiniPlanckMaps)
+                pipeline.Add(MakeMiniPlanckMaps,
+                             ra_center=ra_center,
+                             dec_center=dec_centers[counter])
                 
                 pipeline.Add(core.G3Writer,
                              filename=output_file)
@@ -270,9 +291,11 @@ if arguments.generate_masks_for_power_spectrum_calculations:
     
     class MakeMiniMasksForPowerSpectraCalculations(object):
         
-        def __init__(self):
+        def __init__(self, ra_center, dec_center):
             
             self.spt_map_frame = None
+            self.ra_center     = ra_center
+            self.dec_center    = dec_center
         
         def __call__(self, frame):
             
@@ -288,7 +311,8 @@ if arguments.generate_masks_for_power_spectrum_calculations:
                       "of the original map ..." %(""))
                 mini_map_frame = \
                     fields_coadding.create_new_map_frame_with_smaller_region(
-                        self.spt_map_frame, ra_center, dec_center, t_only=True)
+                        self.spt_map_frame,
+                        self.ra_center, self.dec_center, t_only=True)
                 print("%4s Combinig a point source mask and "
                       "a window function ..." %(""))
                 mini_mask = \
@@ -301,15 +325,15 @@ if arguments.generate_masks_for_power_spectrum_calculations:
     
     
     
-    for dec_center in dec_centers:
+    for counter, field_name in enumerate(field_names):
         
         output_file = \
             os.path.join(arguments.directory_for_file_saving,
-                         "mask_for_power_spectrum_calculations_for_ra0hdec{}_"
-                         "sub_field.g3".format(str(dec_center/deg)))
+                         "mask_for_power_spectrum_calculations_for_{}_"
+                         "sub_field.g3".format(field_name))
         
-        print("- Making a mask for the ra0hdec%s sub field ..."
-              %(dec_center/deg))
+        print("- Making a mask for the %s sub field ..."
+              %(field_name))
         
         pipeline = core.G3Pipeline()
         
@@ -318,7 +342,9 @@ if arguments.generate_masks_for_power_spectrum_calculations:
         
         pipeline.Add(lambda frame: frame.type == core.G3FrameType.Map)
         
-        pipeline.Add(MakeMiniMasksForPowerSpectraCalculations)
+        pipeline.Add(MakeMiniMasksForPowerSpectraCalculations,
+                     ra_center=ra_center,
+                     dec_center=dec_centers[counter])
         
         pipeline.Add(core.G3Writer,
                      filename=output_file)

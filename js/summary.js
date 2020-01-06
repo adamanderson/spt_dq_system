@@ -141,10 +141,12 @@ function update_figs() {
     document["ra_offsets_el2"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'
     document["ra_offsets_el3"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'
 
-    document["ra_offsets_el0_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png'
-    document["ra_offsets_el1_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png'
-    document["ra_offsets_el2_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png'
-    document["ra_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png'
+    document["ra_offsets_el0_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-24.5.png'
+    document["ra_offsets_el1_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-31.5.png'
+    document["ra_offsets_el2_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-38.5.png'
+    document["ra_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-45.5.png'
+    document["ra_offsets_el4_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-52.5.png'
+    document["ra_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-59.5.png'
     
     document["dec_offsets_el0"].src = 'staticimg/'+mapweekdir+
         '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'
@@ -156,19 +158,23 @@ function update_figs() {
         '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'
 
     document["dec_offsets_el0_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png'
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-24.5.png'
     document["dec_offsets_el1_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png'
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-31.5.png'
     document["dec_offsets_el2_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png'
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-38.5.png'
     document["dec_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png'
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-45.5.png'
+    document["dec_offsets_el4_summer"].src = 'staticimg/'+mapweekdirsummer+
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-52.5.png'
+    document["dec_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+
+        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-59.5.png'
     
     document['distro_ra_offsets'].src  = 'staticimg/'+mapweekdir+'/150GHz-T_map_distribution_of_average_Ra_offsets.png'
     document['distro_dec_offsets'].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distribution_of_average_Dec_offsets.png'
 
-    document['distro_ra_offsets_summer'].src  = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distribution_of_average_Ra_offsets.png'
-    document['distro_dec_offsets_summer'].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distribution_of_average_Dec_offsets.png'
+    document['distro_ra_offsets_summer'].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distribution_of_average_Ra_offsets.png'
+    document['distro_dec_offsets_summer'].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distribution_of_average_Dec_offsets.png'
     
     document["flagging_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png'
     document["flagging_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png'

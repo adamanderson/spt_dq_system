@@ -126,12 +126,18 @@ from spt3g.mapspectra import map_analysis
 # ------------------------------------------------------------------------------
 
 
-def get_season_based_on_fields(vector_string):
+def get_season_based_on_fields(some_fields):
     
     winter_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
                      "ra0hdec-59.75", "ra0hdec-67.25"]
-    if set(vector_string) <= set(winter_fields):
+    summer_fields = ["ra5hdec-24.5" , "ra5hdec-31.5",
+                     "ra5hdec-38.5" , "ra5hdec-45.5",
+                     "ra5hdec-52.5" , "ra5hdec-59.5"]
+    
+    if set(some_fields) <= set(winter_fields):
         return "winter"
+    elif set(some_fields) <= set(summer_fields):
+        return "summer"
 
 
 
@@ -717,18 +723,24 @@ def identify_pixels_of_non_atypical_region(
     ras, decs = coordinateutils.maputils.get_ra_dec_map(map_frame["T"])
     ras  = numpy.asarray(ras/core.G3Units.deg)
     decs = numpy.asarray(decs/core.G3Units.deg)
-    center_dec /= core.G3Units.deg
     
     ptsrc_msk = numpy.asarray(mapspectra.apodmask.make_apodized_ptsrc_mask(
                               map_frame, point_source_list_file,
                               apod_type="none", zero_border_arcmin=0.0))
     
-    if get_season_based_on_fields([field_name]) == "winter":
+    season = get_season_based_on_fields([field_name])
+    if season == "winter":
         ra_max =  40.0
         ra_min = -40.0
         dccntr = float(field_name[-6:])
         de_max = dccntr + 3.0
         de_min = dccntr - 3.0
+    elif season == "summer":
+        ra_max = 95.0
+        ra_min = 55.0
+        dccntr = float(field_name[-5:])
+        de_max = dccntr + 2.75
+        de_min = dccntr - 2.75
 
     typical_pixels = numpy.where((ras  > ra_min) & (ras  < ra_max) &
                                  (decs > de_min) & (decs < de_max) &
@@ -783,15 +795,33 @@ def calculate_map_fluctuation_metrics(
             { "90": {"ra0hdec-44.75": 14.0 * wu,
                      "ra0hdec-52.25": 16.0 * wu,
                      "ra0hdec-59.75": 18.0 * wu,
-                     "ra0hdec-67.25": 21.0 * wu},
+                     "ra0hdec-67.25": 21.0 * wu,
+                     "ra5hdec-24.5" : 16.0* wu,
+                     "ra5hdec-31.5" : 18.0* wu,
+                     "ra5hdec-38.5" : 20.0* wu,
+                     "ra5hdec-45.5" : 22.0* wu,
+                     "ra5hdec-52.5" : 25.0* wu,
+                     "ra5hdec-59.5" : 28.0* wu},
              "150": {"ra0hdec-44.75": 20.0 * wu,
                      "ra0hdec-52.25": 24.0 * wu,
                      "ra0hdec-59.75": 27.0 * wu,
-                     "ra0hdec-67.25": 36.0 * wu},
+                     "ra0hdec-67.25": 36.0 * wu,
+                     "ra5hdec-24.5" : 24.0* wu,
+                     "ra5hdec-31.5" : 27.0* wu,
+                     "ra5hdec-38.5" : 30.0* wu,
+                     "ra5hdec-45.5" : 33.0* wu,
+                     "ra5hdec-52.5" : 38.0* wu,
+                     "ra5hdec-59.5" : 42.0* wu},
              "220": {"ra0hdec-44.75":  1.4 * wu,
                      "ra0hdec-52.25":  1.8 * wu,
                      "ra0hdec-59.75":  2.1 * wu,
-                     "ra0hdec-67.25":  2.4 * wu}}
+                     "ra0hdec-67.25":  2.4 * wu,
+                     "ra5hdec-24.5" :  1.6* wu,
+                     "ra5hdec-31.5" :  1.8* wu,
+                     "ra5hdec-38.5" :  2.0* wu,
+                     "ra5hdec-45.5" :  2.2* wu,
+                     "ra5hdec-52.5" :  2.5* wu,
+                     "ra5hdec-59.5" :  2.8* wu}}
         
         t_vals = numpy.asarray(map_frame["T"])
         
@@ -836,7 +866,7 @@ def calculate_map_fluctuation_metrics(
         else:
             mean_weight = numpy.mean(better_w_vals)
             nominal_wgt = nominal_weights_dict[band][sub_field]
-            n_pix_g_wgt = len(numpy.where(better_w_vals > nominal_wgt)[0])
+            n_pix_g_wgt = len(numpy.where(better_w_vals/wu > nominal_wgt)[0])
         
         logfun("$$$ number of pixels with good weights : %s" %(n_pix_g_wgt))
         
@@ -882,7 +912,31 @@ def calculate_pointing_discrepancies(
          "ra0hdec-67.25": \
              {"1st": numpy.array([329.27542, -69.68981, 1114.524]),
               "2nd": numpy.array([337.25092, -69.17492,  445.331]),
-              "3rd": numpy.array([325.44375, -64.18742,  388.218])}}
+              "3rd": numpy.array([325.44375, -64.18742,  388.218])},
+         "ra5hdec-24.5": \
+             {"1st": numpy.array([ 74.26346, -23.41439, 3841.000]),
+              "2nd": numpy.array([ 52.47542, -23.95239, 1458.000]),
+              "3rd": numpy.array([ 92.24900, -22.33922, 1003.000])},
+         "ra5hdec-31.5": \
+             {"1st": numpy.array([ 69.40233, -29.90108,  564.000]),
+              "2nd": numpy.array([ 61.89133, -33.06258,  563.000]),
+              "3rd": numpy.array([ 60.58879, -31.79044,  467.000])},
+         "ra5hdec-38.5": \
+             {"1st": numpy.array([ 60.97404, -36.08358, 4013.000]),
+              "2nd": numpy.array([ 80.74142, -36.45844, 3909.000]),
+              "3rd": numpy.array([ 67.16821, -37.93867, 1850.000])},
+         "ra5hdec-45.5": \
+             {"1st": numpy.array([ 79.95708, -45.77881, 6320.000]),
+              "2nd": numpy.array([ 84.70979, -44.08572, 5294.000]),
+              "3rd": numpy.array([ 73.96163, -46.26628, 4157.000])},
+         "ra5hdec-52.5": \
+             {"1st": numpy.array([ 85.19104, -54.30606, 1127.000]),
+              "2nd": numpy.array([ 57.86771, -51.71525,  401.000]),
+              "3rd": numpy.array([ 92.20471, -54.94525,  386.000])},
+         "ra5hdec-59.5": \
+             {"1st": numpy.array([ 76.68342, -61.16150, 1655.000]),
+              "2nd": numpy.array([ 87.53988, -57.54017, 1005.000]),
+              "3rd": numpy.array([ 80.64333, -61.13250,  573.000])}}
     
     discrep_dict = {"1st": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
                     "2nd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
@@ -1680,10 +1734,14 @@ class AnalyzeAndCoaddMaps(object):
                     self.log("")
                     return []
                 else:
-                    if get_season_based_on_fields(
-                            frame["CoaddedObservationIDs"].keys()) == "winter":
+                    season = get_season_based_on_fields(
+                                 frame["CoaddedObservationIDs"].keys())
+                    if season == "winter":
                         center_ra  = core.G3Units.deg *   0.0
                         center_dec = core.G3Units.deg * -56.0
+                    elif season == "summer":
+                        center_ra  = core.G3Units.deg *  75.0
+                        center_dec = core.G3Units.deg * -42.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1731,9 +1789,13 @@ class AnalyzeAndCoaddMaps(object):
                     d_i  = std_processing.time_to_obsid(t_i)
                     d_f  = std_processing.time_to_obsid(t_f)
                     dura = {str(oid): (d_f - d_i) * core.G3Units.s}
-                    if get_season_based_on_fields([sbfd]) == "winter":
+                    season = get_season_based_on_fields([sbfd])
+                    if season == "winter":
                         center_ra  = core.G3Units.deg * 0.0
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
+                    elif season == "summer":
+                        center_ra  = core.G3Units.deg * 75.0
+                        center_dec = core.G3Units.deg * float(sbfd[-5:])
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -2816,18 +2878,37 @@ def do_weights_look_bad(mean_wt, band, sub_field):
     
     wu = 1 / (core.G3Units.mK * core.G3Units.mK)
     
+    mean_wt /= wu
     thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  65.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  80.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  80.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  95.0*wu}},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  95.0*wu},
+                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi":  80.0*wu},
+                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi":  85.0*wu},
+                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi":  95.0*wu},
+                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 105.0*wu},
+                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
+                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 150.0*wu}},
                   "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 120.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 140.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 165.0*wu}},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 165.0*wu},
+                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi": 145.0*wu},
+                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi": 155.0*wu},
+                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi": 165.0*wu},
+                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 215.0*wu},
+                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 255.0*wu}},
                   "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":   8.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  10.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  12.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  14.0*wu}}}
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  14.0*wu},
+                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi":  10.0*wu},
+                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi":  12.0*wu},
+                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi":  14.0*wu},
+                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
+                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi":  18.0*wu},
+                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi":  21.0*wu}}}
     
     if (mean_wt < thresholds[band][sub_field]["lo"]) or \
        (mean_wt > thresholds[band][sub_field]["hi"]):
@@ -2880,7 +2961,10 @@ class FlagBadMaps(object):
         self.pixels_to_use_for_flc_calc = \
             {sub_field: None for sub_field in \
              ["ra0hdec-44.75", "ra0hdec-52.25",
-              "ra0hdec-59.75", "ra0hdec-67.25"]}
+              "ra0hdec-59.75", "ra0hdec-67.25",
+              "ra5hdec-24.5" , "ra5hdec-31.5" ,
+              "ra5hdec-38.5" , "ra5hdec-45.5" ,
+              "ra5hdec-52.5" , "ra5hdec-59.5"]}
         
         for sub_field in self.pixels_to_use_for_flc_calc.keys():
             pf = "pixel_numbers_for_calculating_"+\
@@ -2898,8 +2982,13 @@ class FlagBadMaps(object):
         if frame.type == core.G3FrameType.Observation:
             self.sb_fld = frame["SourceName"]
             self.obs_id = frame["ObservationID"]
-            self.center_dec = \
-                core.G3Units.deg * float(self.sb_fld.replace("ra0hdec", ""))
+            season = get_season_based_on_fields([self.sb_fld])
+            if season == "winter":
+                self.center_dec = \
+                    core.G3Units.deg * float(self.sb_fld.replace("ra0hdec", ""))
+            elif season == "summer":
+                self.center_dec = \
+                    core.G3Units.deg * float(self.sb_fld.replace("ra5hdec", ""))
         
         if frame.type == core.G3FrameType.Map:
             if frame["Id"] not in self.map_ids:
@@ -3561,7 +3650,7 @@ if __name__ == '__main__':
                         help="A text file in which maps that are found to be "
                              "bad during the coadding processes are recorded. "
                              "In other words, the script does not read a list "
-                             "of observations IDs from the file and exclude "
+                             "of observation IDs from the file and exclude "
                              "them from the analyses and coadding; rather, the "
                              "script only records maps that were found to be "
                              "bad when checking them as part of the analyses.")

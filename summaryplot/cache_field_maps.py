@@ -108,13 +108,21 @@ def update(season, mode, action,
     # -- Variables that depend on the season
     
     if season == 'summer':
-        sub_fields = ['ra0hdec-59.75', 'ra0hdec-67.25']
+        all_sub_fields = ['ra5hdec-24.5', 'ra5hdec-31.5', 'ra5hdec-38.5',
+                          'ra5hdec-45.5', 'ra5hdec-52.5', 'ra5hdec-59.5']
+        if (len(sub_fields) != 0) and (set(sub_fields) < set(all_sub_fields)):
+            # Probably a debugging mode.
+            pass
+        else:
+            sub_fields = all_sub_fields
         planck_map_fits_file = \
             os.path.join(
                 aux_files_directory,
-                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
+                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summer_C_G3Units.fits')
         point_source_list_file = \
-            'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
+            os.path.join(
+                aux_files_directory,
+                '1500d_summer_point_source_list_from_at20g.txt')
     
     
     # - Figure out what appropriate time intervals are and
@@ -133,7 +141,8 @@ def update(season, mode, action,
         end_time   = current_time
         start_time = current_time + delta_t
         if start_time < beginning_of_the_record:
-            start_time = beginning_of_the_record
+            if mode == "coadding":
+                start_time = beginning_of_the_record
         start_time = start_time.replace(minute=0, second=0, microsecond=0)
         
         end_obs_id   = convert_to_obs_id(end_time)
