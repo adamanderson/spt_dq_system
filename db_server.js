@@ -138,7 +138,7 @@ app.get('/lastmodified_calibration', function(req, res) {
 });
 
 // get time that winter fields related plots  were lastmodified
-app.get('/lastmodified_maps', function(req, res) {
+app.get('/lastmodified_maps_winter', function(req, res) {
 	var lastupdate_time;
 
 	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
@@ -541,4 +541,4 @@ function updateSummerMapPlots() {
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') // only update map plots at pole
     setInterval(updateWinterMapPlots, 600000);
-    setInterval(updateSummerMapPlots, 600000);
+    setInterval(updateSummerMapPlots, 60000);
