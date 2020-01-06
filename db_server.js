@@ -496,7 +496,7 @@ function updateWinterMapPlots() {
                          args, {maxBuffer: 1024*1024*8},
                          function(err) {
                              console.log(err);
-                             console.log('Finished map coadds and plots.');
+                             console.log('Finished winter map coadds and plots.');
                              is_winter_map_update_running = false;
                          });
         console.log('Updating winter maps...');
@@ -527,7 +527,7 @@ function updateSummerMapPlots() {
                          {maxBuffer: 1024*1024*8},
                          function(err) {
                              console.log(err);
-                             console.log('Finished map coadds and plots.');
+                             console.log('Finished summer map coadds and plots.');
                              is_summer_map_update_running = false;
                          });
          console.log('Updating summer maps...');
@@ -541,4 +541,4 @@ function updateSummerMapPlots() {
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') // only update map plots at pole
     setInterval(updateWinterMapPlots, 600000);
-    setInterval(updateSummerMapPlots, 60000);
+    setInterval(updateSummerMapPlots, 600000);
