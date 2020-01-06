@@ -439,67 +439,106 @@ app.listen(parseInt(config.port))
 
 // static timeseries plots update
 is_update_running = false;
-is_map_update_running = false;
+is_winter_map_update_running = false;
+is_summer_map_update_running = false;
 var child;
-var child_maps;
+var child_winter_maps;
+var chile_summer_maps;
 
 function updateSummaryPlots() {
-	args = ['-B', 'update_summary.py',
-			'summarystats',
-			config.static_plot_dir,
-			config.calib_data_dir,
-			config.bolo_data_dir,
-			config.min_time_summary_plots]
-
-	if(config.no_data_update) {
-		args.push('--no-data-update')
-	}
-	
-    if(is_update_running == false) {
-		is_update_running = true;
-		// update data skims
-		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
-						 function(err) {
-			console.log(err);
-			console.log('Finished updating data skims and plots.');
-			is_update_running = false;
-	    });
-		console.log('Updating summary plots...');
-    }
-    else {
-		console.log('Summary plot updater already running, so not spawning again!');
-    }
-}
-
-function updateMapPlots() {
-	args = ['-B', 'update_summary.py',
-			'maps',
-                        config.season,
-			config.maps_data_dir,
-			config.coadds_data_dir,
-			config.coadds_figs_dir,
-			config.coadds_logs_dir,
+    args = ['-B',
+            'update_summary.py',
+            'summarystats',
+            config.static_plot_dir,
             config.calib_data_dir,
             config.bolo_data_dir,
-			config.min_time_maps]
+            config.min_time_summary_plots]
 
-    if(is_map_update_running == false) {
-		is_map_update_running = true;
-		// update data skims
-		child = execFile(config.python_location, args, {maxBuffer: 1024*1024*8},
-						 function(err) {
-			console.log(err);
-			console.log('Finished map coadds and plots.');
-			is_map_update_running = false;
-	    });
-		console.log('Updating maps...');
+    if(config.no_data_update) {
+        args.push('--no-data-update')
+    }
+
+    if(is_update_running == false) {
+        is_update_running = true;
+        // update data skims
+        child = execFile(config.python_location,
+                         args,
+                         {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished updating data skims and plots.');
+                             is_update_running = false;
+                         });
+        console.log('Updating summary plots...');
     }
     else {
-		console.log('Map updater already running, so not spawning again!');
+        console.log('Summary plot updater already running, so not spawning again!');
     }
 }
 
-update both types of plots in parallel every 10 minutes
+function updateWinterMapPlots() {
+    args = ['-B',
+            'update_summary.py',
+            'maps',
+            'winter',
+            config.maps_data_dir,
+            config.coadds_data_dir,
+            config.coadds_figs_dir,
+            config.coadds_logs_dir,
+            config.calib_data_dir,
+            config.bolo_data_dir,
+            config.min_time_maps]
+
+    if(is_winter_map_update_running == false) {
+        is_winter_map_update_running = true;
+        // update data skims
+        child = execFile(config.python_location,
+                         args, {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished map coadds and plots.');
+                             is_winter_map_update_running = false;
+                         });
+        console.log('Updating winter maps...');
+    }
+    else {
+        console.log('Winter map updater already running, so not spawning again!');
+    }
+}
+
+function updateSummerMapPlots() {
+    args = ['-B',
+            'update_summary.py',
+            'maps',
+            'summer',
+            config.maps_data_dir,
+            config.coadds_data_dir,
+            config.coadds_figs_dir,
+            config.coadds_logs_dir,
+            config.calib_data_dir,
+            config.bolo_data_dir,
+            config.min_time_maps]
+
+    if(is_summer_map_update_running == false) {
+        is_summer_map_update_running = true;
+        // update data skims
+        child = execFile(config.python_location,
+                         args,
+                         {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished map coadds and plots.');
+                             is_summer_map_update_running = false;
+                         });
+         console.log('Updating summer maps...');
+    }
+    else {
+        console.log('Summer map updater already running, so not spawning again!');
+    }
+}
+
+// update both types of plots in parallel every 10 minutes
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') // only update map plots at pole
-    setInterval(updateMapPlots, 600000);
+    setInterval(updateWinterMapPlots, 600000);
+    setInterval(updateSummerMapPlots, 600000);
