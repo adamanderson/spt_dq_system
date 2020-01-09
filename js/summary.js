@@ -24,7 +24,7 @@ else {
 if(Cookies.get('mapweekdirsummer') !== undefined)
     var mapweekdirsummer = Cookies.get('mapweekdirsummer');
 else {
-    var mapweekdirsummer='maps_summer/figures/last_n/last_7/';
+    var mapweekdirsummer='maps/figures_summer/last_n/last_7/';
 	Cookies.set('mapweekdirsummer', mapweekdirsummer, {expires: 1});
 }
 
