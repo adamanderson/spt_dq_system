@@ -447,7 +447,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             norm_dec_r  = -69.90
             most_neg_d  = -74.75
             most_pos_d  = -37.25
-            center_decs = [-44.75, -52.25, -59.75, -67.25]
+            center_decs = [-67.25, -59.75, -52.25, -44.75]
             one_fld_uni =   3.25
             one_fld_zr  =   4.25
             n_flds      =   4
@@ -458,7 +458,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             norm_dec_r  = -61.90
             most_neg_d  = -66.50
             most_pos_d  = -17.50
-            center_decs = [-24.5, -31.5, -38.5, -45.5, -52.5, -59.5]
+            center_decs = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
             one_fld_uni =   3.00
             one_fld_zr  =   4.00
             n_flds      =   6
