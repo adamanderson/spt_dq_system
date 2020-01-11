@@ -372,10 +372,10 @@ $( document ).ready(function()
 	add_date_buttons('monthly', 'maps/figures', 'maps', 'mapweekdir');
 	add_date_buttons('weekly', 'maps/figures', 'maps', 'mapweekdir');
 
-	add_date_buttons('last_n', 'maps_summer/figures', 'mapssummer', 'mapweekdirsummer');
-	add_date_buttons('yearly', 'maps_summer/figures', 'mapssummer', 'mapweekdirsummer');
-	add_date_buttons('monthly', 'maps_summer/figures', 'mapssummer', 'mapweekdirsummer');
-	add_date_buttons('weekly', 'maps_summer/figures', 'mapssummer', 'mapweekdirsummer');
+	add_date_buttons('last_n', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
+	add_date_buttons('yearly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
+	add_date_buttons('monthly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
+	add_date_buttons('weekly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
 
 	
 	// Bind the click event to the wafer buttons
