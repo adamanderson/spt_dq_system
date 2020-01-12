@@ -102,16 +102,22 @@ app.get('/staticdirs', function(req, res) {
 	// subdirectories of plots
 	var dirlist = [];
 	try {
-		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
-								  req.query.interval + '/');
+		var filelist = fs.readdirSync(config.static_plot_dir + '/' + 
+                                      req.query.subdirectory + '/' + 
+                                      req.query.interval + '/');
 	}
 	catch(err) {
-		filelist = [];
+		var filelist = [];
 	}
 
 	// get the list of directories that contain plots
 	for (jfile=0; jfile<filelist.length; jfile++) {
-		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
+		var test_path = config.static_plot_dir + '/' + 
+			            req.query.subdirectory + '/' + 
+			            req.query.interval + '/' + 
+			            filelist[jfile];
+		if(fs.readdirSync(test_path).length)
+			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 	}
 	res.send(dirlist);
 });
