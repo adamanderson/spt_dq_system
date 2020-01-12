@@ -121,70 +121,52 @@ app.get('/staticdirs', function(req, res) {
 
 // get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
-	var lastupdate_time;
-
 	var stat_dir = config.static_plot_dir + '/plots/last_n/last_3/';
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
-		file_info = fs.statSync(stat_dir + filelist[jfile]);
-		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
-				lastupdate_time = file_info.mtime;
-			}
-		}
-		else {
-			lastupdate_time = file_info.mtime;
-		}
-	}
 
-	res.send({time:lastupdate_time});
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
 });
 
 // get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps_winter', function(req, res) {
-	var lastupdate_time;
-
 	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
-		file_info = fs.statSync(stat_dir + filelist[jfile]);
-		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
-				lastupdate_time = file_info.mtime;
-			}
-		}
-		else {
-			lastupdate_time = file_info.mtime;
-		}
-	}
 
-	res.send({time:lastupdate_time});
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
 });
 
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
-	var lastupdate_time;
-        
-        if (config.coadds_figs_dir.endsWith('/')) {
-            var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
-        } else {
+    if (config.coadds_figs_dir.endsWith('/'))
+        var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
+    else
 	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_7/';
-        }
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
+
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
+});
+
+// check the last-modified property for a list of files and return the latest one
+function check_lastmodified(stat_dir, filelist) {
+    var lastupdate_time;
+    for(var jfile=0; jfile < filelist.length; jfile++) {
 		file_info = fs.statSync(stat_dir + filelist[jfile]);
 		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
+			if(file_info.mtime > lastupdate_time)
 				lastupdate_time = file_info.mtime;
-			}
 		}
-		else {
+		else
 			lastupdate_time = file_info.mtime;
-		}
 	}
+    return lastupdate_time;
+}
 
-	res.send({time:lastupdate_time});
-});
 
 
 // logs messages along with a timestamp. keeps writesteam open
