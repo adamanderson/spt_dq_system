@@ -100,26 +100,23 @@ if (!fs.existsSync(config.coadds_logs_dir)) {
 app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	var dirlist = [];
-	try {
-		var filelist = fs.readdirSync(config.static_plot_dir + '/' + 
-                                      req.query.subdirectory + '/' + 
-                                      req.query.interval + '/');
-	}
-	catch(err) {
-		var filelist = [];
-	}
-
-	// get the list of directories that contain plots
-	for (jfile=0; jfile<filelist.length; jfile++) {
-		var test_path = config.static_plot_dir + '/' + 
-			            req.query.subdirectory + '/' + 
-			            req.query.interval + '/' + 
-			            filelist[jfile];
-		if(fs.readdirSync(test_path).length)
-			dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
-	}
-	res.send(dirlist);
+    var interval_path = config.static_plot_dir + '/' + 
+                        req.query.subdirectory + '/' + 
+                        req.query.interval + '/'
+    
+    fs.readdir(interval_path, function(err, filelist) {
+        var dirlist = [];
+        // get the list of directories that contain plots
+	    for (jfile=0; jfile<filelist.length; jfile++) {
+		    var test_path = config.static_plot_dir + '/' + 
+                            req.query.subdirectory + '/' + 
+                            req.query.interval + '/' + 
+                            filelist[jfile];
+		    if(fs.readdirSync(test_path).length)
+			    dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
+	    }
+	    res.send(dirlist);
+    });
 });
 
 // get time that calibration plots were lastmodified
