@@ -51,8 +51,9 @@ app.use(auth({
 
 // database filenames
 db_files = {scanify: config.scanify_db_path,
-	    aux_transfer: config.auxtransfer_db_path,
-	    autoproc: config.autoproc_db_path}
+	        aux_transfer: config.auxtransfer_db_path,
+	        autoproc: config.autoproc_db_path,
+            sched_table: config.schedule_db_path}
 
 // setup home page
 app.use(express.static('public'));
@@ -198,6 +199,7 @@ app.get('/dbpage', function(req, res) {
 		    db.run("ATTACH \""+db2.filename+"\" as scanify");
 		});
 	}
+
 
 	// get data from the database
 	query = squel.select().from(req.query.dbname);

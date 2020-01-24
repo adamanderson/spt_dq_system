@@ -37,6 +37,15 @@ function open_tab(evt, tab) {
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
+  else if (tab == 'schedule_table') {
+    document.getElementById("obsid-row").style.display = "table-row";
+    document.getElementById("source-row").style.display = "table-row";
+    document.getElementById("type-row").style.display = "none";
+    document.getElementById("file-row").style.display = "none";
+    document.getElementById("modified-row").style.display = "none";
+    document.getElementById("plot-type").style.display = "block";
+    document.getElementById("plot-button").style.display = "inline";
+  }
   else if (tab == 'aux_table') {
     document.getElementById("obsid-row").style.display = "none";
     document.getElementById("source-row").style.display = "none";
@@ -177,62 +186,103 @@ function make_autoproc_table(select) {
   });
 }
 
+function make_schedule_table(select) {
+// create Tabulator on DOM element with id "example-table"
+  $("#schedule_table").tabulator({
+    ajaxURL:"/dbpage", // set the ajax URL
+	      ajaxParams: {search: {modified:    {min: $("#date-from").val(),
+		                                      max: $("#date-to").val()},
+		                        sch_start:   {min: $("#date-from").val(),
+		                                      max: $("#date-to").val()},
+		                        name: $("#obstype-search").val()},
+		               dbname: "sched_table"},
+    ajaxConfig:'GET',
+    selectable: select,
+    index:"_id",
+    height:"400px", // set height of table (optional)
+	layout:"fitColumns",
+    columns:[ // define table columns
+	    {title:"Name", field:"name", sorter:"number"},
+        {title:"Arguments", field:"args"},
+        {title:"Aborted", field:"aborted"},
+        {title:"Start", field:"sch_start", sorter:"date",
+         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+        {title:"Stop", field:"sch_stop", sorter:"date",
+         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+        {title:"Modified (UTC)", field:"modified", sorter:"date",
+         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+    ],
+	initialSort:[{column:"modified", dir:"desc"}]
+  });
+}
+
 
 // get plotting mode and build the table
 make_t_table(10);
+make_schedule_table(10);
 make_aux_table(10);
 make_autoproc_table(10);
 
 
 // wrapper for two search functions
 function search() {
-  var tab = document.getElementsByClassName("tablinks active")[0].id;
-  if (tab == 'aux')
-    asearch();
-  else if (tab == 'scanify')
-    tsearch();
-  else if (tab == 'autoproc')
-      autoprocsearch();
+    var tab = document.getElementsByClassName("tablinks active")[0].id;
+    if (tab == 'aux')
+        asearch();
+    else if (tab == 'scanify')
+        tsearch();
+    else if (tab == 'schedule')
+        schedule_search();
+    else if (tab == 'autoproc')
+        autoprocsearch();
 }
 
 // sends search request and rebuilds table and plot types
 function tsearch() {
-  // clear selections in table
-  $("#scanify_table").tabulator("deselectRow");
-  // package up the search fields into a json to send to server
-  querydata = {search: {source: $("#obstype-search").val(),
-			date:  {min: $("#date-from").val(),
-				max: $("#date-to").val()},
-			observation:    {min: $("#obsid-from").val(),
-					 max: $("#obsid-to").val()}},
-	       dbname: "scanify"}
-  $("#scanify_table").tabulator("setData", "/dbpage", querydata);
-  plot_list();
+    // clear selections in table
+    $("#scanify_table").tabulator("deselectRow");
+    // package up the search fields into a json to send to server
+    querydata = {search: {source:      $("#obstype-search").val(),
+			              date:        {min: $("#date-from").val(),
+				                        max: $("#date-to").val()},
+			              observation: {min: $("#obsid-from").val(),
+					                    max: $("#obsid-to").val()}},
+	             dbname: "scanify"};
+    $("#scanify_table").tabulator("setData", "/dbpage", querydata);
+    plot_list();
 };
 
 function asearch() {
     // package up the search fields into a json to send to server
-    querydata = {search: {date:  {min: $("#date-from").val(),
-				  max: $("#date-to").val()},
-			  filename: $("#file-search").val(),
-			  type: $("#auxtype-search").val()},
-		 dbname: "aux_transfer"};
+    querydata = {search: {date:     {min: $("#date-from").val(),
+				                     max: $("#date-to").val()},
+			              filename: $("#file-search").val(),
+			              type:     $("#auxtype-search").val()},
+		         dbname: "aux_transfer"};
     $("#aux_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
 };
 
 function autoprocsearch() {
     // package up the search fields into a json to send to server
-    querydata = {search: {date:  {min: $("#date-from").val(),
-				  max: $("#date-to").val()},
-			  modified:  {min: $("#modified-from").val(),
-				      max: $("#modified-to").val()},
-			  observation:    {min: $("#obsid-from").val(),
-					   max: $("#obsid-to").val()},
-			  source: $("#obstype-search").val()},
-			  dbname: "autoproc"};
-		 $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
-		 plot_list();
+    querydata = {search: {date:        {min: $("#date-from").val(),
+				                        max: $("#date-to").val()},
+			              modified:    {min: $("#modified-from").val(),
+				                        max: $("#modified-to").val()},
+			              observation: {min: $("#obsid-from").val(),
+					                    max: $("#obsid-to").val()},
+			              source: $("#obstype-search").val()},
+			     dbname: "autoproc"};
+	$("#autoproc_table").tabulator("setData", "/dbpage", querydata);
+	plot_list();
+};
+
+function schedule_search() {
+    querydata = {search: {modified: {min: $("#date-from").val(),
+				                     max: $("#date-to").val()}},
+		         dbname: "sched_table"};
+    $("#schedule_table").tabulator("setData", "/dbpage", querydata);
+    plot_list();
 };
 
 
