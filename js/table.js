@@ -72,52 +72,52 @@ function make_t_table(select, site) {
   var site, obsid_col;
 
   jQuery.ajax({
-	url: '/site',
+    url: '/site',
     success: function(data) {
-	  site = data;
-	},
+      site = data;
+    },
     async: false
   });
 
   if(site == 'north') {
-	obsid_col = {title:"Observation ID", field:"observation", sorter:"number"};
+    obsid_col = {title:"Observation ID", field:"observation", sorter:"number"};
   }
   else if(site == 'pole') {
     obsid_col = {title:"Observation ID", field:"observation", sorter:"number",
-    			 formatter:"link",
-				 formatterParams:{labelField:"observation", target:"_blank",
-								  url:function(cell) {
-									  return window.location.href + cell.getData().log_file;
-								  }}};
+                 formatter:"link",
+                 formatterParams:{labelField:"observation", target:"_blank",
+                                  url:function(cell) {
+                                      return window.location.href + cell.getData().log_file;
+                                  }}};
   }
 
   $("#scanify_table").tabulator({
     ajaxURL:"/dbpage", // set the ajax URL
-	      ajaxParams: {search: {source: $("#obstype-search").val(),
-		      date:  {min: $("#date-from").val(),
-			  max: $("#date-to").val()},
-		      observation:    {min: $("#obsid-from").val(),
-			  max: $("#obsid-to").val()}},
-		  dbname: "scanify"},
+          ajaxParams: {search: {source: $("#obstype-search").val(),
+              date:  {min: $("#date-from").val(),
+              max: $("#date-to").val()},
+              observation:    {min: $("#obsid-from").val(),
+              max: $("#obsid-to").val()}},
+          dbname: "scanify"},
     ajaxConfig:'GET',
     selectable: select,
     index:"_id",
     height:"400px", // set height of table (optional)
-	layout:"fitColumns",
+    layout:"fitColumns",
     columns:[ // define table columns
-	  obsid_col,
-      {title:"Source", field:"source"},
-	  {title:"Scanify status", field:"status_scanify"},
-      {title:"Transfer status<br>(fullrate)", field:"status_fullrate"},
-      {title:"Transfer status<br>(downsampled)", field:"status_downsampled"},
-      {title:"Marked for transfer<br>(fullrate)", field:"transfer_fullrate",
-          formatter:"tickCross"},
-      {title:"Marked for transfer<br>(downsampled)", field:"transfer_downsampled",
-          formatter:"tickCross"},
-      {title:"Date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+        obsid_col,
+        {title:"Source", field:"source"},
+        {title:"Scanify status", field:"status_scanify"},
+        {title:"Transfer status<br>(fullrate)", field:"status_fullrate"},
+        {title:"Transfer status<br>(downsampled)", field:"status_downsampled"},
+        {title:"Marked for transfer<br>(fullrate)", field:"transfer_fullrate",
+         formatter:"tickCross"},
+        {title:"Marked for transfer<br>(downsampled)", field:"transfer_downsampled",
+         formatter:"tickCross"},
+        {title:"Date (UTC)", field:"date", sorter:"date",
+         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
     ],
-	initialSort:[{column:"date", dir:"desc"}]
+    initialSort:[{column:"date", dir:"desc"}]
   });
 }
 
@@ -125,95 +125,95 @@ function make_aux_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#aux_table").tabulator({
     ajaxURL:"/dbpage", // set the ajax URL
-	      ajaxParams: {search: {date:  {min: $("#date-from").val(),
-			  max: $("#date-to").val()},
-		      filename: $("#file-search").val(),
-		      type: $("#auxtype-search").val()},
-		  dbname: "aux_transfer"},
-    ajaxConfig:'GET',
-    selectable: select,
-    index:"_id",
-    height:"400px", // set height of table (optional)
-	layout:"fitColumns",
-    columns:[ // define table columns
-      {title:"Filename", field:"filename"},
-      {title:"Type", field:"type"},
-      {title:"Size", field:"size", sorter:"number"},
-      {title:"Status", field:"status"},
-      {title:"Modified (UTC)", field:"modified", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-      {title:"Date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
-	],
-	initialSort:[{column:"date", dir:"desc"}]
+      ajaxParams: {search: {date:  {min: $("#date-from").val(),
+                                    max: $("#date-to").val()},
+                            filename: $("#file-search").val(),
+                            type: $("#auxtype-search").val()},
+                   dbname: "aux_transfer"},
+      ajaxConfig:'GET',
+      selectable: select,
+      index:"_id",
+      height:"400px", // set height of table (optional)
+      layout:"fitColumns",
+      columns:[ // define table columns
+          {title:"Filename", field:"filename"},
+          {title:"Type", field:"type"},
+          {title:"Size", field:"size", sorter:"number"},
+          {title:"Status", field:"status"},
+          {title:"Modified (UTC)", field:"modified", sorter:"date",
+           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+          {title:"Date (UTC)", field:"date", sorter:"date",
+           sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
+      ],
+      initialSort:[{column:"date", dir:"desc"}]
   });
 }
 
 function make_autoproc_table(select) {
 // create Tabulator on DOM element with id "example-table"
-  $("#autoproc_table").tabulator({
-    ajaxURL:"/dbpage", // set the ajax URL
-	      ajaxParams: {search: {modified:  {min: $("#date-from").val(),
-			  max: $("#date-to").val()},
-		      date:  {min: $("#date-from").val(),
-			  max: $("#date-to").val()},
-		      observation:    {min: $("#obsid-from").val(),
-			  max: $("#obsid-to").val()},
-		      source: $("#obstype-search").val()},
-		  dbname: "autoproc"},
-    ajaxConfig:'GET',
-    selectable: select,
-    index:"_id",
-    height:"400px", // set height of table (optional)
-	layout:"fitColumns",
-    columns:[ // define table columns
-	  {title:"Source", field:"source", sorter:"number",
-	   formatter:function(cell, formatterParams, onRendered) {
-		   logFileName = cell.getData().log_file
-		   if(logFileName.indexOf("calframe") == -1)
-			   return "<a href=" + window.location.href + logFileName + ">" + cell.getData().source + "</a>";
-		   else
-		       return cell.getData().source;
-	   }},
-      {title:"Observation", field:"observation"},
-      {title:"Status", field:"status"},
-      {title:"Modified (UTC)", field:"modified", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-      {title:"Observation date (UTC)", field:"date", sorter:"date",
-          sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-    ],
-	initialSort:[{column:"date", dir:"desc"}]
-  });
+    $("#autoproc_table").tabulator({
+        ajaxURL:"/dbpage", // set the ajax URL
+        ajaxParams: {search: {modified:  {min: $("#date-from").val(),
+                                          max: $("#date-to").val()},
+                              date:  {min: $("#date-from").val(),
+                                      max: $("#date-to").val()},
+                              observation:    {min: $("#obsid-from").val(),
+                                               max: $("#obsid-to").val()},
+                              source: $("#obstype-search").val()},
+                     dbname: "autoproc"},
+        ajaxConfig:'GET',
+        selectable: select,
+        index:"_id",
+        height:"400px", // set height of table (optional)
+        layout:"fitColumns",
+        columns:[ // define table columns
+            {title:"Source", field:"source", sorter:"number",
+             formatter:function(cell, formatterParams, onRendered) {
+                 logFileName = cell.getData().log_file
+                 if(logFileName.indexOf("calframe") == -1)
+                     return "<a href=" + window.location.href + logFileName + ">" + cell.getData().source + "</a>";
+                 else
+                     return cell.getData().source;
+             }},
+            {title:"Observation", field:"observation"},
+            {title:"Status", field:"status"},
+            {title:"Modified (UTC)", field:"modified", sorter:"date",
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+            {title:"Observation date (UTC)", field:"date", sorter:"date",
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+        ],
+        initialSort:[{column:"date", dir:"desc"}]
+    });
 }
 
 function make_schedule_table(select) {
 // create Tabulator on DOM element with id "example-table"
-  $("#schedule_table").tabulator({
-    ajaxURL:"/dbpage", // set the ajax URL
-	      ajaxParams: {search: {modified:    {min: $("#modified-from").val(),
-		                                      max: $("#modified-to").val()},
-		                        sch_start:   {min: $("#date-from").val(),
-		                                      max: $("#date-to").val()},
-		                        name: $("#obstype-search").val()},
-		               dbname: "sched_table"},
-    ajaxConfig:'GET',
-    selectable: select,
-    index:"_id",
-    height:"400px", // set height of table (optional)
-	layout:"fitColumns",
-    columns:[ // define table columns
-	    {title:"Name", field:"name", sorter:"number"},
-        {title:"Arguments", field:"args"},
-        {title:"Aborted", field:"aborted"},
-        {title:"Start", field:"sch_start", sorter:"date",
-         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-        {title:"Stop", field:"sch_stop", sorter:"date",
-         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-        {title:"Modified (UTC)", field:"modified", sorter:"date",
-         sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-    ],
-	initialSort:[{column:"modified", dir:"desc"}]
-  });
+    $("#schedule_table").tabulator({
+        ajaxURL:"/dbpage", // set the ajax URL
+        ajaxParams: {search: {modified:    {min: $("#modified-from").val(),
+                                            max: $("#modified-to").val()},
+                              sch_start:   {min: $("#date-from").val(),
+                                            max: $("#date-to").val()},
+                              name: $("#obstype-search").val()},
+                     dbname: "sched_table"},
+        ajaxConfig:'GET',
+        selectable: select,
+        index:"_id",
+        height:"400px", // set height of table (optional)
+        layout:"fitColumns",
+        columns:[ // define table columns
+            {title:"Name", field:"name", sorter:"number"},
+            {title:"Arguments", field:"args"},
+            {title:"Aborted", field:"aborted"},
+            {title:"Start", field:"sch_start", sorter:"date",
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+            {title:"Stop", field:"sch_stop", sorter:"date",
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+            {title:"Modified (UTC)", field:"modified", sorter:"date",
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+        ],
+        initialSort:[{column:"modified", dir:"desc"}]
+    });
 }
 
 
@@ -243,11 +243,11 @@ function tsearch() {
     $("#scanify_table").tabulator("deselectRow");
     // package up the search fields into a json to send to server
     querydata = {search: {source:      $("#obstype-search").val(),
-			              date:        {min: $("#date-from").val(),
-				                        max: $("#date-to").val()},
-			              observation: {min: $("#obsid-from").val(),
-					                    max: $("#obsid-to").val()}},
-	             dbname: "scanify"};
+                          date:        {min: $("#date-from").val(),
+                                        max: $("#date-to").val()},
+                          observation: {min: $("#obsid-from").val(),
+                                        max: $("#obsid-to").val()}},
+                 dbname: "scanify"};
     $("#scanify_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
 };
@@ -255,10 +255,10 @@ function tsearch() {
 function asearch() {
     // package up the search fields into a json to send to server
     querydata = {search: {date:     {min: $("#date-from").val(),
-				                     max: $("#date-to").val()},
-			              filename: $("#file-search").val(),
-			              type:     $("#auxtype-search").val()},
-		         dbname: "aux_transfer"};
+                                     max: $("#date-to").val()},
+                          filename: $("#file-search").val(),
+                          type:     $("#auxtype-search").val()},
+                 dbname: "aux_transfer"};
     $("#aux_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
 };
@@ -266,23 +266,23 @@ function asearch() {
 function autoprocsearch() {
     // package up the search fields into a json to send to server
     querydata = {search: {date:        {min: $("#date-from").val(),
-				                        max: $("#date-to").val()},
-			              modified:    {min: $("#modified-from").val(),
-				                        max: $("#modified-to").val()},
-			              observation: {min: $("#obsid-from").val(),
-					                    max: $("#obsid-to").val()},
-			              source: $("#obstype-search").val()},
-			     dbname: "autoproc"};
-	$("#autoproc_table").tabulator("setData", "/dbpage", querydata);
-	plot_list();
+                                        max: $("#date-to").val()},
+                          modified:    {min: $("#modified-from").val(),
+                                        max: $("#modified-to").val()},
+                          observation: {min: $("#obsid-from").val(),
+                                        max: $("#obsid-to").val()},
+                          source: $("#obstype-search").val()},
+                 dbname: "autoproc"};
+    $("#autoproc_table").tabulator("setData", "/dbpage", querydata);
+    plot_list();
 };
 
 function schedule_search() {
     querydata = {search: {modified:  {min: $("#modified-from").val(),
-				                      max: $("#modified-to").val()},
+                                      max: $("#modified-to").val()},
                           sch_start: {min: $("#date-from").val(),
                                       max: $("#date-to").val()}},
-		         dbname: "sched_table"};
+                 dbname: "sched_table"};
     $("#schedule_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
 };
@@ -345,12 +345,12 @@ function plot() {
         display_win.show(event.data.slice(4, -1));
 
       else if (event.data.split('fln').length == 2) {
-	  path =  event.data.split('fln')[1].slice(0,-1);
-	  items.push({src: 'img/' + path, w: 0, h: 0});
+      path =  event.data.split('fln')[1].slice(0,-1);
+      items.push({src: 'img/' + path, w: 0, h: 0});
       }
 
       else if (event.data.slice(1, 4) == 'plt') {
-	  display_win.load_progress();
+      display_win.load_progress();
         plot_ctr++;
 
         if (image_ctr == plot_ctr) {
@@ -381,23 +381,23 @@ function plot() {
 
   // loop over each observation
   $.each(rows, function(i, obsdata) {
-    // combine all requested plot types into a string
-    obsdata['plot_type'] = selected_values.join(' ');
-    obsdata['table'] = tab.id;
-    obsdata['func'] = func_val;
-    obsdata['sseid'] = sseid;
-
-    // request the plot
-    $.get("data_req", obsdata, function(data, status) {
-      image_ctr += selected_values.length;
-    });
+      // combine all requested plot types into a string
+      obsdata['plot_type'] = selected_values.join(' ');
+      obsdata['table'] = tab.id;
+      obsdata['func'] = func_val;
+      obsdata['sseid'] = sseid;
+      
+      // request the plot
+      $.get("data_req", obsdata, function(data, status) {
+          image_ctr += selected_values.length;
+      });
   });
-}
+  }
 }
 
 // used to sort image items
 function compare(a, b) {
-  return a.src.localeCompare(b.src);
+    return a.src.localeCompare(b.src);
 }
 
 
