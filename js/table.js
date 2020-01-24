@@ -33,7 +33,8 @@ function open_tab(evt, tab) {
     document.getElementById("source-row").style.display = "table-row";
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
-    document.getElementById("modified-row").style.display = "none";
+    document.getElementById("modified-row").style.display = "none"; 
+    document.getElementById("schedule-name-row").style.display = "none";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -43,6 +44,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("schedule-name-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
   }
@@ -52,6 +54,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "table-row";
     document.getElementById("file-row").style.display = "table-row";
     document.getElementById("modified-row").style.display = "none";
+    document.getElementById("schedule-name-row").style.display = "none";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
   }
@@ -61,6 +64,7 @@ function open_tab(evt, tab) {
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
     document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("schedule-name-row").style.display = "none";
     document.getElementById("plot-type").style.display = "block";
     document.getElementById("plot-button").style.display = "inline";
   }
@@ -194,7 +198,7 @@ function make_schedule_table(select) {
                                             max: $("#modified-to").val()},
                               sch_start:   {min: $("#date-from").val(),
                                             max: $("#date-to").val()},
-                              name: $("#obstype-search").val()},
+                              name: $("#schedule-name-search").val()},
                      dbname: "sched_table"},
         ajaxConfig:'GET',
         selectable: select,
@@ -202,7 +206,7 @@ function make_schedule_table(select) {
         height:"400px", // set height of table (optional)
         layout:"fitColumns",
         columns:[ // define table columns
-            {title:"Name", field:"name", sorter:"number"},
+            {title:"Name", field:"name"},
             {title:"Arguments", field:"args"},
             {title:"Aborted", field:"aborted"},
             {title:"Start", field:"sch_start", sorter:"date",
@@ -281,7 +285,8 @@ function schedule_search() {
     querydata = {search: {modified:  {min: $("#modified-from").val(),
                                       max: $("#modified-to").val()},
                           sch_start: {min: $("#date-from").val(),
-                                      max: $("#date-to").val()}},
+                                      max: $("#date-to").val()},
+                          name: $("#schedule-name-search").val()},
                  dbname: "sched_table"};
     $("#schedule_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
