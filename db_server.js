@@ -363,7 +363,7 @@ function parseSearch(query, searchJSON, tab) {
 
     for(var column in searchJSON.search) {
 	// special handling for ranges of dates
-	if(column == 'date' || column == 'modified') {
+	if(column == 'date' || column == 'modified' || column == 'sch_start' || column == 'sch_stop') {
 	    // otherwise assume that some date range is specified
 	    var min_time = searchJSON.search[column]['min'];
 	    var max_time = searchJSON.search[column]['max'];

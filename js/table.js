@@ -38,13 +38,13 @@ function open_tab(evt, tab) {
     document.getElementById("plot-button").style.display = "inline";
   }
   else if (tab == 'schedule_table') {
-    document.getElementById("obsid-row").style.display = "table-row";
-    document.getElementById("source-row").style.display = "table-row";
+    document.getElementById("obsid-row").style.display = "none";
+    document.getElementById("source-row").style.display = "none";
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
-    document.getElementById("modified-row").style.display = "none";
-    document.getElementById("plot-type").style.display = "block";
-    document.getElementById("plot-button").style.display = "inline";
+    document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("plot-type").style.display = "none";
+    document.getElementById("plot-button").style.display = "none";
   }
   else if (tab == 'aux_table') {
     document.getElementById("obsid-row").style.display = "none";
@@ -190,8 +190,8 @@ function make_schedule_table(select) {
 // create Tabulator on DOM element with id "example-table"
   $("#schedule_table").tabulator({
     ajaxURL:"/dbpage", // set the ajax URL
-	      ajaxParams: {search: {modified:    {min: $("#date-from").val(),
-		                                      max: $("#date-to").val()},
+	      ajaxParams: {search: {modified:    {min: $("#modified-from").val(),
+		                                      max: $("#modified-to").val()},
 		                        sch_start:   {min: $("#date-from").val(),
 		                                      max: $("#date-to").val()},
 		                        name: $("#obstype-search").val()},
@@ -278,8 +278,10 @@ function autoprocsearch() {
 };
 
 function schedule_search() {
-    querydata = {search: {modified: {min: $("#date-from").val(),
-				                     max: $("#date-to").val()}},
+    querydata = {search: {modified:  {min: $("#modified-from").val(),
+				                      max: $("#modified-to").val()},
+                          sch_start: {min: $("#date-from").val(),
+                                      max: $("#date-to").val()}},
 		         dbname: "sched_table"};
     $("#schedule_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
