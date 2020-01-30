@@ -53,7 +53,7 @@ app.use(auth({
 db_files = {scanify: config.scanify_db_path,
 	        aux_transfer: config.auxtransfer_db_path,
 	        autoproc: config.autoproc_db_path,
-            sched_table: config.schedule_db_path}
+            schedule: config.schedule_db_path}
 
 // setup home page
 app.use(express.static('public'));

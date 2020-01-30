@@ -199,7 +199,7 @@ function make_schedule_table(select) {
                               sch_start:   {min: $("#date-from").val(),
                                             max: $("#date-to").val()},
                               name: $("#schedule-name-search").val()},
-                     dbname: "sched_table"},
+                     dbname: "schedule"},
         ajaxConfig:'GET',
         selectable: select,
         index:"_id",
@@ -287,7 +287,7 @@ function schedule_search() {
                           sch_start: {min: $("#date-from").val(),
                                       max: $("#date-to").val()},
                           name: $("#schedule-name-search").val()},
-                 dbname: "sched_table"};
+                 dbname: "schedule"};
     $("#schedule_table").tabulator("setData", "/dbpage", querydata);
     plot_list();
 };
