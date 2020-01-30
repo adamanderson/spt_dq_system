@@ -72,7 +72,7 @@ function open_tab(evt, tab) {
 
 
 function make_t_table(select, site) {
-  // create Tabulator on DOM element with id "transfer_table"
+  // create Tabulator on DOM element
   var site, obsid_col;
 
   jQuery.ajax({
@@ -126,7 +126,7 @@ function make_t_table(select, site) {
 }
 
 function make_aux_table(select) {
-// create Tabulator on DOM element with id "example-table"
+// create Tabulator on DOM element
   $("#aux_table").tabulator({
     ajaxURL:"/dbpage", // set the ajax URL
       ajaxParams: {search: {date:  {min: $("#date-from").val(),
@@ -154,7 +154,7 @@ function make_aux_table(select) {
 }
 
 function make_autoproc_table(select) {
-// create Tabulator on DOM element with id "example-table"
+// create Tabulator on DOM element
     $("#autoproc_table").tabulator({
         ajaxURL:"/dbpage", // set the ajax URL
         ajaxParams: {search: {modified:  {min: $("#date-from").val(),
@@ -191,7 +191,7 @@ function make_autoproc_table(select) {
 }
 
 function make_schedule_table(select) {
-// create Tabulator on DOM element with id "example-table"
+// create Tabulator on DOM element
     $("#schedule_table").tabulator({
         ajaxURL:"/dbpage", // set the ajax URL
         ajaxParams: {search: {modified:    {min: $("#modified-from").val(),
@@ -208,7 +208,7 @@ function make_schedule_table(select) {
         columns:[ // define table columns
             {title:"Name", field:"name"},
             {title:"Arguments", field:"args"},
-            {title:"Aborted", field:"aborted"},
+            {title:"Aborted", field:"aborted", formatter:"tick"},
             {title:"Start", field:"sch_start", sorter:"date",
              sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
             {title:"Stop", field:"sch_stop", sorter:"date",
