@@ -43,7 +43,7 @@ function open_tab(evt, tab) {
     document.getElementById("source-row").style.display = "none";
     document.getElementById("type-row").style.display = "none";
     document.getElementById("file-row").style.display = "none";
-    document.getElementById("modified-row").style.display = "table-row";
+    document.getElementById("modified-row").style.display = "none";
     document.getElementById("schedule-name-row").style.display = "table-row";
     document.getElementById("plot-type").style.display = "none";
     document.getElementById("plot-button").style.display = "none";
@@ -194,9 +194,7 @@ function make_schedule_table(select) {
 // create Tabulator on DOM element
     $("#schedule_table").tabulator({
         ajaxURL:"/dbpage", // set the ajax URL
-        ajaxParams: {search: {modified:    {min: $("#modified-from").val(),
-                                            max: $("#modified-to").val()},
-                              sch_start:   {min: $("#date-from").val(),
+        ajaxParams: {search: {sch_start:   {min: $("#date-from").val(),
                                             max: $("#date-to").val()},
                               name: $("#schedule-name-search").val()},
                      dbname: "schedule"},
@@ -212,9 +210,7 @@ function make_schedule_table(select) {
             {title:"Start", field:"sch_start", sorter:"date",
              sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
             {title:"Stop", field:"sch_stop", sorter:"date",
-             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
-            {title:"Modified (UTC)", field:"modified", sorter:"date",
-             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
+             sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}}
         ],
         initialSort:[{column:"modified", dir:"desc"}]
     });
@@ -282,9 +278,7 @@ function autoprocsearch() {
 };
 
 function schedule_search() {
-    querydata = {search: {modified:  {min: $("#modified-from").val(),
-                                      max: $("#modified-to").val()},
-                          sch_start: {min: $("#date-from").val(),
+    querydata = {search: {sch_start: {min: $("#date-from").val(),
                                       max: $("#date-to").val()},
                           name: $("#schedule-name-search").val()},
                  dbname: "schedule"};
