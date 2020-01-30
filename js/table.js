@@ -208,7 +208,7 @@ function make_schedule_table(select) {
         columns:[ // define table columns
             {title:"Name", field:"name"},
             {title:"Arguments", field:"args"},
-            {title:"Aborted", field:"aborted", formatter:"tick"},
+            {title:"Aborted", field:"aborted", formatter:"tickCross", formatterParams:{crossElement:false}},
             {title:"Start", field:"sch_start", sorter:"date",
              sorterParams:{format:"YYYY-MM-DD hh:mm:ssZZ"}},
             {title:"Stop", field:"sch_stop", sorter:"date",
