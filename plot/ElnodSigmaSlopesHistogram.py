@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from spt3g import core, calibration
+from plotutils import get_elevation
 
 # makes a plot of the offline offset given the date                                                                                 
 def ElnodSigmaSlopesHistogram(request):
@@ -15,12 +16,12 @@ def ElnodSigmaSlopesHistogram(request):
                                                           request['observation']))] \
                                                   [0]["NominalBolometerProperties"]
         boloprops_bolos = list(boloprops.keys())
-        bolodatafile = core.G3File('{}/{}/{}/0000.g3' \
-                                       .format(request['bolodatapath'],
-                                               request['source'],
-                                               request['observation']))
-        for i in range(3):
-            pointingframe = bolodatafile.next()
+
+        el = get_elevation('{}/{}/{}/0000.g3' \
+                   .format(request['bolodatapath'],
+                           request['source'],
+                           request['observation']))
+
     except RuntimeError:
         return "Could not find data file."
 
@@ -35,7 +36,6 @@ def ElnodSigmaSlopesHistogram(request):
     except KeyError:
         return "ElnodSigmaSlopes does not exist for this observation."
 
-    el = np.median([pointingframe["OnlineBoresightEl"][i]*180/np.pi for i in range(len(pointingframe["OnlineBoresightEl"]))])
 
     fig = plt.figure()
     for band in bands:
