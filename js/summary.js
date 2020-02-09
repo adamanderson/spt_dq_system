@@ -27,7 +27,9 @@ function update_figs() {
     document["ts_median_cal_response_lowel"].src   = 'staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
     document["ts_alive_bolos_cal_lowel"].src       = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
     
+    document["ts_median_elnod_slope"].src          = 'staticimg/'+weekdir+'/median_elnod_response_'+wafer+'.png';
     document["ts_median_elnod_sn"].src             = 'staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
+    document["ts_median_elnod_opacity"].src        = 'staticimg/'+weekdir+'/median_elnod_opacity_'+wafer+'.png';
     document["ts_median_elnod_iq"].src             = 'staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
     document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
     

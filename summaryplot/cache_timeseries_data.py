@@ -205,7 +205,11 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-        function_dict_raw = {'calibrator':    {'elevation': mean_cal_elevation}}
+        function_dict_raw = {'calibrator':    {'el': mean_cal_elevation},
+                             'elnod'     :    {'ppa': median_pelec_per_airmass}}
+        key_dict_raw = {'el' : ['elevation'],
+                        'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity']}
+
 
         # loop over weeks
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
@@ -256,9 +260,12 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             rawpath = os.path.join(bolodatapath, source,
                                                    obsid, '0000.g3')
                             for quantity_name in function_dict_raw[source]:
-                                func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
+                                func_result = function_dict_raw[source][quantity_name](rawpath, cal_fname, fname, boloprops, selector_dict)
                                 if func_result:
-                                    data[source][obsid][quantity_name] = func_result
+                                    for i in range(len(key_dict_raw[quantity_name])):
+                                        actual_name = key_dict_raw[quantity_name][i]
+                                        result = func_result[i]
+                                        data[source][obsid][actual_name] = result
 
             if updated:
                 with open(datafile, 'wb') as f:
@@ -372,12 +379,16 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                              xlims=[mindate, maxdate])
                 plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'high',
                                          xlims=[mindate, maxdate])
+                plot_median_elnod_response(data, wafer_list, plotsdir,
+                                           xlims=[mindate, maxdate])
                 plot_median_elnod_sn(data, wafer_list, plotsdir,
                                      xlims=[mindate, maxdate])
-                plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
+                plot_median_elnod_opacity(data, wafer_list, plotsdir,
+                                          xlims=[mindate, maxdate])
                 plot_alive_bolos_elnod(data, wafer_list, plotsdir,
                                        xlims=[mindate, maxdate])
+                plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
+                                           xlims=[mindate, maxdate])
                 plot_median_rcw38_fluxcal(data, wafer_list, plotsdir,
                                           xlims=[mindate, maxdate])
                 plot_median_rcw38_intflux(data, wafer_list, plotsdir,
@@ -425,6 +436,11 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
 
 if __name__ == '__main__':
+
+    timenow = datetime.datetime.utcnow()
+    dt = datetime.timedelta(-1*(timenow.weekday()+1))
+    default_mintime = timenow + dt
+
     P0 = ap.ArgumentParser(description='',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
     S = P0.add_subparsers(dest='mode', title='subcommands',

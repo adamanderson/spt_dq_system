@@ -31,7 +31,12 @@ def alive_bolos_cal_4Hz(frame, boloprops, selector_dict):
         return None
     return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20, operator.gt)
 
-def mean_cal_elevation(rawpath, boloprops):
+def mean_cal_elevation(rawpath, cal_fname, fname, boloprops, selector_dict):
+    # Only the variable rawpath is used here,
+    # but the others were added for the sake of generality and consistency
+    # because the other function in
+    # the dictionary function_dict_raw (cache_timeseries_data.py),
+    # i.e., median_pw_per_airmass, needs those variables.
     class ElExtractor(object):
         def __init__(self):
             self.mean_el = np.nan
@@ -46,7 +51,7 @@ def mean_cal_elevation(rawpath, boloprops):
     pipe.Add(el_extractor)
     pipe.Run()
 
-    return el_extractor.mean_el
+    return [el_extractor.mean_el]
 
 
 def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400]):
