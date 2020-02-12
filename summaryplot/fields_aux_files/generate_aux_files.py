@@ -313,7 +313,7 @@ if arguments.generate_masks_for_power_spectrum_calculations:
                     fields_coadding.create_new_map_frame_with_smaller_region(
                         self.spt_map_frame,
                         self.ra_center, self.dec_center, t_only=True)
-                print("%4s Combinig a point source mask and "
+                print("%4s Combining a point source mask and "
                       "a window function ..." %(""))
                 mini_mask = \
                     fields_coadding.\
