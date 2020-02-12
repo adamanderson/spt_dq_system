@@ -539,6 +539,7 @@ function updateSummerMapPlots() {
 
 // update both types of plots in parallel every 10 minutes
 setInterval(updateSummaryPlots, 600000);
-if(config.site == 'pole') // only update map plots at pole
+if(config.site == 'pole') {// only update map plots at pole
     setInterval(updateWinterMapPlots, 600000);
     setInterval(updateSummerMapPlots, 600000);
+}
