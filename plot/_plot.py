@@ -29,10 +29,6 @@ from os import path, stat, mkdir
 from importlib import import_module
 import hashlib
 
-# Argparse structure is kind of messed up.
-# Use subparsers for separate arguments in each mode, and deal with variable
-# argument lists in a standard way rather than splitting across multiple
-# argparse arguments. [AJA]
 parser = argparse.ArgumentParser(
     description='Calls plotting functions in other files for a webserver.')
 parser.add_argument('source', type=str,
@@ -43,19 +39,12 @@ parser.add_argument('caldatapath', type=str,
     help='Path to autoprocessed calibration data.')
 parser.add_argument('bolodatapath', type=str,
     help='Path to bolometer data.')
-parser.add_argument('single', type=str,
-    help='''If individual, then the observation id. 
-    If timeseries, then the name of the plot.''')
-parser.add_argument('multi', type=str, nargs=argparse.REMAINDER,
-    help='''If individual, then the name(s) of the plots to be created. 
-    If timeseries, then the observations to be used in the plot.''')
+parser.add_argument('obsid', type=str,
+    help='Observation ID to plot.')
+parser.add_argument('plotnames', type=str, nargs='+',
+    help='Names of plots to generate.')
 
 args = parser.parse_args()
-if (len(args.multi) == 0):
-  print('_plot.py: error: ' +
-      'the following arguments are required: source, single, multi',
-      flush=True)
-  exit(1)
 
 # send error message to user through stdout and send error to server
 def err_handler(err, request, msg=None):
@@ -158,12 +147,12 @@ def individual():
   print('plotting!')
   # load arguments into a dict to be passed to plotting functions
   request = {'source': args.source,
-             'observation': args.single,
+             'observation': args.obsid,
              'plotpath': args.plotpath,
              'caldatapath': args.caldatapath,
              'bolodatapath': args.bolodatapath}
 
-  for plot_type in args.multi:
+  for plot_type in args.plotnames:
     try:
       request['plot_type'] = plot_type
       plot(request);

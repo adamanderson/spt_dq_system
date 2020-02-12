@@ -51,8 +51,9 @@ app.use(auth({
 
 // database filenames
 db_files = {scanify: config.scanify_db_path,
-	    aux_transfer: config.auxtransfer_db_path,
-	    autoproc: config.autoproc_db_path}
+	        aux_transfer: config.auxtransfer_db_path,
+	        autoproc: config.autoproc_db_path,
+            schedule: config.schedule_db_path}
 
 // setup home page
 app.use(express.static('public'));
@@ -100,88 +101,73 @@ if (!fs.existsSync(config.coadds_logs_dir)) {
 app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-	var dirlist = [];
-	try {
-		filelist = fs.readdirSync(config.static_plot_dir + '/' + req.query.subdirectory + '/' + 
-								  req.query.interval + '/');
-	}
-	catch(err) {
-		filelist = [];
-	}
-
-	// get the list of directories that contain plots
-	for (jfile=0; jfile<filelist.length; jfile++) {
-		dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
-	}
-	res.send(dirlist);
+    var interval_path = config.static_plot_dir + '/' + 
+                        req.query.subdirectory + '/' + 
+                        req.query.interval + '/'
+    
+    fs.readdir(interval_path, function(err, filelist) {
+        var dirlist = [];
+        // get the list of directories that contain plots
+	    for (jfile=0; jfile<filelist.length; jfile++) {
+		    var test_path = config.static_plot_dir + '/' + 
+                            req.query.subdirectory + '/' + 
+                            req.query.interval + '/' + 
+                            filelist[jfile];
+		    if(fs.readdirSync(test_path).length)
+			    dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
+	    }
+	    res.send(dirlist);
+    });
 });
 
 // get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
-	var lastupdate_time;
-
 	var stat_dir = config.static_plot_dir + '/plots/last_n/last_3/';
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
-		file_info = fs.statSync(stat_dir + filelist[jfile]);
-		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
-				lastupdate_time = file_info.mtime;
-			}
-		}
-		else {
-			lastupdate_time = file_info.mtime;
-		}
-	}
 
-	res.send({time:lastupdate_time});
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
 });
 
 // get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps_winter', function(req, res) {
-	var lastupdate_time;
-
 	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
-		file_info = fs.statSync(stat_dir + filelist[jfile]);
-		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
-				lastupdate_time = file_info.mtime;
-			}
-		}
-		else {
-			lastupdate_time = file_info.mtime;
-		}
-	}
 
-	res.send({time:lastupdate_time});
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
 });
 
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
-	var lastupdate_time;
-        
-        if (config.coadds_figs_dir.endsWith('/')) {
-            var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
-        } else {
+    if (config.coadds_figs_dir.endsWith('/'))
+        var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
+    else
 	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_7/';
-        }
-	filelist = fs.readdirSync(stat_dir);
-	for(var jfile=0; jfile < filelist.length; jfile++) {
+
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
+});
+
+// check the last-modified property for a list of files and return the latest one
+function check_lastmodified(stat_dir, filelist) {
+    var lastupdate_time;
+    for(var jfile=0; jfile < filelist.length; jfile++) {
 		file_info = fs.statSync(stat_dir + filelist[jfile]);
 		if(typeof lastupdate_time !== 'undefined') {
-			if(file_info.mtime > lastupdate_time) {
+			if(file_info.mtime > lastupdate_time)
 				lastupdate_time = file_info.mtime;
-			}
 		}
-		else {
+		else
 			lastupdate_time = file_info.mtime;
-		}
 	}
+    return lastupdate_time;
+}
 
-	res.send({time:lastupdate_time});
-});
 
 
 // logs messages along with a timestamp. keeps writesteam open
@@ -213,6 +199,7 @@ app.get('/dbpage', function(req, res) {
 		    db.run("ATTACH \""+db2.filename+"\" as scanify");
 		});
 	}
+
 
 	// get data from the database
 	query = squel.select().from(req.query.dbname);
@@ -376,7 +363,7 @@ function parseSearch(query, searchJSON, tab) {
 
     for(var column in searchJSON.search) {
 	// special handling for ranges of dates
-	if(column == 'date' || column == 'modified') {
+	if(column == 'date' || column == 'modified' || column == 'sch_start' || column == 'sch_stop') {
 	    // otherwise assume that some date range is specified
 	    var min_time = searchJSON.search[column]['min'];
 	    var max_time = searchJSON.search[column]['max'];

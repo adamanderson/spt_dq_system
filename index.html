@@ -89,6 +89,11 @@ else
       <td><input type="text" id="file-search"></td>
       <td></td>
     </tr>
+    <tr id="schedule-name-row">
+      <td>Schedule Name</td>
+      <td><input type="text" id="schedule-name-search"></td>
+      <td></td>
+    </tr>
     <tr id="type-row">
       <td>Type</td>
       <td>
@@ -128,10 +133,12 @@ else
 
   <div class="tab">
     <button class="tablinks" onclick="open_tab(event, 'scanify_table')" id="scanify">Scanify</button>
+    <button class="tablinks" onclick="open_tab(event, 'schedule_table')" id="schedule">Schedule</button>
     <button class="tablinks" onclick="open_tab(event, 'aux_table')" id="aux">Aux</button>
     <button class="tablinks" onclick="open_tab(event, 'autoproc_table')" id="autoproc">Autoprocessing</button>
   </div>
   <div id="scanify_table" class="tabcontent"></div>
+  <div id="schedule_table" class="tabcontent"></div>
   <div id="aux_table" class="tabcontent"></div>
   <div id="autoproc_table" class="tabcontent"></div>
   </div>

@@ -65,12 +65,12 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
                                          for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                                         data['calibrator'][obsid]['elevation']>40 and \
+                                         data['calibrator'][obsid]['elevation']>30 and \
                                          data['calibrator'][obsid]['elevation']<56])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>40 and \
+                              data['calibrator'][obsid]['elevation']>30 and \
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
@@ -99,7 +99,7 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
         plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator S/N')
         if el == 'low':
-            el_title = '40 < el < 56'
+            el_title = '30 < el < 56'
         elif el == 'high':
             el_title = '56 < el < 72'
         plt.title('4.0 Hz calibrator S/N ({})\n{}'
@@ -128,12 +128,12 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
                                        (core.G3Units.watt*1e-15)  
                                        for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                                       data['calibrator'][obsid]['elevation']>40 and \
+                                       data['calibrator'][obsid]['elevation']>30 and \
                                        data['calibrator'][obsid]['elevation']<56])                
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>40 and \
+                              data['calibrator'][obsid]['elevation']>30 and \
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band] / \
@@ -163,7 +163,7 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
         plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator response [fW]')
         if el == 'low':
-            el_title = '40 < el < 56'
+            el_title = '30 < el < 56'
         elif el == 'high':
             el_title = '56 < el < 72'
         plt.title('4.0 Hz calibrator response ({})\n{}'.
@@ -189,12 +189,12 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
                                           for obsid in obsids
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                                          data['calibrator'][obsid]['elevation']>40 and \
+                                          data['calibrator'][obsid]['elevation']>30 and \
                                           data['calibrator'][obsid]['elevation']<56])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>40 and \
+                              data['calibrator'][obsid]['elevation']>30 and \
                               data['calibrator'][obsid]['elevation']<56]
             elif el == 'high':
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
@@ -225,7 +225,7 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
         plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         if el == 'low':
-            el_title = '40 < el < 56'
+            el_title = '30 < el < 56'
         elif el == 'high':
             el_title = '56 < el < 72'
         plt.title('Number of bolos with calibrator S/N > 20 at 4.0 Hz ({})\n{}'

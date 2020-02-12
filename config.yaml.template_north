@@ -6,6 +6,7 @@ pythonpath: /var/www/spt_dq_system/spt3g_software/build/:/cvmfs/spt.openscienceg
 scanify_db_path: /spt/data/transfer_database/scanify.db
 auxtransfer_db_path: /spt/data/transfer_database/aux_transfer.db
 autoproc_db_path: /var/www/spt_dq_system/autoproc.db
+schedule_db_path: /var/www/spt_dq_system/schedule.db
 
 autoproc_log_path: /spt/user/production/logs/
 

@@ -1,32 +1,18 @@
-// Check if there are cookies already defined for the wafer and time interval,
-// and use them if available.
-if(Cookies.get('wafer') !== undefined)
-	var wafer = Cookies.get('wafer');
-else {
-	var wafer='all';
-	Cookies.set('wafer', wafer, {expires: 1});
+// check if cookies are defined, otherwise set them to defaults
+var default_cookies = {'wafer': 'all',
+                       'weekdir': 'plots/last_n/last_3/',
+                       'mapweekdir': 'maps/figures/last_n/last_7/',
+                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_7/'};
+for (var cookie_name in default_cookies) {
+    if (Cookies.get(cookie_name) == undefined) 
+        Cookies.set(cookie_name, default_cookies[cookie_name], {expires: 1});
 }
 
-if(Cookies.get('weekdir') !== undefined)
-	var weekdir = Cookies.get('weekdir');
-else {
-	var weekdir='plots/last_n/last_3/';
-	Cookies.set('weekdir', weekdir, {expires: 1});
-}
-
-if(Cookies.get('mapweekdir') !== undefined)
-    var mapweekdir = Cookies.get('mapweekdir');
-else {
-    var mapweekdir='maps/figures/last_n/last_7/';
-	Cookies.set('mapweekdir', mapweekdir, {expires: 1});
-}
-
-if(Cookies.get('mapweekdirsummer') !== undefined)
-    var mapweekdirsummer = Cookies.get('mapweekdirsummer');
-else {
-    var mapweekdirsummer='maps/figures_summer/last_n/last_7/';
-	Cookies.set('mapweekdirsummer', mapweekdirsummer, {expires: 1});
-}
+// get cookie values
+var wafer = Cookies.get('wafer');
+var weekdir = Cookies.get('weekdir');
+var mapweekdir = Cookies.get('mapweekdir');
+var mapweekdirsummer = Cookies.get('mapweekdirsummer');
 
 
 /**
