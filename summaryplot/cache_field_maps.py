@@ -120,9 +120,7 @@ def update(season, mode, action,
                 aux_files_directory,
                 'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summer_C_G3Units.fits')
         point_source_list_file = \
-            os.path.join(
-                aux_files_directory,
-                '1500d_summer_point_source_list_from_at20g.txt')
+            'spt3g_software/sources/1500d_ptsrc_list_summer_at20g.txt')
     
     
     # - Figure out what appropriate time intervals are and
