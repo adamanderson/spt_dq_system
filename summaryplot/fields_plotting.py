@@ -553,7 +553,19 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         
         larger_max = numpy.max([numpy.nanmax(normalized_weights),
                                 numpy.nanmax(prediction)])
-        ytop = larger_max * 1.23
+        
+        if larger_max > 10.0:
+            ytop = 5.2
+        else:
+            nonzero_weights = \
+                normalized_weights[numpy.where(normalized_weights>0.0)]
+            max_nonzero = numpy.max(nonzero_weights)
+            med_nonzero = numpy.median(nonzero_weights)
+            if max_nonzero / med_nonzero > 10.0:
+                ytop = med_nonzero * 3.0
+            else:
+                ytop = larger_max * 1.23
+        
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
         set_ticks(plot_obj, mjridcs, mnridcs, [str(dec) for dec in center_decs],
                   None, None, None, self.ttl_fs, data_linewidth)
