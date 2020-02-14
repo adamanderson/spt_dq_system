@@ -683,8 +683,16 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                     map_res = wt_mp.res
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
+                        field_names = obs_id_list.keys()
                     else:
                         obs_id_list = None
+                        field_names = [self.obs_fr["SourceName"]]
+                    season = get_season_based_on_fields(field_names)
+                    if season == "winter":
+                        center_ra = "0h"
+                    if season == "summer":
+                        center_ra = "5h"
+                    
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
                             self.obs_fr, obs_id_list, wt_mp_str,
@@ -697,7 +705,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                         map_id_for_fig = self.map_id
                     fig_ttl = map_id_for_fig + " " + wt_mp_str + "\n" + \
                               "Cross sectional view " + \
-                              "along the RA = 0h contour" + "\n"
+                              "along the RA = "+center_ra+" contour" + "\n"
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
                                 wt_mp_str.replace(" ", "_") + \
