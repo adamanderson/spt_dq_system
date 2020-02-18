@@ -2874,11 +2874,12 @@ def drop_duplicate_analysis_results(frame):
 
 
 
-def do_weights_look_bad(mean_wt, band, sub_field):
+def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
     
     wu = 1 / (core.G3Units.mK * core.G3Units.mK)
     
     mean_wt /= wu
+    max_wt  /= wu
     thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  65.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  80.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  80.0*wu},
@@ -2911,7 +2912,8 @@ def do_weights_look_bad(mean_wt, band, sub_field):
                           "ra5hdec-59.5" : {"lo": 0.0*wu, "hi":  21.0*wu}}}
     
     if (mean_wt < thresholds[band][sub_field]["lo"]) or \
-       (mean_wt > thresholds[band][sub_field]["hi"]):
+       (mean_wt > thresholds[band][sub_field]["hi"]) or \
+       (max_wt  > thresholds[band][sub_field]["hi"] * 5.0):
         return True
     else:
         return False
@@ -3033,8 +3035,9 @@ class FlagBadMaps(object):
                           logfun=self.logfun)
             
             mean_wt = flc_dct["MeansOfTTWeights"]
+            max_wt  = numpy.max(new_frame["Wunpol"].TT)
             bad_weights = do_weights_look_bad(
-                              mean_wt, band, self.sb_fld)
+                              mean_wt, max_wt, band, self.sb_fld)
             if bad_weights:
                 record_bad_obs_id(self.x_list,
                                   frame["Id"], self.sb_fld, self.obs_id,
