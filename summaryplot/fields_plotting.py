@@ -441,8 +441,6 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         
         season = get_season_based_on_fields(n_obss.keys())
         if season  == "winter":
-            center_ra   =   0.0
-            cen_ra_str  = "0h"
             norm_dec_l  = -70.10
             norm_dec_r  = -69.90
             most_neg_d  = -74.75
@@ -452,8 +450,6 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             one_fld_zr  =   4.25
             n_flds      =   4
         elif season == "summer":
-            center_ra   =  75.0
-            cen_ra_str  = "5h"
             norm_dec_l  = -62.10
             norm_dec_r  = -61.90
             most_neg_d  = -66.50
@@ -462,6 +458,9 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             one_fld_uni =   3.00
             one_fld_zr  =   4.00
             n_flds      =   6
+        
+        center_ra     = weight_map.alpha_center / core.G3Units.deg
+        center_ra_str = '{:d}h'.format(int(center_ra/15))
         
         vertical_cr_sec_values = \
             numpy.asarray(weight_map).transpose()[weight_map.shape[1]//2]
@@ -487,7 +486,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             max_w_ra, max_w_dec = \
                 weight_map.pixel_to_angle(weight_map.shape[1]//2, max_idx)
             max_w_dec /= core.G3Units.deg
-                
+        
         decs = numpy.linspace(most_neg_d, most_pos_d,
                               (most_pos_d-most_neg_d)*1000+1)
         pids = [weight_map.angle_to_pixel(center_ra*deg, d*deg) for d in decs]
@@ -513,7 +512,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                 one_sub_field_hits[i] = \
                     1.0 - 1.0 * (i - idx_re) / (idx_rz - idx_re)
             try:
-                n_obs = len(n_obss["ra"+cen_ra_str+"dec"+str(center_dec)])
+                n_obs = len(n_obss["ra"+center_ra_str+"dec"+str(center_dec)])
             except KeyError:
                 n_obs = 0
             focal_plane_hits += one_sub_field_hits * n_obs
@@ -569,6 +568,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
         set_ticks(plot_obj, mjridcs, mnridcs, [str(dec) for dec in center_decs],
                   None, None, None, self.ttl_fs, data_linewidth)
+        
+        fig_title = fig_title.replace('RACENTER', center_ra_str)
         set_ax_labels_and_title(
             plot_obj, xlabel, ylabel, fig_title, self.ttl_fs)
         
@@ -683,15 +684,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                     map_res = wt_mp.res
                     if self.coadded_data:
                         obs_id_list = frame["CoaddedObservationIDs"]
-                        field_names = obs_id_list.keys()
                     else:
                         obs_id_list = None
-                        field_names = [self.obs_fr["SourceName"]]
-                    season = get_season_based_on_fields(field_names)
-                    if season == "winter":
-                        center_ra = "0h"
-                    if season == "summer":
-                        center_ra = "5h"
                     
                     fig_ttl, fl_nm = \
                         self.get_title_and_file_name_of_figure_for_map(
@@ -705,7 +699,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                         map_id_for_fig = self.map_id
                     fig_ttl = map_id_for_fig + " " + wt_mp_str + "\n" + \
                               "Cross sectional view " + \
-                              "along the RA = "+center_ra+" contour" + "\n"
+                              "along the RA = RACENTER contour" + "\n"
                     if self.simpler_file_names:
                         fl_nm = self.map_id + "-" + \
                                 wt_mp_str.replace(" ", "_") + \
