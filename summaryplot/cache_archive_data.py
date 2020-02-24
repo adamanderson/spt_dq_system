@@ -312,14 +312,21 @@ def run(mode=None,
             path_to_plotting_record = os.path.join(
                                           output_dir,
                                           'files_used_last_time.pickle')
+
             try:
                 with open(path_to_plotting_record, 'rb') as fobj:
-                    files_processed_last_time = pickles.load(fobj)
+                    files_processed_last_time = pickle.load(fobj)
             except:
                 files_processed_last_time = set()
 
             if action != 'rebuild':
-                input_files = input_files - files_processed_last_time
+                untouched_files = input_files - files_processed_last_time
+                if len(untouched_files) == 0:
+                    no_need_to_do_anything = True
+                else:
+                    no_need_to_do_anything = False
+            else:
+                no_need_to_do_anything = False
             input_files = sorted(list(input_files))
 
             logger.info('')
@@ -337,7 +344,7 @@ def run(mode=None,
                 logger.info('Output directory:')
                 logger.info(' %s', output_dir)
                 logger.info('Input files:')
-                if len(input_files) == 0:
+                if no_need_to_do_anything:
                     logger.info(' Actually, all the files have'
                                 ' already been used for plotting!')
                 else:
@@ -348,7 +355,7 @@ def run(mode=None,
                 logger.info('')
             else:
                 try:
-                    if len(input_files) == 0:
+                    if no_need_to_do_anything:
                         logger.info('Actually, all the files have '
                                     'already been used for plotting')
                         logger.info('(or there are no files yet), '
