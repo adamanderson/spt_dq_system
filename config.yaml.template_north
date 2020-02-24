@@ -23,12 +23,18 @@ bolo_data_dir: /spt/data/bolodata/fullrate/
 
 no_data_update: true
 
-maps_data_dir: /spt/data/onlinemaps
-coadds_data_dir: /var/www/spt_dq_system/static_plots/maps/
-coadds_figs_dir: /var/www/spt_dq_system/static_plots/maps/
-coadds_logs_dir: /var/www/spt_dq_system/static_plots/maplogs/
+maps_data_dir: /spt/data/onlinemaps/
+coadds_data_dir: /var/www/spt_dq_system/static_plots/maps/data/
+coadds_figs_dir: /var/www/spt_dq_system/static_plots/maps/figures/
+coadds_logs_dir: /var/www/spt_dq_system/static_plots/maps/logs/
+
+arc_data_dir: /spt/data/arc/
+arc_pkls_dir: /var/www/spt_dq_system/static_plots/arcs/pkls/
+arc_figs_dir: /var/www/spt_dq_system/static_plots/arcs/figs/
+arc_logs_dir: /var/www/spt_dq_system/static_plots/arcs/logs/
 
 port: 80
 
 min_time_summary_plots: 20181220
 min_time_maps: 20190320
+min_time_arcs: 20200215

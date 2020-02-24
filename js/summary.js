@@ -2,7 +2,8 @@
 var default_cookies = {'wafer': 'all',
                        'weekdir': 'plots/last_n/last_3/',
                        'mapweekdir': 'maps/figures/last_n/last_7/',
-                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_7/'};
+                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_7/',
+                       'arcdir': 'arcs/figs/last_n/last_03/'};
 for (var cookie_name in default_cookies) {
     if (Cookies.get(cookie_name) == undefined) 
         Cookies.set(cookie_name, default_cookies[cookie_name], {expires: 1});
@@ -13,6 +14,7 @@ var wafer = Cookies.get('wafer');
 var weekdir = Cookies.get('weekdir');
 var mapweekdir = Cookies.get('mapweekdir');
 var mapweekdirsummer = Cookies.get('mapweekdirsummer');
+var arcdir = Cookies.get('arcdir');
 
 
 /**
@@ -255,6 +257,19 @@ function update_figs() {
         '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
     document["pw_per_k_by_wafer_220_summer"].src = 'staticimg/'+mapweekdirsummer+
         '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'
+
+    document["tipper_tau"].src  = 'staticimg/'+arcdir+'/tipper_tau.png'
+    document["tipper_tatm"].src = 'staticimg/'+arcdir+'/tipper_tatm.png'
+
+    document["weather_tatm"].src = 'staticimg/'+arcdir+'/weather_tatm.png'
+    document["weather_humi"].src = 'staticimg/'+arcdir+'/weather_humi.png'
+    document["weather_pres"].src = 'staticimg/'+arcdir+'/weather_pres.png'
+    document["weather_wmag"].src = 'staticimg/'+arcdir+'/weather_wmag.png'
+    document["weather_wdir"].src = 'staticimg/'+arcdir+'/weather_wdir.png'
+
+    document["cabin_temps"].src = 'staticimg/'+arcdir+'/cabin_temps.png'
+    document["4K_temps"].src    = 'staticimg/'+arcdir+'/fourk_temps.png'
+    document["50K_temps"].src   = 'staticimg/'+arcdir+'/fiftyk_temps.png'
 }
 
 
@@ -290,6 +305,10 @@ function update_lastmodified() {
 	$.get('/lastmodified_maps_summer', function(data) {
 		$("#lastmodified_maps_summer").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
 	});
+	$.get('/lastmodified_weather', function(data) {
+	    $("#lastmodified_weather").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+	});
+	
 }
 
 /**
@@ -324,16 +343,16 @@ function add_date_buttons(interval, subdirectory, tab, boundVar)
 			  data.reverse();
 			  for (jdir=0; jdir<data.length; jdir++)
 			  {
-				  if (tab === 'summary')
+				  if (tab == 'summary')
 					  datestring = data[jdir].split('/')[2];
 				  else if (tab == 'maps')
 					  datestring = data[jdir].split('/')[3];
-                                  else if (tab == 'mapssummer')
-                                          datestring = data[jdir].split('/')[3];
+                  else if (tab == 'mapssummer')
+                      datestring = data[jdir].split('/')[3];
+                  else if (tab == 'weather')
+                      datestring = data[jdir].split('/')[3];
 
-				  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='" +
-				  				   data[jdir] + "'>\n" + 
-				  				   "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
+				  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
 
 				  // can use jquery <select ...></select> with this line instead of radio buttons
 				  // $(div_id).append("<option value='"+data[jdir]+"'>"+datestring+"</option>");
@@ -365,7 +384,10 @@ $( document ).ready(function()
 	add_date_buttons('monthly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
 	add_date_buttons('weekly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
 
-	
+    add_date_buttons('last_n', 'arcs/figs', 'weather', 'arcdir');
+    add_date_buttons('monthly', 'arcs/figs', 'weather', 'arcdir');
+    add_date_buttons('weekly', 'arcs/figs', 'weather', 'arcdir');
+
 	// Bind the click event to the wafer buttons
 	$("[id^=wafers-]").click(function(event) {
 		set_variable("wafer", event.target.value);

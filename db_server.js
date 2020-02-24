@@ -104,7 +104,7 @@ app.get('/staticdirs', function(req, res) {
     var interval_path = config.static_plot_dir + '/' + 
                         req.query.subdirectory + '/' + 
                         req.query.interval + '/'
-    
+
     fs.readdir(interval_path, function(err, filelist) {
         var dirlist = [];
         // get the list of directories that contain plots
@@ -113,6 +113,7 @@ app.get('/staticdirs', function(req, res) {
                             req.query.subdirectory + '/' + 
                             req.query.interval + '/' + 
                             filelist[jfile];
+
 		    if(fs.readdirSync(test_path).length)
 			    dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
 	    }
@@ -152,6 +153,17 @@ app.get('/lastmodified_maps_summer', function(req, res) {
 	    res.send({time:lastupdate_time});
     });
 });
+
+// get time that weather plots were lastmodified
+app.get('/lastmodified_weather', function(req, res) {
+	var stat_dir = config.arc_figs_dir + '/last_n/last_03/';
+
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
+});
+
 
 // check the last-modified property for a list of files and return the latest one
 function check_lastmodified(stat_dir, filelist) {
@@ -428,9 +440,11 @@ app.listen(parseInt(config.port))
 is_update_running = false;
 is_winter_map_update_running = false;
 is_summer_map_update_running = false;
+is_arc_update_running = false;
 var child;
 var child_winter_maps;
-var chile_summer_maps;
+var child_summer_maps;
+var child_arcs;
 
 function updateSummaryPlots() {
     args = ['-B',
@@ -524,9 +538,38 @@ function updateSummerMapPlots() {
     }
 }
 
+function updateArcPlots() {
+    args = ['-B',
+            'update_summary.py',
+            'arcs',
+            config.arc_data_dir,
+            config.arc_pkls_dir,
+            config.arc_figs_dir,
+            config.arc_logs_dir,
+            config.min_time_arcs]
+
+    if(is_arc_update_running == false) {
+        is_arc_update_running = true;
+        // update arc file skims
+        child = execFile(config.python_location,
+                         args,
+                         {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished updating arc file skims and plots');
+                             is_arc_update_running = false;
+                         });
+         console.log('Updating arc file skims and plots...');
+    }
+    else {
+        console.log('Arc file updater already running, so not spawning again!');
+    }
+}
+
 // update both types of plots in parallel every 10 minutes
 setInterval(updateSummaryPlots, 600000);
-if(config.site == 'pole') {// only update map plots at pole
+if(config.site == 'pole') { // only update map and arc plots at pole
     setInterval(updateWinterMapPlots, 600000);
     setInterval(updateSummerMapPlots, 600000);
+    setInterval(updateArcPlots,       600000);
 }

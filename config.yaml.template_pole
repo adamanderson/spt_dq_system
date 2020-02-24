@@ -25,7 +25,13 @@ coadds_data_dir:
 coadds_figs_dir: 
 coadds_logs_dir:
 
+arc_data_dir:
+arc_pkls_dir:
+arc_figs_dir:
+arc_logs_dir:
+
 port: 3000
 
 min_time_summary_plots: 20181220
 min_time_maps: 20190320
+min_time_arcs: 20200215
