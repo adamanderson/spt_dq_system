@@ -9,6 +9,8 @@ import numpy as np
 from summaryplot.plot_util import plot_timeseries
 import operator
 
+low_el_range  = [20, 56]
+high_el_range = [56, 72]
 
 def median_cal_sn_4Hz(frame, boloprops, selector_dict):
     if 'CalibratorResponseSN' not in frame.keys():
@@ -70,24 +72,24 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
                                          for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                                         data['calibrator'][obsid]['elevation']>30 and \
-                                         data['calibrator'][obsid]['elevation']<56])
+                                         data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                                         data['calibrator'][obsid]['elevation']<low_el_range[1]])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>30 and \
-                              data['calibrator'][obsid]['elevation']<56]
+                              data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<low_el_range[1]]
             elif el == 'high':
                 median_calSN = np.array([data['calibrator'][obsid]['MedianCalSN_4Hz'][wafer][band]
                                          for obsid in obsids
                                          if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                                         data['calibrator'][obsid]['elevation']>56 and \
-                                         data['calibrator'][obsid]['elevation']<72])                
+                                         data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                                         data['calibrator'][obsid]['elevation']<high_el_range[1]])                
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalSN_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>56 and \
-                              data['calibrator'][obsid]['elevation']<72]
+                              data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<high_el_range[1]]
 
             dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_calSN, band, xlims=xlims, ylims=ylims)
@@ -104,9 +106,9 @@ def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400])
         plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator S/N')
         if el == 'low':
-            el_title = '30 < el < 56'
+            el_title = '{} < el < {}'.format(low_el_range[0], low_el_range[1])
         elif el == 'high':
-            el_title = '56 < el < 72'
+            el_title = '{} < el < {}'.format(high_el_range[0], high_el_range[1])
         plt.title('4.0 Hz calibrator S/N ({})\n{}'
                   .format(wafer, el_title))
         plt.legend()
@@ -133,25 +135,25 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
                                        (core.G3Units.watt*1e-15)  
                                        for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                                       data['calibrator'][obsid]['elevation']>30 and \
-                                       data['calibrator'][obsid]['elevation']<56])                
+                                       data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                                       data['calibrator'][obsid]['elevation']<low_el_range[1]])                
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>30 and \
-                              data['calibrator'][obsid]['elevation']<56]
+                              data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<low_el_range[1]]
             elif el == 'high':
                 median_cal = np.array([data['calibrator'][obsid]['MedianCalResponse_4Hz'][wafer][band] / \
                                        (core.G3Units.watt*1e-15)
                                        for obsid in obsids
                                        if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                                       data['calibrator'][obsid]['elevation']>56 and \
-                                       data['calibrator'][obsid]['elevation']<72])                
+                                       data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                                       data['calibrator'][obsid]['elevation']<high_el_range[1]])                
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'MedianCalResponse_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>56 and \
-                              data['calibrator'][obsid]['elevation']<72]
+                              data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<high_el_range[1]]
 
             dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             plot_timeseries(dts, median_cal, band, xlims=xlims, ylims=ylims)
@@ -168,9 +170,9 @@ def plot_median_cal_response_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0,
         plt.xlabel('observation time (UTC)')
         plt.ylabel('median calibrator response [fW]')
         if el == 'low':
-            el_title = '30 < el < 56'
+            el_title = '{} < el < {}'.format(low_el_range[0], low_el_range[1])
         elif el == 'high':
-            el_title = '56 < el < 72'
+            el_title = '{} < el < {}'.format(high_el_range[0], high_el_range[1])
         plt.title('4.0 Hz calibrator response ({})\n{}'.
                   format(wafer, el_title))
         plt.legend()
@@ -194,24 +196,24 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
                                           for obsid in obsids
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                                          data['calibrator'][obsid]['elevation']>30 and \
-                                          data['calibrator'][obsid]['elevation']<56])
+                                          data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                                          data['calibrator'][obsid]['elevation']<low_el_range[1]])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>30 and \
-                              data['calibrator'][obsid]['elevation']<56]
+                              data['calibrator'][obsid]['elevation']>low_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<low_el_range[1]]
             elif el == 'high':
                 n_alive_bolos = np.array([data['calibrator'][obsid]['AliveBolosCal_4Hz'][wafer][band]
                                           for obsid in obsids
                                           if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                                          data['calibrator'][obsid]['elevation']>56 and \
-                                          data['calibrator'][obsid]['elevation']<72])
+                                          data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                                          data['calibrator'][obsid]['elevation']<high_el_range[1]])
                 timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.seconds \
                               for obsid in obsids
                               if 'AliveBolosCal_4Hz' in data['calibrator'][obsid] and \
-                              data['calibrator'][obsid]['elevation']>56 and \
-                              data['calibrator'][obsid]['elevation']<72]
+                              data['calibrator'][obsid]['elevation']>high_el_range[0] and \
+                              data['calibrator'][obsid]['elevation']<high_el_range[1]]
             dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
             if wafer == 'all':
                 plot_timeseries(dts, n_alive_bolos, band, xlims=xlims, ylims=ylims_all)
@@ -230,9 +232,9 @@ def plot_alive_bolos_cal_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 600
         plt.xlabel('observation time (UTC)')
         plt.ylabel('number of alive bolos')
         if el == 'low':
-            el_title = '30 < el < 56'
+            el_title = '{} < el < {}'.format(low_el_range[0], low_el_range[1])
         elif el == 'high':
-            el_title = '56 < el < 72'
+            el_title = '{} < el < {}'.format(high_el_range[0], high_el_range[1])
         plt.title('Number of bolos with calibrator S/N > 20 at 4.0 Hz ({})\n{}'
                   .format(wafer, el_title))
         plt.legend()
