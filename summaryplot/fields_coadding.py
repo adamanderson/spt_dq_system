@@ -470,7 +470,10 @@ def collect_medians_of_pW_per_K_factors(
                      "220": 2.8025804e-07*flu},
            "MAT5A": { "90": 2.5738063e-07*flu,
                      "150": 1.7319235e-07*flu,
-                     "220": 2.1451640e-07*flu}}
+                     "220": 2.1451640e-07*flu},
+           "W28A2": { "90": 4.8580000e-08*flu,
+                     "150": 3.5360000e-08*flu,
+                     "220": 6.5600000e-08*flu}}
            # * Copied from spt3g_software/calibration/python/apply_t_cal.py
     
     values_by_group = \
@@ -488,6 +491,8 @@ def collect_medians_of_pW_per_K_factors(
                 source = "RCW38"
             if "MAT5A" in flux_calibration_key:
                 source = "MAT5A"
+            if "W28A2" in flux_calibration_key:
+                source = "W28A2"
         if "IntegralFlux" in key:
             integral_flux_key = key
         if "SkyTransmission" in key:
