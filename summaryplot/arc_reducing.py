@@ -80,7 +80,17 @@ def run(input_files=None,
         pipeline.Add(gcp.ARCFileReader,
                      filename=f)
         pipeline.Add(arc_data_collector)
-        pipeline.Run()
+        
+        try:
+            pipeline.Run()
+        except:
+            logger.info('')
+            logger.exception('An error occurred:\n------------------')
+            logger.info('------------------')
+            logger.info('This file was skipped!')
+            logger.info('')
+            continue
+        
         all_data = arc_data_collector.extract_values()
         
         for key, array in all_data.items():
