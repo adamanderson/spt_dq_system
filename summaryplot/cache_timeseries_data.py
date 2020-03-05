@@ -262,9 +262,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             for quantity_name in function_dict_raw[source]:
                                 func_result = function_dict_raw[source][quantity_name](rawpath, cal_fname, fname, boloprops, selector_dict)
                                 if func_result:
-                                    for i in range(len(key_dict_raw[quantity_name])):
-                                        actual_name = key_dict_raw[quantity_name][i]
-                                        result = func_result[i]
+                                    for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
 
             if updated:
@@ -440,6 +438,7 @@ if __name__ == '__main__':
     timenow = datetime.datetime.utcnow()
     dt = datetime.timedelta(-1*(timenow.weekday()+1))
     default_mintime = timenow + dt
+    default_maxtime = timenow
 
     P0 = ap.ArgumentParser(description='',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -464,8 +463,7 @@ if __name__ == '__main__':
                              help='Minimum time of observations to skim. Format: '
                              'YYYYMMDD (starts at beginning of day)')
     parser_skim.add_argument('--max-time', action='store',
-                             default=(timenow + \
-                                      datetime.timedelta(days=1)).strftime('%Y%m%d'),
+                             default=default_maxtime.strftime('%Y%m%d'),
                              help='Maximum time of observations to skim. Format: '
                              'YYYYMMDD (ends at end of day)')
 
@@ -486,11 +484,12 @@ if __name__ == '__main__':
                              help='Minimum time of observations to skim. Format: '
                              'YYYYMMDD (starts at beginning of day)')
     parser_plot.add_argument('--max-time', action='store',
-                             default=None,
+                             default=default_maxtime.strftime('%Y%m%d'),
                              help='Maximum time of observations to skim. Format: '
                              'YYYYMMDD (ends at end of day)')
     args = P0.parse_args()
-
+    
+    
     if args.mode == 'plot':
         update(mode=args.mode,
                action=args.action,
