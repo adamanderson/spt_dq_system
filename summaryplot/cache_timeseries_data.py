@@ -15,6 +15,7 @@ from summaryplot.elnod import *
 from summaryplot.mat5a import *
 from summaryplot.noise import *
 from summaryplot.rcw38 import *
+from summaryplot.pmnj0210_5101 import *
 import hashlib
 
 
@@ -187,6 +188,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                          'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_mat5a_fluxcal,
                                                'MedianMAT5AIntegralFlux': median_mat5a_intflux,
                                                'AliveBolosMAT5A': alive_bolos_mat5a_fluxcal},
+                         'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
                                                'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
@@ -250,9 +252,11 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
                         d = [fr for fr in core.G3File(fname)]
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
+                        if len(d) == 1:
+                            d = d[0]
 
                         for quantity_name in function_dict[source]:
-                            func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
+                            func_result = function_dict[source][quantity_name](d, boloprops, selector_dict)
                             if func_result:
                                 data[source][obsid][quantity_name] = func_result
 
@@ -403,6 +407,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                             xlims=[mindate, maxdate])
                 plot_alive_bolos_mat5a(data, wafer_list, plotsdir,
                                        xlims=[mindate, maxdate])
+                plot_pmnj0210_5101_fitting_results(data, plotsdir,
+                                                   xlims=[mindate, maxdate])
                 plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
                                   xlims=[mindate, maxdate])
                 plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, plotsdir,

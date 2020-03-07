@@ -46,7 +46,20 @@ function update_figs() {
     document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
     document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
     document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
-    
+
+    document["focus_fwhm_vs_bench_90"].src         = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png';
+    document["focus_fwhm_vs_bench_150"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_150.png';
+    document["focus_fwhm_vs_bench_220"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_220.png';
+
+    document["focus_ellip_vs_bench_90"].src        = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_90.png';
+    document["focus_ellip_vs_bench_150"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_150.png';
+    document["focus_ellip_vs_bench_220"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_220.png';
+
+    document["focus_min_fwhm"].src                 = 'staticimg/'+weekdir+'/focus_FWHM.png'
+    document["focus_min_fwhm_bench"].src           = 'staticimg/'+weekdir+'/focus_BenchF.png'
+    document["focus_min_ellip"].src                = 'staticimg/'+weekdir+'/focus_Ellipticity.png'
+    document["focus_min_ellip_bench"].src          = 'staticimg/'+weekdir+'/focus_BenchE.png'
+
     document["ts_median_net_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
     document["ts_median_net_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
     document["ts_median_net_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
