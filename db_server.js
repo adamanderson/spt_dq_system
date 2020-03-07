@@ -92,10 +92,6 @@ if (!fs.existsSync(config.static_plot_dir)) {
 app.use('/staticimg', express.static(config.static_plot_dir));
 app.use('/readmeimg', express.static(path.join(__dirname, 'READMEfigs')));
 
-// make directory for log files if it doesn't already exist
-if (!fs.existsSync(config.coadds_logs_dir)) {
-    fs.mkdirSync(config.coadds_logs_dir);
-}
 
 // get subdirectory information for previous plots
 app.get('/staticdirs', function(req, res) {
