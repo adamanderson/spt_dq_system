@@ -33,14 +33,16 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
             cy, cx = np.unravel_index(np.nanargmax(tmap), tmap.shape)
 
             tmap = np.asarray(tmap)[cy-width : cy+width, cx-width:cx+width]
-            params = util.fitting.fit_gaussian2d(tmap)
-            (amp, x0, y0, sigma_x, sigma_y, theta, height) = params
-
-            sigma_to_fwhm = 2.*np.sqrt(2.*np.log(2))
-            fwhm_px = sigma_to_fwhm*np.sqrt(0.5*sigma_x**2 + 0.5*sigma_y**2)
-            fwhm_am = fwhm_px * res / core.G3Units.arcmin
-            ellipticity = np.sqrt(np.abs(sigma_x**2-sigma_y**2) / np.max((sigma_x**2, sigma_y**2)))
-
+            try:
+                params = util.fitting.fit_gaussian2d(tmap)
+                (amp, x0, y0, sigma_x, sigma_y, theta, height) = params
+                sigma_to_fwhm = 2.*np.sqrt(2.*np.log(2))
+                fwhm_px = sigma_to_fwhm*np.sqrt(0.5*sigma_x**2 + 0.5*sigma_y**2)
+                fwhm_am = fwhm_px * res / core.G3Units.arcmin
+                ellipticity = np.sqrt(np.abs(sigma_x**2-sigma_y**2) / np.max((sigma_x**2, sigma_y**2)))
+            except:
+                fwhm_am = np.nan
+                ellipticity = np.nan
             out['FWHM'][band] = fwhm_am
             out['ellipticity'][band] = ellipticity
 

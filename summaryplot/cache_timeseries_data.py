@@ -252,7 +252,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
                         d = [fr for fr in core.G3File(fname)]
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
-                        if len(d) == 1:
+                        if source not in ['PMNJ0210-5101']:
                             d = d[0]
 
                         for quantity_name in function_dict[source]:
