@@ -75,20 +75,32 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
     figell = plt.figure("Ellipticity", figsize=(8,6))
 
 
-    ylims = {"BenchF": (20., 35.),
-             "BenchE": [20., 35.],
-             "FWHM": (0.5, 2.0), 
-             "Ellipticity": (-0.05, 1.05)}
+    ylims = {"BenchF": {90: (22., 33.),
+                        150: (22., 33.),
+                        220: (22., 33.),
+                        'all': (22., 33.)},
+             "BenchE": {90: (22., 33.),
+                        150: (22., 33.),
+                        220: (22., 33.),
+                        'all': (22., 33.)},
+             "FWHM": {90: (1.3, 1.9),
+                      150: (0.9, 1.5),
+                      220: (0.7, 1.3),
+                      'all': (0.5, 2.1)},
+             "Ellipticity": {90: (-0.05, 1.05),
+                             150: (-0.05, 1.05),
+                             220: (-0.05, 1.05),
+                             'all': (-0.05, 1.05)}}
 
-    ylabels = {"BenchF": "Bench position [mm]",
-               "BenchE": "Bench position [mm]",
-               "FWHM": "Beam FWHM [arcmin]", 
+    ylabels = {"BenchF": "Position [mm]",
+               "BenchE": "Position [mm]",
+               "FWHM": "FWHM [arcmin]", 
                "Ellipticity": "Ellipticity"}
     
-    titles = {"BenchF": "Bench position that minimizes the beam FWHM (all)",
-              "BenchE": "Bench position that minimizes the ellipticity (all)",
+    titles = {"BenchF": "Bench position (along the optical axis) resulting in the minimum FWHM (all)",
+              "BenchE": "Bench position (along the optical axis) resulting in the minimum ellipticity (all)",
               "FWHM": "Minimum beam FWHM (all)",
-              "Ellipticity": "Minimum ellipticity (all)"}
+              "Ellipticity": "Minimum beam ellipticity (all)"}
 
     for band in [90, 150, 220]:
 
@@ -129,24 +141,24 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
             plt.plot(bench, ellipticity, label="Sch. "+str(group[0]), linestyle="none", marker="o", alpha=0.75)
         
         plt.figure("PosVsWidth")
-        plt.xlim(left=ylims["BenchF"][0], right=ylims["BenchF"][1])
-        plt.ylim(bottom=ylims["FWHM"][0], top=ylims["FWHM"][1])
+        plt.xlim(left=ylims["BenchF"][band][0], right=ylims["BenchF"][band][1])
+        plt.ylim(bottom=ylims["FWHM"][band][0], top=ylims["FWHM"][band][1])
         plt.grid()
         plt.legend(loc="upper right")
-        plt.xlabel("Bench position [mm]")
-        plt.ylabel("Beam FWHM [arcmin]")
-        plt.title("FWHM as a function of bench position "+str(band)+" GHz (all)")
+        plt.xlabel("Position [mm]")
+        plt.ylabel("FWHM [arcmin]")
+        plt.title("Beam FWHM versus bench position along optical axis, "+str(band)+" GHz (all)")
         plt.tight_layout()
         plt.savefig('{}/focus_fwhm_vs_bench_{}.png'.format(outdir, band)) 
         plt.close()
         plt.figure("PosVsEllip")
-        plt.xlim(left=ylims["BenchF"][0], right=ylims["BenchF"][1])
-        plt.ylim(bottom=ylims["Ellipticity"][0], top=ylims["Ellipticity"][1])
+        plt.xlim(left=ylims["BenchF"][band][0], right=ylims["BenchF"][band][1])
+        plt.ylim(bottom=ylims["Ellipticity"][band][0], top=ylims["Ellipticity"][band][1])
         plt.grid()
         plt.legend(loc="upper right")
-        plt.xlabel("Bench position [mm]")
+        plt.xlabel("Position [mm]")
         plt.ylabel("Ellipticity")
-        plt.title("Ellipticity as a function of bench position "+str(band)+" GHz (all)")
+        plt.title("Beam ellipticity versus bench position along optical axis, "+str(band)+" GHz (all)")
         plt.tight_layout()
         plt.savefig('{}/focus_ellip_vs_bench_{}.png'.format(outdir, band))
         plt.close()
@@ -156,7 +168,7 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
 
         for figname, figarr in zip(fignames, [benchf_min, benche_min, fwhm_min, e_min]):
             plt.figure(figname)
-            plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname])
+            plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'])
 
     for figname in fignames:
         plt.figure(figname)
