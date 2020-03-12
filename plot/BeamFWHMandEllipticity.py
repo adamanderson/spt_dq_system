@@ -89,7 +89,7 @@ def BeamFWHMandEllipticity(request):
 
         im = ax.imshow(tmap, cmap=colormap, aspect='equal')
         ax.contour(fit, [amp/2.], colors=[textcolor], linestyles=['solid'], linewidths=[0.5])
-        ax.text(x=px-0.9*width, y=py-0.6*width, s="FWHM: %.2f\'\nell: %.2f"%(fwhm_am, ell), color=textcolor)
+        ax.text(x=px-0.9*width, y=py-0.6*width, s="FWHM: %.2f\'\ne: %.2f"%(fwhm_am, ell), color=textcolor)
 
         px_am = core.G3Units.arcmin / res
         ct = np.cos(theta)

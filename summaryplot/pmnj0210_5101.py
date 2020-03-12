@@ -91,16 +91,16 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
                              150: (-0.05, 1.05),
                              220: (-0.05, 1.05),
                              'all': (-0.05, 1.05)}}
-
     ylabels = {"BenchF": "Position [mm]",
                "BenchE": "Position [mm]",
                "FWHM": "FWHM [arcmin]", 
                "Ellipticity": "Ellipticity"}
-    
     titles = {"BenchF": "Bench position (along the optical axis) resulting in the minimum FWHM (all)",
               "BenchE": "Bench position (along the optical axis) resulting in the minimum ellipticity (all)",
               "FWHM": "Minimum beam FWHM (all)",
               "Ellipticity": "Minimum beam ellipticity (all)"}
+    colors  = {90:'C0', 150:'C1', 220:'C2'}
+    markers = {0: 'o', 1: 's', 2: '+', 3: 'x', 4: '<', 5: '>'} 
 
     for band in [90, 150, 220]:
 
@@ -113,7 +113,7 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
         fig_fwhm_vs_pos = plt.figure("PosVsWidth", figsize=(8,6))
         fig_elli_vs_pos = plt.figure("PosVsEllip", figsize=(8,6))
         
-        for group in grouped_obsids:
+        for counter_g, group in enumerate(grouped_obsids):
 
             timestamps.append(obsid_to_g3time(int(group[0])).time / core.G3Units.seconds)
 
@@ -136,10 +136,10 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
                 e_min.append(ellipticity.min())
 
             plt.figure("PosVsWidth")
-            plt.plot(bench, fwhm, label="Sch. "+str(group[0]), linestyle="none", marker="o", alpha=0.75)
+            plt.plot(bench, fwhm, label="Schedule "+str(group[0]), marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
             plt.figure("PosVsEllip")
-            plt.plot(bench, ellipticity, label="Sch. "+str(group[0]), linestyle="none", marker="o", alpha=0.75)
-        
+            plt.plot(bench, ellipticity, label="Schedule "+str(group[0]), marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
+
         plt.figure("PosVsWidth")
         plt.xlim(left=ylims["BenchF"][band][0], right=ylims["BenchF"][band][1])
         plt.ylim(bottom=ylims["FWHM"][band][0], top=ylims["FWHM"][band][1])
@@ -168,7 +168,7 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
 
         for figname, figarr in zip(fignames, [benchf_min, benche_min, fwhm_min, e_min]):
             plt.figure(figname)
-            plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'])
+            plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'], alpha=0.65)
 
     for figname in fignames:
         plt.figure(figname)
