@@ -290,6 +290,14 @@ function update_figs() {
  * Show/hide plots when switching between yearly and non-yearly view for maps
  */
 function update_visibility() {
+    if(!window["weekdir"].includes('yearly')) {
+        $(".cal_yearly").hide();
+        $(".cal_non_yearly").show();
+    }
+    else {
+        $(".cal_yearly").show();
+        $(".cal_non_yearly").hide();
+    }
     if(!window["mapweekdir"].includes('yearly')) {
         $(".maps_yearly").hide();
         $(".maps_non_yearly").show();
@@ -384,6 +392,7 @@ $( document ).ready(function()
 	$("#tabs").tabs();
 	$("#waferlist").controlgroup();
 	add_date_buttons('last_n', 'plots', 'summary', 'weekdir');
+	add_date_buttons('yearly', 'plots', 'summary', 'weekdir');
 	add_date_buttons('monthly', 'plots', 'summary', 'weekdir');
 	add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
 

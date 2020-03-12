@@ -189,23 +189,18 @@ if args.mode == 'summarystats':
                                      bolodatapath=args.bolodatadir,
                                      min_time=args.mintime)
 
-    # update weekly plots
-    cache_timeseries_data.update(mode='plot', action='update',
-                                 timeinterval='weekly',
-                                 outdir=args.staticplotdir,
-                                 min_time=args.mintime)
+    # update plots
+    for interval in ['weekly', 'monthly', 'yearly']:
+        cache_timeseries_data.update(mode='plot', action='update',
+                                     timeinterval=interval,
+                                     outdir=args.staticplotdir,
+                                     min_time=args.mintime)
 
-    # update monthly plots
-    cache_timeseries_data.update(mode='plot', action='update',
-                                 timeinterval='monthly',
-                                 outdir=args.staticplotdir,
-                                 min_time=args.mintime)
-
-    # update "last 3 days" plots
-    cache_timeseries_data.update(mode='plot', action='update',
-                                 timeinterval='3',
-                                 outdir=args.staticplotdir,
-                                 min_time=args.mintime)
+    for n in [3]:
+        cache_timeseries_data.update(mode='plot', action='update',
+                                     timeinterval=n,
+                                     outdir=args.staticplotdir,
+                                     min_time=args.mintime)
 
 
 

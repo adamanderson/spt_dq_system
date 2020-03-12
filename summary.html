@@ -114,6 +114,12 @@
           </fieldset>
           <br>
           <fieldset class="field-with-border">
+            <legend>Yearly</legend>
+            <div id="datalist_summary_yearly">
+            </div>
+          </fieldset>
+          <br>
+          <fieldset class="field-with-border">
             <legend>Monthly</legend>
             <div id="datalist_summary_monthly">
             </div>
@@ -130,8 +136,11 @@
       <div class="container-figs-one-interval" style="background-color:hsla(280, 100%, 75%, 0.01);">
         <table style="table-layout:fixed;" cellpadding="5">
           <tr>
-            <td colspan="1">
+            <td colspan="1" class="cal_non_yearly">
               <h2><u>Calibrator</u></h2>
+            </td>
+            <td colspan="1" class="cal_yearly">
+              <h2><u>HII Regions</u></h2>
             </td>
             <td colspan="2" align="right" valign="top">
               <div id="lastmodified_calibration">
@@ -139,12 +148,12 @@
             </td>
           </tr>
 
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>Low Elevation</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_median_cal_response_lowel' class="fig-with-border"
@@ -164,13 +173,13 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
-          <tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>High Elevation</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_median_cal_response_highel' class="fig-with-border"
@@ -190,19 +199,19 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
           
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h2><u>Elnod</u></h2>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>Response to Airmass</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_response_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_median_elnod_slope' class="fig-with-border"
@@ -222,13 +231,13 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
-          <tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>Sky Opacity</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_opacity_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_median_elnod_opacity' class="fig-with-border"
@@ -236,13 +245,13 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
-          <tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>IQ Rotation</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_median_elnod_iq' class="fig-with-border"
@@ -250,9 +259,9 @@
               </a>
             </td>            
           </tr>
-          <tr><td><br></td></tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
           
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h2><u>HII Regions</u></h2>
             </td>
@@ -284,12 +293,12 @@
             </td>
           </tr>
           <tr><td><br></td></tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>RCW38 Very Fast Point</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' class="fig-with-border"
@@ -297,7 +306,7 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
           <tr>
             <td>
               <h3>MAT5A Fast Point</h3>
@@ -324,12 +333,12 @@
             </td>
           </tr>
           <tr><td><br></td></tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>MAT5A Very Fast Point</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png'">
                 <img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' class="fig-with-border"
@@ -337,7 +346,7 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
           
           <tr>
             <td>
@@ -345,12 +354,12 @@
             </td>
           </tr>
 
-          <tr>
+          <tr class="cal_non_yearly">
             <td>
               <h3>Beam Properties and Bench Positions</h3>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png'">
                 <img style="display:block;" width="100%" name='focus_fwhm_vs_bench_90' class="fig-with-border"
@@ -370,7 +379,7 @@
               </a>
             </td>
           </tr>
-          <tr>
+          <tr class="cal_non_yearly">
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+weekdir+'/focus_ellip_vs_bench_90.png'">
                 <img style="display:block;" width="100%" name='focus_ellip_vs_bench_90' class="fig-with-border"
@@ -390,7 +399,7 @@
               </a>
             </td>
           </tr>
-          <tr><td><br></td></tr>
+          <tr class="cal_non_yearly"><td><br></td></tr>
           <tr>
             <td>
               <h3>Parabola Fitting Results</h3>
@@ -428,7 +437,7 @@
 
         </table>
         
-        <table style="table-layout:fixed;" cellpadding="5">
+        <table style="table-layout:fixed;" cellpadding="5" class="cal_non_yearly">
           <tr>
             <td>
               <h2><u>Noise</u></h2>
