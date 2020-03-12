@@ -11,6 +11,7 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
     out = {}
     out['FWHM'] = {}
     out['ellipticity'] = {}
+    out['bench_position'] = np.nan
 
     for frame in frames:
         if frame.type == core.G3FrameType.Observation:
