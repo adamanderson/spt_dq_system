@@ -104,7 +104,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                     next_day = datetime.datetime(year=next_day.year+1,
                                                  month=1,
                                                  day=1)
-            elif timeinterval == 'yearly':
+            elif timeinterval == 'yearly': # yearly mode
                 next_day = datetime.datetime(year=next_day.year+1,
                                              month=1,
                                              day=1)

@@ -11,7 +11,7 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
     out = {}
     out['FWHM'] = {}
     out['ellipticity'] = {}
-    out['bench_position'] = np.nan
+    out['bench position'] = np.nan
 
     for frame in frames:
         if frame.type == core.G3FrameType.Observation:
@@ -61,7 +61,7 @@ def group_by_time(arr, obs, delta_t = 86400):
     return arr
 
 
-def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_minima = True):
+def plot_pmnj0210_5101_fitting_results(data, outdir, xlims = None, interpolate_minima = True):
 
     pdata = data['PMNJ0210-5101']
     obsids = sorted([obsid for obsid in pdata])
@@ -122,8 +122,13 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims=None, interpolate_min
             fwhm = np.array([pdata[obs]['BenchPosAndFittingResults']['FWHM']['%dGHz'%band] for obs in group])
             ellipticity = np.array([pdata[obs]['BenchPosAndFittingResults']['ellipticity']['%dGHz'%band] for obs in group])
 
-            fcoeffs = np.polyfit(bench, fwhm, 2)
-            ecoeffs = np.polyfit(bench, ellipticity, 2)
+            try:
+                fcoeffs = np.polyfit(bench, fwhm, 2)
+                ecoeffs = np.polyfit(bench, ellipticity, 2)
+            except ValueError:
+                # possibly due to some NaNs
+                fcoeffs = [np.nan, np.nan]
+                ecoeffs = [np.nan, np.nan]
 
             bminf = - 0.5*fcoeffs[1]/fcoeffs[0]
             benchf_min.append(bminf)
