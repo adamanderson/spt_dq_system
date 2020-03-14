@@ -239,6 +239,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                 if source not in data.keys():
                     data[source] = {}
+                    updated = True
                 for fname in files_to_parse:
                     obsid = os.path.splitext(os.path.basename(fname))[0]
                     cal_fname = '{}/{}/{}/nominal_online_cal.g3' \
