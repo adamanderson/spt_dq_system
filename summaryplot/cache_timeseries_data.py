@@ -312,7 +312,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                         mindate.strftime('%Y'))
             else:
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                        'last_{}'.format(timeinterval))
+                                        'last_{:02d}'.format(int(timeinterval)))
             os.makedirs(plotsdir, exist_ok=True)
 
             # load data from this date range

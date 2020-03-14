@@ -196,7 +196,7 @@ if args.mode == 'summarystats':
                                      outdir=args.staticplotdir,
                                      min_time=args.mintime)
 
-    for n in [3]:
+    for n in [1, 3, 7, 30]:
         cache_timeseries_data.update(mode='plot', action='update',
                                      timeinterval=n,
                                      outdir=args.staticplotdir,
@@ -447,6 +447,7 @@ if args.mode == 'arcs':
                                                time_string, logger_name))
                 
                 try:
+                    calfigsdir = args.arcfigsdir.replace('arcs/figs', 'plots')
                     cache_archive_data.run(mode=mode,
                                            action=action,
                                            interval=interval,
@@ -454,6 +455,7 @@ if args.mode == 'arcs':
                                            newest_time_to_consider=args.maxtime,
                                            pickles_dir=args.arcpklsdir,
                                            figures_dir=args.arcfigsdir,
+                                           calibra_dir=calfigsdir,
                                            just_see_commands=args.dryrun,
                                            logger_name=logger_name,
                                            log_file=log_file)

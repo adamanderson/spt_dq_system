@@ -31,6 +31,7 @@ def run(mode=None,
         arc_files_dir=None,
         pickles_dir=None,
         figures_dir=None,
+        calibra_dir=None,
         just_see_commands=True,
         logger_name=None,
         log_file=None):    
@@ -308,6 +309,23 @@ def run(mode=None,
             output_dir   = desired_outdir_paths[counter_r-1]
             input_files  = find_pickle_files_from_some_time_range(
                                pickles_dir, start_obs_id, end_obs_id)
+
+            # --- Make a copy of the elnod-derived opacity plot
+            #     to be shown in the Weather Etc. tab
+
+            elnod_tau_plot = os.path.join(
+                                 calibra_dir,
+                                 output_dir.split('/')[-2],
+                                 output_dir.split('/')[-1],
+                                 'median_elnod_opacity_all.png')
+            el_tau_plot_cp = os.path.join(
+                                 output_dir,
+                                 'median_elnod_opacity_all.png')
+            if os.path.isfile(elnod_tau_plot) and (not just_see_commands):
+                os.system('cp {} {}'.format(elnod_tau_plot, el_tau_plot_cp))
+
+
+            # --- Back to plotting ARC file data
 
             path_to_plotting_record = os.path.join(
                                           output_dir,
