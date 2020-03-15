@@ -36,16 +36,19 @@ function update_figs() {
     document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
     
     document["ts_rcw38_sky_transmission"].src      = 'staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
-    
     document["ts_median_rcw38_fluxcal"].src        = 'staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
     document["ts_median_rcw38_intflux"].src        = 'staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
     document["ts_alive_bolos_rcw38"].src           = 'staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
     
     document["ts_mat5a_sky_transmission"].src      = 'staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
-    
     document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
     document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
     document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
+
+    document["ts_w28a2_sky_transmission"].src      = 'staticimg/'+weekdir+'/w28a2_sky_transmission_'+wafer+'.png';
+    document["ts_median_w28a2_fluxcal"].src        = 'staticimg/'+weekdir+'/median_w28a2_fluxcal_'+wafer+'.png';
+    document["ts_median_w28a2_intflux"].src        = 'staticimg/'+weekdir+'/median_w28a2_intflux_'+wafer+'.png';
+    document["ts_alive_bolos_w28a2"].src           = 'staticimg/'+weekdir+'/alive_bolos_w28a2_'+wafer+'.png';
 
     document["focus_fwhm_vs_bench_90"].src         = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png';
     document["focus_fwhm_vs_bench_150"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_150.png';

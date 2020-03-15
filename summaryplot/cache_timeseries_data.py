@@ -12,9 +12,8 @@ import os.path
 import shutil
 from summaryplot.calibrator import *
 from summaryplot.elnod import *
-from summaryplot.mat5a import *
 from summaryplot.noise import *
-from summaryplot.rcw38 import *
+from summaryplot.htwo import *
 from summaryplot.pmnj0210_5101 import *
 import hashlib
 
@@ -181,14 +180,18 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                          ('all', 150): (select_wafer, select_band),
                          ('all', 220): (select_wafer, select_band)}
 
-        function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmission},
-                         'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
-                                               'MedianRCW38IntegralFlux': median_rcw38_intflux,
-                                               'AliveBolosRCW38': alive_bolos_rcw38_fluxcal},
-                         'MAT5A':             {'MAT5ASkyTransmission': mat5a_sky_transmission},
-                         'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_mat5a_fluxcal,
-                                               'MedianMAT5AIntegralFlux': median_mat5a_intflux,
-                                               'AliveBolosMAT5A': alive_bolos_mat5a_fluxcal},
+        function_dict = {'RCW38':             {'RCW38SkyTransmission': htwo_sky_transmission},
+                         'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_htwo_fluxcal,
+                                               'MedianRCW38IntegralFlux': median_htwo_intflux,
+                                               'AliveBolosRCW38': alive_bolos_htwo_fluxcal},
+                         'MAT5A':             {'MAT5ASkyTransmission': htwo_sky_transmission},
+                         'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_htwo_fluxcal,
+                                               'MedianMAT5AIntegralFlux': median_htwo_intflux,
+                                               'AliveBolosMAT5A': alive_bolos_htwo_fluxcal},
+                         'W28A2':             {'W28A2SkyTransmission': htwo_sky_transmission},
+                         'W28A2-pixelraster': {'MedianW28A2FluxCalibration': median_htwo_fluxcal,
+                                               'MedianW28A2IntegralFlux': median_htwo_intflux,
+                                               'AliveBolosW28A2': alive_bolos_htwo_fluxcal},
                          'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
@@ -373,21 +376,25 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                 # create the plots
                 if timeinterval == 'yearly':
-                    plot_median_rcw38_fluxcal(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_median_rcw38_intflux(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_alive_bolos_rcw38(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
-                    plot_median_mat5a_fluxcal(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_median_mat5a_intflux(data, wafer_list, plotsdir,
+                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
                                               xlims=[mindate, maxdate])
                     plot_pmnj0210_5101_fitting_results(data, plotsdir,
                                                        xlims=[mindate, maxdate])
-                    plot_alive_bolos_mat5a(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
                 else:
+                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
+                                              xlims=[mindate, maxdate])
+                        plot_htwo_skytrans(src, data, wafer_list, plotsdir,
+                                           xlims=[mindate, maxdate])
                     plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
                                            xlims=[mindate, maxdate])
                     plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
@@ -410,22 +417,6 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                            xlims=[mindate, maxdate])
                     plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
                                                xlims=[mindate, maxdate])
-                    plot_median_rcw38_fluxcal(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_median_rcw38_intflux(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_alive_bolos_rcw38(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
-                    plot_rcw38_sky_transmission(data, wafer_list, plotsdir,
-                                                xlims=[mindate, maxdate])
-                    plot_median_mat5a_fluxcal(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_median_mat5a_intflux(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_alive_bolos_mat5a(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
-                    plot_mat5a_sky_transmission(data, wafer_list, plotsdir,
-                                                xlims=[mindate, maxdate])
                     plot_pmnj0210_5101_fitting_results(data, plotsdir,
                                                        xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
