@@ -119,7 +119,7 @@ app.get('/staticdirs', function(req, res) {
 
 // get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
-	var stat_dir = config.static_plot_dir + '/plots/last_n/last_3/';
+	var stat_dir = config.static_plot_dir + '/plots/last_n/last_03/';
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
