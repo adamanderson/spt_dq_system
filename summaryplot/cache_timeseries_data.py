@@ -259,6 +259,16 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
                         if source not in ['PMNJ0210-5101']:
                             d = d[0]
+                        elif source == 'PMNJ0210-5101':
+                            rawpath = os.path.join(bolodatapath, source,
+                                                   obsid, '0000.g3')
+                            iterator = core.G3File(rawpath)
+                            while True:
+                                frame = iterator.next()
+                                if frame.type == core.G3FrameType.Observation:
+                                    obf = frame
+                                    break
+                            d = [obf] + d
 
                         for quantity_name in function_dict[source]:
                             func_result = function_dict[source][quantity_name](d, boloprops, selector_dict)
