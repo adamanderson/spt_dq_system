@@ -211,10 +211,13 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
+
         function_dict_raw = {'calibrator':    {'el': mean_cal_elevation},
-                             'elnod'     :    {'ppa': median_pelec_per_airmass}}
+                             'elnod'     :    {'ppa': median_pelec_per_airmass},
+                             'noise'     :    {'nl': number_of_lines_in_median_psds}}
         key_dict_raw = {'el' : ['elevation'],
-                        'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity']}
+                        'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity'],
+                        'nl' : ['NumberOfLinesInMedianPSDs']}
 
 
         # loop over weeks
@@ -443,6 +446,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                       xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
                                       xlims=[mindate, maxdate])
+                plot_number_of_lines(data, wafer_list, plotsdir,
+                                         xlims=[mindate, maxdate])
 
                 # update the hash
                 with open(os.path.join(plotsdir, 'data_hash.dat'), 'w') as f:
