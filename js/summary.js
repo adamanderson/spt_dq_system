@@ -77,6 +77,8 @@ function update_figs() {
     document["ts_median_nei_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
     document["ts_median_nei_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
     document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
+
+    document["ts_number_of_lines"].src             = 'staticimg/'+weekdir+'/number_of_lines_found_'+wafer+'.png';
     
     document["map_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map.png';
     document["map_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map.png';
