@@ -64,10 +64,13 @@ def BeamFWHMandEllipticity(request):
     for ax, band in zip(axes, ['90GHz', '150GHz', '220GHz']):
 
         res = maps[band].res
+        width = int(np.ceil(45*core.G3Units.arcmin / res / 2.))
+        yc = maps[band].shape[0] // 2
+        xc = maps[band].shape[1] // 2
+        tmap  = np.asarray(maps[band])[yc-width : yc+width, xc-width:xc+width]
         width = int(np.ceil(figwidth_arcmin*core.G3Units.arcmin / res / 2.))
-        cy, cx = np.unravel_index(np.nanargmax(maps[band]), maps[band].shape)
-
-        tmap = np.asarray(maps[band])[cy-width : cy+width, cx-width:cx+width]
+        cy, cx = np.unravel_index(np.nanargmax(tmap), tmap.shape)
+        tmap = np.asarray(tmap)[cy-width : cy+width, cx-width:cx+width]
         tmap /= core.G3Units.mK
         try:
             params = util.fitting.fit_gaussian2d(tmap)

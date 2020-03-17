@@ -30,8 +30,16 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
             band = frame['Id'][-6:].replace('-','')
             tmap = frame['T'] / frame['Wunpol'].TT
             res = tmap.res
+            
+            old_shape = tmap.shape
+            yc = old_shape[0] // 2 
+            xc = old_shape[1] // 2
+            width = int(np.ceil(45.*core.G3Units.arcmin / res / 2.))
+            tmap  = np.asarray(tmap)[yc-width:yc+width, xc-width:xc+width]
+
+            new_shape = tmap.shape
             width = int(np.ceil(10.*core.G3Units.arcmin / res / 2.))
-            cy, cx = np.unravel_index(np.nanargmax(tmap), tmap.shape)
+            cy, cx = np.unravel_index(np.nanargmax(tmap), new_shape)
 
             tmap = np.asarray(tmap)[cy-width : cy+width, cx-width:cx+width]
             try:
