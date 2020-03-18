@@ -3,7 +3,8 @@ var default_cookies = {'wafer': 'all',
                        'weekdir': 'plots/last_n/last_03/',
                        'mapweekdir': 'maps/figures/last_n/last_7/',
                        'mapweekdirsummer': 'maps/figures_summer/last_n/last_7/',
-                       'arcdir': 'arcs/figs/last_n/last_03/'};
+                       'arcdir': 'arcs/figs/last_n/last_03/',
+                       'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {
     if (Cookies.get(cookie_name) == undefined) 
         Cookies.set(cookie_name, default_cookies[cookie_name], {expires: 1});
@@ -15,6 +16,7 @@ var weekdir = Cookies.get('weekdir');
 var mapweekdir = Cookies.get('mapweekdir');
 var mapweekdirsummer = Cookies.get('mapweekdirsummer');
 var arcdir = Cookies.get('arcdir');
+var cycledir = Cookies.get('cycledir');
 
 
 /**
@@ -285,6 +287,10 @@ function update_figs() {
     document["cabin_temps"].src  = 'staticimg/'+arcdir+'/cabin_temps.png';
     document["4K_temps"].src     = 'staticimg/'+arcdir+'/fourk_temps.png';
     document["50K_temps"].src    = 'staticimg/'+arcdir+'/fiftyk_temps.png';
+
+    document["cycle_he10_full"].src = 'staticimg/'+cycledir+'/he10_full.png';
+    document["cycle_he10_half"].src = 'staticimg/'+cycledir+'/he10_half.png';
+    document["cycle_low_temps"].src = 'staticimg/'+cycledir+'/low_temps.png';
 }
 
 
@@ -374,6 +380,8 @@ function add_date_buttons(interval, subdirectory, tab, boundVar)
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'weather')
                       datestring = data[jdir].split('/')[3];
+                  else if (tab == 'fridge')
+                      datestring = data[jdir].split('/')[3];
 
 				  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
 
@@ -411,6 +419,8 @@ $( document ).ready(function()
     add_date_buttons('last_n', 'arcs/figs', 'weather', 'arcdir');
     add_date_buttons('monthly', 'arcs/figs', 'weather', 'arcdir');
     add_date_buttons('weekly', 'arcs/figs', 'weather', 'arcdir');
+    
+    add_date_buttons('cycles', 'arcs/figs', 'fridge', 'cycledir');
 
 	// Bind the click event to the wafer buttons
 	$("[id^=wafers-]").click(function(event) {

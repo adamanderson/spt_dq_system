@@ -27,9 +27,9 @@ from spt3g import std_processing
 
 
 
-def run(input_files=None,
-        pickles_dir=None,
-        logger=None):
+def run_weather(input_files=None,
+                pickles_dir=None,
+                logger=None):
 
     logger.info('')
     logger.info('----------------------------')
@@ -136,4 +136,67 @@ def run(input_files=None,
         with open(output_path, 'wb') as fobj:
             pickle.dump(all_data, fobj)
         logger.info('Saved the output to %s.', output_path)
+
+
+
+def run_fridge_cycles(input_files=None,
+                      pickles_dir=None,
+                      pickle_name=None,
+                      extra_info=None,
+                      logger=None):
+
+    logger.info('')
+    logger.info('----------------------------')
+    logger.info(' These are the input files: ')
+    logger.info('----------------------------')
+    logger.info('')
+    for counter, f in enumerate(input_files, 1):
+        logger.info(' file %06d: %s', counter, f)
+    logger.info('\n')
+
+    key_dict = {'UCHEAD'  : ['array', 'cryo', 'temperature', 0,  0],
+                'ICHEAD'  : ['array', 'cryo', 'temperature', 0,  1],
+                'HE4HEAD' : ['array', 'cryo', 'temperature', 0,  2],
+                'HE4FB'   : ['array', 'cryo', 'temperature', 0,  3],
+                'HE4PUMP' : ['array', 'cryo', 'temperature', 0,  4],
+                'ICPUMP'  : ['array', 'cryo', 'temperature', 0,  5],
+                'UCPUMP'  : ['array', 'cryo', 'temperature', 0,  6],
+                'HE4SW'   : ['array', 'cryo', 'temperature', 0,  7],
+                'ICSW'    : ['array', 'cryo', 'temperature', 0,  8],
+                'UCSW'    : ['array', 'cryo', 'temperature', 0,  9],
+                'UC_STAGE': ['array', 'cryo', 'temperature', 0, 10],
+                'LC_TOWER': ['array', 'cryo', 'temperature', 0, 11],
+                'IC_STAGE': ['array', 'cryo', 'temperature', 0, 12],
+                '4K_HEAD' : ['array', 'cryo', 'temperature', 0, 13],
+                '4K_SQUID': ['array', 'cryo', 'temperature', 0, 14],
+                '50K_HEAD': ['array', 'cryo', 'temperature', 0, 15],
+                'UTC'     : ['array', 'cryo', 'utc']}
+
+    logger.info('Processing %d files together...', len(input_files))
+
+    arc_data_collector = util.extractdata.MultiAccumulator(
+                             keys=key_dict)
+    pipeline = core.G3Pipeline()
+    pipeline.Add(gcp.ARCFileReader,
+                 filename=input_files)
+    pipeline.Add(arc_data_collector)
+
+    try:
+        pipeline.Run()
+    except:
+        logger.info('')
+        logger.exception('An error occurred:\n------------------')
+        logger.info('------------------')
+        logger.info('The data from this fridge cycle were skipped!')
+        logger.info('')
+        return
+
+    all_data = arc_data_collector.extract_values()
+    all_data['OID'] = numpy.array([std_processing.time_to_obsid(t)
+                                  for t in all_data['UTC']])
+    all_data['INFO'] = extra_info
+
+    output_file = '{}/fridge_{}.pkl'.format(pickles_dir, pickle_name)
+    with open(output_file, 'wb') as fobj:
+        pickle.dump(all_data, fobj)
 

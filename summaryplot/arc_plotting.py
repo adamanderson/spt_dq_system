@@ -85,11 +85,11 @@ def get_xtick_labels(ticks):
 
 
 
-def run(input_files=None,
-        output_dir=None,
-        start_obs_id=None,
-        end_obs_id=None,
-        logger=None):
+def run_weather(input_files=None,
+                output_dir=None,
+                start_obs_id=None,
+                end_obs_id=None,
+                logger=None):
 
     logger.info('')
     logger.info('--------------------------')
@@ -370,5 +370,139 @@ def run(input_files=None,
 
     logger.info('')
     logger.info('All plots have been made!')
+    logger.info('')
+
+
+
+def run_fridge_cycles(input_file=None, output_dir=None, logger=None):
+
+    logger.info('')
+    logger.info('Loading the data...')
+
+    with open(input_file, 'rb') as fobj:
+        data = pickle.load(fobj)
+
+    oids = data['OID']
+    beg  = std_processing.time_to_obsid(data['INFO']['start'].\
+               strftime('20%y%m%d_%H%M%S'))
+    end  = std_processing.time_to_obsid(data['INFO']['stop'].\
+               strftime('20%y%m%d_%H%M%S'))
+    end  = (end  - beg) / 60.0
+    mins = (oids - beg) / 60.0
+
+    common_title  = 'Temperature of various thermometers '
+    common_title += 'during cycle_tune({})\n'.format(data['INFO']['args'])
+    common_title += '(From {} till {})'.format(
+                        data['INFO']['start'].strftime('20%y%m%d_%H%M%S'),
+                        data['INFO']['stop'].strftime('20%y%m%d_%H%M%S'))
+
+    logger.info('Making the first plot...')
+
+    figure = pyplot.figure(figsize=(12, 6))
+    plot   = figure.add_subplot(1, 1, 1)
+
+    for thermometer in ['UCHEAD',  'ICHEAD', 'HE4HEAD', 'HE4FB',
+                        'HE4PUMP', 'ICPUMP', 'UCPUMP',
+                        'HE4SW',   'ICSW',   'UCSW']:
+        plot.plot(mins, data[thermometer], label=thermometer,
+                  linewidth=1.5, alpha=0.75)
+
+    plot.set_xlim(left=-15, right=375)
+    plot.set_ylim(bottom=0.2, top=70)
+    plot.set_yscale('log')
+    xticks_major = numpy.arange(7) * 60
+    xticks_minor = (numpy.arange(39) - 1) * 10
+    xticks_minor = xticks_minor[xticks_minor%60!=0]
+    plot.set_xticks(xticks_major, minor=False)
+    plot.set_xticks(xticks_minor, minor=True)
+    plot.tick_params(which='both', direction='in', pad=6.0,
+                     labelsize=12, labelcolor='black')
+    plot.grid(axis='both', which='major', linestyle='dotted', linewidth=1.0)
+    plot.grid(axis='both', which='minor', linestyle='dotted', linewidth=0.5)
+    plot.set_xlabel('\nTime since the beginning of the cycle [minutes]',
+                    fontsize=14)
+    plot.set_ylabel('Temperature [K]\n', fontsize=14)
+    plot.axvline(end, color='black', linestyle='dashed', linewidth=1.25,
+                 label='END')
+    plot.legend(loc='upper right', fontsize=13)
+    sub_title = '  -  Plot 1: He10 fridge parts, entire period\n'
+    plot.set_title(common_title+sub_title, fontsize=15)
+    figure.tight_layout()
+    figure.savefig('{}/he10_full.png'.format(output_dir),
+                   bbox_inches='tight')
+    pyplot.close(figure)
+
+
+    logger.info('Making the second plot...')
+
+    figure = pyplot.figure(figsize=(12, 6))
+    plot   = figure.add_subplot(1, 1, 1)
+
+    for thermometer in ['UCHEAD',  'ICHEAD', 'HE4HEAD', 'HE4FB',
+                        'HE4PUMP', 'ICPUMP', 'UCPUMP',
+                        'HE4SW',   'ICSW',   'UCSW']:
+        plot.plot(mins, data[thermometer], label=thermometer,
+                  linewidth=1.5, alpha=0.75)
+
+    plot.set_xlim(left=-15, right=175)
+    plot.set_ylim(bottom=0.2, top=70)
+    plot.set_yscale('log')
+    xticks_major = numpy.arange(9) * 20
+    xticks_minor = (numpy.arange(36) - 1) * 5
+    xticks_minor = xticks_minor[xticks_minor%20!=0]
+    plot.set_xticks(xticks_major, minor=False)
+    plot.set_xticks(xticks_minor, minor=True)
+    plot.tick_params(which='both', direction='in', pad=6.0,
+                         labelsize=12, labelcolor='black')
+    plot.grid(axis='both', which='major', linestyle='dotted', linewidth=1.0)
+    plot.grid(axis='both', which='minor', linestyle='dotted', linewidth=0.5)
+    plot.set_xlabel('\nTime since the beginning of the cycle [minutes]',
+                    fontsize=14)
+    plot.set_ylabel('Temperature [K]\n', fontsize=14)
+    plot.legend(loc='upper right', fontsize=13)
+    sub_title = '  -  Plot 2: He10 fridge parts, 1st half\n'
+    plot.set_title(common_title+sub_title, fontsize=15)
+    figure.tight_layout()
+    figure.savefig('{}/he10_half.png'.format(output_dir),
+                   bbox_inches='tight')
+
+
+    logger.info('Making the third plot...')
+
+    figure = pyplot.figure(figsize=(12, 6))
+    plot   = figure.add_subplot(1, 1, 1)
+
+    for thermometer in ['UCHEAD', 'ICHEAD', 'UC_STAGE', 'IC_STAGE', 'LC_TOWER']:
+        plot.plot(mins, data[thermometer], label=thermometer,
+                  linewidth=1.5, alpha=0.75)
+
+    plot.set_xlim(left=-15, right=285)
+    plot.set_ylim(bottom=0.2, top=3.1)
+    xticks_major = numpy.arange(10) * 30
+    xticks_minor = (numpy.arange(31) - 1) * 10
+    xticks_minor = xticks_minor[xticks_minor%30!=0]
+    plot.set_xticks(xticks_major, minor=False)
+    plot.set_xticks(xticks_minor, minor=True)
+    yticks_major = (numpy.arange(10) + 1) * 0.3
+    yticks_minor = (numpy.arange(30)) * 0.1 + 0.2
+    yticks_minor = yticks_minor[yticks_minor%0.3!=0.0]
+    plot.set_yticks(yticks_major, minor=False)
+    plot.set_yticks(yticks_minor, minor=True)
+    plot.tick_params(which='both', direction='in', pad=6.0,
+                         labelsize=12, labelcolor='black')
+    plot.grid(axis='both', which='major', linestyle='dotted', linewidth=1.0)
+    plot.grid(axis='both', which='minor', linestyle='dotted', linewidth=0.5)
+    plot.set_xlabel('\nTime since the beginning of the cycle [minutes]',
+                    fontsize=14)
+    plot.set_ylabel('Temperature [K]\n', fontsize=14)
+    plot.legend(loc='upper right', fontsize=13)
+    sub_title = '  -  Plot 3: Low temperature parts\n'
+    plot.set_title(common_title+sub_title, fontsize=15)
+    figure.tight_layout()
+    figure.savefig('{}/low_temps.png'.format(output_dir),
+                   bbox_inches='tight')
+    pyplot.show(plot)
+
+    logger.info('Done.')
     logger.info('')
 

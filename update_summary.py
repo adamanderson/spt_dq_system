@@ -434,7 +434,7 @@ if args.mode == 'arcs':
     
         elif mode == 'plotting':
             for interval in ['last_01', 'last_03', 'last_07', 'last_30',
-                             'weekly',  'monthly']:
+                             'weekly',  'monthly', 'fridge']:
                 current_time = datetime.datetime.utcnow()
                 logger.info('Plotting the pickled results '
                             'for the time interval "%s"...', interval)

@@ -21,15 +21,23 @@
     width: 100%;
   }
   .container-time-interval-selector,
-  .container-figs-one-interval {
+  .container-time-interval-selector-wider,
+  .container-figs-one-interval,
+  .container-figs-one-interval-narrower {
     overflow: scroll;
     padding: 1%;
   }
   .container-time-interval-selector {
     width: 14%;
   }
+  .container-time-interval-selector-wider {
+    width: 20%;
+  }
   .container-figs-one-interval {
     width: 86%;
+  }
+  .container-figs-one-interval-narrower {
+    width: 80%;
   }
   .fig-with-border {
     border-width: 1px;
@@ -68,6 +76,7 @@
     <li><a href="#tabs-maps">Field Observations (Winter)</a></li>
     <li><a href="#tabs-mapssummer">Field Observations (Summer)</a></li>
     <li><a href="#tabs-weather">Weather Et Cetera</a></li>
+    <li><a href="#tabs-fridge">Fridge Cycles</a></li>
     <li><a href="#tabs-readme">Read Me</a></li>
   </ul>
   
@@ -2133,6 +2142,49 @@
     </div>
   </div>
   
+  
+  <div id="tabs-fridge" style="padding:10px 10px 10px 10px;">
+    <div class="container-all-figs" style="height:86vh;">
+      <div class="container-time-interval-selector-wider" style="background-color:hsla(165, 100%, 75%, 0.01);">
+        <form>
+          <fieldset class="field-with-border">
+            <legend>Cycles</legend>
+            <div id="datalist_fridge_cycles">
+            </div>
+          </fieldset>
+        </form>
+      </div>
+
+      <div class="container-figs-one-interval-narrower" style="background-color:hsla(285, 100%, 75%, 0.01);">
+        <table style="table-layout:fixed;" cellpadding="5">
+          <tr>
+            <td width="100%">
+              <a href="javascript:location.href='staticimg/'+cycle_dir+'/he10_full.png'">
+                <img style="display:block;" width="100%" name='cycle_he10_full' class="fig-with-border" src='staticimg/arcs/figs/cycles/newest/he10_full.png'>
+              </a>
+            </td>
+          </tr>
+          <tr><td><br></td></tr>
+          <tr>
+            <td width="100%">
+              <a href="javascript:location.href='staticimg/'+cycle_dir+'/he10_half.png'">
+                <img style="display:block;" width="100%" name='cycle_he10_half' class="fig-with-border" src='staticimg/arcs/figs/cycles/newest/he10_half.png'>
+              </a>
+            </td>
+          </tr>
+          <tr><td><br></td></tr>
+          <tr>
+            <td width="100%">
+              <a href="javascript:location.href='staticimg/'+cycle_dir+'/low_temps.png'">
+                <img style="display:block;" width="100%" name='cycle_low_temps' class="fig-with-border" src='staticimg/arcs/figs/cycles/newest/low_temps.png'>
+              </a>
+            </td>
+          </tr>
+
+        </table>
+      </div>
+    </div>
+  </div>
   
   <div id="tabs-readme" style="height:85vh;overflow:scroll;">
     <p> Hello! Thank you for visiting the SPT-3G data quality summary webpage and for reading the documentation here.
