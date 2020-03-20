@@ -101,7 +101,7 @@ def update(season, mode, action,
         os.path.join(aux_files_directory,
                     'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
     point_source_list_file = \
-        'spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt'
+        'spt3g_software/sources/1500d_ptsrc_and_decrement_list.txt'
     dummy_input_file = \
         os.path.join(aux_files_directory, 'dummy.g3')
     
