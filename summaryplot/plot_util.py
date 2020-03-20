@@ -54,4 +54,5 @@ def plot_timeseries(datetimes, data, band, xlims=None, ylims=None, alpha=0.35):
     ylims_current = plt.gca().get_ylim()
     for date in nan_dates:
         plt.plot([date, date], ylims_current, 'r--', linewidth=0.5)
+        plt.text(x=date, y=0.5*(ylims_current[1]-ylims_current[0])+ylims_current[0], s='NaN', color='r', rotation=90, ha='center', va='center')
     plt.ylim(ylims_current)

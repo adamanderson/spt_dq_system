@@ -100,7 +100,7 @@ def plot_median_htwo_fluxcal(src, data, wafers, outdir, xlims=None, ylims=[-100,
                     outdir, src.lower(), wafer))
         plt.close()
 
-def plot_median_htwo_intflux(src, data, wafers, outdir, xlims=None, ylims=[2e-7, 7e-7]):
+def plot_median_htwo_intflux(src, data, wafers, outdir, xlims=None, ylims=[1, 8]):
     lines = {}
     cal_k = 'Median' + src + 'IntegralFlux'
     
@@ -114,12 +114,17 @@ def plot_median_htwo_intflux(src, data, wafers, outdir, xlims=None, ylims=[2e-7,
             medians = np.array([data[src][obsid][cal_k][wafer][band]
                                 for obsid in obsids
                                 if  cal_k in data[src][obsid]])
+            medians /= core.G3Units.arcmin**2
 
             timestamps = [obsid_to_g3time(int(obsid)).time / core.G3Units.sec
                           for obsid in obsids
                           if  cal_k in data[src][obsid]]
             dts = np.array([datetime.datetime.utcfromtimestamp(ts)
                             for ts in timestamps])
+            if 'RCW38' in src:
+                ylims = [3.25, 6.75]
+            elif 'MAT5A' in src:
+                ylims = [1.75, 5.25]
             plot_timeseries(dts, medians, band, xlims=xlims, ylims=ylims)
 
             if len(medians)>0:
@@ -133,7 +138,7 @@ def plot_median_htwo_intflux(src, data, wafers, outdir, xlims=None, ylims=[2e-7,
         src = src.replace('-pixelraster', '')
         plt.grid()
         plt.xlabel('observation time (UTC)')
-        plt.ylabel('median {} integral flux'.format(src))
+        plt.ylabel('median {} integral flux [arcmin^2]'.format(src))
         plt.title('{} Integral Flux ({})'.format(src, wafer))
         plt.legend()
         plt.tight_layout()
@@ -142,7 +147,7 @@ def plot_median_htwo_intflux(src, data, wafers, outdir, xlims=None, ylims=[2e-7,
         plt.close()
 
 
-def plot_htwo_skytrans(src, data, wafers, outdir, xlims=None, ylims=[0.80, 1.10]):
+def plot_htwo_skytrans(src, data, wafers, outdir, xlims=None, ylims=[0.80, 1.20]):
     lines = {}
     cal_k = src + 'SkyTransmission'
     
