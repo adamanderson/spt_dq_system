@@ -250,7 +250,7 @@ def update(season, mode, action,
             os.mkdir(os.path.join(root_directory, time_interval))
         for time_range in desired_time_ranges:
             if time_interval == "last_n":
-                sub_dir = time_interval.replace("n", str(last_how_many_days))
+                sub_dir = "last_{:02d}".format(last_how_many_days)
             else:
                 sub_dir = convert_time_intervals_to_dir_names(
                               time_interval, time_range[0])

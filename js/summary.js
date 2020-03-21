@@ -1,8 +1,8 @@
 // check if cookies are defined, otherwise set them to defaults
 var default_cookies = {'wafer': 'all',
                        'weekdir': 'plots/last_n/last_03/',
-                       'mapweekdir': 'maps/figures/last_n/last_7/',
-                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_7/',
+                       'mapweekdir': 'maps/figures/last_n/last_07/',
+                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_07/',
                        'arcdir': 'arcs/figs/last_n/last_03/',
                        'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {

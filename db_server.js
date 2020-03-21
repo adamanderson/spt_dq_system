@@ -129,7 +129,7 @@ app.get('/lastmodified_calibration', function(req, res) {
 
 // get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps_winter', function(req, res) {
-	var stat_dir = config.coadds_figs_dir + '/last_n/last_7/';
+	var stat_dir = config.coadds_figs_dir + '/last_n/last_07/';
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -140,9 +140,9 @@ app.get('/lastmodified_maps_winter', function(req, res) {
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
     if (config.coadds_figs_dir.endsWith('/'))
-        var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_7/').replace("/_summer", "_summer");
+        var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_07/').replace("/_summer", "_summer");
     else
-	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_7/';
+	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_07/';
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
