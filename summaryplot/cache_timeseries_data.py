@@ -12,9 +12,9 @@ import os.path
 import shutil
 from summaryplot.calibrator import *
 from summaryplot.elnod import *
-from summaryplot.mat5a import *
 from summaryplot.noise import *
-from summaryplot.rcw38 import *
+from summaryplot.htwo import *
+from summaryplot.pmnj0210_5101 import *
 import hashlib
 
 
@@ -51,9 +51,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
     default_mintime = timenow + dt
 
     # check timeinterval argument
-    if mode == 'plot' and \
-       timeinterval != 'monthly' and \
-       timeinterval != 'weekly':
+    if mode == 'plot' and timeinterval not in ['weekly', 'monthly', 'yearly']:
         try:
             int(timeinterval)
         except:
@@ -62,6 +60,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
     # check --max-time argument
     if max_time == None:
+        if timeinterval == 'yearly':
+            max_time = timenow.replace(year=timenow.year+1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         if timeinterval == 'monthly':
             if timenow.month != 12:
                 max_time = timenow.replace(month=timenow.month+1, day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -79,23 +79,21 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
     # parse times to loop over
     dt_mintime = datetime.datetime(year=int(min_time[:4]),
-                             month=int(min_time[4:6]),
-                             day=int(min_time[6:8]))
+                                   month=int(min_time[4:6]),
+                                   day=int(min_time[6:8]))
     dt_maxtime = datetime.datetime(year=int(max_time[:4]),
-                             month=int(max_time[4:6]),
-                             day=int(max_time[6:8]))
+                                   month=int(max_time[4:6]),
+                                   day=int(max_time[6:8]))
 
     date_boundaries = []
     next_day = dt_mintime
 
-    if mode == 'skim' or (timeinterval == 'weekly' or
-                               timeinterval == 'monthly'):
+    if mode == 'skim' or (timeinterval in ['weekly', 'monthly', 'yearly']):
         while next_day < dt_maxtime:
             date_boundaries.append(next_day)
 
             if mode == 'skim' or timeinterval == 'weekly': # weekly mode
                 next_day = next_day + datetime.timedelta(days = 7 - next_day.weekday())
-
             elif timeinterval == 'monthly': # monthly mode
                 try:
                     next_day = datetime.datetime(year=next_day.year,
@@ -105,10 +103,13 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                     next_day = datetime.datetime(year=next_day.year+1,
                                                  month=1,
                                                  day=1)
+            elif timeinterval == 'yearly': # yearly mode
+                next_day = datetime.datetime(year=next_day.year+1,
+                                             month=1,
+                                             day=1)
         date_boundaries.append(dt_maxtime)
     else:
-        date_boundaries = [dt_maxtime - datetime.timedelta(days=int(timeinterval)),
-                           dt_maxtime]
+        date_boundaries = [dt_maxtime - datetime.timedelta(days=int(timeinterval)), dt_maxtime]
 
 
     # SKIM MODE
@@ -179,14 +180,19 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                          ('all', 150): (select_wafer, select_band),
                          ('all', 220): (select_wafer, select_band)}
 
-        function_dict = {'RCW38':             {'RCW38SkyTransmission': rcw38_sky_transmission},
-                         'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_rcw38_fluxcal,
-                                               'MedianRCW38IntegralFlux': median_rcw38_intflux,
-                                               'AliveBolosRCW38': alive_bolos_rcw38_fluxcal},
-                         'MAT5A':             {'MAT5ASkyTransmission': mat5a_sky_transmission},
-                         'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_mat5a_fluxcal,
-                                               'MedianMAT5AIntegralFlux': median_mat5a_intflux,
-                                               'AliveBolosMAT5A': alive_bolos_mat5a_fluxcal},
+        function_dict = {'RCW38':             {'RCW38SkyTransmission': htwo_sky_transmission},
+                         'RCW38-pixelraster': {'MedianRCW38FluxCalibration': median_htwo_fluxcal,
+                                               'MedianRCW38IntegralFlux': median_htwo_intflux,
+                                               'AliveBolosRCW38': alive_bolos_htwo_fluxcal},
+                         'MAT5A':             {'MAT5ASkyTransmission': htwo_sky_transmission},
+                         'MAT5A-pixelraster': {'MedianMAT5AFluxCalibration': median_htwo_fluxcal,
+                                               'MedianMAT5AIntegralFlux': median_htwo_intflux,
+                                               'AliveBolosMAT5A': alive_bolos_htwo_fluxcal},
+                         'W28A2':             {'W28A2SkyTransmission': htwo_sky_transmission},
+                         'W28A2-pixelraster': {'MedianW28A2FluxCalibration': median_htwo_fluxcal,
+                                               'MedianW28A2IntegralFlux': median_htwo_intflux,
+                                               'AliveBolosW28A2': alive_bolos_htwo_fluxcal},
+                         'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
                                                'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
@@ -205,7 +211,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-        function_dict_raw = {'calibrator':    {'elevation': mean_cal_elevation}}
+
+        function_dict_raw = {'calibrator':    {'el': mean_cal_elevation},
+                             'elnod'     :    {'ppa': median_pelec_per_airmass},
+                             'noise'     :    {'nl': number_of_lines_in_median_psds}}
+        key_dict_raw = {'el' : ['elevation'],
+                        'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity'],
+                        'nl' : ['NumberOfLinesInMedianPSDs']}
+
 
         # loop over weeks
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
@@ -232,6 +245,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                 if source not in data.keys():
                     data[source] = {}
+                    updated = True
                 for fname in files_to_parse:
                     obsid = os.path.splitext(os.path.basename(fname))[0]
                     cal_fname = '{}/{}/{}/nominal_online_cal.g3' \
@@ -246,9 +260,21 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
                         d = [fr for fr in core.G3File(fname)]
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
+                        if source not in ['PMNJ0210-5101']:
+                            d = d[0]
+                        elif source == 'PMNJ0210-5101':
+                            rawpath = os.path.join(bolodatapath, source,
+                                                   obsid, '0000.g3')
+                            iterator = core.G3File(rawpath)
+                            while True:
+                                frame = iterator.next()
+                                if frame.type == core.G3FrameType.Observation:
+                                    obf = frame
+                                    break
+                            d = [obf] + d
 
                         for quantity_name in function_dict[source]:
-                            func_result = function_dict[source][quantity_name](d[0], boloprops, selector_dict)
+                            func_result = function_dict[source][quantity_name](d, boloprops, selector_dict)
                             if func_result:
                                 data[source][obsid][quantity_name] = func_result
 
@@ -256,9 +282,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             rawpath = os.path.join(bolodatapath, source,
                                                    obsid, '0000.g3')
                             for quantity_name in function_dict_raw[source]:
-                                func_result = function_dict_raw[source][quantity_name](rawpath, boloprops)
+                                func_result = function_dict_raw[source][quantity_name](rawpath, cal_fname, fname, boloprops, selector_dict)
                                 if func_result:
-                                    data[source][obsid][quantity_name] = func_result
+                                    for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
+                                        data[source][obsid][actual_name] = result
 
             if updated:
                 with open(datafile, 'wb') as f:
@@ -267,7 +294,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
     # PLOT MODE
     elif mode == 'plot':
-        if timeinterval == 'monthly' or timeinterval == 'weekly':
+        if timeinterval in ['weekly', 'monthly', 'yearly']:
             timeinterval_stub = timeinterval
         else: # checked arguments at top so we know this is castable to float
             timeinterval_stub = 'last_n'
@@ -280,9 +307,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
             shutil.rmtree(plotstimedir)        
 
         weekly_filenames = np.array(glob(os.path.join(datadir, '*pkl')))
-        weekly_datetimes = np.array([datetime.datetime.strptime(os.path.basename(fname).split('_')[0],
-                                                                '%Y%m%d')
-                                     for fname in weekly_filenames])
+        weekly_datetimes = np.array([datetime.datetime.strptime(os.path.basename(fname).split('_')[0], '%Y%m%d') for fname in weekly_filenames])
         ind_sort = np.argsort(weekly_datetimes)
         weekly_filenames = weekly_filenames[ind_sort]
         weekly_datetimes = weekly_datetimes[ind_sort]
@@ -298,9 +323,12 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
             elif timeinterval == 'monthly':
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
                                         mindate.strftime('%Y%m'))
+            elif timeinterval == 'yearly':
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
+                                        mindate.strftime('%Y'))
             else:
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                        'last_{}'.format(timeinterval))
+                                        'last_{:02d}'.format(int(timeinterval)))
             os.makedirs(plotsdir, exist_ok=True)
 
             # load data from this date range
@@ -360,64 +388,76 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             data[source].pop(obsid)
 
                 # create the plots
-                plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
-                                       xlims=[mindate, maxdate])
-                plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
-                                             xlims=[mindate, maxdate])
-                plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'low',
-                                         xlims=[mindate, maxdate])
-                plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'high',
-                                       xlims=[mindate, maxdate])
-                plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'high',
-                                             xlims=[mindate, maxdate])
-                plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'high',
-                                         xlims=[mindate, maxdate])
-                plot_median_elnod_sn(data, wafer_list, plotsdir,
-                                     xlims=[mindate, maxdate])
-                plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
+                if timeinterval == 'yearly':
+                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
+                                              xlims=[mindate, maxdate])
+                    plot_pmnj0210_5101_fitting_results(data, plotsdir,
+                                                       xlims=[mindate, maxdate])
+                else:
+                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
+                                                 xlims=[mindate, maxdate])
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
+                                              xlims=[mindate, maxdate])
+                        plot_htwo_skytrans(src, data, wafer_list, plotsdir,
                                            xlims=[mindate, maxdate])
-                plot_alive_bolos_elnod(data, wafer_list, plotsdir,
-                                       xlims=[mindate, maxdate])
-                plot_median_rcw38_fluxcal(data, wafer_list, plotsdir,
-                                          xlims=[mindate, maxdate])
-                plot_median_rcw38_intflux(data, wafer_list, plotsdir,
-                                          xlims=[mindate, maxdate])
-                plot_rcw38_sky_transmission(data, wafer_list, plotsdir,
-                                            xlims=[mindate, maxdate])
-                plot_alive_bolos_rcw38(data, wafer_list, plotsdir,
-                                       xlims=[mindate, maxdate])
-                plot_median_mat5a_fluxcal(data, wafer_list, plotsdir,
-                                          xlims=[mindate, maxdate])
-                plot_median_mat5a_intflux(data, wafer_list, plotsdir,
-                                          xlims=[mindate, maxdate])
-                plot_mat5a_sky_transmission(data, wafer_list, plotsdir,
-                                            xlims=[mindate, maxdate])
-                plot_alive_bolos_mat5a(data, wafer_list, plotsdir,
-                                       xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
-                plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                  xlims=[mindate, maxdate])
+                    plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
+                                           xlims=[mindate, maxdate])
+                    plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
+                                                 xlims=[mindate, maxdate])
+                    plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'low',
+                                             xlims=[mindate, maxdate])
+                    plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'high',
+                                           xlims=[mindate, maxdate])
+                    plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'high',
+                                                 xlims=[mindate, maxdate])
+                    plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'high',
+                                             xlims=[mindate, maxdate])
+                    plot_median_elnod_response(data, wafer_list, plotsdir,
+                                               xlims=[mindate, maxdate])
+                    plot_median_elnod_sn(data, wafer_list, plotsdir,
+                                         xlims=[mindate, maxdate])
+                    plot_median_elnod_opacity(data, wafer_list, plotsdir,
+                                              xlims=[mindate, maxdate])
+                    plot_alive_bolos_elnod(data, wafer_list, plotsdir,
+                                           xlims=[mindate, maxdate])
+                    plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
+                                               xlims=[mindate, maxdate])
+                    plot_pmnj0210_5101_fitting_results(data, plotsdir,
+                                                       xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                    plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
+                                      xlims=[mindate, maxdate])
+                plot_number_of_lines(data, wafer_list, plotsdir,
+                                         xlims=[mindate, maxdate])
 
                 # update the hash
                 with open(os.path.join(plotsdir, 'data_hash.dat'), 'w') as f:
@@ -425,6 +465,12 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
 
 if __name__ == '__main__':
+
+    timenow = datetime.datetime.utcnow()
+    dt = datetime.timedelta(-1*(timenow.weekday()+1))
+    default_mintime = timenow + dt
+    default_maxtime = timenow
+
     P0 = ap.ArgumentParser(description='',
                            formatter_class=ap.ArgumentDefaultsHelpFormatter)
     S = P0.add_subparsers(dest='mode', title='subcommands',
@@ -448,8 +494,7 @@ if __name__ == '__main__':
                              help='Minimum time of observations to skim. Format: '
                              'YYYYMMDD (starts at beginning of day)')
     parser_skim.add_argument('--max-time', action='store',
-                             default=(timenow + \
-                                      datetime.timedelta(days=1)).strftime('%Y%m%d'),
+                             default=default_maxtime.strftime('%Y%m%d'),
                              help='Maximum time of observations to skim. Format: '
                              'YYYYMMDD (ends at end of day)')
 
@@ -460,7 +505,8 @@ if __name__ == '__main__':
                              help='Update or rebuild the data skims or plots.')
     parser_plot.add_argument('timeinterval', default=None,
                              help='Time interval at which to generate plots. '
-                             'Available options are "weekly", "monthly" or "N", '
+                             'Available options are '
+                             '"weekly", "monthly", "yearly" or "N", '
                              'where N is generates a plot containing data from '
                              'only the most recent N days.')
     parser_plot.add_argument('outdir', action='store', default=None,
@@ -470,11 +516,12 @@ if __name__ == '__main__':
                              help='Minimum time of observations to skim. Format: '
                              'YYYYMMDD (starts at beginning of day)')
     parser_plot.add_argument('--max-time', action='store',
-                             default=None,
+                             default=default_maxtime.strftime('%Y%m%d'),
                              help='Maximum time of observations to skim. Format: '
                              'YYYYMMDD (ends at end of day)')
     args = P0.parse_args()
-
+    
+    
     if args.mode == 'plot':
         update(mode=args.mode,
                action=args.action,

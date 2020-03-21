@@ -4,7 +4,7 @@ import matplotlib.dates as mdates
 
 colors = {90:'C0', 150:'C1', 220:'C2'}
 
-def plot_timeseries(datetimes, data, band, xlims=None, ylims=None):
+def plot_timeseries(datetimes, data, band, xlims=None, ylims=None, alpha=0.35):
     '''
     Make a timeseries plot with some special features appropriate to the
     summary web page.
@@ -29,7 +29,7 @@ def plot_timeseries(datetimes, data, band, xlims=None, ylims=None):
     plt.plot(datenums[np.isfinite(data)],
              data[np.isfinite(data)],
              'o', label='{} GHz'.format(band), color=colors[band],
-             alpha=0.35)
+             alpha=alpha)
     
     # plot out-of-range data and set limits
     if xlims != None:
@@ -54,4 +54,5 @@ def plot_timeseries(datetimes, data, band, xlims=None, ylims=None):
     ylims_current = plt.gca().get_ylim()
     for date in nan_dates:
         plt.plot([date, date], ylims_current, 'r--', linewidth=0.5)
+        plt.text(x=date, y=0.5*(ylims_current[1]-ylims_current[0])+ylims_current[0], s='NaN', color='r', rotation=90, ha='center', va='center')
     plt.ylim(ylims_current)

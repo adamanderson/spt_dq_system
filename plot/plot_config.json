@@ -10,6 +10,8 @@
     "RCW38": ["NominalPointingOffsets"],
     "RCW38-pixelraster": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
     "0537-441-pixelraster": ["NominalPointingOffsets", "CoaddedMaps0537441"],
+    "PMNJ0210-5101": ["BeamFWHMandEllipticity"],
+    "PMNJ0210-5101-pixelraster": ["BeamFWHMandEllipticity"],
     "saturn": ["NominalPointingOffsets"],
     "debug-forced-scanify": ["NominalPointingOffsets"],
     "noise": ["NominalPointingOffsets", "NET01to05HzHistogram", "NET1to2HzHistogram", "NET3to5HzHistogram", "NET10to15HzHistogram"]
@@ -43,6 +45,8 @@
     "RCW38": ["NominalPointingOffsets"],
     "RCW38-pixelraster": ["NominalPointingOffsets", "OfflinePointingOffsets", "RCW38IntegralFlux", "RCW38FluxCalibration"],
     "0537-441-pixelraster": ["NominalPointingOffsets", "CoaddedMaps0537441"],
+    "PMNJ0210-5101": ["BeamFWHMandEllipticity"],
+    "PMNJ0210-5101-pixelraster": ["BeamFWHMandEllipticity"],
     "saturn": ["NominalPointingOffsets"],
     "debug-forced-scanify": ["NominalPointingOffsets"],
     "noise": ["NominalPointingOffsets", "NET01to05HzHistogram", "NET1to2HzHistogram", "NET3to5HzHistogram", "NET10to15HzHistogram"]
