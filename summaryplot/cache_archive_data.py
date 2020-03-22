@@ -307,6 +307,8 @@ def run(mode=None,
 
         start_time = oldest_time_to_consider
         end_time   = newest_time_to_consider
+        start_time = start_time.replace(tzinfo=datetime.timezone.utc)
+        end_time   = end_time.replace(tzinfo=datetime.timezone.utc)
 
         path_to_reduction_record = os.path.join(
                                        pickles_dir,
