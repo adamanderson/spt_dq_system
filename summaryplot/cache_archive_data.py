@@ -348,6 +348,7 @@ def run(mode=None,
                                  hour=schedule_stop.hour,
                                  minute=schedule_stop.minute,
                                  second=schedule_stop.second)
+            ten_mins_before = schedule_start + datetime.timedelta(minutes=-10)
             six_hours_later = schedule_start + datetime.timedelta(hours=6)
             pickle_name     = schedule_start.strftime('20%y%m%d_%H%M%S')
 
@@ -384,7 +385,7 @@ def run(mode=None,
                 try:
                     input_files = find_arc_files_from_some_time_range(
                                       arc_files_dir,
-                                      schedule_start,
+                                      ten_mins_before,
                                       six_hours_later)
                     if len(input_files) < 22:
                         logger.info('Actually, the number of input files')
