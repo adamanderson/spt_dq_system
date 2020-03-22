@@ -567,5 +567,5 @@ setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') { // only update map and arc plots at pole
     setInterval(updateWinterMapPlots, 600000);
     setInterval(updateSummerMapPlots, 600000);
-    setInterval(updateArcPlots,       600000);
+    setInterval(updateArcPlots,      3600000);
 }
