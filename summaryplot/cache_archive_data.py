@@ -386,7 +386,7 @@ def run(mode=None,
                                       arc_files_dir,
                                       schedule_start,
                                       six_hours_later)
-                    if len(input_files) < 21:
+                    if len(input_files) < 22:
                         logger.info('Actually, the number of input files')
                         logger.info('seems too small (%d),', len(input_files))
                         logger.info('so the processing will not occur.')
@@ -548,6 +548,8 @@ def run(mode=None,
 
             start_time = oldest_time_to_consider
             end_time   = newest_time_to_consider
+            start_time = start_time.replace(tzinfo=datetime.timezone.utc)
+            end_time   = end_time.replace(tzinfo=datetime.timezone.utc)
 
             database = schedule_queries.get_schedule_instances_for_daterange(
                            "cycle_tune.sch",
