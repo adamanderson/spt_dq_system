@@ -2188,57 +2188,74 @@
   
   <div id="tabs-readme" style="height:85vh;overflow:scroll;">
     <p> Hello! Thank you for visiting the SPT-3G data quality summary webpage and for reading the documentation here.
-        If you notice that the figures in either the Calibration Observations tab or the Field Observations tab
-        have not been updated for the last three days (but have not heard of any issues with the operation of
-        the telescope and the camera), or if you have some questions or suggestions on the webpage,
-        please let Adam and Wei know! </p><br>
+        If you notice that the figures in any of the tabs (Calibration Observations, Field Observations, etc.)
+        have not been updated for the last two days but are not aware of any issues with the operation of
+        the telescope and the camera, or if you have some questions or suggestions on the webpage,
+        please let Adam and Wei know! (Read Me author: Wei, Last updated: 2020/03/24)</p><br>
     
     <h3> 1. Overview </h3>
-    <p> This webpage is meant to be used to monitor how stable the results of various observations have been over time,
-        especially for the last several days. Each figure (except for some figures in the Field Observations tab)
-        shows the time variations of certain quantity during certain time interval. If the operation of the telescope
-        and the camera was normal during that time interval, then the data points plotted there should show a flat trend;
-        the presence of any abnormal data point indicates that there was some issue with the operation
-        (or perhaps some bug in our analysis pipeline that calculated that data point). </p>
+    <p> This webpage is meant to be used to monitor how stable the results of various calibration observations and
+        field observations have been over time, especially for the last several days.
+        Nearly every figure in the <i>Calibration Observations</i> tab, <i>Field Observations (Winter)</i> tab,
+        and <i>Field Observations (Summer)</i> tab shows the time variations of certain quantity during certain time interval.
+        If the operation of the telescope and the camera was normal during that time interval,
+        then the data points plotted in a figure should show a flat trend.
+        The presence of any abnormal data point indicates that there was some issue with the operation,
+        some unusual environmental condition, or some bug in the analysis pipeline that calculated that data point.
+        Since bad weather conditions is a common cause of deteriorated data quality,
+        some weather-related plots are shown in the <i>Weather Et Cetera</i> tab,
+        which may be useful when we want to know what the weather was like during certain period
+        from which we see degraded data quality.
+        In addition, there are some cryogenics-related plots in the <i>Fridge Cycles</i> and <i>Weather Et Cetera</i> tabs
+        that may be useful in a situation where we suspect that there are some issues with the cryogenics. </p>
     <p> There are not any strict definitions on what is considered as abnormal, but,
-        if you notice that almost all the results from last few days' observations deviate from
-        the general trends over the past month by more than 50%, then that is propably something worth investigating.  
-        There are some additional suggestions in
+        if you notice that all the results from the observations taken during that past day or two deviate from
+        the general trends over the past month by more than 50%,
+        then that is propably something worth reporting and investigating.  
+        There are some detailed suggestions in
         <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/SuggestionsForUsingTheDataQualitySummaryWebpageEtc">
-         this wiki page</a> as to what is considered as abnormal. Also, if you want to know the current status of the
+         this wiki page</a> as to the criteria you can consider adopting.
+        Also, if you want to know the current status of the
         northern shifts for data quality monitoring,
-        please check <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>.</p>
-    <p> With this tool, we hope that any potentially serious problem will be detected early on!
-        The following sections have some explanations on the figures shown on this webpage. </p><br>
+        please check <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>. </p>
+    <p> With this tool, we hope that any potentially serious problem will be detected early on.
+        The following sections have some explanations on the figures shown in each tab. </p><br>
     
     <h3> 2. <i>Calibration Observations</i> tab </h3>
-    <p> This tab contains figures showing the time variations of various calibration quantities' medians
-        from different observing bands of different wafers during different time intervals.
-        These calibration quantities are simply the ones that are computed by the auto-processing pipeline.
-        By default, the medians from all wafers are shown. The presence of a red triangle near either the top or bottom
+    <p> This tab mostly contains figures showing the time variations of the medians of various calibration quantities
+        across different combinations of observing bands and wafers during different time intervals.
+        Most of the quantities shown here are simply the ones computed by the autoprocessing pipelines,
+        but some of them are separately calculated by this data quality monitoring system.
+        For more detailed explanations, please see the sections below.
+        The presence of a red triangle near either the top or bottom
         of a plot indicates that there is a data point that lies outside the range,
-        and the presence of a vertical red line indicates that there is a NaN. </p>
-    <p> If you are not familiar with what types of calibration observations are taken,
+        and the presence of a vertical red line indicates that there is a NaN.
+        All the time intervals except for those in the "Yearly" section contain the same set of figures.
+        For the time intervals in the "Yearly" section, only figures related to infrequent observations are shown. </p>
+    <p> If you are not familiar with what types of calibration observations we take and how we analyze their data,
         you may find the following resources useful:
         <a href="https://github.com/SouthPoleTelescope/spt3g_software/blob/master/calibration/README.rst">
          the documentation on calibration in the <code>spt3g_software</code> repository</a>,
         <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20170718_calstatus.pdf">Nathan's slides</a>,
-        <a href="https://pole.uchicago.edu/spt3g/index.php/Calibration_Pipeline">Daniel's wiki page</a>, and
-        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/CalNotesTcDontLookHere"> Tom's wiki page</a>.</p><br>
-      
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Calibration_Pipeline">Daniel's wiki page</a>,
+        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/CalNotesTcDontLookHere"> Tom's wiki page</a>, and
+        <a href="https://pole.uchicago.edu/spt3g/index.php/File:20191016_Calibration_Procedure.pdf">Wei's slides</a>. </p><br>
+    
     <h4> 2.1. <i>Calibrator</i> section </h4>
-    <p> The figures in the left column show the quantity <code>CalibratorResponse</code> computed by the auto-processing,
+    <p> The figures in the left column show the quantity <code>CalibratorResponse</code> computed by the autoprocessing,
         those in the center column show <code>CalibratorResponseSN</code>,
         and those in the right colunm show numbers of bolometers whose <code>CalibratorResponseSN</code> were above 20,
-        which is the threshold used in our map-making pipeline
-        to remove bolometers that had low response to the calibrator. </p>
+        which is the standard threshold used in our map-making pipeline
+        to remove bolometers whose optical response was too low. </p>
     <p> Results from calibrator stares are separated according to the telescope elevation at which each stare took place.
         The figures in the first (second) row show the results from those stares that were taken
-        within the range of the elevation covered in a "low-el" observing "day" ("high-el" observing "day"),
+        within the range of the elevation covered in a "low-el" ("high-el") observing "day",
         in which we observe the ra0hdec-44.75 and ra0hdec-52.25 sub-fields
         (ra0hdec-59.75 and ra0hdec-67.25 sub-fields).
         Here, "low-el" and "high-el" refer to the ranges [40, 56] and [56, 72] degrees, respectively,
-        and a "day" lasts for about 20 hours (fridge cycle time plus fridge hold time). </p>
+        and a "day" lasts for about 20 hours (fridge cycle time plus fridge hold time).
+        For more information on what these "days" look like, please take a look at
+        <a href="https://pole.uchicago.edu/spt3g/index.php/ObservationCadence">this wiki page</a>. </p>
     <p> (One minor complication to what is stated in the previous paragraph is that
         figures in the first row may show some results from high-el observing days as well,
         and, likewise, the figures from the second row may show some results from low-el observing days.
@@ -2246,55 +2263,99 @@
         right before observing that field and then another calibrator stare at the top elevation
         right after finishing observing that field.
         Since the top elevation of the ra0hdec-52.25 sub-field can be slightly above 56 degrees, and
-        the bottom elevation of the ra0hdec-59.75 sub-field can be slightly below 56 degrees (depending on dither steps),
+        the bottom elevation of the ra0hdec-59.75 sub-field can be slightly below 56 degrees (depending on the dither steps),
         the figures in both rows may end up showing results from both types of observing days.) </p>
-    <p> In addition to the separation by elevation,
-        the results from those special calibrator stares that were taken at unusual elevations
-        (i.e. any elevation higher than 72 or lower than 40 degrees) or
-        with unsual chopper frequencies (i.e. any frequency other than 4 Hz) are excluded.
-        This is to avoid potential confusions caused by
-        showing results from standard stares and non-standard ones together.
-        The end result of this filtering is that each data point shown here corresponds to a standard calibrator stare
-        that was taken as part of a normal schedule to observe a sub-field. </p><br>
-        
+    <p> The explanations above apply to the winter sub-fields but not the summer ones.
+        We started to observe a different set of sub-fields in summer from the 2019/2020 austral summer
+        because the winter sub-fields are contaminated by the sun during summer.
+        Since the range of the elevation covered by the summer sub-fields is [21, 63],
+        the definition of the "low-el" used in the first row of plots was extended from [40, 56] to [20, 56].
+        For more information on the summer sub-fields, please take a look at
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Observing_Cadence_Summer_2019_2020">this wiki page</a>. </p>
+    <p> Since we sometimes take calibrator stares with the chopper frequency set to some values higher than the standard 4 Hz
+        (as part of the calibrator sweep schedules), and since the detectors' response to the calibrator
+        decreases as the frequency increases, in order to avoid potential confusion caused by this frequency dependence,
+        the results from only the 4 Hz calibrator stares are shown. </p><br>
+    
     <h4> 2.2. <i>Elnod</i> section </h4>
-    <p> The left figure shows the quantity <code>ElnodSNSlopes</code> from the auto-processing, 
-        the middle one shows the IQ phase angle, which is given by
-        <code>arctan(ElnodEigenvalueDominantVectorQ / ElnodEigenvalueDominantVectorI)</code>,
-        and the right one shows numbers of bolometers whose <code>ElnodSNSlopes</code> were larger than 20.
-        The periodic variations of <code>ElnodSNSlopes</code> seem to be closely related to
-        the elevations at which the elnods were taken; the values are larger on low-el observing days
-        and smaller on high-el observing days. The reason <code>ElnodSNSlopes</code> are larger for elnods taken at
-        lower elevations is perhaps because there is more change in airmass during an elnod taken at a lower elevation
-        than at a higher one. </p><br>
+    <p> The figures in the first row are similar to those shown in the <i>Calibrator</i> section.
+        The figure on the left shows the medians of the quantity <code>ElnodSlopes</code> computed by the autoprocessing,
+        the one in the middle shows <code>ElnodSNSlopes</code>, and the one on the right shows
+        numbers of bolometers whose <code>ElnodSNSlopes</code> were larger than 20.
+        Actually, the units of <code>ElnodSlopes</code> are originally [Counts/airmass],
+        and we convert them to [pW/airmass] so that the numbers are hopefully easier to understand.
+        Another thing to note is that, unlike <code>CalibratorResponseSN</code>, <code>ElnodSNSlopes</code> is
+        by default not used to remove unresponsive bolometers in our standard map-making pipeline. </p>
+    <p> The figure in the second row shows the atmospheric opacity (zenith optical depth) in each frequency band
+        estimated from the aforementioned quantity <code>ElnodSlopes</code>.
+        These opacity values are not computed by the autoprocessing but by this data quality monitoring system.
+        The formula used to convert <code>ElnodSlopes</code> to the opacity values is based on
+        <a href="https://kicp-workshops.uchicago.edu/CMB-School/resources/depot/benson__2.pdf">
+         a presentation of Brad's</a> (slides 3 through 8), and the actual code used is
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/elnod.py#L69">
+         this one</a>. </p>
+    <p> The figure in the thrid row shows the IQ phase angle, which is given by
+        <code>arctan(ElnodEigenvalueDominantVectorQ/ElnodEigenvalueDominantVectorI)</code>.
+        Both the numerator and denominator are computed by the autoprocessing. </p><br>
     
     <h4> 2.3. <i>HII Regions</i> section </h4>
     <p> The figures in this section show the quantities <code>SourceFluxCalibration</code>,
         <code>SourceIntegralFlux</code>, and <code>SourceSkyTransmission</code>, where <code>Source</code>
-        can be either <code>RCW38</code> or <code>MAT5A</code>.
+        can be <code>RCW38</code>, <code>MAT5A</code>, or <code>W28A2</code>.
+        All three quantities are computed by the autoprocessing.
         The first two quantites are computed from fast-point observations,
-        and the last one from very-fast-point observations. <code>RCW38</code> is used to calibrate observations of the
-        two low-el fields, and <code>MAT5A</code> for the two high-el fields. </p>
+        and the last one from very-fast-point observations. <code>RCW38</code> is used to calibrate
+        the data from the observations of the el0 and el1 winter sub-fields and el2 through el4 summer sub-fields,
+        <code>MAT5A</code> is used for the el2 and el3 winter sub-fields and el5 summer sub-fields,
+        and <code>W28A2</code> is used for the el0 summer sub-field. </p>
+    <p> There are two rows of figures for each source.
+        The first row shows medians of <code>FluxCalibration</code>, medians of <code>IntegralFlux</code>,
+        and numbers of bolometers whose <code>FluxCalibration</code> is negative.
+        As for the <code>IntegralFlux</code>, for each observation,
+        one single value is calculated and assigned to all bolometers of the same band,
+        so the median is simply equal to this value. The figure in the second row shows <code>SkyTransmission</code>,
+        which also has just one value for each band. </p>
     <p> Fast-point observations provide the main ingredient we need to calibrate bolometer timestreams into K_CMB units.
         Given that these observations are taken only once in about a week,
         it is very important to make sure that the results from each fast-point do not look bad.
         The medians of <code>IntegralFlux</code> and <code>FluxCalibration</code> should not look abnormal.
         In addition, the numbers of detectors whose <code>FluxCalibration</code> have negative values
-        should not be much smaller than usual (since <code>FluxCalibration</code> is defined as
+        should not be much smaller than the usual ones (since <code>FluxCalibration</code> is roughly defined as
         a bolometer's peak response to the source
         (the most negative value in its map of the source expressed in some units of electrical bias power)
         divided by its reaponse to the calibrator (a positive quantity),
         this number at least needs to be negative for it to be considered as reasonable). </p><br>
     
-    <h4> 2.4. <i>Noise</i> section </h4>
-    <p> This section shows bolometers' noise levels in three different units
+    <h4> 2.4. <i>Focus Quasar</i> section </h4>
+    <p> The figures in this section show quantities related to observations of the focus quasar (PMNJ0210-5101).
+        From March 2020, we started a new schedule of focus quasar observations in which
+        the source is observed with the optical bench situated at five different positions along the optical axis.
+        The main purpose of this schedule is to track how the bench position that minimizes the beam width
+        varies throughout a year. </p>
+    <p> The autoprocessing makes a map of the source for each band from each observation,
+        and the data quality monitoring system analyzes each of these maps to calculate the beam FWHM and ellipticity
+        through fitting the map to a 2D Gaussian. Furthermore, for each set of five observations,
+        it estimates the bench position that minimizes the FWHM and ellipticity by fitting parabolas to the data points.
+        The actual code that does these things is
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/pmnj0210_5101.py">
+         here</a>. The figures in the first two rows show the beam properties versus the bench position,
+        and the figures in the next two rows show the optimal bench position versus time. </p><br>
+    
+    <h4> 2.5. <i>Noise</i> section </h4>
+    <p> The figures in the first three rows of this section show bolometers' noise levels in three different units
         (noise equivalent temperature (NET), noise equivalent power (NEP), and noise equivalent current (NEI))
         within four different frequency ranges ([0.1, 0.5], [1.0, 2.0], [3.0, 5.0], and [10.0, 15.0] Hz).
-        These numbers come from the auto-processing of the daily noise stares' timestreams.
+        These numbers come from the autoprocessing of the noise stares' timestreams.
         The noise levels in the lowest frequency range are more susceptible to weather than
-        those in the other three ranges, and thus they are expected to show more variations. </p><br>
+        those in the other three ranges, and thus they are expected to show more variations. </p>
+    <p> The figure in the last row shows numbers of noise lines found
+        from median PSDs of the timestreams from each band and wafer.
+        This line-finding analysis is done by the data quality monitoring system,
+        and the actual code used is
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/noise.py#L108">
+         here</a>. </p><br>
     
-    <h4> 2.5. Figures for individual observations </h4>
+    <h4> 2.6. Figures for individual observations </h4>
     <p> In every figure shown in the <i>Calibration Observations</i> tab,
         one observation's results are reduced to one data point (for each observing band).
         If you are interested in checking the details of the results from certain observation,
@@ -2303,21 +2364,26 @@
         Instructions on how to use this webpage can be found in
         <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20190513_hackathon_dq.pdf">Adam's slides</a>.</p><br>
     
-    <h3> 3. <i>Field Observations</i> tab </h3>
-    <p> In this tab, for each time interval listed on the left, you can find figures showing co-added maps from that interval
+    <h3> 3. <i>Field Observations</i> tabs </h3>
+    <p> In these tabs (<i>Winter</i> and <i>Summer</i>), for each time interval listed on the left,
+        you can find figures showing co-added maps from that interval
         and figures showing time variations of several map-related quantities such as map noise level during the same interval.
-        In the latter type of figure, one data point corresponds to one field observation.
+        In the latter type of figures, one data point corresponds to one observation of a sub-field.
         The yearly intervals actually have different types of figures, which are explained in the following sections. </p>
-    <p> Most of the figures have the notations
+    <p> For the <i>Winter</i> tab, most of the figures have the notations
         "el0", "el1", "el2", and "el3" in their legends and/or titles, 
         and these are simply shorthands for the
         ra0hdec-44.75, ra0hdec-52.25, ra0hdec-59.75, and ra0hdec-67.25 sub-fields, respectively.
-        The figure below shows the extent of the 1500 square degrees field in RA and Dec. The three constant-Dec contours
-        separate the full field into four sub-fields, the top of which is the "el0", and the bottom of which is the "el3".
-        The shaded regions are the ones used for auto and cross spectrum calculations, which are explained more later. <br>
-        <img style="width:750px;height:450px;"
-             src="readmeimg/locations_of_smaller_regions.png">
-        </p><br>
+        As for the <i>Summer</i> tab, "el0", "el1", "el2", "el3", "el4", and "el5" correspond to
+        the ra5hdec-24.5, ra5hdec-31.5, ra5hdec-38.5, ra5hdec-45.5, ra5hdec-52.5, and ra5hdec-59.5, respectively.
+        The two figures below show the locations of these sub-fields.
+        Both the full winter field and the full summer field have an area of about 1500 square degrees. <br><br>
+        <img style="width:665px;height:490px;"
+             src="readmeimg/1500d_winter_full_field.png"><br>
+        <img style="width:665px;height:490px;"
+             src="readmeimg/1500d_summer_full_field.png"><br><br>
+        For more information on the sub-fields and the strategies we use to observe them, please see
+        <a href="https://pole.uchicago.edu/spt3g/index.php/ObservationCadence#Summer_2019-2020">this wiki page</a>. </p><br>
     
     <h4> 3.1. <i>Maps</i> section </h4>
     <p> The figures in the first row show co-added temperature maps from each of the three observing bands.
@@ -2339,10 +2405,12 @@
         From a typical noise variance, an educated guess for the signal variance, the number of maps added together,
         and this model, an expected variance is calculated for a co-add,
         and the color bar limits are set to be +/- 2.5 times the corresponding standard deviation. </p>
-    <p> The image below shows an example of how the expected variance is determined.
+    <p> The figure below shows an example of how the expected variance is determined.
         The blue data points show how the variance of a 2019 co-added signal (plus noise) map changed
-        everytime two new maps were added, and the orange data points show how the variance of the corresponding
-        co-added noise map changed. The blue box, whisker, and caps in the upper left corner show a distribution of
+        everytime two new maps were added with the same sign,
+        and the orange data points show how the variance of the corresponding co-added noise map changed
+        everytime the same two new maps were added but with the opposite signs.
+        The blue box, whisker, and caps in the lower left corner show a distribution of
         variances of individual maps divided by two. The blue and orange curves are the results of curve fittings
         to the data points, and the models used in the fittings are shown in the legend. <br><br>
         <a href="javascript:location.href='readmeimg/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png'">
@@ -2356,15 +2424,18 @@
     <p> The figures in the second row show co-added TT weight maps. The lower and upper limits of a color bar
         in this type of figures simply correspond to the minimum and maximum of the values in a weight map, respectively.
         The figures in the third row show cross sections of these weight maps, and the values are normalized to
-        the weight at Dec = -70 degrees. The cross section is along the RA = 0 degree contour,
-        which corresponds to the vertical line that bisects a map. Along with the actual data, expected cross sections are
+        the weight at around the most negative declination.
+        For the winter full field, the cross section is along the RA = 0 degree contour,
+        and, for the summer full field, the cross section is along the RA= 75 degrees contour.
+        In both cases, the cross section corresponds to the vertical line that bisects the map.
+        Along with the actual data, expected cross sections are
         also shown, which are based on a simple model that the weight of a pixel is proportional to the amount of time
-        the telescope spends on staring at the sky area that corresponds to the pixel.
+        the telescope spends on staring at the area of the sky corresponding to that pixel.
         Since our scans have the same duration and cover the same RA range regardless of declination
         (or the telescope elevation), the time spent on a pixel is
         inversely proportional to cosine of the declination of that pixel. This time spent is also proportional to
         the number of observations that covered that pixel. As a result, the expected cross section shown in a figure is
-        basically equal to secant of declination multiplied by number of observation. </p><br>
+        basically equal to secant of declination multiplied by number of observations. </p><br>
     
     <h4> 3.2. <i>Fluctuations in Maps</i> section </h4>
     <p> For non-yearly time intervals, there are two rows of figures in this section. The first row shows noise levels,
@@ -2373,13 +2444,15 @@
         In order to save time and reduce memory usage, only the data within a 5 degrees by 5 degrees patch
         located around the center of a sub-field are used for calculating the noise.
         These small patches do contain bright point sources, which are masked during the calculations. As for calculating
-        an average of a TT weight map, the peripheral regions of the map
-        where weights sharply decrease toward zero are ignored.
-        The figures below show the mask used for each of the sub-field and the
-        effect of masking the sources on the autospectrum calculation
+        an average value from a TT weight map, the peripheral regions of the map
+        where weights sharply decrease toward zero and the pixels corresponding to point sources are both ignored.
+        The figures below show the masks generated from the list
+        <code>spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt</code>
+        for the central region of each of the winter sub-field and
+        the effect of masking the sources on the autospectrum calculation
         (the maps shown here are not from co-adds but just from some random single-observation maps).
         The reason the masking makes a much bigger difference for the ra0hdec-52.25 sub-field seems to be because
-        the point sources in the field are much brighter. </p>
+        the point sources in that sub-field are much brighter. </p>
     <table style="table-layout:fixed;" cellpadding="5">
       <tr>
         <td>
@@ -2454,40 +2527,42 @@
     <p> For non-yearly time intervals, time variations of discrepancies between measured positions and true possitions
         of three bright point sources from each sub-field are shown. The measured positions are results of 2D Gaussian
         fittings to small map regions around the sources, and the true positions are from the ATCA20G catalog.
-        The image below shows the locations of these point sources. <br><br>
+        For example, the image below shows the locations of the point sources used for the winter sub-fields. <br><br>
         <a href="javascript:location.href='readmeimg/locations_of_bright_sources.png'">
           <img style="width:750px;height:450px;"
                src="readmeimg/locations_of_bright_sources.png">
         </a></p>
-    <p> The signal-to-noise ratios of these sources are smaller in 220 GHz maps than in 95 and 150 GHz, but the numbers
-        are nearly the same in 95 GHz and 150 GHz, and figures for the latter are chosen to be shown.
-        Of these twelve sources, the brightest one is in the ra0hdec-52.25 sub-field and has SNR of a few hundreds.
+    <p> The signal-to-noise ratios of these sources are smaller in 220 GHz maps than in 95 and 150 GHz,
+        but the ratios are similar in 95 GHz and 150 GHz.
+        Of the twelve sources used for the winter sub-fields,
+        the brightest one is in the ra0hdec-52.25 sub-field and has SNR of a few hundreds.
         The dimmest one is in the ra0hdec-67.25 sub-field and has SNR of about 15. The other ten sources' SNRs are
         roughly in the range between 25 and 70 (SNR here is defined as the peak value of a source divided by
-        a standard deviation of the sub-field map to which the source belongs, and the standard deviation is calculated
-        by masking point sources). </p>
-    <p> There are four figures for RA offsets (one for each sub-field) and four for Dec offsets. In each figure,
+        the standard deviation of the sub-field map to which the source belongs, and point sources are masked
+        when the standard deviation is calculated). </p>
+    <p> For each sub-field, there is one figure for RA offsets and one for Dec offsets. In each figure,
         along with the offsets from the three sources, the average offset of these three sources is also shown.
         For yearly time intervals, there are figures showing distributions of the average offsets. </p><br>
     
     <h4> 3.4. <i>Completeness of Observations</i> section </h4>
-    <p> This section exists for non-yearly time intervals only. The first row shows average numbers of bolometers
-        that were not flagged and thus used for map-making, bolometers that were flagged and removed from map-making,
-        and bolometers that were flagged for different reasons.
+    <p> This section exists for non-yearly time intervals only.
+        The first row shows average numbers of bolometers that were not flagged and thus used for map-making,
+        numbers of bolometers that were flagged and removed from map-making,
+        and numbers of bolometers that were flagged for different reasons.
         The map-making pipeline does bolometer flagging on a scan-by-scan basis,
         so here an average number refers to the average over all scans of an observation.
         Since one bolometer can be flagged for different reasons, 
         the sum of the average numbers of bolometers flagged by individual reasons
-        exceed the average number of flagged and removed bolometers (the red crosses) for each observation.
+        exceed the average number of total removed bolometers (the red crosses) for each observation.
         As for the numbers of removed bolometers, most of them are just those bolometers that
         we do not attempt to tune to begin with. This can be seen from the more or less constant levels of "BadHK".
         Thus, the figures do not indicate that there are typically about one thousand
         bolometers from each band that were initially tuned successfully but later produced bad data during observing. </p>
     <p> The figures in the second row show fractions of pixels in TT weight maps that have nominal weights.
-        Currently, there are suggestions that the criteria used to determine whether a weight value is nominal or not
-        are too strict and should be loosened, and these figures will be regenerated soon,
-        so please ignore them for now. </p>
-    <p> The figure in the third row shows the duration of each observation as recorded in its g3 files.
+        The nominal weight for each sub-field is roughly equal to
+        30% of the average weight of a typical weight map from that sub-field. </p>
+    <p> The figure in the third row shows the duration of each observation
+        as recorded in the observation frame found in the raw data g3 files.
         This figure also happens to show our observing cadence in a colorful way. The printed observing efficiency is
         calculated by dividing the total observation duration from that time interval by
         the length of the entire interval. </p><br>
@@ -2503,7 +2578,7 @@
         how close the numbers are to 1.0 is perhaps not a very meaningful aspect to pay attention to.
         However, the figures should still be useful to catch those maps that have abnormal calibration.
         Like the noise calculations, in order to save time and memory usage,
-        only the small regions around the cetners of the sub-field are used for these cross spectrum calculations
+        only the small regions around the cetners of the sub-fields are used for these cross spectrum calculations
         (points sources are masked as well). The figure below shows an example of calculating this ratio.
         The SPT map used here is not a co-add but just a random single-observation map. <br><br>
         <img class="fig-with-border" style="width:500px;height:300px;"
@@ -2511,7 +2586,7 @@
     <p> The second and third rows show by how much bolometers' response to the calibrator vary
         as the telescope elevation changes. As part of the schedule to observe a sub-field, we take a calibrator stare
         at the bottom elevation of that field before observing it and then take another calibrator stare at the top elevation
-        of that field after observing it. From the auto-processed results of these two calibrator stares,
+        of that field after observing it. From the autoprocessed results of these two calibrator stares,
         the percentage change in the quantity <code>CalibratorResponse</code> at the top of the field with respect to
         the bottom is calculated for each bolometer. Then, the figures in the second row show the median percentage change
         from all bolometers of each observing band, and the figures in the third row show the median from each wafer and
@@ -2526,7 +2601,26 @@
         the ratios of the cross spectra, and the second row shows the median percentage changes in bolometers' response to
         the calibrator. </p><br>
     
-    <h3> 4. Repository </h3>
+    <h3> 4. <i>Weather Et Cetera</i> tab </h3>
+    <p> When we see some anomalous data points in the figures shown in
+        the <i>Calibration Observations</i> and <i>Field Observations</i> tabs,
+        one question that may come to our mind is "How was the weather like during that time interval?".
+        The contents in this tab are meant to help us answer that question.
+        The <i>Tipper</i> section shows the atmospheric brightness and opacity measured by the submillimeter tipper
+        (please check <a href="https://arxiv.org/abs/1602.08795">this paper</a> to see how the instrument works).
+        It also has a copy of the figure from the <i>Callibration Observations</i> tab that shows our elnod-derived opacity.
+        The <i>Weather Station</i> section shows the various quantities measured by our own weather station.
+        Both the tipper and our weather station are installed near the telescope.
+        In addition, there are figures showing the temperature measured by
+        various thermometers installed in the receiver cabin and the cryostats.
+        These may not be that useful, but it probably should not hurt to have them... </p><br>
+    
+    <h3> 5. <i>Fridge Cycles</i> tab </h3>
+    <p> This tab contains figures showing the temperatue of various parts of the He sorption fridge during each fridge cycle.
+        The plots in the "newest" section are identical to the plots in the section right below it.
+        The plots shown here are hopefully useful in case we see some degraded performance of the fridge. </p><br>
+    
+    <h3> 6. Repository </h3>
     <p> All the relevant scripts that work together to make this webpage run are located in the
         <code>spt_dq_system</code> repository. <code>db_server.js</code> is the Java script that starts a server
         that serves this webpage. It calls the python script <code>update_summary.py</code> periodically to
@@ -2545,14 +2639,16 @@
         Even though the updating is only done occasionally for this version,
         the g3 files are made on Amundsen and thus readily accessible to
         anyone in the north who is interested in using them. They are located in
-        <code>/spt/user/weiquan/map_quality/hi_res_maps/</code>. </p><br>
+        <code>/spt/user/weiquan/map_quality/hi_res_maps/</code> (for winter sub-fields) and
+        <code>/spt/user/weiquan/map_quality/hi_res_maps_summer/</code> (for summer sub-fields). </p><br>
     
-    <h3> 5. Finally... </h3>
+    <h3> 7. Finally... </h3>
     <p> Thank you again for reading the documentation. If you have any questions on anything written here,
-        please let me know! (Read Me author: Wei) </p><br>
+        please let Wei know! </p><br>
   </div>
 
 </div>
 </body>
 
 </html>
+
