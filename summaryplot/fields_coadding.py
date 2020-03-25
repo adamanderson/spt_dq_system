@@ -2885,30 +2885,30 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
     
     mean_wt /= wu
     max_wt  /= wu
-    thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  65.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  80.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  80.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  95.0*wu},
+    thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 100.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 120.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 120.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 145.0*wu},
                           "ra5hdec-24.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
                           "ra5hdec-31.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
                           "ra5hdec-38.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
                           "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
                           "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 145.0*wu},
                           "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 175.0*wu}},
-                  "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 120.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 140.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 165.0*wu},
+                  "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 180.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 210.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 220.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 250.0*wu},
                           "ra5hdec-24.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
                           "ra5hdec-31.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
                           "ra5hdec-38.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
                           "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
                           "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 235.0*wu},
                           "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 255.0*wu}},
-                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":   8.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  10.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  12.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  14.0*wu},
+                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  12.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  15.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  18.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  21.0*wu},
                           "ra5hdec-24.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
                           "ra5hdec-31.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
                           "ra5hdec-38.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
@@ -3044,6 +3044,11 @@ class FlagBadMaps(object):
             bad_weights = do_weights_look_bad(
                               mean_wt, max_wt, band, self.sb_fld)
             if bad_weights:
+                wu = 1.0 / (core.G3Units.mK * core.G3Units.mK)
+                self.logfun("### The weights were determined to be bad!")
+                self.logfun("### For the record:")
+                self.logfun("###   mean weight: %f mK^-2", mean_wt/wu)
+                self.logfun("###   max weight : %f mK^-2", max_wt/wu)
                 record_bad_obs_id(self.x_list,
                                   frame["Id"], self.sb_fld, self.obs_id,
                                   "Anomalously large weights.")
@@ -3059,6 +3064,7 @@ class FlagBadMaps(object):
             for map_type in map_types:
                 if False in numpy.isfinite(numpy.asarray(new_frame[map_type])):
                     has_nans = True
+                    self.logfun("### NaNs were found in the %s map!", map_type)
                     record_bad_obs_id(self.x_list,
                                       frame["Id"], self.sb_fld, self.obs_id,
                                       "NaNs in "+map_type+" map.")

@@ -796,8 +796,12 @@ def update(season, mode, action,
                          'make_figures_for_responsivity_changes'   : True,
                          'make_figures_for_fluctuation_metrics'    : True,
                          'make_figures_for_pointing_discrepancies' : True,
-                         'make_figure_for_ratios_of_power_spectra': True,
-                         'make_figure_for_noise_levels'           : True})
+                         'make_figure_for_ratios_of_power_spectra' : True,
+                         'make_figure_for_noise_levels'            : True,
+                         'left_xlimit_for_time_variations' : \
+                              desired_obs_id_ranges[i][0],
+                         'right_xlimit_for_time_variations': \
+                              desired_obs_id_ranges[i][1]})
                 else:
                     args_plotting.update(
                         {'make_figures_showing_time_variations'   : True,

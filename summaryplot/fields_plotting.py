@@ -1321,9 +1321,9 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         key_prefix = "FluctuationMetricsIndividualSignalMaps"
         param_lists = \
             [{"key"   : key_prefix + "MeansOfTTWeights",
-              "ylims" : { "90GHz": {"bottom": 20, "top": 100},
-                         "150GHz": {"bottom": 30, "top": 170},
-                         "220GHz": {"bottom":  1, "top":  15}},
+              "ylims" : { "90GHz": {"bottom": 30, "top": 150},
+                         "150GHz": {"bottom": 30, "top": 250},
+                         "220GHz": {"bottom":  1, "top":  20}},
               "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
               "lnstyl": self.ln_styl,
               "ylabel": "Mean weight  " + \
@@ -1367,10 +1367,10 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 xvals, yvals = self.get_data_points_to_plot(
                                    fluc_data, [sub_field], plist["yunits"])
                 if "NumbersOfPixelsWithGoodTTWeights" in plist["key"]:
-                    tot_n_pix = {"ra0hdec-44.75": 23493916,
-                                 "ra0hdec-52.25": 20249796,
-                                 "ra0hdec-59.75": 16651643,
-                                 "ra0hdec-67.25": 12786678,
+                    tot_n_pix = {"ra0hdec-44.75": 19367330,
+                                 "ra0hdec-52.25": 16686859,
+                                 "ra0hdec-59.75": 13734737,
+                                 "ra0hdec-67.25": 10543954,
                                  "ra5hdec-24.5" : 11458275,
                                  "ra5hdec-31.5" : 10736705,
                                  "ra5hdec-38.5" :  9854259,
@@ -1678,8 +1678,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         season = get_season_based_on_fields(frame[noise_key].keys())
         if season  == "winter":
             ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
-                          "150GHz": {"bottom":  90, "top": 210},
-                          "220GHz": {"bottom": 300, "top": 700}}
+                          "150GHz": {"bottom":  70, "top": 170},
+                          "220GHz": {"bottom": 260, "top": 600}}
         if season == "summer":
             ylims_dict = { "90GHz": {"bottom":  60, "top": 220},
                           "150GHz": {"bottom":  60, "top": 220},
@@ -2359,6 +2359,7 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
     
     def __init__(self,
                  map_id=None, map_type=None,
+                 min_obs_id=None, max_obs_id=None,
                  fig_rc=False, fig_fl=False, fig_pt=False,
                  fig_rp=False, fig_ns=False,
                  figure_title_font_size=11,
@@ -2366,8 +2367,11 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
                  logging_function=logging.info):
         
         self.log = logging_function
-        self.map_id   = map_id
-        self.map_type = map_type
+        
+        self.map_id     = map_id
+        self.map_type   = map_type
+        self.min_obs_id = min_obs_id
+        self.max_obs_id = max_obs_id
         
         self.make_fig_for_frac_cal_chng = fig_rc
         self.make_fig_for_fluc_metrics  = fig_fl
@@ -2408,6 +2412,17 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         self.ln_styl = "solid"
         
         self.fig_dir = directory_to_save_figures
+    
+    
+    def drop_data_too_old_or_new(self, map_map_double):
+        
+        trimmed_mmd = core.G3MapMapDouble()
+        for sub_field, map_double in map_map_double.items():
+            trimmed_mmd[sub_field] = core.G3MapDouble()
+            for obs_id, value in map_double.items():
+                if self.min_obs_id <= int(obs_id) <= self.max_obs_id:
+                    trimmed_mmd[sub_field][obs_id] = value
+        return trimmed_mmd
     
     
     def get_full_fig_title(self, additional_title, no_map_type=False):
@@ -2507,6 +2522,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         original_frac_changes_data = \
             frame["MedianCalibratorResponseAllBolos"+\
                   "FractionalChangesTopToBottom"]
+        original_frac_changes_data = \
+            self.drop_data_too_old_or_new(original_frac_changes_data)
         data_reorganized = {}
         for sub_field, map_double in original_frac_changes_data.items():
             data_reorganized[sub_field] = \
@@ -2541,6 +2558,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         original_mean_weights_data = \
             frame["FluctuationMetricsIndividualSignalMapsMeansOfTTWeights"]
+        original_mean_weights_data = \
+            self.drop_data_too_old_or_new(original_mean_weights_data)
         wu = 1 / (core.G3Units.mK * core.G3Units.mK)
         data_reorganized = {}
         for sub_field, map_double in original_mean_weights_data.items():
@@ -2550,8 +2569,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         season = get_season_based_on_fields(
                      original_mean_weights_data.keys())
         if season == "winter":
-            xlim_lefts  = {"90GHz":  20.0, "150GHz":  30.0, "220GHz":  1.0}
-            xlim_rights = {"90GHz": 120.0, "150GHz": 180.0, "220GHz": 15.0}
+            xlim_lefts  = {"90GHz":  25.0, "150GHz":  40.0, "220GHz":  1.0}
+            xlim_rights = {"90GHz": 180.0, "150GHz": 270.0, "220GHz": 24.0}
         elif season == "summer":
             xlim_lefts  = {"90GHz":  20.0, "150GHz":  30.0, "220GHz":  1.0}
             xlim_rights = {"90GHz": 160.0, "150GHz": 250.0, "220GHz": 25.0}
@@ -2584,6 +2603,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
                 [frame["Delta"+coordinate+"sOf"+\
                        rank+"BrightestSourceFromEachSubfield"] \
                  for rank in ["1st", "2nd", "3rd"]]
+            original_offsets_data_sets = \
+                [self.drop_data_too_old_or_new(mmd) \
+                 for mmd in original_offsets_data_sets]
             
             data_reorganized = {}
             for sub_field, map_double in original_offsets_data_sets[0].items():
@@ -2621,6 +2643,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         original_noise_data = \
             frame["AveragesOfRatiosOfSPTxPlancktoPlckxPlckTTspectra"]
+        original_noise_data = \
+            self.drop_data_too_old_or_new(original_noise_data)
         data_reorganized = {}
         for sub_field, map_double in original_noise_data.items():
             data_reorganized[sub_field] = \
@@ -2657,7 +2681,10 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
-        original_noise_data = frame["NoiseLevelsFromIndividualTMaps"]
+        original_noise_data = \
+            frame["NoiseLevelsFromIndividualTMaps"]
+        original_noise_data = \
+            self.drop_data_too_old_or_new(original_noise_data)
         nu = core.G3Units.uK * core.G3Units.arcmin
         data_reorganized = {}
         for sub_field, map_double in original_noise_data.items():
@@ -2666,8 +2693,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         season = get_season_based_on_fields(data_reorganized.keys())
         if season  == "winter":
-            xlim_lefts  = {"90GHz": 100, "150GHz":  80, "220GHz": 280}
-            xlim_rights = {"90GHz": 220, "150GHz": 180, "220GHz": 650}
+            xlim_lefts  = {"90GHz":  85, "150GHz":  70, "220GHz": 240}
+            xlim_rights = {"90GHz": 190, "150GHz": 160, "220GHz": 620}
         elif season == "summer":
             xlim_lefts  = {"90GHz":  60, "150GHz":  60, "220GHz": 200}
             xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 740}
@@ -2964,6 +2991,8 @@ def run(input_files=[], decide_whether_to_make_figures_at_all=False,
         pipeline.Add(MakeFiguresForDistributionsOfMapRelatedQuantities,
                      map_id=map_id,
                      map_type=map_type,
+                     min_obs_id=left_xlimit_for_time_variations,
+                     max_obs_id=right_xlimit_for_time_variations,
                      fig_rc=make_figures_for_responsivity_changes,
                      fig_fl=make_figures_for_fluctuation_metrics,
                      fig_pt=make_figures_for_pointing_discrepancies,
