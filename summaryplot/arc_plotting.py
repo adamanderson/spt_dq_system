@@ -85,7 +85,8 @@ def get_xtick_labels(ticks):
 
 
 
-def run_weather(input_files=None,
+def run_weather(input_dir=None,
+                input_files=None,
                 output_dir=None,
                 start_obs_id=None,
                 end_obs_id=None,
@@ -100,7 +101,7 @@ def run_weather(input_files=None,
     logger.info('End   time as in observation ID: %d', end_obs_id)
     logger.info('Output directory:')
     logger.info(' %s', output_dir)
-    logger.info('Input files:')
+    logger.info('Input files (in %s):', input_dir)
     for counter_f, f in enumerate(input_files, 1):
         logger.info(' file %04d: %s', counter_f, f)
     logger.info('')
@@ -139,6 +140,7 @@ def run_weather(input_files=None,
     logger.info('')
     logger.info('Gathering the data points to plot...')
     for counter_f, f in enumerate(input_files, 1):
+        f = os.path.join(input_dir, f)
         with open(f, 'rb') as fobj:
             d = pickle.load(fobj)
             for k, v in d.items():

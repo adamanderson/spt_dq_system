@@ -428,8 +428,7 @@ def run(mode=None,
                     try:
                         this_obs_id = int(some_pickle.split('.')[0])
                         if start_obs_id <= this_obs_id <= end_obs_id:
-                            relevant_pickles.append(
-                                os.path.join(pickles_dir, some_pickle))
+                            relevant_pickles.append(some_pickle)
                     except:
                         ### Probably a file whose name is not 12345678.pickle
                         pass
@@ -518,6 +517,7 @@ def run(mode=None,
                                         'so, there is nothing to do!')
                         else:
                             arc_plotting.run_weather(
+                                input_dir=pickles_dir,
                                 input_files=input_files,
                                 output_dir=output_dir,
                                 start_obs_id=start_obs_id,
