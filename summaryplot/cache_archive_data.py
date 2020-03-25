@@ -23,6 +23,14 @@ from summaryplot import arc_plotting
 from spt3g       import std_processing
 
 from spt3g.autoprocessing import schedule_queries
+try: # in the north
+    querier = schedule_queries.DBQuerier(
+                  scanify_file='/spt/data/transfer_database/scanify.txt',
+                  sch_file='/spt/data/transfer_database/schedule.txt')
+except: # at Pole
+    querier = schedule_queries.DBQuerier(
+                  scanify_file='/poleanalysis/sptdaq/db/db/scanify.txt',
+                  sch_file='/poleanalysis/sptdaq/db/db/schedule.txt')
 
 
 
@@ -314,7 +322,7 @@ def run(mode=None,
                                        pickles_dir,
                                        'fridge_files_processed_so_far.pickle')
 
-        database = schedule_queries.get_schedule_instances_for_daterange(
+        database = querier.get_schedule_instances_for_daterange(
                        "cycle_tune.sch",
                        start=start_time,
                        stop=end_time)
@@ -552,7 +560,7 @@ def run(mode=None,
             start_time = start_time.replace(tzinfo=datetime.timezone.utc)
             end_time   = end_time.replace(tzinfo=datetime.timezone.utc)
 
-            database = schedule_queries.get_schedule_instances_for_daterange(
+            database = querier.get_schedule_instances_for_daterange(
                            "cycle_tune.sch",
                            start=start_time,
                            stop=end_time)
