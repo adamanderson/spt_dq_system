@@ -26,6 +26,7 @@ no_data_update: true
 maps_data_dir: /spt/data/onlinemaps/
 coadds_data_dir: /var/www/spt_dq_system/static_plots/maps/data/
 coadds_figs_dir: /var/www/spt_dq_system/static_plots/maps/figures/
+coadds_figs_summer_dir: /var/www/spt_dq_system/static_plots/maps/figures_summer/
 coadds_logs_dir: /var/www/spt_dq_system/static_plots/maps/logs/
 
 arc_data_dir: /spt/data/arc/

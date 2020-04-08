@@ -58,15 +58,15 @@ db_files = {scanify: config.scanify_db_path,
 // setup home page
 app.use(express.static('public'));
 app.get('/index.html', function (req, res) {
-  res.sendFile( __dirname + "/" + "index.html" );
+  res.sendFile( path.join(__dirname, "index.html") );
 })
 app.get('/', function (req, res) {
-  res.sendFile( __dirname + "/" + "index.html" );
+  res.sendFile( path.join(__dirname, "index.html") );
 })
 
 // needed to load js and css files
-app.use('/js',express.static(__dirname + '/js'));
-app.use('/css',express.static(__dirname + '/css'));
+app.use('/js', express.static( path.join(__dirname, '/js') ));
+app.use('/css', express.static( path.join(__dirname, '/css') ));
 
 // file browser for log files
 if(config.site == 'pole') {
@@ -97,9 +97,9 @@ app.use('/readmeimg', express.static(path.join(__dirname, 'READMEfigs')));
 app.get('/staticdirs', function(req, res) {
 	// just do an ls on the plots directory to figure out the other
 	// subdirectories of plots
-    var interval_path = config.static_plot_dir + '/' + 
-                        req.query.subdirectory + '/' + 
-                        req.query.interval + '/'
+    var interval_path = path.join(config.static_plot_dir,
+                                  req.query.subdirectory,
+                                  req.query.interval);
 
     fs.readdir(interval_path, function(err, filelist) {
         // treat file not found like an empty file
@@ -111,13 +111,11 @@ app.get('/staticdirs', function(req, res) {
         var dirlist = [];
         // get the list of directories that contain plots
 	    for (jfile=0; jfile<filelist.length; jfile++) {
-		    var test_path = config.static_plot_dir + '/' + 
-                            req.query.subdirectory + '/' + 
-                            req.query.interval + '/' + 
-                            filelist[jfile];
+            var test_path = path.join(interval_path,
+                                     filelist[jfile]);
 
 		    if(fs.readdirSync(test_path).length)
-			    dirlist.push(req.query.subdirectory + '/' + req.query.interval + '/' + filelist[jfile]);
+			    dirlist.push( path.join(req.query.subdirectory,  req.query.interval, filelist[jfile]) );
 	    }
 	    res.send(dirlist);
     });
@@ -125,7 +123,7 @@ app.get('/staticdirs', function(req, res) {
 
 // get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
-	var stat_dir = config.static_plot_dir + '/plots/last_n/last_03/';
+	var stat_dir = path.join(config.static_plot_dir, '/plots/last_n/last_03/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -135,7 +133,7 @@ app.get('/lastmodified_calibration', function(req, res) {
 
 // get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps_winter', function(req, res) {
-	var stat_dir = config.coadds_figs_dir + '/last_n/last_07/';
+	var stat_dir = path.join(config.coadds_figs_dir, '/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -145,10 +143,7 @@ app.get('/lastmodified_maps_winter', function(req, res) {
 
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
-    if (config.coadds_figs_dir.endsWith('/'))
-        var stat_dir = (config.coadds_figs_dir + '_summer' + '/last_n/last_07/').replace("/_summer", "_summer");
-    else
-	    var stat_dir = config.coadds_figs_dir + '_summer' + '/last_n/last_07/';
+    var stat_dir = path.join(config.coadds_figs_summer_dir, '/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -158,7 +153,7 @@ app.get('/lastmodified_maps_summer', function(req, res) {
 
 // get time that weather plots were lastmodified
 app.get('/lastmodified_weather', function(req, res) {
-	var stat_dir = config.arc_figs_dir + '/last_n/last_03/';
+	var stat_dir = path.join(config.arc_figs_dir, '/last_n/last_03/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -171,7 +166,7 @@ app.get('/lastmodified_weather', function(req, res) {
 function check_lastmodified(stat_dir, filelist) {
     var lastupdate_time;
     for(var jfile=0; jfile < filelist.length; jfile++) {
-		file_info = fs.statSync(stat_dir + filelist[jfile]);
+		file_info = fs.statSync( path.join(stat_dir, filelist[jfile]) );
 		if(typeof lastupdate_time !== 'undefined') {
 			if(file_info.mtime > lastupdate_time)
 				lastupdate_time = file_info.mtime;
@@ -224,7 +219,7 @@ app.get('/dbpage', function(req, res) {
 			   if(req.query.dbname == 'scanify') {
 				   // append log file information to database results
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = 'scanify_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+					   rows[jrow]['log_file'] = path.join('scanify_logs', rows[jrow]['source'], rows[jrow]['observation']);
 				   }
 				   
 				   // interpret transfer_fullrate and transfer_downsampled
@@ -244,7 +239,7 @@ app.get('/dbpage', function(req, res) {
 			   if(req.query.dbname == 'autoproc') {
 				   // append log file information to database results
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = 'autoproc_logs/' + rows[jrow]['source'] + '/' + rows[jrow]['observation']
+					   rows[jrow]['log_file'] = path.join('autoproc_logs/', rows[jrow]['source'], rows[jrow]['observation']);
 				   }
 			   }
 			   res.send(rows);
@@ -257,16 +252,16 @@ app.get('/dbpage', function(req, res) {
 
 // page for displaying plots/data
 app.get('/display.html', function(req, res) {
-  res.sendFile( __dirname + "/" + "display.html" );
+  res.sendFile( path.join(__dirname, "display.html") );
 });
 
 // summary page
 app.get('/summary.html', function(req, res) {
-  res.sendFile( __dirname + "/" + "summary.html" );
+  res.sendFile( path.join(__dirname, "summary.html") );
 });
 //monthly summary
 app.get('/monthly.html', function(req, res) {
-  res.sendFile( __dirname + "/" + "monthly.html" );
+  res.sendFile( path.join(__dirname, "monthly.html") );
 });
 
 // request new sseid
