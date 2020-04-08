@@ -102,6 +102,12 @@ app.get('/staticdirs', function(req, res) {
                         req.query.interval + '/'
 
     fs.readdir(interval_path, function(err, filelist) {
+        // treat file not found like an empty file
+        if(err && err.code == "ENOENT") {
+            res.send([]);
+            return;
+        }
+
         var dirlist = [];
         // get the list of directories that contain plots
 	    for (jfile=0; jfile<filelist.length; jfile++) {
