@@ -219,7 +219,7 @@ app.get('/dbpage', function(req, res) {
 			   if(req.query.dbname == 'scanify') {
 				   // append log file information to database results
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = path.join('scanify_logs', rows[jrow]['source'], rows[jrow]['observation']);
+					   rows[jrow]['log_file'] = path.join('scanify_logs', rows[jrow]['source'], rows[jrow]['observation'].toString());
 				   }
 				   
 				   // interpret transfer_fullrate and transfer_downsampled
