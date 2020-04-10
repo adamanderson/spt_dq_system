@@ -239,7 +239,7 @@ app.get('/dbpage', function(req, res) {
 			   if(req.query.dbname == 'autoproc') {
 				   // append log file information to database results
 				   for(var jrow in rows) {
-					   rows[jrow]['log_file'] = path.join('autoproc_logs/', rows[jrow]['source'], rows[jrow]['observation']);
+					   rows[jrow]['log_file'] = path.join('autoproc_logs/', rows[jrow]['source'], rows[jrow]['observation'].toString());
 				   }
 			   }
 			   res.send(rows);
