@@ -1,10 +1,13 @@
 from spt3g import core, mapmaker, util, pointing
 from functools import reduce
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 import datetime
+import os
 from summaryplot.plot_util import plot_timeseries
 from spt3g.std_processing import obsid_to_g3time
+from spt3g.std_processing import time_to_obsid
 
 def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
 
@@ -69,7 +72,7 @@ def group_by_time(arr, obs, delta_t = 86400):
     return arr
 
 
-def plot_pmnj0210_5101_fitting_results(data, outdir, xlims = None, interpolate_minima = True):
+def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
 
     pdata = data['PMNJ0210-5101']
     obsids = sorted([obsid for obsid in pdata])
@@ -110,6 +113,32 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims = None, interpolate_m
               "Ellipticity": "Minimum beam ellipticity (all)"}
     colors  = {90:'C0', 150:'C1', 220:'C2'}
     markers = {0: 'o', 1: 's', 2: '+', 3: 'x', 4: '<', 5: '>'} 
+
+    fieldobs = 'ra0hdec-52.25'
+    minobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[0].strftime('%Y%m%d'))))
+    maxobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[1].strftime('%Y%m%d'))))
+    el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
+    el1obsids = sorted([int(o) for o in el1obsids])
+    el1obsids = [o for o in el1obsids if minobsid <= o <= maxobsid]
+    if (len(el1obsids) == 0) and ('fullrate' in bolodatapath):
+        bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+        el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
+        el1obsids = sorted([int(o) for o in el1obsids])
+        el1obsids = [o for o in el1obsids if minobsid <= o <= maxobsid]
+    nominalbp = []
+    nominalts = []
+    for el1obsid in el1obsids:
+        obsfr = core.G3File(os.path.join(
+                    bolodatapath,  fieldobs,
+                    str(el1obsid), '0000.g3')).next()
+        bcp = obsfr['BenchCommandedPosition']
+        bz = obsfr['BenchZeros']
+        for k in bcp.keys():
+            bcp[k] -= bz[k]
+        posoptax = pointing.focus.bench2optical(bcp['x4'], bcp['y1'], bcp['z6'])
+        nominalbp.append(posoptax[2].item())
+        nominalts.append(obsid_to_g3time(el1obsid).time / core.G3Units.s)
+    nominaldates = np.array([datetime.datetime.utcfromtimestamp(nts) for nts in nominalts])
 
     for band in [90, 150, 220]:
 
@@ -183,6 +212,12 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, xlims = None, interpolate_m
         for figname, figarr in zip(fignames, [benchf_min, benche_min, fwhm_min, e_min]):
             plt.figure(figname)
             plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'], alpha=0.65)
+
+    for figname, figarr in zip(fignames[:2], [benchf_min, benche_min]):
+        plt.figure(figname)
+        nominaldatenums = mdates.date2num(nominaldates)
+        plt.plot(nominaldatenums, nominalbp, color='black', linestyle='dashed', alpha=0.50, label='Nominal pos.')
+        plt.legend()
 
     for figname in fignames:
         plt.figure(figname)

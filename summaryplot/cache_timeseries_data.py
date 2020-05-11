@@ -399,7 +399,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                  xlims=[mindate, maxdate])
                         plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
                                               xlims=[mindate, maxdate])
-                    plot_pmnj0210_5101_fitting_results(data, plotsdir,
+                    plot_pmnj0210_5101_fitting_results(data,
+                                                       plotsdir, bolodatapath,
                                                        xlims=[mindate, maxdate])
                 else:
                     for src in ['RCW38', 'MAT5A', 'W28A2']:
@@ -433,7 +434,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                            xlims=[mindate, maxdate])
                     plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
                                                xlims=[mindate, maxdate])
-                    plot_pmnj0210_5101_fitting_results(data, plotsdir,
+                    plot_pmnj0210_5101_fitting_results(data,
+                                                       plotsdir, bolodatapath,
                                                        xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
                                       xlims=[mindate, maxdate])
@@ -514,6 +516,8 @@ if __name__ == '__main__':
                              'only the most recent N days.')
     parser_plot.add_argument('outdir', action='store', default=None,
                              help='Path containing skimmed data and plots.')
+    parser_plot.add_argument('bolodatapath', default=None,
+                             help='Path to bolometer data.')
     parser_plot.add_argument('--min-time', action='store',
                              default=default_mintime.strftime('%Y%m%d'),
                              help='Minimum time of observations to skim. Format: '
@@ -530,6 +534,7 @@ if __name__ == '__main__':
                action=args.action,
                timeinterval=args.timeinterval,
                outdir=args.outdir,
+               bolodatapath=args.bolodatapath,
                min_time=args.min_time,
                max_time=args.max_time)
     elif args.mode == 'skim':

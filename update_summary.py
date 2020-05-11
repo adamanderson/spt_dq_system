@@ -194,12 +194,14 @@ if args.mode == 'summarystats':
         cache_timeseries_data.update(mode='plot', action='update',
                                      timeinterval=interval,
                                      outdir=args.staticplotdir,
+                                     bolodatapath=args.bolodatadir,
                                      min_time=args.mintime)
 
     for n in [1, 3, 7, 30]:
         cache_timeseries_data.update(mode='plot', action='update',
                                      timeinterval=n,
                                      outdir=args.staticplotdir,
+                                     bolodatapath=args.bolodatadir,
                                      min_time=args.mintime)
 
 
