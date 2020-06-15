@@ -2191,7 +2191,7 @@
         If you notice that the figures in any of the tabs (Calibration Observations, Field Observations, etc.)
         have not been updated for the last two days but are not aware of any issues with the operation of
         the telescope and the camera, or if you have some questions or suggestions on the webpage,
-        please let Adam and Wei know! (Read Me author: Wei, Last updated: 2020/05/05)</p><br>
+        please let Adam and Wei know! (Read Me author: Wei, Last updated: 2020/06/14)</p><br>
     
     <h3> 1. Overview </h3>
     <p> This webpage is meant to be used to monitor how stable the results of various calibration observations and
@@ -2353,12 +2353,28 @@
         These numbers come from the autoprocessing of the noise stares' timestreams.
         The noise levels in the lowest frequency range are more susceptible to weather than
         those in the other three ranges, and thus they are expected to show more variations. </p>
-    <p> The figure in the last row shows numbers of noise lines found
-        from median PSDs of the timestreams from each band and wafer.
-        This line-finding analysis is done by the data quality monitoring system,
-        and the actual code used is
+    <p> The figure in the last row shows numbers of noise lines found from noise stare timestreams.
+        For each combination of band and wafer,
+        the power spectral density (PSD) of each detector's timestream that belongs to that group is calculated,
+        and the median PSD is obtained from these PSDs.
+        Then, a line is defined as a peak in this median PSD whose value is more than twice as large as
+        the median of the neighboring values within +/- 0.3 Hz from the location of the peak.
+        Any line whose frequency is below 0.99 Hz is ignored.
+        The actual code used to do this is located
         <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/noise.py#L108">
-         here</a>. </p><br>
+         here</a>. </p>
+    <p> The original motivation for adding this figure was to detect early on a situation
+        where timestreams suddenly start to have a lot of persistent noise lines in them.
+        One instance of this situation happened between late January 2020 and early February,
+        when the EHT electronics was operating, and it introduced a forest of lines into our timestreams.
+        Unfortunately, this way of detecting lines is susceptible to bad weather conditions.
+        When the weather is bad, the median PSDs are noisier than usual and tend to have a lot of fluctuations
+        below a few Hz. As a result, some of the peaks in these fluctuations are flagged as "lines",
+        which go away once the weather improves.
+        Therefore, whenever you notice there were several noise stares
+        from which a large number of lines were found (indicated by the red triangles),
+        but you also know that the weather was bad during that period, then these lines are probably not worrisome.
+        However, if the weather was nominal, then this may be an indication of some issue. </p><br>
     
     <h4> 2.6. Figures for individual observations </h4>
     <p> In every figure shown in the <i>Calibration Observations</i> tab,
