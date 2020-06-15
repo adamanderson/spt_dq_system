@@ -120,7 +120,7 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
     el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
     el1obsids = sorted([int(o) for o in el1obsids])
     el1obsids = [o for o in el1obsids if minobsid <= o <= maxobsid]
-    if (len(el1obsids) == 0) and ('fullrate' in bolodatapath):
+    if ((len(el1obsids) == 0) or (maxobsid-el1obsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
         bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
         el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
         el1obsids = sorted([int(o) for o in el1obsids])
