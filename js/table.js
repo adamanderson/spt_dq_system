@@ -287,111 +287,113 @@ function schedule_search() {
 };
 
 
-// create sse listener
-var es = new EventSource("/sse");
 
 // sends plot request to server and opens images in new window
 function plot() {
-  // holds selected observations
-  var rows;
-  // check if scanify or aux
-  var tab = document.getElementsByClassName("tablinks active")[0];
-  if (tab.id == "aux") {
-    rows = $("#aux_table").tabulator("getSelectedData");
-  }
-  else if (tab.id == "scanify") {
-    rows = $("#scanify_table").tabulator("getSelectedData");
-  }
+    // create sse listener
+    var es = new EventSource("/sse");
+
+    // holds selected observations
+    var rows;
+    // check if scanify or aux
+    var tab = document.getElementsByClassName("tablinks active")[0];
+    if (tab.id == "aux") {
+        rows = $("#aux_table").tabulator("getSelectedData");
+    }
+    else if (tab.id == "scanify") {
+        rows = $("#scanify_table").tabulator("getSelectedData");
+    }
     else if (tab.id == "autoproc") {
-    rows = $("#autoproc_table").tabulator("getSelectedData");
-  }
+        rows = $("#autoproc_table").tabulator("getSelectedData");
+    }
 
 
-  if (rows.length == 0) {
-    alert("Please select at least one observation.");
-    return;
-  }
+    if (rows.length == 0) {
+        alert("Please select at least one observation.");
+        return;
+    }
 
-  // get plot type
-  var selected_values = [];    
-  $("#plot_select :selected").each(function(){
-    selected_values.push($(this).val()); 
-  });
-  if (selected_values.length == 0) {
-    alert("Please select at least one plot type.");
-    return;
-  }
+    // get plot type
+    var selected_values = [];    
+    $("#plot_select :selected").each(function(){
+        selected_values.push($(this).val()); 
+    });
+    if (selected_values.length == 0) {
+        alert("Please select at least one plot type.");
+        return;
+    }
 
-  // open new window immediately so it isn't considered a pop-up
-  var display_win = window.open('display.html', '_blank');
+    // open new window immediately so it isn't considered a pop-up
+    var display_win = window.open('display.html', '_blank');
 
-  // items holds the image info needed for photoswipe
-  var items = [];
+    // items holds the image info needed for photoswipe
+    var items = [];
 
-  // counts the number of images to be created
-  var image_ctr = 0;
+    // counts the number of images to be created
+    var image_ctr = 0;
 
-  var sseid;
-  $.get("sseid", function(id, status) {
-    sseid = id;
-    // counts the images that have finished being created
-    var plot_ctr = 0;
+    var sseid;
+    $.get("sseid", function(id, status) {
+        sseid = id;
+        // counts the images that have finished being created
+        var plot_ctr = 0;
 
-    es.addEventListener('out' + sseid, function (event) {
-      // events include opening and closing quotations so slice them out
+        es.addEventListener('out' + sseid, function (event) {
+            // events include opening and closing quotations so slice them out
 
-      if (event.data.slice(1, 4) == 'msg')
-        display_win.show(event.data.slice(4, -1));
+            if (event.data.slice(1, 4) == 'msg')
+                display_win.show(event.data.slice(4, -1));
 
-      else if (event.data.split('fln').length == 2) {
-      path =  event.data.split('fln')[1].slice(0,-1);
-      items.push({src: 'img/' + path, w: 0, h: 0});
-      }
+            else if (event.data.split('fln').length == 2) {
+                path =  event.data.split('fln')[1].slice(0,-1);
+                items.push({src: 'img/' + path, w: 0, h: 0});
+            }
 
-      else if (event.data.slice(1, 4) == 'plt') {
-      display_win.load_progress();
-        plot_ctr++;
+            else if (event.data.slice(1, 4) == 'plt') {
+                display_win.load_progress();
+                plot_ctr++;
 
-        if (image_ctr == plot_ctr) {
-          // done making plots
-          items.sort(compare);
-          display_win.start_image(items);
-        }
-      }
+                if (image_ctr == plot_ctr) {
+                    // done making plots
+                    items.sort(compare);
+                    display_win.start_image(items);
+                    es.close();
+                }
+            }
 
+        });
+
+        es.addEventListener('err' + sseid, function (event) {
+            display_win.show_err(event.data);
+        });
     });
 
-    es.addEventListener('err' + sseid, function (event) {
-      display_win.show_err(event.data);
-    });
-  });
+    // make the plots and everything else once display window has opened
+    // so that we can track plotting progress and send images to the new window.
+    display_win.onload = function () {
 
-  // make the plots and everything else once display window has opened
-  // so that we can track plotting progress and send images to the new window.
-  display_win.onload = function () {
+        // get plotting mode
+        var func_val = $('input[name="func"]:checked').val();
 
-  // get plotting mode
-  var func_val = $('input[name="func"]:checked').val();
+        // set the number of images and variables to keep track of creation
+        display_win.images_to_load = selected_values.length * rows.length;
+        display_win.loaded_count = 0;
+        display_win.loading_progress = 0;
 
-  // set the number of images and variables to keep track of creation
-  display_win.images_to_load = selected_values.length * rows.length;
-  display_win.loaded_count = 0;
-  display_win.loading_progress = 0;
-
-  // loop over each observation
-  $.each(rows, function(i, obsdata) {
-      // combine all requested plot types into a string
-      obsdata['plot_type'] = selected_values.join(' ');
-      obsdata['table'] = tab.id;
-      obsdata['func'] = func_val;
-      obsdata['sseid'] = sseid;
-      
-      // request the plot
-      $.get("data_req", obsdata, function(data, status) {
-          image_ctr += selected_values.length;
-      });
-  });
-  }
+        // loop over each observation
+        $.each(rows, function(i, obsdata) {
+            // combine all requested plot types into a string
+            obsdata['plot_type'] = selected_values.join(' ');
+            obsdata['table'] = tab.id;
+            obsdata['func'] = func_val;
+            obsdata['sseid'] = sseid;
+            
+            // request the plot
+            $.get("data_req", obsdata, function(data, status) {
+                image_ctr += selected_values.length;
+            });
+        });
+    }
 }
 
 // used to sort image items
