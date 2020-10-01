@@ -20,6 +20,7 @@ import shutil
 import json
 import sys
 import logging
+import gc
 import matplotlib
 matplotlib.use("Agg")
 import numpy
@@ -614,6 +615,7 @@ def update(season, mode, action,
         if mode == 'coadding':
             
             for band in bands:
+                gc.collect()
                 rvals_sum = 0
                 
                 anal_yearly_args = \
@@ -644,6 +646,7 @@ def update(season, mode, action,
                 
                 
                 for sub_field in sub_fields:
+                    gc.collect()
                     log("--- %s %s ---", band, sub_field)
                     log("")
                     
@@ -741,6 +744,7 @@ def update(season, mode, action,
             fig_dir = desired_dir_names[i+n_time_ranges]
             
             for band in bands:
+                gc.collect()
                 log('--- %s ---', band)
                 log('')
                 

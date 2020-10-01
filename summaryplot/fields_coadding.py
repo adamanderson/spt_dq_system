@@ -106,18 +106,16 @@ import logging
 import os
 import sys
 import glob
-import gc
 import numpy
 import pickle
 
 from spt3g import core
 from spt3g import mapmaker
 from spt3g import util
-from spt3g import coordinateutils
+from spt3g import maps
 from spt3g import std_processing
 from spt3g import mapspectra
 from scipy import signal
-from spt3g.mapspectra import map_analysis
 
 
 
@@ -164,10 +162,10 @@ def add_two_map_frames(
     
     if t_only:
         
-        assert frame_one["T"].is_weighted, \
-               "T map from frame one appears to be unweighted!"
-        assert frame_two["T"].is_weighted, \
-               "T map from frame two appears to be unweighted!"
+        if not frame_one["T"].weighted:
+            maps.ApplyWeights(frame_one)
+        if not frame_two["T"].weighted:
+            maps.ApplyWeights(frame_two)
         
         logfun("$$$ use x = %d and y = %d "
                "for the indices of a particular pixel" %(ix, iy))
@@ -183,67 +181,58 @@ def add_two_map_frames(
         # - First, remove weights if necessary
         
         if remove_weights_beforehand:
-            t_map_one = mapmaker.mapmakerutils.remove_weight_t(
-                            frame_one["T"], frame_one["Wunpol"])
-            t_map_two = mapmaker.mapmakerutils.remove_weight_t(
-                            frame_two["T"], frame_two["Wunpol"])
-        else:
-            t_map_one = frame_one["T"]
-            t_map_two = frame_two["T"]
+            maps.RemoveWeights(frame_one, zero_nans=True)
+            maps.RemoveWeights(frame_two, zero_nans=True)
         
         logfun("$$$ t1 after potential weights removal : %+7.3e"
-               %(numpy.asarray(t_map_one)[iy][ix]/tu))
+               %(numpy.asarray(frame_one["T"])[iy][ix]/tu))
         logfun("$$$ t2 after potential weights removal : %+7.3e"
-               %(numpy.asarray(t_map_two)[iy][ix]/tu))
+               %(numpy.asarray(frame_two["T"])[iy][ix]/tu))
+        
+        maps.CompactMaps(frame_one, zero_nans=True)
+        maps.CompactMaps(frame_two, zero_nans=True)
         
         # - Then, add field maps (and weight maps if applicable) together
         
-        t_map = t_map_one + t_map_two * multiply_2nd_maps_by
-        del t_map_one, t_map_two
-        gc.collect()
-        w_map  = frame_one["Wunpol"].TT + \
-                 frame_two["Wunpol"].TT * multiply_2nd_weights_by
-        w_maps = coordinateutils.G3SkyMapWeights()
-        w_maps.TT = w_map
-        del w_map
-        gc.collect()
+        new_frame = core.G3Frame(core.G3FrameType.Map)
+
+        new_frame["T"] = frame_one["T"] + \
+                         frame_two["T"] * multiply_2nd_maps_by        
+        new_frame["Wunpol"] = maps.G3SkyMapWeights()
+        new_frame["Wunpol"].TT = frame_one["Wunpol"].TT + \
+                                 frame_two["Wunpol"].TT * multiply_2nd_weights_by
         
         logfun("$$$ t resultant : %+7.3e"
-               %(numpy.asarray(t_map)[iy][ix]/tu))
+               %(numpy.asarray(new_frame["T"])[iy][ix]/tu))
         logfun("$$$ w resultant : %+7.3e [1/mK^2]"
-               %(numpy.asarray(w_maps.TT)[iy][ix]*tu*tu))
+               %(numpy.asarray(new_frame["Wunpol"].TT)[iy][ix]*tu*tu))
         
         # - After that, remove weights if necessary
         
         if remove_weights_afterward:
-            t_map  = mapmaker.mapmakerutils.remove_weight_t(
-                         t_map, w_maps)
+            maps.RemoveWeights(new_frame, zero_nans=True)
         
         logfun("$$$ t after potential weights removal : %+7.3e [mK]"
-               %(numpy.asarray(t_map)[iy][ix]))
+               %(numpy.asarray(new_frame["T"])[iy][ix]))
         
         # - Furthur divide the map by some number if requested
         
         if divide_result_by != 1.0:
-            t_map = t_map / divide_result_by
+            new_frame["T"] = new_frame.pop("T") / divide_result_by
         
         logfun("$$$ t after division : %+7.3e [mK]"
-               %(numpy.asarray(t_map)[iy][ix]/tu))
+               %(numpy.asarray(new_frame["T"])[iy][ix]/tu))
         
-        # - Finally, record the results in a new frame
-        
-        new_frame = core.G3Frame(core.G3FrameType.Map)
-        new_frame["T"] = t_map
-        if record_weights:
-            new_frame["Wunpol"] = w_maps
-        
+        # - Finally, check some numbers again
+                
         logfun("$$$ t final : %+7.3e"
                %(numpy.asarray(new_frame["T"])[iy][ix]/tu))
-        try:
+        if record_weights:
             logfun("$$$ w final : %+7.3e [1/mK^2]"
                    %(numpy.asarray(new_frame["Wunpol"].TT)[iy][ix]*tu*tu))
-        except:
+        else:
             logfun("$$$ w final : N/A")
+        maps.CompactMaps(new_frame, zero_nans=True)
     
     else:
         raise Exception("The case where map frames contain temperature "
@@ -264,6 +253,9 @@ def add_two_map_frames(
 def create_new_map_frame_with_smaller_region(
         map_frame, center_ra, center_dec, t_only=True):
     
+    if map_frame is None:
+        return None
+    
     new_map_frame = core.G3Frame(core.G3FrameType.Map)
 
     if t_only:
@@ -277,15 +269,15 @@ def create_new_map_frame_with_smaller_region(
                           "coord_ref"   : map_frame["T"].coord_ref,
                           "pol_type"    : map_frame["T"].pol_type}
         
-        smaller_field_map = coordinateutils.FlatSkyMap(**map_parameters)
-        coordinateutils.reproj_map(map_frame["T"], smaller_field_map, 1)
+        smaller_field_map = maps.FlatSkyMap(**map_parameters)
+        maps.reproj_map(map_frame["T"], smaller_field_map, 1)
         new_map_frame["T"] = smaller_field_map
         
         if "Wunpol" in map_frame.keys():
-            smaller_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
-            coordinateutils.reproj_map(
+            smaller_weight_map = maps.FlatSkyMap(**map_parameters)
+            maps.reproj_map(
                 map_frame["Wunpol"].TT, smaller_weight_map, 1)
-            new_map_frame["Wunpol"] = coordinateutils.G3SkyMapWeights()
+            new_map_frame["Wunpol"] = maps.G3SkyMapWeights()
             new_map_frame["Wunpol"].TT = smaller_weight_map
     
     return new_map_frame
@@ -554,6 +546,33 @@ def collect_medians_of_pW_per_K_factors(
 
 
 
+def maybe_get_gfal_copied_file(path, outdir=None):
+    
+    if path.startswith("/sptgrid"):
+        origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
+        if outdir is None:
+            outdir = os.getcwd()
+        gfldir = os.path.join(outdir, "temp_dir_for_gfalcp")
+        if not os.path.isdir(gfldir):
+            os.system("mkdir {}".format(gfldir))
+        destin = os.path.join(gfldir, os.path.basename(path))
+        os.system("gfal-copy {} file://{}".format(origin, destin))
+        path = destin
+    
+    return path
+
+
+
+
+def maybe_del_gfal_copied_file(path):
+    
+    if "temp_dir_for_gfalcp" in path and os.path.isfile(path):
+        os.system("rm {}".format(path))
+
+
+
+
+
 def calculate_change_in_cal_response_vs_elevation(
         field_obs_id, dec_center, cal_obs_ids, cal_ts_dir, cal_autoproc_dir,
         bolo_dict, logfun=print):
@@ -607,6 +626,7 @@ def calculate_change_in_cal_response_vs_elevation(
     for location, cal_id in cal_obs_ids.items():
         cal_ts_file = os.path.join(cal_ts_dir, str(cal_id), "0000.g3")
         try:
+            cal_ts_file = maybe_get_gfal_copied_file(cal_ts_file)
             iterator = core.G3File(cal_ts_file)
             while True:
                 fr = iterator.next()
@@ -614,6 +634,7 @@ def calculate_change_in_cal_response_vs_elevation(
                     mean_el = numpy.mean(fr["RawBoresightEl"])/core.G3Units.deg
                     elevations[location] = mean_el
                     break
+            maybe_del_gfal_copied_file(cal_ts_file)
         except:
             pass
     
@@ -658,12 +679,23 @@ def calculate_change_in_cal_response_vs_elevation(
         logfun("$$$ One or more calibration file not found!")
         return response_dict
     
+    cal_autoproc_file_bot,  \
+    cal_autoproc_file_mid,  \
+    cal_autoproc_file_top = \
+        [maybe_get_gfal_copied_file(f) for f in
+         (cal_autoproc_file_bot,
+          cal_autoproc_file_mid,
+          cal_autoproc_file_top)]
     cal_data_bot = list(core.G3File(cal_autoproc_file_bot))[0]\
                    ["CalibratorResponse"]
     cal_data_mid = list(core.G3File(cal_autoproc_file_mid))[0]\
                    ["CalibratorResponse"]
     cal_data_top = list(core.G3File(cal_autoproc_file_top))[0]\
                    ["CalibratorResponse"]
+    for f in (cal_autoproc_file_bot,
+              cal_autoproc_file_mid,
+              cal_autoproc_file_top):
+        maybe_del_gfal_copied_file(f)
     
     
     # - Organize the data and calculate the fractional changes
@@ -725,7 +757,7 @@ def calculate_change_in_cal_response_vs_elevation(
 def identify_pixels_of_non_atypical_region(
         field_name, map_frame, point_source_list_file):
     
-    ras, decs = coordinateutils.maputils.get_ra_dec_map(map_frame["T"])
+    ras, decs = maps.maputils.get_ra_dec_map(map_frame["T"])
     ras  = numpy.asarray(ras/core.G3Units.deg)
     decs = numpy.asarray(decs/core.G3Units.deg)
     
@@ -750,15 +782,6 @@ def identify_pixels_of_non_atypical_region(
     typical_pixels = numpy.where((ras  > ra_min) & (ras  < ra_max) &
                                  (decs > de_min) & (decs < de_max) &
                                  (ptsrc_msk == 1.0))
-    
-    del ras, decs, ptsrc_msk
-    gc.collect()
-    
-    """final_mask = numpy.zeros(map_frame["T"].shape)
-    final_mask[typical_pixels] = 1.0
-    from matplotlib import pyplot
-    pyplot.imshow(final_mask, cmap="gray")
-    pyplot.show()"""
     
     return typical_pixels
 
@@ -791,7 +814,7 @@ def calculate_map_fluctuation_metrics(
     fluctuation_metrics = {key: numpy.nan for key in flc_keys}
     
     for fmk in field_map_keys:
-        assert (not map_frame[fmk].is_weighted), fmk + " map is still weighted!"
+        assert (not map_frame[fmk].weighted), fmk + " map is still weighted!"
     
     if t_only:
         
@@ -880,6 +903,7 @@ def calculate_map_fluctuation_metrics(
         fluctuation_metrics["NumbersOfPixelsWithGoodTTWeights"] = n_pix_g_wgt
     
     logfun("$$$ ... that's all I wanted to know.")
+    maps.CompactMaps(map_frame, zero_nans=True)
     
     return fluctuation_metrics
 
@@ -889,7 +913,7 @@ def calculate_map_fluctuation_metrics(
 def calculate_pointing_discrepancies(
         map_frame, sub_field, map_stddev=None):
     
-    assert (not map_frame["T"].is_weighted), \
+    assert (not map_frame["T"].weighted), \
            "The temperature map is still weighted!"
     
     usys = core.G3Units
@@ -958,9 +982,10 @@ def calculate_pointing_discrepancies(
         if true_right_ascension > 180:
             true_right_ascension -= 360
         true_right_ascension *= usys.deg
-        
         true_declination  = info[1]
         true_declination *= usys.deg
+        true_right_ascension = float(true_right_ascension)
+        true_declination = float(true_declination)
         
         true_x, true_y = \
             map_frame["T"].angle_to_xy(true_right_ascension,
@@ -1001,6 +1026,8 @@ def calculate_pointing_discrepancies(
         
         measured_x = gaussian_center_x + mini_map_x_left
         measured_y = gaussian_center_y + mini_map_y_bottom
+        measured_x = float(measured_x)
+        measured_y = float(measured_y)
         
         measured_right_ascension, measured_declination = \
             map_frame["T"].xy_to_angle(measured_x, measured_y)
@@ -1028,6 +1055,8 @@ def calculate_pointing_discrepancies(
             source_snr = numpy.max(source_centered_mini_map) / map_stddev
         snr_dict[point_source_rank] = source_snr
     
+    maps.CompactMaps(map_frame, zero_nans=True)
+    
     return discrep_dict, flux_dict, snr_dict
 
 
@@ -1035,10 +1064,10 @@ def calculate_pointing_discrepancies(
 
 def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
     
-    ptsrc_mask  = mapspectra.apodmask.make_apodized_ptsrc_mask(
-                    map_frame, point_source_file)
+    ptsrc_mask = mapspectra.apodmask.make_apodized_ptsrc_mask(
+                     map_frame, point_source_file)
     
-    edge_mask = coordinateutils.FlatSkyMap(
+    edge_mask = maps.FlatSkyMap(
                     x_len=map_frame["T"].shape[1],
                     y_len=map_frame["T"].shape[0],
                     res=map_frame["T"].res, proj=map_frame["T"].proj,
@@ -1064,10 +1093,10 @@ def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
 def create_mini_planck_map_frame(
         fits_file, spt_map_frame, center_ra, center_dec, t_only=True):
     
-    planck_healpix_maps = coordinateutils.fitsio.load_skymap_fits(fits_file)
+    planck_healpix_maps = maps.fitsio.load_skymap_fits(fits_file)
     
     if t_only:
-        planck_flatsky_map = coordinateutils.maputils.healpix_to_flatsky(
+        planck_flatsky_map = maps.maputils.healpix_to_flatsky(
                                  planck_healpix_maps["T"],
                                  res=spt_map_frame["T"].res,
                                  x_len=spt_map_frame["T"].shape[1],
@@ -1083,9 +1112,6 @@ def create_mini_planck_map_frame(
     map_frame_smaller = create_new_map_frame_with_smaller_region(
                             new_map_frame, center_ra, center_dec)
     
-    del new_map_frame
-    gc.collect()
-    
     return map_frame_smaller
 
 
@@ -1094,7 +1120,7 @@ def create_mini_planck_map_frame(
 def calculate_average_ratio_of_spt_planck_xspectra(
         spt_map_frame, planck_map_frames, mask, t_only=True):
     
-    assert (not spt_map_frame["T"].is_weighted), \
+    assert (not spt_map_frame["T"].weighted), \
            "The SPT T map is still weighted!"
     
     for mission, map_frame in planck_map_frames.items():
@@ -1105,10 +1131,10 @@ def calculate_average_ratio_of_spt_planck_xspectra(
         if mission == "halfmission-2":
             halfmission2_planck_map_frame = map_frame
     
-    sptmp   = numpy.asarray(spt_map_frame["T"])/core.G3Units.mK
-    plkmpf  = numpy.asarray(fullmission_planck_map_frame["T"])/core.G3Units.mK
-    plkmph1 = numpy.asarray(halfmission1_planck_map_frame["T"])/core.G3Units.mK
-    plkmph2 = numpy.asarray(halfmission2_planck_map_frame["T"])/core.G3Units.mK
+    sptmp   = spt_map_frame["T"] / core.G3Units.mK
+    plkmpf  = fullmission_planck_map_frame["T"] / core.G3Units.mK
+    plkmph1 = halfmission1_planck_map_frame["T"] / core.G3Units.mK
+    plkmph2 = halfmission2_planck_map_frame["T"] / core.G3Units.mK
     
     average_ratios = {}
     
@@ -1116,13 +1142,13 @@ def calculate_average_ratio_of_spt_planck_xspectra(
     ell_hi = 1250
     
     if t_only:
-        planck_x_planck = map_analysis.calculate_powerspectra(
+        planck_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                               halfmission1_planck_map_frame,
                               input2=halfmission2_planck_map_frame,
                               delta_l=50, lmin=300, lmax=6000,
                               apod_mask=mask, realimag="real", flatten=False)
         
-        spt_x_planck = map_analysis.calculate_powerspectra(
+        spt_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                            spt_map_frame, input2=fullmission_planck_map_frame,
                            delta_l=50, lmin=300, lmax=6000,
                            apod_mask=mask, realimag="real", flatten=False)
@@ -1141,7 +1167,7 @@ def calculate_average_ratio_of_spt_planck_xspectra(
 
 def calculate_noise_levels(map_frame, mask, t_only=True):
     
-    assert (not map_frame["T"].is_weighted), \
+    assert (not map_frame["T"].weighted), \
             "The T maps is still weighted!"
     
     noises = {}
@@ -1150,7 +1176,7 @@ def calculate_noise_levels(map_frame, mask, t_only=True):
     ell_hi = 5000
     
     if t_only:
-        cls = map_analysis.calculate_powerspectra(
+        cls = mapspectra.map_analysis.calculate_powerspectra(
                   map_frame, input2=None,
                   delta_l=50, lmin=300, lmax=6000,
                   apod_mask=mask, realimag="real", flatten=False)
@@ -1667,7 +1693,9 @@ class AnalyzeAndCoaddMaps(object):
             self.log("")
             return False
         
-        if not numpy.isfinite(numpy.nanmean(numpy.asarray(map_frame["T"]))):
+        mean = numpy.nanmean(numpy.asarray(map_frame["T"]))
+        maps.CompactMaps(map_frame, zero_nans=True)
+        if not numpy.isfinite(mean):
             self.log("")
             self.log("* There seem to be only NaNs in the map!")
             self.log("")
@@ -1893,24 +1921,27 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("* sky map and weight map (ID: %s)", frame["Id"])
                 self.log("* to the coadded maps (ID: %s) ...", id_for_coadds)
                 if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
+                    self.coadded_map_frames[id_for_coadds] = frame
                     if self.t_only:
-                        self.coadded_map_frames[id_for_coadds]["T"] = frame["T"]
-                        self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
-                            frame["Wunpol"]
-                    tu = core.G3Units.mK
-                    self.detail("$$$ t of original map @ "
-                                "the center of the full field: %7.3e"
-                                %(numpy.asarray(
-                                  self.coadded_map_frames[id_for_coadds]["T"])\
-                                  [center_y][center_x]/tu))
-                    self.detail("$$$ w of original map @ "
-                                "the center of the full field: %7.3e"
-                                %(numpy.asarray(
-                                  self.coadded_map_frames\
-                                  [id_for_coadds]["Wunpol"].TT)\
-                                  [center_y][center_x]*tu*tu))                    
+                        tu = core.G3Units.mK
+                        self.detail("$$$ t of original map @ "
+                                    "(x, y) = (%d, %d): %7.3e"
+                                    %(center_x, center_y,
+                                      numpy.asarray(
+                                      self.coadded_map_frames\
+                                      [id_for_coadds]["T"])\
+                                      [center_y][center_x]/tu))
+                        self.detail("$$$ w of original map @ "
+                                    "(x, y) = (%d, %d): %7.3e"
+                                    %(center_x, center_y,
+                                      numpy.asarray(
+                                      self.coadded_map_frames\
+                                      [id_for_coadds]["Wunpol"].TT)\
+                                      [center_y][center_x]*tu*tu))
                     self.log("* ... field and weight maps were added "
                              "to the empty cache.")
+                    maps.CompactMaps(self.coadded_map_frames[id_for_coadds],
+                                     zero_nans=True)
                 else:
                     self.coadded_map_frames[id_for_coadds] = \
                         add_two_map_frames(
@@ -1927,7 +1958,6 @@ class AnalyzeAndCoaddMaps(object):
                             iy=center_y, ix=center_x)
                 self.log("* Done.")
                 self.log("")
-            gc.collect()
             
             
             # -- Collect flagging and calibration related quantities
@@ -2180,8 +2210,6 @@ class AnalyzeAndCoaddMaps(object):
                             self.log("* the requested analyses need to wait.")
                         
                         if time_to_analyze_maps:
-                            summ_map_frame_individ = None
-                            diff_map_frame_individ = None
                             summ_map_frame_coadded = \
                                 add_two_map_frames(
                                     self.coadded_map_frames[idl],
@@ -2192,9 +2220,28 @@ class AnalyzeAndCoaddMaps(object):
                                     multiply_2nd_weights_by=1.0,
                                     remove_weights_afterward=True,
                                     divide_result_by=1.0,
-                                    record_weights=False,
+                                    record_weights=True,
                                     logfun=self.detail,
                                     iy=center_y, ix=center_x)
+                            """
+                            summ_map_frame_coadded = None
+                            """
+                            """
+                            summ_map_frame_individ = \
+                                add_two_map_frames(
+                                    self.map_cache_for_both_dirs[idl][sbfd],
+                                    self.map_cache_for_both_dirs[idr][sbfd],
+                                    t_only=self.t_only,
+                                    remove_weights_beforehand=False,
+                                    multiply_2nd_maps_by=1.0,
+                                    multiply_2nd_weights_by=1.0,
+                                    remove_weights_afterward=True,
+                                    divide_result_by=1.0,
+                                    record_weights=True,
+                                    logfun=self.detail,
+                                    iy=center_y, ix=center_x)
+                            """
+                            summ_map_frame_individ = None
                             diff_map_frame_coadded = \
                                 add_two_map_frames(
                                     self.coadded_map_frames[idl],
@@ -2208,59 +2255,83 @@ class AnalyzeAndCoaddMaps(object):
                                     record_weights=False,
                                     logfun=self.detail,
                                     iy=center_y, ix=center_x)
-                            summ_map_frame_individ_mini = None
-                            diff_map_frame_individ_mini = None
-                            summ_map_frame_coadded_mini = None
+                            """
+                            diff_map_frame_coadded = None
+                            """
+                            """
+                            diff_map_frame_individ = \
+                                add_two_map_frames(
+                                    self.map_cache_for_both_dirs[idl][sbfd],
+                                    self.map_cache_for_both_dirs[idr][sbfd],
+                                    t_only=self.t_only,
+                                    remove_weights_beforehand=True,
+                                    multiply_2nd_maps_by=-1.0,
+                                    multiply_2nd_weights_by=1.0,
+                                    remove_weights_afterward=False,
+                                    divide_result_by=2.0,
+                                    record_weights=False,
+                                    logfun=self.detail,
+                                    iy=center_y, ix=center_x)
+                            """
+                            diff_map_frame_individ = None
+                            # * Depending on what analysis tasks are done,
+                            #   not all of the four types of frames are needed.
+                            #   Having no """'s would be ideal, though.
+                            
+                            summ_map_frame_individ_mini,  \
+                            summ_map_frame_coadded_mini,  \
+                            diff_map_frame_individ_mini,  \
                             diff_map_frame_coadded_mini = \
-                                create_new_map_frame_with_smaller_region(
-                                    diff_map_frame_coadded,
-                                    center_ra, center_dec,
-                                    t_only=self.t_only)
-                            # * There are conceivable situations where
-                            #   individual maps are needed, but these frames
-                            #   suffice for the time being.
+                                [create_new_map_frame_with_smaller_region(
+                                     one_type_of_frame,
+                                     center_ra, center_dec,
+                                     t_only=self.t_only)
+                                 for one_type_of_frame in
+                                     (summ_map_frame_individ,
+                                      summ_map_frame_coadded,
+                                      diff_map_frame_individ,
+                                      diff_map_frame_coadded)]
                     else:
                         time_to_analyze_maps   = True
-                        summ_map_frame_individ = \
-                            core.G3Frame(core.G3FrameType.Map)
+                        summ_map_frame_individ = frame
                         tu = core.G3Units.mK
                         if self.t_only:
-                            summ_map_frame_individ["T"] = \
-                                mapmaker.mapmakerutils.remove_weight_t(
-                                    frame["T"], frame["Wunpol"])
-                            summ_map_frame_individ["Wunpol"] = \
-                                frame["Wunpol"]
+                            maps.RemoveWeights(frame, zero_nans=True)
                             self.detail("$$$ t of original map "
                                         "@ field center : %7.3e [mK]"
                                         %(numpy.asarray(
                                           summ_map_frame_individ["T"])\
                                           [center_y][center_x]/tu))
-                        diff_map_frame_individ = None
+                            maps.CompactMaps(summ_map_frame_individ,
+                                             zero_nans=True)
                         summ_map_frame_coadded = None
+                        diff_map_frame_individ = frame
                         diff_map_frame_coadded = None
-                        summ_map_frame_individ_mini = \
-                            create_new_map_frame_with_smaller_region(
-                                summ_map_frame_individ,
-                                center_ra, center_dec,
-                                t_only=self.t_only)
-                        diff_map_frame_individ_mini = \
-                            summ_map_frame_individ_mini
-                        summ_map_frame_coadded_mini = None
-                        diff_map_frame_coadded_mini = None
-                        # * There are conceivable situations where
-                        #   coadded maps are needed, but these frames
-                        #   suffice for the time being.
-                        gc.collect()
-                if self.t_only:
-                    del frame["T"], frame["Wunpol"]
-                    gc.collect()
+                        # * Depending on what analysis tasks are done,
+                        #   not all of the four types of frames are needed.
+                        #   Having no """'s would be ideal, though.
+                        
+                        summ_map_frame_individ_mini,  \
+                        summ_map_frame_coadded_mini,  \
+                        diff_map_frame_individ_mini,  \
+                        diff_map_frame_coadded_mini = \
+                            [create_new_map_frame_with_smaller_region(
+                                 one_type_of_frame,
+                                 center_ra, center_dec,
+                                 t_only=self.t_only)
+                             for one_type_of_frame in
+                                 (summ_map_frame_individ,
+                                  summ_map_frame_coadded,
+                                  diff_map_frame_individ,
+                                  diff_map_frame_coadded)]
                 self.log("* Preparations done.")
                 self.log("")
             
             else:
                 time_to_analyze_maps = False
-            
-            
+
+
+
             # --- Calculate a standard deviation of the temperature map,
             #     a mean of the TT weight map, and the number of pixels in the
             #     weight map whose weights are above certain threshold
@@ -2629,10 +2700,8 @@ class AnalyzeAndCoaddMaps(object):
                     self.map_cache_for_both_dirs[idr][sbfd] = None
             
             
-            # - Finally try to free up some memory
+            # - Drop the frame now that it was added and processed
             
-            del frame
-            gc.collect()
             return []
         
         
@@ -2656,6 +2725,7 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("# --------------------------- #")
                 self.log("")
                 
+                mp_fr.pop("Id")
                 mp_fr["Id"] = map_id
                 mp_fr["AreCoaddedMapsContained"] = True
                 mp_fr["CoaddedMapIDs"] = self.coadded_map_ids[map_id]
@@ -2882,9 +2952,6 @@ def drop_duplicate_analysis_results(frame):
 def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
     
     wu = 1 / (core.G3Units.mK * core.G3Units.mK)
-    
-    mean_wt /= wu
-    max_wt  /= wu
     thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 100.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 120.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 120.0*wu},
@@ -3010,21 +3077,12 @@ class FlagBadMaps(object):
                     band = b.replace("GHz", "")
                     break
             
-            new_frame = core.G3Frame(core.G3FrameType.Map)
+            # - Remove weights and assume the map is not bad
             
-            if self.t_only:
-                t_map_no_weights = mapmaker.mapmakerutils.remove_weight_t(
-                                       frame["T"], frame["Wunpol"])
-                numpy.asarray(t_map_no_weights)\
-                    [numpy.asarray(frame["Wunpol"].TT)==0.0] = 0.0
-                new_frame["T"] = t_map_no_weights
-                new_frame["Wunpol"] = frame["Wunpol"]
-            
-            
-            # - Assume the map is not bad
-            
+            maps.RemoveWeights(frame, zero_nans=True)
             map_is_bad = False
-                        
+            
+            
             # -- One criterion for cutting a map is
             #    mean TT weight of a map
             
@@ -3034,13 +3092,13 @@ class FlagBadMaps(object):
                         self.sb_fld, frame, self.p_list)
             
             flc_dct = calculate_map_fluctuation_metrics(
-                          new_frame, band, self.sb_fld,
+                          frame, band, self.sb_fld,
                           pixs=self.pixels_to_use_for_flc_calc[self.sb_fld],
                           t_only=self.t_only,
                           logfun=self.logfun)
             
             mean_wt = flc_dct["MeansOfTTWeights"]
-            max_wt  = numpy.max(new_frame["Wunpol"].TT)
+            max_wt  = numpy.max(frame["Wunpol"].TT)
             bad_weights = do_weights_look_bad(
                               mean_wt, max_wt, band, self.sb_fld)
             if bad_weights:
@@ -3057,12 +3115,13 @@ class FlagBadMaps(object):
             # -- Another criterion is presence of NaNs
             
             has_nans = False
+            maps.ApplyWeights(frame)
             
             if self.t_only:
                 map_types = ["T"]
             
             for map_type in map_types:
-                if False in numpy.isfinite(numpy.asarray(new_frame[map_type])):
+                if False in numpy.isfinite(numpy.asarray(frame[map_type])):
                     has_nans = True
                     self.logfun("### NaNs were found in the %s map!", map_type)
                     record_bad_obs_id(self.x_list,
@@ -3070,7 +3129,7 @@ class FlagBadMaps(object):
                                       "NaNs in "+map_type+" map.")
             
             
-            # - Check the badness again
+            # - Report the badness and make the maps sparse again
             
             map_is_bad = bad_weights or has_nans
             
@@ -3080,6 +3139,8 @@ class FlagBadMaps(object):
             else:
                 self.logfun("* ... the map doesn't look obviously bad!")
             self.logfun("")
+            
+            maps.CompactMaps(frame, zero_nans=True)
 
 
 
@@ -3324,6 +3385,11 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
     
     pipeline = core.G3Pipeline()
     
+    for i, f in enumerate(all_good_g3_files):
+        f = maybe_get_gfal_copied_file(
+                f, outdir=os.path.dirname(output_file))
+        all_good_g3_files[i] = f
+    
     pipeline.Add(core.G3Reader,
                  filename=all_good_g3_files)
     
@@ -3407,6 +3473,9 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
     pipeline.Run(profile=profile)
     
     log("")
+    
+    for f in all_good_g3_files:
+        f = maybe_del_gfal_copied_file(f)
     
     return 1
 

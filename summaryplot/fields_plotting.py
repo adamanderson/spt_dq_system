@@ -75,7 +75,7 @@ import  logging
 from    operator    import  itemgetter
 from    spt3g       import  core
 from    spt3g       import  mapmaker
-from    spt3g       import  coordinateutils
+from    spt3g       import  maps
 from    spt3g       import  std_processing
 from    scipy       import  ndimage
 from    scipy       import  linalg
@@ -244,11 +244,11 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         print("The rebin factor is", rebin_factor)
         
         if self.map_type == "T":
-            new_field_map  = coordinateutils.FlatSkyMap(**map_parameters)
-            new_weight_map = coordinateutils.FlatSkyMap(**map_parameters)
-            coordinateutils.reproj_map(
+            new_field_map  = maps.FlatSkyMap(**map_parameters)
+            new_weight_map = maps.FlatSkyMap(**map_parameters)
+            maps.reproj_map(
                 frame["T"], new_field_map, rebin_factor)
-            coordinateutils.reproj_map(
+            maps.reproj_map(
                 frame["Wunpol"].TT, new_weight_map, rebin_factor)
             new_frame = core.G3Frame(core.G3FrameType.Map)
             new_frame["T"]         = new_field_map
@@ -260,14 +260,9 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
     
     def get_field_map(self, frame):
         
-        if self.map_type == "T":
-            t_map = mapmaker.mapmakerutils.remove_weight_t(
-                        frame["T"], frame["Wunpol"])
-            idx_zero_weights = \
-                numpy.where(numpy.asarray(frame["Wunpol"].TT)==0.0)
-            numpy.asarray(t_map)[idx_zero_weights] = numpy.nan
-            
-            return t_map, "T map"
+        maps.RemoveWeights(frame)
+        if self.map_type == "T":            
+            return frame["T"], "T map"
     
     
     def get_weight_map(self, frame):
