@@ -1921,8 +1921,10 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("* sky map and weight map (ID: %s)", frame["Id"])
                 self.log("* to the coadded maps (ID: %s) ...", id_for_coadds)
                 if len(self.coadded_map_frames[id_for_coadds].keys()) == 0:
-                    self.coadded_map_frames[id_for_coadds] = frame
                     if self.t_only:
+                        self.coadded_map_frames[id_for_coadds]["T"] = frame["T"]
+                        self.coadded_map_frames[id_for_coadds]["Wunpol"] = \
+                            frame["Wunpol"]
                         tu = core.G3Units.mK
                         self.detail("$$$ t of original map @ "
                                     "(x, y) = (%d, %d): %7.3e"
@@ -2725,7 +2727,6 @@ class AnalyzeAndCoaddMaps(object):
                 self.log("# --------------------------- #")
                 self.log("")
                 
-                mp_fr.pop("Id")
                 mp_fr["Id"] = map_id
                 mp_fr["AreCoaddedMapsContained"] = True
                 mp_fr["CoaddedMapIDs"] = self.coadded_map_ids[map_id]
