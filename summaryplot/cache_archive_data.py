@@ -25,8 +25,8 @@ from spt3g       import std_processing
 from spt3g.autoprocessing import schedule_queries
 try: # in the north
     querier = schedule_queries.DBQuerier(
-                  scanify_file='/spt/data/transfer_database/scanify.txt',
-                  sch_file='/spt/data/transfer_database/schedule.txt')
+                  scanify_file='/sptlocal/transfer/rsync/transfer_database/scanify.txt',
+                  sch_file='/sptlocal/transfer/rsync/transfer_database/schedule.txt')
 except: # at Pole
     querier = schedule_queries.DBQuerier(
                   scanify_file='/poleanalysis/sptdaq/db/db/scanify.txt',
