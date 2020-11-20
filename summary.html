@@ -2188,58 +2188,65 @@
   
   <div id="tabs-readme" style="height:85vh;overflow:scroll;">
     <p> Hello! Thank you for visiting the SPT-3G data quality summary webpage and for reading the documentation here.
-        If you notice that the figures in any of the tabs (Calibration Observations, Field Observations, etc.)
+        If you notice that the figures in any of the tabs (<i>Calibration Observations</i>, <i>Field Observations</i>, etc.)
         have not been updated for the last two days but are not aware of any issues with the operation of
         the telescope and the camera, or if you have some questions or suggestions on the webpage,
-        please let Adam and Wei know! (Read Me author: Wei, Last updated: 2020/06/14)</p><br>
+        please let Adam and Wei know.
+        If you are new to this webpage and are confused by what it is, how it works, what to look at, etc.,
+        please feel free to contact Wei,
+        who is more than happy to give a presentation/tutorial on the contents of this webpage! </p>
+    <p style="text-align:right"> (Read Me author: Wei, Last updated: 2020/11/20) </p><br>
     
     <h3> 1. Overview </h3>
     <p> This webpage is meant to be used to monitor how stable the results of various calibration observations and
-        field observations have been over time, especially for the last several days.
-        Nearly every figure in the <i>Calibration Observations</i> tab, <i>Field Observations (Winter)</i> tab,
-        and <i>Field Observations (Summer)</i> tab shows the time variations of certain quantity during certain time interval.
+        field observations have been over time, especially for the last several days. </p>
+    <p> Nearly every figure in the <i>Calibration Observations</i> tab and <i>Field Observations (Winter/Summer)</i> tab
+        shows the time variations of certain quantity during certain time interval.
         If the operation of the telescope and the camera was normal during that time interval,
-        then the data points plotted in a figure should show a flat trend.
+        then the data points plotted there should show a more or less flat trend.
         The presence of any abnormal data point indicates that there was some issue with the operation,
-        some unusual environmental condition, or some bug in the analysis pipeline that calculated that data point.
+        some unusual environmental condition, or perhaps some problem in the analysis pipeline that calculated that data point.
         Since bad weather conditions is a common cause of deteriorated data quality,
         some weather-related plots are shown in the <i>Weather Et Cetera</i> tab,
         which may be useful when we want to know what the weather was like during certain period
         from which we see degraded data quality.
         In addition, there are some cryogenics-related plots in the <i>Fridge Cycles</i> and <i>Weather Et Cetera</i> tabs
-        that may be useful in a situation where we suspect that there are some issues with the cryogenics. </p>
-    <p> There are not any strict definitions on what is considered as abnormal, but,
-        if you notice that all the results from the observations taken during that past day or two deviate from
-        the general trends over the past month by more than 50%,
-        then that is propably something worth reporting and investigating.  
-        There are some detailed suggestions in
-        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/SuggestionsForUsingTheDataQualitySummaryWebpageEtc">
-         this wiki page</a> as to the criteria you can consider adopting.
-        Also, if you want to know the current status of the
-        northern shifts for data quality monitoring,
-        please check <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>. </p>
-    <p> With this tool, we hope that any potentially serious problem will be detected early on.
-        The following sections have some explanations on the figures shown in each tab. </p><br>
+        that may be useful in a situation where we suspect that there are some issues with the cryostats. </p>
+    <p> There are not any strict definitions on what is considered as abnormal, but, for example,
+        if all the results from the observations taken during the past day or two deviate from
+        the general trends over the past month by more than 50%, then that may be an indicator of some issue. </p>
+    <p> Our winterovers are checking this webpage on a daily basis.
+        In addition, in any given week, there should be two people in the north paying attention to the plots as well.
+        (More information on the logistics of the northern data quality monitoring shift can be found in
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Northern_Offsite_Shift">this wiki page</a>). 
+        By closely monitoring the data quality through this tool,
+        we hope that any potentially serious problem will be detected early on.
+        The following sections have some explanations on the figures shown in each tab. </p>
+    <p> The subsequent sections have more detailed explanations on what contents each tab has. </p><br>
     
     <h3> 2. <i>Calibration Observations</i> tab </h3>
     <p> This tab mostly contains figures showing the time variations of the medians of various calibration quantities
-        across different combinations of observing bands and wafers during different time intervals.
+        from different combinations of observing bands and wafers during different time intervals.
         Most of the quantities shown here are simply the ones computed by the autoprocessing pipelines,
         but some of them are separately calculated by this data quality monitoring system.
-        For more detailed explanations, please see the sections below.
         The presence of a red triangle near either the top or bottom
         of a plot indicates that there is a data point that lies outside the range,
         and the presence of a vertical red line indicates that there is a NaN.
         All the time intervals except for those in the "Yearly" section contain the same set of figures.
         For the time intervals in the "Yearly" section, only figures related to infrequent observations are shown. </p>
-    <p> If you are not familiar with what types of calibration observations we take and how we analyze their data,
+    <p> If you are completely new to SPT-3G and
+        have just started learning what observations we take and how we analyze their data to calibrate detectors,
+        you may find
+        <a href="https://pole.uchicago.edu/spt3g/index.php/File:20191016_Calibration_Procedure.pdf">this presentation</a>
+        potentially useful. It is quite long but hopefully helps you understand the calibration quantities 
+        shown in this tab. </p>
+    <p> If you are already familiar with the calibration observations and would just like to refresh your memory,
         you may find the following resources useful:
         <a href="https://github.com/SouthPoleTelescope/spt3g_software/blob/master/calibration/README.rst">
          the documentation on calibration in the <code>spt3g_software</code> repository</a>,
         <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20170718_calstatus.pdf">Nathan's slides</a>,
-        <a href="https://pole.uchicago.edu/spt3g/index.php/Calibration_Pipeline">Daniel's wiki page</a>,
-        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/CalNotesTcDontLookHere"> Tom's wiki page</a>, and
-        <a href="https://pole.uchicago.edu/spt3g/index.php/File:20191016_Calibration_Procedure.pdf">Wei's slides</a>. </p><br>
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Calibration_Pipeline">Daniel's wiki page</a>, and
+        <a href="https://spt-trac.grid.uchicago.edu/trac_south_pole/wiki/CalNotesTcDontLookHere"> Tom's wiki page</a>.</p><br>
     
     <h4> 2.1. <i>Calibrator</i> section </h4>
     <p> The figures in the left column show the quantity <code>CalibratorResponse</code> computed by the autoprocessing,
@@ -2293,7 +2300,7 @@
         <a href="https://kicp-workshops.uchicago.edu/CMB-School/resources/depot/benson__2.pdf">
          a presentation of Brad's</a> (slides 3 through 8), and the actual code used is
         <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/elnod.py#L69">
-         this one</a>. </p>
+         here</a>. </p>
     <p> The figure in the thrid row shows the IQ phase angle, which is given by
         <code>arctan(ElnodEigenvalueDominantVectorQ/ElnodEigenvalueDominantVectorI)</code>.
         Both the numerator and denominator are computed by the autoprocessing. </p><br>
@@ -2318,7 +2325,7 @@
     <p> Fast-point observations provide the main ingredient we need to calibrate bolometer timestreams into K_CMB units.
         Given that these observations are taken only once in about a week,
         it is very important to make sure that the results from each fast-point do not look bad.
-        The medians of <code>IntegralFlux</code> and <code>FluxCalibration</code> should not look abnormal.
+        This means that the medians of <code>IntegralFlux</code> and <code>FluxCalibration</code> should not look abnormal.
         In addition, the numbers of detectors whose <code>FluxCalibration</code> have negative values
         should not be much smaller than the usual ones (since <code>FluxCalibration</code> is roughly defined as
         a bolometer's peak response to the source
@@ -2378,8 +2385,8 @@
     
     <h4> 2.6. Figures for individual observations </h4>
     <p> In every figure shown in the <i>Calibration Observations</i> tab,
-        one observation's results are reduced to one data point (for each observing band).
-        If you are interested in checking the details of the results from certain observation,
+        one observation's results are reduced to one data point (for each observing band and/or wafer).
+        If you are interested in checking the details of the results from one particular observation,
         say, the distribution of <code>CalibratorResponse</code> from a particular calibrator stare,
         you may find the <a href="http://spt3g-dq.grid.uchicago.edu/">per-observation plotter</a> useful.
         Instructions on how to use this webpage can be found in
@@ -2391,6 +2398,9 @@
         and figures showing time variations of several map-related quantities such as map noise level during the same interval.
         In the latter type of figures, one data point corresponds to one observation of a sub-field.
         The yearly intervals actually have different types of figures, which are explained in the following sections. </p>
+    <p> If you are new to SPT-3G and unfamiliar with how we take field observations and make CMB maps,
+        hopefully there is someone in your institution whom you can ask questions to...
+        Of course, Wei is happy to talk about the quantities plotted here as well! </p>
     <p> For the <i>Winter</i> tab, most of the figures have the notations
         "el0", "el1", "el2", and "el3" in their legends and/or titles, 
         and these are simply shorthands for the
@@ -2638,8 +2648,8 @@
     
     <h3> 5. <i>Fridge Cycles</i> tab </h3>
     <p> This tab contains figures showing the temperatue of various parts of the He sorption fridge during each fridge cycle.
-        The plots in the "newest" section are identical to the plots in the section right below it.
-        The plots shown here are hopefully useful in case we see some degraded performance of the fridge. </p><br>
+        The plots you get from the "newest" radio button are identical to the plots you get from the button right below it.
+        These plots will hopefully be useful in case we see some degraded performance of the fridge. </p><br>
     
     <h3> 6. Repository </h3>
     <p> All the relevant scripts that work together to make this webpage run are located in the
