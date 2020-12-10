@@ -74,7 +74,8 @@
   <ul>
     <li><a href="#tabs-summarystats">Calibration Observations</a></li>
     <li><a href="#tabs-maps">Field Observations (Winter)</a></li>
-    <li><a href="#tabs-mapssummer">Field Observations (Summer)</a></li>
+    <li><a href="#tabs-mapssummer">(Summer)</a></li>
+    <li><a href="#tabs-mapssummerb">(Summer-b)</a></li>
     <li><a href="#tabs-weather">Weather Et Cetera</a></li>
     <li><a href="#tabs-fridge">Fridge Cycles</a></li>
     <li><a href="#tabs-readme">Read Me</a></li>
@@ -1347,7 +1348,7 @@
             <td width="33%">
               <a href="javascript:location.href='staticimg/'+mapweekdirsummer+'/90GHz-T_map.png'">
                 <img style="display:block;" width="100%" name='map_t_90_summer' class="fig-with-border"
-                     src='staticimg/summer/figures_summer/last_n/last_07/90GHz-T_map.png'>
+                     src='staticimg/maps/figures_summer/last_n/last_07/90GHz-T_map.png'>
               </a>
             </td>
             <td width="33%">
@@ -2010,7 +2011,695 @@
       </div>
     </div>
   </div>
-  
+
+  <div id="tabs-mapssummerb" style="padding:10px 10px 10px 10px;">
+    <div class="container-all-figs" style="height:86vh;">
+      <div class="container-time-interval-selector" style="background-color:hsla(165, 100%, 75%, 0.01);">
+        <form>
+          <fieldset class="field-with-border">
+            <legend>Recent</legend>
+            <div id="datalist_mapssummerb_last_n">
+            </div>
+          </fieldset>
+          <br>
+          <fieldset class="field-with-border">
+            <legend>Yearly</legend>
+            <div id="datalist_mapssummerb_yearly">
+            </div>
+          </fieldset>
+          <br>
+          <fieldset class="field-with-border">
+            <legend>Monthly</legend>
+            <div id="datalist_mapssummerb_monthly">
+            </div>
+          </fieldset>
+          <br>
+          <fieldset class="field-with-border">
+            <legend>Weekly</legend>
+            <div id="datalist_mapssummerb_weekly">
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      
+      <div class="container-figs-one-interval" style="background-color:hsla(285, 100%, 75%, 0.01);">
+        <table style="table-layout:fixed;" cellpadding="5">
+          <tr>
+            <td colspan="1">
+              <h2><u>Maps</u></h2>
+            </td>
+            <td colspan="2" align="right" valign="top">
+              <div id="lastmodified_maps_summerb">
+              </div>
+            </td>
+          </tr>
+          
+          <tr>
+            <td>
+              <h3>T Maps</h3>
+            </td>
+          </tr>  
+          <tr>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/90GHz-T_map.png'">
+                <img style="display:block;" width="100%" name='map_t_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/150GHz-T_map.png'">
+                <img style="display:block;" width="100%" name='map_t_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/220GHz-T_map.png'">
+                <img style="display:block;" width="100%" name='map_t_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map.png'>
+              </a>
+            </td>
+          </tr>
+          <tr><td><br></td></tr>
+
+          <tr>
+            <td>
+              <h3>TT Weight Maps</h3>
+            </td>
+          </tr>  
+          <tr>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/90GHz-TT_weight_map.png'">
+                <img style="display:block;" width="100%" name='map_tt_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-TT_weight_map.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/150GHz-TT_weight_map.png'">
+                <img style="display:block;" width="100%" name='map_tt_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-TT_weight_map.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/220GHz-TT_weight_map.png'">
+                <img style="display:block;" width="100%" name='map_tt_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-TT_weight_map.png'>
+              </a>
+            </td>
+          </tr>
+          <tr><td><br></td></tr>
+          
+          <tr>
+            <td>
+              <h3>TT Weight Map Cross Sections</h3>
+            </td>
+          </tr>
+          <tr>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/90GHz-TT_weight_map_cross_sectional_view.png'">
+                <img style="display:block;" width="100%" name='xsec_tt_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-TT_weight_map_cross_sectional_view.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/150GHz-TT_weight_map_cross_sectional_view.png'">
+                <img style="display:block;" width="100%" name='xsec_tt_150_summerb' class="fig-with-border"
+                     src='staticimg/map/figures_summerb/last_n/last_07/150GHz-TT_weight_map_cross_sectional_view.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/220GHz-TT_weight_map_cross_sectional_view.png'">
+                <img style="display:block;" width="100%" name='xsec_tt_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-TT_weight_map_cross_sectional_view.png'>
+              </a>
+            </td>
+          </tr>
+          <tr><td><br></td></tr>
+          
+          <tr>
+            <td>
+              <br><h2><u>Fluctuations in Maps</u></h2>
+            </td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Noise Levels of T Maps</h3>
+            </td>  
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/90GHz-T_map_noise_levels_from_individual_maps.png'">
+                <img style="display:block;" width="100%" name='individ_noise_t_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_noise_levels_from_individual_maps.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/150GHz-T_map_noise_levels_from_individual_maps.png'">
+                <img style="display:block;" width="100%" name='individ_noise_t_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_noise_levels_from_individual_maps.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/220GHz-T_map_noise_levels_from_individual_maps.png'">
+                <img style="display:block;" width="100%" name='individ_noise_t_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_noise_levels_from_individual_maps.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Means of TT Weight Maps</h3>
+            </td>  
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/90GHz-T_map_mean_of_tt_weight_map_values.png'">
+                <img style="display:block;" width="100%" name='mean_tt_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_mean_of_tt_weight_map_values.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/150GHz-T_map_mean_of_tt_weight_map_values.png'">
+                <img style="display:block;" width="100%" name='mean_tt_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_mean_of_tt_weight_map_values.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+'/220GHz-T_map_mean_of_tt_weight_map_values.png'">
+                <img style="display:block;" width="100%" name='mean_tt_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_mean_of_tt_weight_map_values.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Noise Levels of Running Coadded T Maps</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_noise_levels_from_running_coadds.png'">
+                <img style="display:block;" width="100%" name='running_noise_t_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_noise_levels_from_running_coadds.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_noise_levels_from_running_coadds.png'">
+                <img style="display:block;" width="100%" name='running_noise_t_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_noise_levels_from_running_coadds.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_noise_levels_from_running_coadds.png'">
+                <img style="display:block;" width="100%" name='running_noise_t_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_noise_levels_from_running_coadds.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Noise Levels of Individual T Maps</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_distributions_of_individual_noise_levels.png'">
+                <img style="display:block;" width="100%" name='distro_noise_t_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distributions_of_individual_noise_levels.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distributions_of_individual_noise_levels.png'">
+                <img style="display:block;" width="100%" name='distro_noise_t_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_distributions_of_individual_noise_levels.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_distributions_of_individual_noise_levels.png'">
+                <img style="display:block;" width="100%" name='distro_noise_t_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_distributions_of_individual_noise_levels.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Means of TT Weights</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+                <img style="display:block;" width="100%" name='distro_mean_tt_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+                <img style="display:block;" width="100%" name='distro_mean_tt_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+                <img style="display:block;" width="100%" name='distro_mean_tt_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr>
+            <td>
+              <br><h2><u>Pointing</u></h2>
+            </td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>RA Offsets of Points Sources</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-29.75.png'">
+                <img style="display:block;" width="100%" name='ra_offsets_el1b0_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-29.75.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-33.25.png'">
+                <img style="display:block;" width="100%" name='ra_offsets_el1b1_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-33.25.png'>
+              </a>
+            </td>
+          </tr>  
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-36.75.png'">
+                <img style="display:block;" width="100%" name='ra_offsets_el2b0_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-36.75.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-40.25.png'">
+                <img style="display:block;" width="100%" name='ra_offsets_el2b1_summerb' class="fig-with-border"
+                 src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-40.25.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Dec Offsets of Points Sources</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-29.75.png'">
+                <img style="display:block;" width="100%" name='dec_offsets_el1b0_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-29.75.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-33.25.png'">
+                <img style="display:block;" width="100%" name='dec_offsets_el1b1_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-33.25.png'>
+              </a>
+            </td>
+          </tr>  
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-36.75.png'">
+                <img style="display:block;" width="100%" name='dec_offsets_el2b0_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-36.75.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-40.25.png'">
+                <img style="display:block;" width="100%" name='dec_offsets_el2b1_summerb' class="fig-with-border"
+                 src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-40.25.png'>
+              </a>
+            </td>
+          </tr>
+
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Averages of Pointing Offsets</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distribution_of_average_Ra_offsets.png'">
+                <img style="display:block;" width="100%" name='distro_ra_offsets_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distribution_of_average_Ra_offsets.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distribution_of_average_Dec_offsets.png'">
+                <img style="display:block;" width="100%" name='distro_dec_offsets_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distribution_of_average_Dec_offsets.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          <tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <br><h2><u>Completeness of Observations</u></h2>
+             </td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Numbers of Bolometers Not Flagged</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_average_numbers_of_flagged_detectors.png'">
+                <img style="display:block;" width="100%" name='flagging_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_average_numbers_of_flagged_detectors.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_average_numbers_of_flagged_detectors.png'">
+                <img style="display:block;" width="100%" name='flagging_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_average_numbers_of_flagged_detectors.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_average_numbers_of_flagged_detectors.png'">
+                <img style="display:block;" width="100%" name='flagging_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_average_numbers_of_flagged_detectors.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Fractions of Pixels Having Nominal Weights</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+                <img style="display:block;" width="100%" name='fractional_coverage_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+                <img style="display:block;" width="100%" name='fractional_coverage_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+                <img style="display:block;" width="100%" name='fractional_coverage_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Observation Durations</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/observation_durations.png'">
+                <img style="display:block;" width="100%" name='observation_durations_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/observation_durations.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr>
+            <td>
+              <br><h2><u>Temperature Calibration</u></h2>
+            </td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>SPT x Planck / Planck x Planck</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_averages_of_power_spectra_ratios.png'">
+                <img style="display:block;" width="100%" name='xspec_ratio_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_averages_of_power_spectra_ratios.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_averages_of_power_spectra_ratios.png'">
+                <img style="display:block;" width="100%" name='xspec_ratio_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_averages_of_power_spectra_ratios.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_averages_of_power_spectra_ratios.png'">
+                <img style="display:block;" width="100%" name='xspec_ratio_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_averages_of_power_spectra_ratios.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Cross Spectra Ratios</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_90_summerb' class="fig-with-border"
+                      src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_150_summerb' class="fig-with-border"
+                      src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+                 <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_220_summerb' class="fig-with-border"
+                      src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          <tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Cal vs El (by sub field)</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_field_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>Cal vs El (by wafer)</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+                <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+          
+          <tr class="maps_summerb_yearly">
+            <td>
+              <h3>Cal vs El</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_distributions_of_cal_response_changes.png'">
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_90_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_distributions_of_cal_response_changes.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_distributions_of_cal_response_changes.png'">
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_150_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_distributions_of_cal_response_changes.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/220GHz-T_map_distributions_of_cal_response_changes.png'">
+                <img style="display:block;" width="100%" name='distro_cal_vs_el_220_summerb' class="fig-with-border"
+                     src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_distributions_of_cal_response_changes.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_yearly">
+            <td><br></td>
+          <tr>
+          
+          <tr class="maps_summerb_non_yearly">
+            <td>
+              <h3>pW/K Conversion Factors</h3>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_90_summerb' class="fig-with-border"
+                 src='staticimg/maps/figures_summerb/last_n/last_07/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                       '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_150_summerb' class="fig-with-border"
+                 src='staticimg/maps/figures_summerb/last_n/last_07/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+              </a>
+            </td>
+            <td width="33%">
+              <a href="javascript:location.href='staticimg/'+mapweekdirsummerb+
+                      '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+                <img style="display:block;" width="100%" name='pw_per_k_by_wafer_220_summerb' class="fig-with-border"
+                 src='staticimg/maps/figures_summerb/last_n/last_07/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+              </a>
+            </td>
+          </tr>
+          <tr class="maps_summerb_non_yearly">
+            <td><br></td>
+          </tr>
+
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div id="tabs-weather" style="padding:10px 10px 10px 10px;">
     <div class="container-all-figs" style="height:86vh;">
       <div class="container-time-interval-selector" style="background-color:hsla(165, 100%, 75%, 0.01);">
@@ -2299,7 +2988,7 @@
         The formula used to convert <code>ElnodSlopes</code> to the opacity values is based on
         <a href="https://kicp-workshops.uchicago.edu/CMB-School/resources/depot/benson__2.pdf">
          a presentation of Brad's</a> (slides 3 through 8), and the actual code used is
-        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/elnod.py#L69">
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/elnod.py#L69">
          here</a>. </p>
     <p> The figure in the thrid row shows the IQ phase angle, which is given by
         <code>arctan(ElnodEigenvalueDominantVectorQ/ElnodEigenvalueDominantVectorI)</code>.
@@ -2344,7 +3033,7 @@
         through fitting the map to a 2D Gaussian. Furthermore, for each set of five observations,
         it estimates the bench position that minimizes the FWHM and ellipticity by fitting parabolas to the data points.
         The actual code that does these things is
-        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/pmnj0210_5101.py">
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/pmnj0210_5101.py">
          here</a>. </p>
     <p> The figures in the first two rows (not available in the "Yearly" intervals)
         show the beam properties versus the bench position for each schedule within that time interval,
@@ -2368,7 +3057,7 @@
         the median of the neighboring values within +/- 0.3 Hz from the location of the peak.
         Any line whose frequency is below 0.99 Hz is ignored.
         The actual code used to do this is located
-        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/pw_per_airmass/summaryplot/noise.py#L108">
+        <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/noise.py#L108">
          here</a>. </p>
     <p> The original motivation for adding this figure was to detect early on a situation
         where timestreams suddenly start to have a lot of persistent noise lines in them.

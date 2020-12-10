@@ -101,11 +101,16 @@ def get_season_based_on_fields(some_fields):
     summer_fields = ["ra5hdec-24.5" , "ra5hdec-31.5",
                      "ra5hdec-38.5" , "ra5hdec-45.5",
                      "ra5hdec-52.5" , "ra5hdec-59.5"]
+    summer_fields_b = ["ra1h40dec-29.75", "ra1h40dec-33.25",
+                       "ra1h40dec-36.75", "ra1h40dec-40.25"]
+    
     if set(some_fields) <= set(winter_fields):
         return "winter"
     elif set(some_fields) <= set(summer_fields):
         return "summer"
-                    
+    elif set(some_fields) <= set(summer_fields_b):
+        return "summerb"
+
 
 def get_figure_and_plot_objects(w=12.0, h=9.0, dpi=100):
     
@@ -294,9 +299,11 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
         elif (obs_fr is None) and (obs_id_list is not None):
             season = get_season_based_on_fields(obs_id_list.keys())
             if season == "winter":
-                source = "Winter fields"
+                source = "1500d winter field"
             elif season == "summer":
-                source = "Summer fields"
+                source = "1500d summer field"
+            elif season == "summerb":
+                source = "600d summer-b field"
             obs_ids = []
             for oids_one_field in obs_id_list.values():
                 for oid in oids_one_field:
@@ -311,11 +318,13 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             obs_id = min_id + " to " + max_id
             el_dic = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
                       "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3",
-                      "ra5hdec-24.5" : "el 0", "ra5hdec-31.5" : "el 1",
-                      "ra5hdec-38.5" : "el 2", "ra5hdec-45.5" : "el 3",
-                      "ra5hdec-52.5" : "el 4", "ra5hdec-59.5" : "el 5"}
+                      "ra5hdec-24.5": "el 0", "ra5hdec-31.5": "el 1",
+                      "ra5hdec-38.5": "el 2", "ra5hdec-45.5": "el 3",
+                      "ra5hdec-52.5": "el 4", "ra5hdec-59.5": "el 5",
+                      "ra1h40dec-29.75": "el 1b0", "ra1h40dec-33.25": "el 1b1",
+                      "ra1h40dec-36.75": "el 2b0", "ra1h40dec-40.25": "el 2b1"}
             n_obss = ",  ".join([el_dic[source] + " : " + str(len(obss)) \
-                                for source, obss in obs_id_list.items()])
+                                 for source, obss in obs_id_list.items()])
             resol  = str(map_res/core.G3Units.arcmin)+"'"
             if self.smooth_map_with_gaussian:
                 resol += " map smoothed with " + \
@@ -453,9 +462,18 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             one_fld_uni =   3.00
             one_fld_zr  =   4.00
             n_flds      =   6
+        elif season == "summerb":
+            norm_dec_l  = -41.10
+            norm_dec_r  = -40.90
+            most_neg_d  = -43.75
+            most_pos_d  = -26.25
+            center_decs = [-40.25, -36.75, -33.25, -29.75]
+            one_fld_uni =   1.50
+            one_fld_zr  =   2.50
+            n_flds      =   4
         
         center_ra     = weight_map.alpha_center / core.G3Units.deg
-        center_ra_str = '{:d}h'.format(int(center_ra/15))
+        center_ra_str = '{:d}deg'.format(int(center_ra))
         
         vertical_cr_sec_values = \
             numpy.asarray(weight_map).transpose()[weight_map.shape[1]//2]
@@ -769,9 +787,11 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         self.map_id   = map_id
         self.all_fields = ["ra0hdec-44.75", "ra0hdec-52.25",
                            "ra0hdec-59.75", "ra0hdec-67.25",
-                           "ra5hdec-24.5" , "ra5hdec-31.5" ,
-                           "ra5hdec-38.5" , "ra5hdec-45.5" ,
-                           "ra5hdec-52.5" , "ra5hdec-59.5"]
+                           "ra5hdec-24.5", "ra5hdec-31.5",
+                           "ra5hdec-38.5", "ra5hdec-45.5",
+                           "ra5hdec-52.5", "ra5hdec-59.5",
+                           "ra1h40dec-29.75", "ra1h40dec-33.25",
+                           "ra1h40dec-36.75", "ra1h40dec-40.25"]
         self.make_fig_for_flggg_stats   = fig_fs
         self.make_fig_for_temp_cal_facs = fig_tc
         self.make_fig_for_frac_cal_chng = fig_rc
@@ -796,16 +816,20 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         self.n_rmarg_el = 4.8
         self.n_rmarg_wf = 6.0
         self.ttl_fs  = figure_title_font_size
-        self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
-                        "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3",
-                        "ra5hdec-24.5" : "el 0"   , "ra5hdec-31.5" : "el 1",
-                        "ra5hdec-38.5" : "el 2"   , "ra5hdec-45.5" : "el 3",
-                        "ra5hdec-52.5" : "el 4"   , "ra5hdec-59.5" : "el 5"}
+        self.el_dict = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
+                        "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3",
+                        "ra5hdec-24.5": "el 0", "ra5hdec-31.5": "el 1",
+                        "ra5hdec-38.5": "el 2", "ra5hdec-45.5": "el 3",
+                        "ra5hdec-52.5": "el 4", "ra5hdec-59.5": "el 5",
+                        "ra1h40dec-29.75": "el 1b0", "ra1h40dec-33.25": "el 1b1",
+                        "ra1h40dec-36.75": "el 2b0", "ra1h40dec-40.25": "el 2b1"}
         self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
                         "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728",
-                        "ra5hdec-24.5" : "#1f77b4", "ra5hdec-31.5" : "#ff7f0e",
-                        "ra5hdec-38.5" : "#2ca02c", "ra5hdec-45.5" : "#d62728",
-                        "ra5hdec-52.5" : "#9467bd", "ra5hdec-59.5" : "#8c564b"}
+                        "ra5hdec-24.5": "#1f77b4", "ra5hdec-31.5": "#ff7f0e",
+                        "ra5hdec-38.5": "#2ca02c", "ra5hdec-45.5": "#d62728",
+                        "ra5hdec-52.5": "#9467bd", "ra5hdec-59.5": "#8c564b",
+                        "ra1h40dec-29.75": "C0", "ra1h40dec-33.25": "C1",
+                        "ra1h40dec-36.75": "C2", "ra1h40dec-40.25": "C3"}
         self.waf_cl_dict = {"W172": "#1f77b4", "W174": "#ff7f0e",
                             "W176": "#2ca02c", "W177": "#d62728",
                             "W180": "#9467bd", "W181": "#8c564b",
@@ -1315,26 +1339,52 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         key_prefix = "FluctuationMetricsIndividualSignalMaps"
         param_lists = \
-            [{"key"   : key_prefix + "MeansOfTTWeights",
-              "ylims" : { "90GHz": {"bottom": 30, "top": 150},
-                         "150GHz": {"bottom": 30, "top": 250},
-                         "220GHz": {"bottom":  1, "top":  20}},
-              "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
-              "lnstyl": self.ln_styl,
-              "ylabel": "Mean weight  " + \
-                        "[1 / " + r"${mK_{CMB}}^2$" + "]" + "\n",
-              "title" : "Means of TT weight maps" + "\n",
-              "file"  : "mean_of_tt_weight_map_values"},
-             {"key"   : key_prefix + "NumbersOfPixelsWithGoodTTWeights",
-              "ylims" : { "90GHz": {"bottom": -0.01, "top": 1.10},
-                         "150GHz": {"bottom": -0.01, "top": 1.10},
-                         "220GHz": {"bottom": -0.01, "top": 1.10}},
-              "yunits": 1.0,
-              "lnstyl": "None",
-              "ylabel": "Fraction" + "\n",
-              "title" : "Fractions of pixels having nominal weights" + "\n",
-              "file"  : "fractional_coverage_in_tt_weight_maps"}]
-        
+            {key_prefix+"MeansOfTTWeights": \
+                 {"ylims": \
+                      {"winter": { "90GHz": {"bottom": 30, "top": 150},
+                                  "150GHz": {"bottom": 30, "top": 250},
+                                  "220GHz": {"bottom":  1, "top":  20}},
+                       "summer": { "90GHz": {"bottom": 20, "top": 160},
+                                  "150GHz": {"bottom": 30, "top": 250},
+                                  "220GHz": {"bottom":  1, "top":  25}},
+                       "summerb": { "90GHz": {"bottom": 20, "top": 225},
+                                   "150GHz": {"bottom": 20, "top": 275},
+                                   "220GHz": {"bottom":  1, "top":  30}}},
+                  "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
+                  "lnstyl": self.ln_styl,
+                  "ylabel": "Mean weight  " + \
+                            "[1 / " + r"${mK_{CMB}}^2$" + "]" + "\n",
+                  "title" : "Means of TT weight maps" + "\n",
+                  "file"  : "mean_of_tt_weight_map_values"},
+              key_prefix+"NumbersOfPixelsWithGoodTTWeights": \
+                 {"ylims" : { "90GHz": {"bottom": -0.01, "top": 1.10},
+                             "150GHz": {"bottom": -0.01, "top": 1.10},
+                             "220GHz": {"bottom": -0.01, "top": 1.10}},
+                  "n_pix" : {"ra0hdec-44.75": 19367330,
+                             "ra0hdec-52.25": 16686859,
+                             "ra0hdec-59.75": 13734737,
+                             "ra0hdec-67.25": 10543954,
+                             "ra5hdec-24.5": 11458275,
+                             "ra5hdec-31.5": 10736705,
+                             "ra5hdec-38.5":  9854259,
+                             "ra5hdec-45.5":  8811520,
+                             "ra5hdec-52.5":  7635120,
+                             "ra5hdec-59.5":  6370108,
+                             "ra1h40dec-29.75": 3975580,
+                             "ra1h40dec-33.25": 3833325,
+                             "ra1h40dec-36.75": 3674593,
+                             "ra1h40dec-40.25": 3496554},
+                      # * n_pix calculated from
+                      #     fields_coadding.identify_pixels_of_non_atypical_region
+                      #   and these source lists:
+                      #     winter : 1500d_logSN_ptsrc_and_decrement_list.txt 
+                      #     summer : 1500d_ptsrc_list_summer_at20g.txt
+                      #     summerb : 600d_ptsrc_list_summer_b_at20g.txt
+                  "yunits": 1.0,
+                  "lnstyl": "None",
+                  "ylabel": "Fraction" + "\n",
+                  "title" : "Fractions of pixels having nominal weights" + "\n",
+                  "file"  : "fractional_coverage_in_tt_weight_maps"}}
         
         info_contained = self.frame_has_info(frame, key_prefix)
         if (not info_contained) or (self.fig_fl_made):
@@ -1342,18 +1392,14 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         self.log("")
         self.log("Making figures for some fluctuation metrics ...")
         
-        for plist in param_lists:
+        for metric_key, plist in param_lists.items():
             
             figure_obj, plot_obj = get_figure_and_plot_objects()
+            fluc_data = frame[metric_key]
             
-            fluc_data = frame[plist["key"]]
-            
-            ylims = plist["ylims"]
-            if get_season_based_on_fields(fluc_data.keys()) == "summer":
-                if "MeansOfTTWeights" in  plist["key"]:
-                    ylims = { "90GHz": {"bottom": 20, "top": 160},
-                             "150GHz": {"bottom": 30, "top": 250},
-                             "220GHz": {"bottom":  1, "top":  25}}
+            season = get_season_based_on_fields(fluc_data.keys())
+            if "MeansOfTTWeights" in metric_key:
+                ylims = plist["ylims"][season]
             xlims = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
             
@@ -1361,18 +1407,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             for sub_field in sorted(fluc_data.keys()):
                 xvals, yvals = self.get_data_points_to_plot(
                                    fluc_data, [sub_field], plist["yunits"])
-                if "NumbersOfPixelsWithGoodTTWeights" in plist["key"]:
-                    tot_n_pix = {"ra0hdec-44.75": 19367330,
-                                 "ra0hdec-52.25": 16686859,
-                                 "ra0hdec-59.75": 13734737,
-                                 "ra0hdec-67.25": 10543954,
-                                 "ra5hdec-24.5" : 11458275,
-                                 "ra5hdec-31.5" : 10736705,
-                                 "ra5hdec-38.5" :  9854259,
-                                 "ra5hdec-45.5" :  8811520,
-                                 "ra5hdec-52.5" :  7635120,
-                                 "ra5hdec-59.5" :  6370108}
-                    yvals = [yval/tot_n_pix[sub_field] for yval in yvals]
+                if "NumbersOfPixelsWithGoodTTWeights" in metric_key:
+                    yvals = [yval/plist["n_pix"][sub_field] for yval in yvals]
                     n_st_0p9 = len([yval for yval in yvals if yval < 0.9])
                     n_tot    = len(yvals)
                     if n_tot == 0:
@@ -1380,7 +1416,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                     else:
                         n_rec = int(100.0 * n_st_0p9 / n_tot)
                     records_for_later[sub_field] = n_rec
-                if "MeansOfTTWeights" in plist["key"]:
+                if "MeansOfTTWeights" in metric_key:
                     records_for_later[sub_field] = numpy.median(yvals)
                 
                 label = self.el_dict[sub_field]
@@ -1406,7 +1442,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 None, None, None, self.ttl_fs, self.ln_wdth)
             
             lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
-            if "NumbersOfPixelsWithGoodTTWeights" in plist["key"]:
+            if "NumbersOfPixelsWithGoodTTWeights" in metric_key:
                 for counter, sub_field in enumerate(sorted(fluc_data.keys())):
                     good_pc = records_for_later[sub_field]
                     plot_obj.text(0.98, 0.65-counter*0.06,
@@ -1420,8 +1456,9 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                               transform=plot_obj.transAxes,
                               color="black", alpha=2.0*self.typical_alpha,
                               fontsize=0.9*lgd_fs, horizontalalignment="right")
+            """
             if "MeansOfTTWeights" in plist["key"]:
-                """el3_median = records_for_later["ra0hdec-67.25"]
+                el3_median = records_for_later["ra0hdec-67.25"]
                 el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_median
                 el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_median
                 el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_median
@@ -1444,7 +1481,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 plot_obj.text(0.98, 0.20,
                               "cos3 / cos1\n= 0.63", **text_kargs)
                 plot_obj.text(0.98, 0.10,
-                              "cos3 / cos2\n= 0.77", **text_kargs)"""
+                              "cos3 / cos2\n= 0.77", **text_kargs)
+            """
             
             xlabel = self.typical_xlabel
             ylabel = plist["ylabel"]
@@ -1675,10 +1713,14 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
                           "150GHz": {"bottom":  70, "top": 170},
                           "220GHz": {"bottom": 260, "top": 600}}
-        if season == "summer":
+        elif season == "summer":
             ylims_dict = { "90GHz": {"bottom":  60, "top": 220},
                           "150GHz": {"bottom":  60, "top": 220},
                           "220GHz": {"bottom": 200, "top": 740}}
+        elif season == "summerb":
+            ylims_dict = { "90GHz": {"bottom":  40, "top": 220},
+                          "150GHz": {"bottom":  40, "top": 220},
+                          "220GHz": {"bottom": 190, "top": 610}}
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
         
@@ -1712,7 +1754,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                   None, None, None, self.ttl_fs, self.ln_wdth)
         
         lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
-        """el3_value  = records_for_later["ra0hdec-67.25"]
+        """
+        el3_value  = records_for_later["ra0hdec-67.25"]
         el2_to_el3 = records_for_later["ra0hdec-59.75"] / el3_value
         el1_to_el3 = records_for_later["ra0hdec-52.25"] / el3_value
         el0_to_el3 = records_for_later["ra0hdec-44.75"] / el3_value
@@ -1735,7 +1778,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         plot_obj.text(0.98, 0.20,
                       "cos1/cos3\n= 1.58", **text_kargs)
         plot_obj.text(0.98, 0.10,
-                      "cos2/cos3\n= 1.30", **text_kargs)"""
+                      "cos2/cos3\n= 1.30", **text_kargs)
+        """
         
         xlabel = self.typical_xlabel
         ylabel = "Average  " + r"$\sqrt{C_l}$" + "  " + "in the " + "\n" + \
@@ -1816,16 +1860,20 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         self.fig_fl_made = False
         
         self.ttl_fs  = figure_title_font_size
-        self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
-                        "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3",
-                        "ra5hdec-24.5" : "el 0"   , "ra5hdec-31.5" : "el 1",
-                        "ra5hdec-38.5" : "el 2"   , "ra5hdec-45.5" : "el 3",
-                        "ra5hdec-52.5" : "el 4"   , "ra5hdec-59.5" : "el 5"}
+        self.el_dict = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
+                        "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3",
+                        "ra5hdec-24.5": "el 0", "ra5hdec-31.5": "el 1",
+                        "ra5hdec-38.5": "el 2", "ra5hdec-45.5": "el 3",
+                        "ra5hdec-52.5": "el 4", "ra5hdec-59.5": "el 5",
+                        "ra1h40dec-29.75": "el 1b0", "ra1h40dec-33.25": "el 1b1",
+                        "ra1h40dec-36.75": "el 2b0", "ra1h40dec-40.25": "el 2b1"}
         self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
                         "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728",
-                        "ra5hdec-24.5" : "#1f77b4", "ra5hdec-31.5" : "#ff7f0e",
-                        "ra5hdec-38.5" : "#2ca02c", "ra5hdec-45.5" : "#d62728",
-                        "ra5hdec-52.5" : "#9467bd", "ra5hdec-59.5" : "#8c564b"}
+                        "ra5hdec-24.5": "#1f77b4", "ra5hdec-31.5": "#ff7f0e",
+                        "ra5hdec-38.5": "#2ca02c", "ra5hdec-45.5": "#d62728",
+                        "ra5hdec-52.5": "#9467bd", "ra5hdec-59.5": "#8c564b",
+                        "ra1h40dec-29.75": "C0", "ra1h40dec-33.25": "C1",
+                        "ra1h40dec-36.75": "C2", "ra1h40dec-40.25": "C3"}
         self.ln_wdth = 1.25
         self.ln_styl = "solid"
         self.mrkrsz  = 10.0
@@ -1875,6 +1923,10 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
             ylims_dict = { "90GHz": {"bottom":  5, "top": 200},
                           "150GHz": {"bottom":  5, "top": 200},
                           "220GHz": {"bottom": 15, "top": 600}}
+        elif season == "summerb":
+            ylims_dict = { "90GHz": {"bottom":  5, "top": 200},
+                          "150GHz": {"bottom":  5, "top": 200},
+                          "220GHz": {"bottom": 15, "top": 600}}
         
         max_n_obss = 0
         for sub_field, noise_dict in noise_data.items():
@@ -1889,8 +1941,10 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
         for sub_field in self.el_dict.keys():
             if sub_field in bad_ids.keys():
                 n_excluded[sub_field] = len(bad_ids[sub_field])
-            """else:
-                n_excluded[sub_field] = 0"""
+            """
+            else:
+                n_excluded[sub_field] = 0
+            """
         
         for sub_field, obs_ids in self.obs_id_list.items():
             noise_units  = core.G3Units.uK * core.G3Units.arcmin
@@ -1913,12 +1967,16 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
                            "ra0hdec-52.25": 0.86,
                            "ra0hdec-59.75": 0.79,
                            "ra0hdec-67.25": 0.72,
-                           "ra5hdec-24.5" : 0.93,
-                           "ra5hdec-31.5" : 0.86,
-                           "ra5hdec-38.5" : 0.79,
-                           "ra5hdec-45.5" : 0.72,
-                           "ra5hdec-52.5" : 0.65,
-                           "ra5hdec-59.5" : 0.58}
+                           "ra5hdec-24.5": 0.93,
+                           "ra5hdec-31.5": 0.86,
+                           "ra5hdec-38.5": 0.79,
+                           "ra5hdec-45.5": 0.72,
+                           "ra5hdec-52.5": 0.65,
+                           "ra5hdec-59.5": 0.58,
+                           "ra1h40dec-29.75": 0.93,
+                           "ra1h40dec-33.25": 0.86,
+                           "ra1h40dec-36.75": 0.79,
+                           "ra1h40dec-40.25": 0.72}
             plot_obj.text(0.50, ylocs_dict[sub_field],
                           "YTD noise: {:05.2f}".format(curr_nois),
                           transform=plot_obj.transAxes,
@@ -1946,12 +2004,16 @@ class MakeFiguresForTimeEvolutionOfMapRelatedQuantities(object):
                            "ra0hdec-52.25": 0.18,
                            "ra0hdec-59.75": 0.11,
                            "ra0hdec-67.25": 0.04,
-                           "ra5hdec-24.5" : 0.39,
-                           "ra5hdec-31.5" : 0.32,
-                           "ra5hdec-38.5" : 0.25,
-                           "ra5hdec-45.5" : 0.18,
-                           "ra5hdec-52.5" : 0.11,
-                           "ra5hdec-59.5" : 0.04}
+                           "ra5hdec-24.5": 0.39,
+                           "ra5hdec-31.5": 0.32,
+                           "ra5hdec-38.5": 0.25,
+                           "ra5hdec-45.5": 0.18,
+                           "ra5hdec-52.5": 0.11,
+                           "ra5hdec-59.5": 0.04,
+                           "ra1h40dec-29.75": 0.25,
+                           "ra1h40dec-33.25": 0.18,
+                           "ra1h40dec-36.75": 0.11,
+                           "ra1h40dec-40.25": 0.04}
             plot_obj.text(0.03, ylocs_dict[sub_field],
                           explanation,
                           transform=plot_obj.transAxes,
@@ -2388,19 +2450,25 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         self.fields  = ["ra0hdec-44.75", "ra0hdec-52.25",
                         "ra0hdec-59.75", "ra0hdec-67.25",
-                        "ra5hdec-24.5" , "ra5hdec-31.5",
-                        "ra5hdec-38.5" , "ra5hdec-45.5",
-                        "ra5hdec-52.5" , "ra5hdec-59.5"]
-        self.el_dict = {"ra0hdec-44.75": "el 0"   , "ra0hdec-52.25": "el 1",
-                        "ra0hdec-59.75": "el 2"   , "ra0hdec-67.25": "el 3",
-                        "ra5hdec-24.5" : "el 0"   , "ra0hdec-31.5" : "el 1",
-                        "ra5hdec-38.5" : "el 2"   , "ra5hdec-45.5" : "el 3",
-                        "ra5hdec-52.5" : "el 4"   , "ra5hdec-59.5" : "el 5"}
+                        "ra5hdec-24.5", "ra5hdec-31.5",
+                        "ra5hdec-38.5", "ra5hdec-45.5",
+                        "ra5hdec-52.5", "ra5hdec-59.5",
+                        "ra1h40dec-29.75", "ra1h40dec-33.25",
+                        "ra1h40dec-36.75", "ra1h40dec-40.25"]
+        self.el_dict = {"ra0hdec-44.75": "el 0", "ra0hdec-52.25": "el 1",
+                        "ra0hdec-59.75": "el 2", "ra0hdec-67.25": "el 3",
+                        "ra5hdec-24.5": "el 0", "ra0hdec-31.5": "el 1",
+                        "ra5hdec-38.5": "el 2", "ra5hdec-45.5": "el 3",
+                        "ra5hdec-52.5": "el 4", "ra5hdec-59.5": "el 5",
+                        "ra1h40dec-29.75": "el 1b0", "ra1h40dec-33.25": "el 1b1",
+                        "ra1h40dec-36.75": "el 2b0", "ra1h40dec-40.25": "el 2b1"}
         self.cl_dict = {"ra0hdec-44.75": "#1f77b4", "ra0hdec-52.25": "#ff7f0e",
                         "ra0hdec-59.75": "#2ca02c", "ra0hdec-67.25": "#d62728",
-                        "ra5hdec-24.5" : "#1f77b4", "ra5hdec-31.5" : "#ff7f0e",
-                        "ra5hdec-38.5" : "#2ca02c", "ra5hdec-45.5" : "#d62728",
-                        "ra5hdec-52.5" : "#9467bd", "ra5hdec-59.5" : "#8c564b"}
+                        "ra5hdec-24.5": "#1f77b4", "ra5hdec-31.5": "#ff7f0e",
+                        "ra5hdec-38.5": "#2ca02c", "ra5hdec-45.5": "#d62728",
+                        "ra5hdec-52.5": "#9467bd", "ra5hdec-59.5": "#8c564b",
+                        "ra1h40dec-29.75": "C0", "ra1h40dec-33.25": "C1",
+                        "ra1h40dec-36.75": "C2", "ra1h40dec-40.25": "C3"}
         
         self.alpha   = 0.5
         self.ln_wdth = 1.25
@@ -2524,8 +2592,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
             data_reorganized[sub_field] = \
                 numpy.asarray(map_double.values()) * 100
         
-        xlim_lefts  = {"90GHz": -3,  "150GHz": -3,  "220GHz": -2}
-        xlim_rights = {"90GHz":  15, "150GHz":  15, "220GHz":  10}
+        xlim_lefts  = {"90GHz": -3, "150GHz": -3, "220GHz": -2}
+        xlim_rights = {"90GHz": 15, "150GHz": 15, "220GHz": 10}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2569,6 +2637,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         elif season == "summer":
             xlim_lefts  = {"90GHz":  20.0, "150GHz":  30.0, "220GHz":  1.0}
             xlim_rights = {"90GHz": 160.0, "150GHz": 250.0, "220GHz": 25.0}
+        elif season == "summerb":
+            xlim_lefts  = {"90GHz":  20.0, "150GHz":  20.0, "220GHz":  1.0}
+            xlim_rights = {"90GHz": 225.0, "150GHz": 275.0, "220GHz": 30.0}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2652,6 +2723,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         if season  == "summer":
             xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.5, "220GHz": 0.2}
             xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 5.0}
+        if season  == "summerb":
+            xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.5, "220GHz": 0.2}
+            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 5.0}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2693,6 +2767,9 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         elif season == "summer":
             xlim_lefts  = {"90GHz":  60, "150GHz":  60, "220GHz": 200}
             xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 740}
+        elif season == "summerb":
+            xlim_lefts  = {"90GHz":  40, "150GHz":  40, "220GHz": 190}
+            xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 610}
 
         self.draw_histograms(
             plot_obj, data_reorganized,

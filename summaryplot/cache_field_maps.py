@@ -44,9 +44,8 @@ def update(season, mode, action,
            original_maps_dir='.',
            calibration_data_dir='.', bolo_timestreams_dir='.',
            coadds_dir='.', figs_dir='.',
-           bands=['90GHz', '150GHz', '220GHz'],
-           sub_fields=['ra0hdec-44.75', 'ra0hdec-52.25',
-                       'ra0hdec-59.75', 'ra0hdec-67.25'],
+           bands=[],
+           sub_fields=[],
            logger_name='', log_file=None,
            just_see_commands=False):
     
@@ -98,24 +97,33 @@ def update(season, mode, action,
     aux_files_directory  = 'summaryplot/fields_aux_files/'
     bad_map_list_file    = \
         os.path.join(aux_files_directory, 'bad_map_list.txt')
-    planck_map_fits_file = \
-        os.path.join(aux_files_directory,
-                    'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
-    point_source_list_file = \
-        'spt3g_software/sources/1500d_ptsrc_and_decrement_list.txt'
     dummy_input_file = \
         os.path.join(aux_files_directory, 'dummy.g3')
     
-    # -- Variables that depend on the season
+    if len(bands) == 0:
+        bands = ['90GHz', '150GHz', '220GHz']
     
-    if season == 'summer':
-        all_sub_fields = ['ra5hdec-24.5', 'ra5hdec-31.5', 'ra5hdec-38.5',
-                          'ra5hdec-45.5', 'ra5hdec-52.5', 'ra5hdec-59.5']
-        if (len(sub_fields) != 0) and (set(sub_fields) < set(all_sub_fields)):
-            # Probably a debugging mode.
-            pass
-        else:
-            sub_fields = all_sub_fields
+    # -- Variables that depend on the season
+
+    all_sub_fields = {"winter": ["ra0hdec-44.75", "ra0hdec-52.25",
+                                 "ra0hdec-59.75", "ra0hdec-67.25"],
+                      "summer": ["ra5hdec-24.5", "ra5hdec-31.5",
+                                 "ra5hdec-38.5", "ra5hdec-45.5",
+                                 "ra5hdec-52.5", "ra5hdec-59.5"],
+                      "summerb": ["ra1h40dec-29.75", "ra1h40dec-33.25",
+                                  "ra1h40dec-36.75", "ra1h40dec-40.25"]}
+    if len(sub_fields) == 0:
+        sub_fields = all_sub_fields[season]
+    
+    if season == 'winter':
+        planck_map_fits_file = \
+            os.path.join(
+                aux_files_directory,
+                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
+        point_source_list_file = \
+            'spt3g_software/sources/1500d_ptsrc_and_decrement_list.txt'
+    
+    elif season == 'summer':
         planck_map_fits_file = \
             os.path.join(
                 aux_files_directory,
@@ -123,6 +131,16 @@ def update(season, mode, action,
         point_source_list_file = \
             'spt3g_software/sources/1500d_ptsrc_list_summer_at20g.txt'
     
+    elif season == 'summerb':
+        all_sub_fields = ["ra1h40dec-29.75", "ra1h40dec-33.25",
+                          "ra1h40dec-36.75", "ra1h40dec-40.25"]
+        planck_map_fits_file = \
+            os.path.join(
+                aux_files_directory,
+                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summerb_C_G3Units.fits')
+        point_source_list_file = \
+            'spt3g_software/sources/600d_ptsrc_list_summer_b_at20g.txt'
+
     
     # - Figure out what appropriate time intervals are and
     #   make sure an appropriate directory structure exists
@@ -151,12 +169,22 @@ def update(season, mode, action,
         desired_time_ranges.append((start_time, end_time))
     
     else:        
-        def get_the_beginning_of_the_interval(interval, end_time):
-            
+        def get_the_beginning_of_the_interval(interval, end_time, obs_season):
             if interval == "yearly":
-                start_of_interval = end_time.replace(
-                                        month=1, day=1, hour=0,
-                                        minute=0, second=0, microsecond=0)
+                if "summer" in season:
+                    if end_time.month < 10:
+                        start_of_interval = end_time.replace(
+                                                year=end_time.year-1,
+                                                month=10, day=1, hour=0,
+                                                minute=0, second=0, microsecond=0)
+                    else:
+                        start_of_interval = end_time.replace(
+                                                month=10, day=1, hour=0,
+                                                minute=0, second=0, microsecond=0)
+                else:
+                    start_of_interval = end_time.replace(
+                                            month=1, day=1, hour=0,
+                                            minute=0, second=0, microsecond=0)
             if interval == "monthly":
                 start_of_interval = end_time.replace(
                                         day=1, hour=0,
@@ -165,8 +193,8 @@ def update(season, mode, action,
                 current_weekday   = end_time.weekday()
                 delta_t           = datetime.timedelta(days=-1*current_weekday)
                 start_of_interval = (end_time + delta_t).replace(
-                                        hour=0,
-                                        minute=0, second=0, microsecond=0)
+                                        hour=0, minute=0,
+                                        second=0, microsecond=0)
             return start_of_interval
         
         
@@ -181,7 +209,8 @@ def update(season, mode, action,
                             hour=0, minute=0, second=0, microsecond=0)
                 else:
                     beginning_of_next_month = \
-                        current_time.replace(year=current_time.year+1,
+                        current_time.replace(
+                            year=current_time.year+1,
                             month=1, day=1,
                             hour=0, minute=0, second=0, microsecond=0)
                 end_of_this_month = \
@@ -202,7 +231,7 @@ def update(season, mode, action,
         while end_time_at_start_of_loop > beginning_of_the_record:
             beginning_of_the_interval = \
                 get_the_beginning_of_the_interval(
-                    time_interval, end_time_at_start_of_loop)
+                    time_interval, end_time_at_start_of_loop, season)
             if (mode == "coadding") and \
                (beginning_of_the_interval < beginning_of_the_record):
                 time_to_use_as_start = beginning_of_the_record

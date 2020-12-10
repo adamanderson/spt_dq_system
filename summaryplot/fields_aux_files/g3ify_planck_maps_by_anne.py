@@ -11,8 +11,10 @@ def mask_1500d(nside, coord=None):
         nside,
         # latrange=(-74, -38),
         # lonrange=(-68, 68),
-        latrange=[-66, -18],
-        lonrange=[45, 105],
+        # latrange=[-66, -18],
+        # lonrange=[45, 105],
+        latrange=(-45, -25),
+        lonrange=(-5, 55),
         coord=coord
     )
 
@@ -29,15 +31,17 @@ def hpf(cutoff, width, nside):
     return ell, kernel
     
 mask = mask_1500d(2048)
-map_path = '/spt/user/agambrel/planck_maps'
+map_path = '/sptlocal/user/agambrel/planck_maps'
 mname = 'HFI_SkyMap_{}_2048_R3.01_{}.fits'
 
 for freq in [100, 143, 217]:
-    for mission in ["halfmission-1", "halfmission-2", "full"]:
+    for mission in ["halfmission-1", "halfmission-2", "fullmission"]:
         if high_pass is not None:
             mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_C_G3Units_hpl{}.fits'.format(freq, hm, high_pass)
         else:
-            mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_summer_C_G3Units.fits'.format(freq, mission)
+            # mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_C_G3Units.fits'.format(freq, mission)
+            # mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_summer_C_G3Units.fits'.format(freq, mission)
+            mname_out = 'HFI_SkyMap_{}GHz_2048_R3.01_{}_cut_summerb_C_G3Units.fits'.format(freq, mission)
 
         if os.path.exists(os.path.join(map_path, mname_out)):
             continue

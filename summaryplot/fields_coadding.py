@@ -131,11 +131,15 @@ def get_season_based_on_fields(some_fields):
     summer_fields = ["ra5hdec-24.5" , "ra5hdec-31.5",
                      "ra5hdec-38.5" , "ra5hdec-45.5",
                      "ra5hdec-52.5" , "ra5hdec-59.5"]
+    summer_fields_b = ["ra1h40dec-29.75", "ra1h40dec-33.25",
+                       "ra1h40dec-36.75", "ra1h40dec-40.25"]
     
     if set(some_fields) <= set(winter_fields):
         return "winter"
     elif set(some_fields) <= set(summer_fields):
         return "summer"
+    elif set(some_fields) <= set(summer_fields_b):
+        return "summerb"
 
 
 
@@ -251,7 +255,7 @@ def add_two_map_frames(
 
 
 def create_new_map_frame_with_smaller_region(
-        map_frame, center_ra, center_dec, t_only=True):
+        map_frame, center_ra, center_dec, xylen_deg=5.0, t_only=True):
     
     if map_frame is None:
         return None
@@ -260,8 +264,8 @@ def create_new_map_frame_with_smaller_region(
 
     if t_only:
         
-        map_parameters = {"x_len": int(5.0*core.G3Units.deg/map_frame["T"].res),
-                          "y_len": int(5.0*core.G3Units.deg/map_frame["T"].res),
+        map_parameters = {"x_len": int(xylen_deg*core.G3Units.deg/map_frame["T"].res),
+                          "y_len": int(xylen_deg*core.G3Units.deg/map_frame["T"].res),
                           "res"  : map_frame["T"].res,
                           "proj" : map_frame["T"].proj,
                           "alpha_center": center_ra,
@@ -556,7 +560,7 @@ def maybe_get_gfal_copied_file(path, outdir=None):
         if not os.path.isdir(gfldir):
             os.system("mkdir {}".format(gfldir))
         destin = os.path.join(gfldir, os.path.basename(path))
-        os.system("gfal-copy {} file://{}".format(origin, destin))
+        os.system("gfal-copy {} file://{} -t 7200".format(origin, destin))
         path = destin
     
     return path
@@ -574,7 +578,8 @@ def maybe_del_gfal_copied_file(path):
 
 
 def calculate_change_in_cal_response_vs_elevation(
-        field_obs_id, dec_center, cal_obs_ids, cal_ts_dir, cal_autoproc_dir,
+        field_obs_id, dec_center, dec_height,
+        cal_obs_ids, cal_ts_dir, cal_autoproc_dir,
         bolo_dict, logfun=print):
     
     response_dict = {group: {"AtBottomOfFields": [],
@@ -639,22 +644,25 @@ def calculate_change_in_cal_response_vs_elevation(
             pass
     
     el_center = -1 * dec_center / core.G3Units.deg
+    margin = 1.0
+    half_height_ub = (dec_height / 2.0) + margin
+    half_height_lb = (dec_height / 2.0) - margin
     for location, recorded_el in elevations.items():
         if location == "AtBottomOfFields":
-            if (recorded_el < el_center - 4.75) or \
-               (recorded_el > el_center - 2.75):
+            if (recorded_el < el_center - half_height_ub) or \
+               (recorded_el > el_center - half_height_lb):
                 fill_with_nans()
                 logfun("$$$ The bottom elevation seems wrong!")
                 return response_dict
         if location == "AtMiddleOfFields":
-            if (recorded_el < el_center - 1.0) or \
-               (recorded_el > el_center + 1.0):
+            if (recorded_el < el_center - margin) or \
+               (recorded_el > el_center + margin):
                 fill_with_nans()
                 logfun("$$$ The middle elevation seems wrong!")
                 return response_dict
         if location == "AtTopOfFields":
-            if (recorded_el > el_center + 4.75) or \
-               (recorded_el < el_center + 2.75):
+            if (recorded_el > el_center + half_height_ub) or \
+               (recorded_el < el_center + half_height_lb):
                 fill_with_nans()
                 logfun("$$$ The top elevation seems wrong!")
                 return response_dict
@@ -757,7 +765,7 @@ def calculate_change_in_cal_response_vs_elevation(
 def identify_pixels_of_non_atypical_region(
         field_name, map_frame, point_source_list_file):
     
-    ras, decs = maps.maputils.get_ra_dec_map(map_frame["T"])
+    ras, decs = maps.get_ra_dec_map(map_frame["T"])
     ras  = numpy.asarray(ras/core.G3Units.deg)
     decs = numpy.asarray(decs/core.G3Units.deg)
     
@@ -778,6 +786,12 @@ def identify_pixels_of_non_atypical_region(
         dccntr = float(field_name[-5:])
         de_max = dccntr + 2.75
         de_min = dccntr - 2.75
+    elif season == "summerb":
+        ra_max = 45.0
+        ra_min =  5.0
+        dccntr = float(field_name[-6:])
+        de_max = dccntr + 1.00
+        de_min = dccntr - 1.00
 
     typical_pixels = numpy.where((ras  > ra_min) & (ras  < ra_max) &
                                  (decs > de_min) & (decs < de_max) &
@@ -824,32 +838,44 @@ def calculate_map_fluctuation_metrics(
                      "ra0hdec-52.25": 16.0 * wu,
                      "ra0hdec-59.75": 18.0 * wu,
                      "ra0hdec-67.25": 21.0 * wu,
-                     "ra5hdec-24.5" : 16.0* wu,
-                     "ra5hdec-31.5" : 18.0* wu,
-                     "ra5hdec-38.5" : 20.0* wu,
-                     "ra5hdec-45.5" : 22.0* wu,
-                     "ra5hdec-52.5" : 25.0* wu,
-                     "ra5hdec-59.5" : 28.0* wu},
+                     "ra5hdec-24.5": 16.0 * wu,
+                     "ra5hdec-31.5": 18.0 * wu,
+                     "ra5hdec-38.5": 20.0 * wu,
+                     "ra5hdec-45.5": 22.0 * wu,
+                     "ra5hdec-52.5": 25.0 * wu,
+                     "ra5hdec-59.5": 28.0 * wu,
+                     "ra1h40dec-29.75": 18.0 * wu,
+                     "ra1h40dec-33.25": 18.0 * wu,
+                     "ra1h40dec-36.75": 20.0 * wu,
+                     "ra1h40dec-40.25": 20.0 * wu},
              "150": {"ra0hdec-44.75": 20.0 * wu,
                      "ra0hdec-52.25": 24.0 * wu,
                      "ra0hdec-59.75": 27.0 * wu,
                      "ra0hdec-67.25": 36.0 * wu,
-                     "ra5hdec-24.5" : 24.0* wu,
-                     "ra5hdec-31.5" : 27.0* wu,
-                     "ra5hdec-38.5" : 30.0* wu,
-                     "ra5hdec-45.5" : 33.0* wu,
-                     "ra5hdec-52.5" : 38.0* wu,
-                     "ra5hdec-59.5" : 42.0* wu},
-             "220": {"ra0hdec-44.75":  1.4 * wu,
-                     "ra0hdec-52.25":  1.8 * wu,
-                     "ra0hdec-59.75":  2.1 * wu,
-                     "ra0hdec-67.25":  2.4 * wu,
-                     "ra5hdec-24.5" :  1.6* wu,
-                     "ra5hdec-31.5" :  1.8* wu,
-                     "ra5hdec-38.5" :  2.0* wu,
-                     "ra5hdec-45.5" :  2.2* wu,
-                     "ra5hdec-52.5" :  2.5* wu,
-                     "ra5hdec-59.5" :  2.8* wu}}
+                     "ra5hdec-24.5": 24.0 * wu,
+                     "ra5hdec-31.5": 27.0 * wu,
+                     "ra5hdec-38.5": 30.0 * wu,
+                     "ra5hdec-45.5": 33.0 * wu,
+                     "ra5hdec-52.5": 38.0 * wu,
+                     "ra5hdec-59.5": 42.0 * wu,
+                     "ra1h40dec-29.75": 27.0 * wu,
+                     "ra1h40dec-33.25": 27.0 * wu,
+                     "ra1h40dec-36.75": 30.0 * wu,
+                     "ra1h40dec-40.25": 30.0 * wu},
+             "220": {"ra0hdec-44.75": 1.4 * wu,
+                     "ra0hdec-52.25": 1.8 * wu,
+                     "ra0hdec-59.75": 2.1 * wu,
+                     "ra0hdec-67.25": 2.4 * wu,
+                     "ra5hdec-24.5": 1.6 * wu,
+                     "ra5hdec-31.5": 1.8 * wu,
+                     "ra5hdec-38.5": 2.0 * wu,
+                     "ra5hdec-45.5": 2.2 * wu,
+                     "ra5hdec-52.5": 2.5 * wu,
+                     "ra5hdec-59.5": 2.8 * wu,
+                     "ra1h40dec-29.75": 1.8 * wu,
+                     "ra1h40dec-33.25": 1.8 * wu,
+                     "ra1h40dec-36.75": 2.0 * wu,
+                     "ra1h40dec-40.25": 2.0 * wu}}
         
         t_vals = numpy.asarray(map_frame["T"])
         
@@ -896,6 +922,7 @@ def calculate_map_fluctuation_metrics(
             nominal_wgt = nominal_weights_dict[band][sub_field]
             n_pix_g_wgt = len(numpy.where(better_w_vals/wu > nominal_wgt)[0])
         
+        logfun("$$$ number of pixels looked at : %s" %(len(pixs[0])))
         logfun("$$$ number of pixels with good weights : %s" %(n_pix_g_wgt))
         
         fluctuation_metrics["TMapStandardDeviations"] = map_stdddev
@@ -927,45 +954,61 @@ def calculate_pointing_discrepancies(
     
     some_brightest_sources = \
         {"ra0hdec-44.75": \
-             {"1st": numpy.array([352.32358, -47.50531, 1408.089]),
-              "2nd": numpy.array([314.06833, -47.24664, 1374.576]),
-              "3rd": numpy.array([ 41.50037, -46.85467,  715.329])},
+             {"1st": numpy.array([352.32358, -47.50531, 1408]),
+              "2nd": numpy.array([314.06833, -47.24664, 1375]),
+              "3rd": numpy.array([ 41.50037, -46.85467,  715])},
          "ra0hdec-52.25": \
-             {"1st": numpy.array([ 32.69288, -51.01703, 3819.563]),
-              "2nd": numpy.array([ 23.27404, -52.00094, 1026.665]),
-              "3rd": numpy.array([359.47312, -53.18686,  864.243])},
+             {"1st": numpy.array([ 32.69288, -51.01703, 3820]),
+              "2nd": numpy.array([ 23.27404, -52.00094, 1027]),
+              "3rd": numpy.array([359.47312, -53.18686,  864])},
          "ra0hdec-59.75": \
-             {"1st": numpy.array([ 47.48363, -60.97761,  869.843]),
-              "2nd": numpy.array([ 45.96104, -62.19042,  832.717]),
-              "3rd": numpy.array([ 14.69433, -56.98650,  785.528])},
+             {"1st": numpy.array([ 47.48363, -60.97761,  870]),
+              "2nd": numpy.array([ 45.96104, -62.19042,  833]),
+              "3rd": numpy.array([ 14.69433, -56.98650,  786])},
          "ra0hdec-67.25": \
-             {"1st": numpy.array([329.27542, -69.68981, 1114.524]),
-              "2nd": numpy.array([337.25092, -69.17492,  445.331]),
-              "3rd": numpy.array([325.44375, -64.18742,  388.218])},
+             {"1st": numpy.array([329.27542, -69.68981, 1115]),
+              "2nd": numpy.array([337.25092, -69.17492,  445]),
+              "3rd": numpy.array([325.44375, -64.18742,  388])},
          "ra5hdec-24.5": \
-             {"1st": numpy.array([ 74.26346, -23.41439, 3841.000]),
-              "2nd": numpy.array([ 52.47542, -23.95239, 1458.000]),
-              "3rd": numpy.array([ 92.24900, -22.33922, 1003.000])},
+             {"1st": numpy.array([ 74.26346, -23.41439, 3841]),
+              "2nd": numpy.array([ 52.47542, -23.95239, 1458]),
+              "3rd": numpy.array([ 92.24900, -22.33922, 1003])},
          "ra5hdec-31.5": \
-             {"1st": numpy.array([ 69.40233, -29.90108,  564.000]),
-              "2nd": numpy.array([ 61.89133, -33.06258,  563.000]),
-              "3rd": numpy.array([ 60.58879, -31.79044,  467.000])},
+             {"1st": numpy.array([ 69.40233, -29.90108,  564]),
+              "2nd": numpy.array([ 61.89133, -33.06258,  563]),
+              "3rd": numpy.array([ 60.58879, -31.79044,  467])},
          "ra5hdec-38.5": \
-             {"1st": numpy.array([ 60.97404, -36.08358, 4013.000]),
-              "2nd": numpy.array([ 80.74142, -36.45844, 3909.000]),
-              "3rd": numpy.array([ 67.16821, -37.93867, 1850.000])},
+             {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
+              "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
+              "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
          "ra5hdec-45.5": \
-             {"1st": numpy.array([ 79.95708, -45.77881, 6320.000]),
-              "2nd": numpy.array([ 84.70979, -44.08572, 5294.000]),
-              "3rd": numpy.array([ 73.96163, -46.26628, 4157.000])},
+             {"1st": numpy.array([ 79.95708, -45.77881, 6320]),
+              "2nd": numpy.array([ 84.70979, -44.08572, 5294]),
+              "3rd": numpy.array([ 73.96163, -46.26628, 4157])},
          "ra5hdec-52.5": \
-             {"1st": numpy.array([ 85.19104, -54.30606, 1127.000]),
-              "2nd": numpy.array([ 57.86771, -51.71525,  401.000]),
-              "3rd": numpy.array([ 92.20471, -54.94525,  386.000])},
+             {"1st": numpy.array([ 85.19104, -54.30606, 1127]),
+              "2nd": numpy.array([ 57.86771, -51.71525,  401]),
+              "3rd": numpy.array([ 92.20471, -54.94525,  386])},
          "ra5hdec-59.5": \
-             {"1st": numpy.array([ 76.68342, -61.16150, 1655.000]),
-              "2nd": numpy.array([ 87.53988, -57.54017, 1005.000]),
-              "3rd": numpy.array([ 80.64333, -61.13250,  573.000])}}
+             {"1st": numpy.array([ 76.68342, -61.16150, 1655]),
+              "2nd": numpy.array([ 87.53988, -57.54017, 1005]),
+              "3rd": numpy.array([ 80.64333, -61.13250,  573])},
+         "ra1h40dec-29.75": \
+             {"1st": numpy.array([  2.64967, -30.46339,  741]),
+              "2nd": numpy.array([ 39.12962, -29.89864,  612]),
+              "3rd": numpy.array([ 18.94342, -30.82197,  472])},
+         "ra1h40dec-33.25": \
+             {"1st": numpy.array([ 35.73500, -34.69103, 1019]),
+              "2nd": numpy.array([ 28.29246, -33.17408,  542]),
+              "3rd": numpy.array([ 34.20079, -32.79458,  540])},
+         "ra1h40dec-36.75": \
+             {"1st": numpy.array([  6.56833, -35.21369, 1123]),
+              "2nd": numpy.array([ 23.49125, -36.49314,  440]),
+              "3rd": numpy.array([ 42.73092, -36.27647,  340])},
+         "ra1h40dec-40.25": \
+             {"1st": numpy.array([ 16.68796, -40.57208, 2146]),
+              "2nd": numpy.array([  3.24954, -39.90733, 1609]),
+              "3rd": numpy.array([ 23.63392, -38.72603,  685])}}
     
     discrep_dict = {"1st": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
                     "2nd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
@@ -1091,7 +1134,8 @@ def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
 
 
 def create_mini_planck_map_frame(
-        fits_file, spt_map_frame, center_ra, center_dec, t_only=True):
+        fits_file, spt_map_frame, center_ra, center_dec,
+        xylen_deg=5.0, t_only=True):
     
     planck_healpix_maps = maps.fitsio.load_skymap_fits(fits_file)
     
@@ -1109,9 +1153,10 @@ def create_mini_planck_map_frame(
         new_map_frame = core.G3Frame(core.G3FrameType.Map)
         new_map_frame["T"] = planck_flatsky_map
     
-    map_frame_smaller = create_new_map_frame_with_smaller_region(
-                            new_map_frame, center_ra, center_dec)
-    
+        map_frame_smaller = create_new_map_frame_with_smaller_region(
+                                new_map_frame, center_ra, center_dec,
+                                xylen_deg=xylen_deg)
+
     return map_frame_smaller
 
 
@@ -1145,12 +1190,12 @@ def calculate_average_ratio_of_spt_planck_xspectra(
         planck_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                               halfmission1_planck_map_frame,
                               input2=halfmission2_planck_map_frame,
-                              delta_l=50, lmin=300, lmax=6000,
+                              delta_l=200, lmin=300, lmax=6000,
                               apod_mask=mask, realimag="real", flatten=False)
         
         spt_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                            spt_map_frame, input2=fullmission_planck_map_frame,
-                           delta_l=50, lmin=300, lmax=6000,
+                           delta_l=200, lmin=300, lmax=6000,
                            apod_mask=mask, realimag="real", flatten=False)
         
         cl_ratios   = spt_x_planck["TT"] / planck_x_planck["TT"]
@@ -1178,7 +1223,7 @@ def calculate_noise_levels(map_frame, mask, t_only=True):
     if t_only:
         cls = mapspectra.map_analysis.calculate_powerspectra(
                   map_frame, input2=None,
-                  delta_l=50, lmin=300, lmax=6000,
+                  delta_l=200, lmin=300, lmax=6000,
                   apod_mask=mask, realimag="real", flatten=False)
         
         bin_centers = cls["TT"].bin_centers
@@ -1365,10 +1410,10 @@ class AnalyzeAndCoaddMaps(object):
             self.cal_ts_dir  = \
                 os.path.join(bolo_timestreams_dir, "calibrator")
             self.cal_autoproc_dir = \
-                os.path.join(calibration_data_dir, "calibration", "calibrator")
+                os.path.join(calibration_data_dir, "calibrator")
             self.cal_obs_ids = \
                 [int(obs_id) for obs_id in os.listdir(self.cal_ts_dir) \
-                 if (int(obs_id) >= min_field_obs_id-600) and          \
+                 if (int(obs_id) >= min_field_obs_id-1200) and         \
                     (int(obs_id) <= max_field_obs_id+9000)]
             
             self.cal_locations = ["AtBottomOfFields",
@@ -1772,9 +1817,15 @@ class AnalyzeAndCoaddMaps(object):
                     if season == "winter":
                         center_ra  = core.G3Units.deg *   0.0
                         center_dec = core.G3Units.deg * -56.0
+                        minimap_xylen_deg = 5.0
                     elif season == "summer":
                         center_ra  = core.G3Units.deg *  75.0
                         center_dec = core.G3Units.deg * -42.0
+                        minimap_xylen_deg = 5.0
+                    elif season == "summerb":
+                        center_ra  = core.G3Units.deg *  25.0
+                        center_dec = core.G3Units.deg * -35.0
+                        minimap_xylen_deg = 2.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1824,11 +1875,20 @@ class AnalyzeAndCoaddMaps(object):
                     dura = {str(oid): (d_f - d_i) * core.G3Units.s}
                     season = get_season_based_on_fields([sbfd])
                     if season == "winter":
-                        center_ra  = core.G3Units.deg * 0.0
+                        center_ra  = core.G3Units.deg *  0.0
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
+                        dec_height_deg = 7.5
+                        minimap_xylen_deg = 5.0
                     elif season == "summer":
                         center_ra  = core.G3Units.deg * 75.0
                         center_dec = core.G3Units.deg * float(sbfd[-5:])
+                        dec_height_deg = 7.0
+                        minimap_xylen_deg = 5.0
+                    elif season == "summerb":
+                        center_ra  = core.G3Units.deg * 25.0
+                        center_dec = core.G3Units.deg * float(sbfd[-6:])
+                        dec_height_deg = 3.5
+                        minimap_xylen_deg = 2.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -2132,7 +2192,9 @@ class AnalyzeAndCoaddMaps(object):
                         frac_diffs_from_this_fr = {}
                         fracs_to_be_reorganized = \
                             calculate_change_in_cal_response_vs_elevation(
-                                oid, center_dec, self.cal_obs_ids,
+                                oid,
+                                center_dec, dec_height_deg,
+                                self.cal_obs_ids,
                                 self.cal_ts_dir, self.cal_autoproc_dir,
                                 self.wafers_and_bolos,
                                 logfun=self.detail)
@@ -2287,6 +2349,7 @@ class AnalyzeAndCoaddMaps(object):
                                 [create_new_map_frame_with_smaller_region(
                                      one_type_of_frame,
                                      center_ra, center_dec,
+                                     xylen_deg=minimap_xylen_deg,
                                      t_only=self.t_only)
                                  for one_type_of_frame in
                                      (summ_map_frame_individ,
@@ -2320,6 +2383,7 @@ class AnalyzeAndCoaddMaps(object):
                             [create_new_map_frame_with_smaller_region(
                                  one_type_of_frame,
                                  center_ra, center_dec,
+                                 xylen_deg=minimap_xylen_deg,
                                  t_only=self.t_only)
                              for one_type_of_frame in
                                  (summ_map_frame_individ,
@@ -2957,32 +3021,44 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 120.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 120.0*wu},
                           "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 175.0*wu}},
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 125.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 125.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 125.0*wu},
+                          "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 125.0*wu},
+                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 145.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 175.0*wu},
+                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 250.0*wu},
+                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 250.0*wu},
+                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 250.0*wu},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 250.0*wu}},
                   "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 180.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 210.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 220.0*wu},
                           "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 250.0*wu},
-                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi": 235.0*wu},
-                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi": 255.0*wu}},
-                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  12.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi":  15.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi":  18.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi":  21.0*wu},
-                          "ra5hdec-24.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
-                          "ra5hdec-31.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
-                          "ra5hdec-38.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
-                          "ra5hdec-45.5" : {"lo": 0.0*wu, "hi":  15.0*wu},
-                          "ra5hdec-52.5" : {"lo": 0.0*wu, "hi":  18.0*wu},
-                          "ra5hdec-59.5" : {"lo": 0.0*wu, "hi":  22.0*wu}}}
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 235.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 255.0*wu},
+                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 270.0*wu},
+                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 270.0*wu},
+                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 270.0*wu},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 270.0*wu}},
+                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 12.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 18.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 21.0*wu},
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 18.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 22.0*wu},
+                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 30.0*wu}}}
     
     if (mean_wt < thresholds[band][sub_field]["lo"]) or \
        (mean_wt > thresholds[band][sub_field]["hi"]) or \
@@ -3039,7 +3115,9 @@ class FlagBadMaps(object):
               "ra0hdec-59.75", "ra0hdec-67.25",
               "ra5hdec-24.5" , "ra5hdec-31.5" ,
               "ra5hdec-38.5" , "ra5hdec-45.5" ,
-              "ra5hdec-52.5" , "ra5hdec-59.5"]}
+              "ra5hdec-52.5" , "ra5hdec-59.5" ,
+              "ra1h40dec-29.75", "ra1h40dec-33.25",
+              "ra1h40dec-36.75", "ra1h40dec-40.25"]}
         
         for sub_field in self.pixels_to_use_for_flc_calc.keys():
             pf = "pixel_numbers_for_calculating_"+\

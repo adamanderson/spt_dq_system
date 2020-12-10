@@ -62,11 +62,15 @@ parser_maps = \
 parser_maps.add_argument('season',
                          help='Season from which the field maps are '
                               'to be monitored. Available choices are '
-                              '"winter" and "summer". If "winter" is chosen, '
+                              '"winter", "summer", "summerb", and "summerc". '
+                              'If "winter" is chosen, '
                               'then the relevant fields are '
-                              'the four ra0hdec* fields. If "summer" is chosen, '
+                              'the four ra0hdec* fields. '
+                              'If "summer*" is chosen, '
                               'then the relevant fields are '
-                              'the six ra5hdec* fields.')
+                              'the fourteen ra5hdec* fields, '
+                              'four ra1h40dec* fields, '
+                              'or four ra12h40dec* fields.')
 parser_maps.add_argument('mapsdatadir',
                          help='Path to the directory containing auto-processed '
                               'maps of individual observations.')
@@ -214,12 +218,12 @@ if args.mode == 'maps':
     
     # update coadded maps and relevant figures
     
-    if args.season == 'summer':
+    if 'summer' in args.season:
         def get_summer_path(p):
             if p[-1] == '/':
                 p = p[0:-1]
             sp = os.path.join(os.path.dirname(p),
-                              os.path.basename(p)+'_summer')
+                              os.path.basename(p)+'_'+args.season)
             return sp
         args.coaddsdatadir = get_summer_path(args.coaddsdatadir)
         args.coaddsfigsdir = get_summer_path(args.coaddsfigsdir)
