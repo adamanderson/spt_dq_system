@@ -237,9 +237,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
             # update the data skim
             for source, quantities in function_dict.items():
-                calfiles = glob('{}/calibration/{}/*g3'.format(caldatapath, source))
-                files_to_parse = [fname for fname in calfiles if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
-                                  int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
+                calfiles = glob(os.path.join(caldatapath, source, '*g3'))
+                files_to_parse = [fname for fname in calfiles
+                                  if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
+                                     int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
 
                 print('Analyzing source: {}'.format(source))
 
@@ -248,16 +249,30 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                     updated = True
                 for fname in files_to_parse:
                     obsid = os.path.splitext(os.path.basename(fname))[0]
-                    cal_fname = '{}/{}/{}/nominal_online_cal.g3' \
-                        .format(bolodatapath, source, obsid)                
+                    cal_fname = os.path.join(bolodatapath, source, obsid, 'nominal_online_cal.g3')
+                    rawpath = os.path.join(bolodatapath, source, obsid, '0000.g3')
                     print('observation: {}'.format(obsid))
 
                     if (obsid not in data[source].keys() or \
                         data[source][obsid]['timestamp'] != os.path.getctime(fname)) and \
-                        os.path.exists(fname) and os.path.exists(cal_fname):
+                       os.path.exists(fname) and os.path.exists(cal_fname):
                         updated = True
-
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
+
+                        """"""
+                        if caldatapath.startswith("/sptgrid"):
+                            def get_gfal_copied_file(path):
+                                origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
+                                destin = os.path.join(os.getcwd(), datadir, os.path.basename(path))
+                                os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
+                                return destin
+                            fname = get_gfal_copied_file(fname)
+                            cal_fname = get_gfal_copied_file(cal_fname)
+                            rawpath = get_gfal_copied_file(rawpath)
+                        """"""
+                        ### We can just read the files directly if gfal-copy is cumbersome.
+                        ### Remember to also comment out the code that deletes files.
+
                         d = [fr for fr in core.G3File(fname)]
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
                         if len(d) == 0:
@@ -266,8 +281,6 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         if source not in ['PMNJ0210-5101']:
                             d = d[0]
                         elif source == 'PMNJ0210-5101':
-                            rawpath = os.path.join(bolodatapath, source,
-                                                   obsid, '0000.g3')
                             iterator = core.G3File(rawpath)
                             while True:
                                 frame = iterator.next()
@@ -282,13 +295,16 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                 data[source][obsid][quantity_name] = func_result
 
                         if source in function_dict_raw:
-                            rawpath = os.path.join(bolodatapath, source,
-                                                   obsid, '0000.g3')
                             for quantity_name in function_dict_raw[source]:
                                 func_result = function_dict_raw[source][quantity_name](rawpath, cal_fname, fname, boloprops, selector_dict)
                                 if func_result:
                                     for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
+
+                        """"""
+                        if caldatapath.startswith("/sptgrid"):
+                            os.system("rm {} {} {}".format(fname, cal_fname, rawpath))
+                        """"""
 
             if updated:
                 with open(datafile, 'wb') as f:
@@ -461,7 +477,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                       xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
                                       xlims=[mindate, maxdate])
-                plot_number_of_lines(data, wafer_list, plotsdir,
+                    plot_number_of_lines(data, wafer_list, plotsdir,
                                          xlims=[mindate, maxdate])
 
                 # update the hash

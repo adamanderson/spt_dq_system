@@ -73,14 +73,25 @@ def run_weather(input_files=None,
 
 
     for counter_f, f in enumerate(input_files, 1):
+        if f.startswith("/sptgrid"):
+            origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + f
+            destin = os.path.join(os.getcwd(), pickles_dir, os.path.basename(f))
+            os.system("gfal-copy {} file://{}".format(origin, destin))
+        else:
+            destin = f
+        """
+        destin = input_files
+        ### We can just read the files directly if gfal-copy is cumbersome.
+        ### Remember to also comment out the code that deletes files.
+        """
         logger.info('Processing %s (file %06d)...', f, counter_f)
         arc_data_collector = util.extractdata.MultiAccumulator(
                                  keys=key_dict)
         pipeline = core.G3Pipeline()
         pipeline.Add(gcp.ARCFileReader,
-                     filename=f)
+                     filename=destin)
         pipeline.Add(arc_data_collector)
-        
+
         try:
             pipeline.Run()
         except:
@@ -90,9 +101,12 @@ def run_weather(input_files=None,
             logger.info('This file was skipped!')
             logger.info('')
             continue
-        
+
+        if f.startswith("/sptgrid"):
+            os.system("rm {}".format(destin))        
+
         all_data = arc_data_collector.extract_values()
-        
+
         for key, array in all_data.items():
             if '_utc' in key:
                 all_data.pop(key)
@@ -174,11 +188,25 @@ def run_fridge_cycles(input_files=None,
 
     logger.info('Processing %d files together...', len(input_files))
 
+    if input_files[0].startswith("/sptgrid"):
+        destins = []
+        for f in input_files:
+            origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + f
+            destin = os.path.join(os.getcwd(), pickles_dir, os.path.basename(f))
+            os.system("gfal-copy {} file://{}".format(origin, destin))
+            destins.append(destin)        
+    else:
+        destins = input_files
+    """
+    destins = input_files
+    ### We can just read the files directly if gfal-copy is cumbersome.
+    ### Remember to also comment out the code that deletes files.
+    """
     arc_data_collector = util.extractdata.MultiAccumulator(
                              keys=key_dict)
     pipeline = core.G3Pipeline()
     pipeline.Add(gcp.ARCFileReader,
-                 filename=input_files)
+                 filename=destins)
     pipeline.Add(arc_data_collector)
 
     try:
@@ -190,6 +218,10 @@ def run_fridge_cycles(input_files=None,
         logger.info('The data from this fridge cycle were skipped!')
         logger.info('')
         return
+
+    if input_files[0].startswith("/sptgrid"):
+        for f in destins:
+            os.system("rm {}".format(f))
 
     all_data = arc_data_collector.extract_values()
     all_data['OID'] = numpy.array([std_processing.time_to_obsid(t)
