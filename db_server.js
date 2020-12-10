@@ -123,7 +123,7 @@ app.get('/staticdirs', function(req, res) {
 
 // get time that calibration plots were lastmodified
 app.get('/lastmodified_calibration', function(req, res) {
-	var stat_dir = path.join(config.static_plot_dir, '/plots/last_n/last_03/');
+	var stat_dir = path.join(config.static_plot_dir, '/plots/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -143,7 +143,24 @@ app.get('/lastmodified_maps_winter', function(req, res) {
 
 // get time that summer fields related plots  were lastmodified
 app.get('/lastmodified_maps_summer', function(req, res) {
-    var stat_dir = path.join(config.coadds_figs_summer_dir, '/last_n/last_07/');
+    if (config.coadds_figs_dir.endsWith('/'))
+        coadds_figs_summer_dir = (config.coadds_figs_dir + '_summer').replace("/_summer", "_summer");
+    else
+	    coadds_figs_summer_dir = config.coadds_figs_dir + '_summer';
+    var stat_dir = path.join(coadds_figs_summer_dir, '/last_n/last_07/');
+
+    fs.readdir(stat_dir, function(err, filelist) {
+        lastupdate_time = check_lastmodified(stat_dir, filelist);
+	    res.send({time:lastupdate_time});
+    });
+});
+
+app.get('/lastmodified_maps_summerb', function(req, res) {
+    if (config.coadds_figs_dir.endsWith('/'))
+        coadds_figs_summer_dir = (config.coadds_figs_dir + '_summerb').replace("/_summerb", "_summerb");
+    else
+	    coadds_figs_summer_dir = config.coadds_figs_dir + '_summerb';
+    var stat_dir = path.join(coadds_figs_summer_dir, '/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -153,7 +170,7 @@ app.get('/lastmodified_maps_summer', function(req, res) {
 
 // get time that weather plots were lastmodified
 app.get('/lastmodified_weather', function(req, res) {
-	var stat_dir = path.join(config.arc_figs_dir, '/last_n/last_03/');
+	var stat_dir = path.join(config.arc_figs_dir, '/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -437,10 +454,12 @@ app.listen(parseInt(config.port))
 is_update_running = false;
 is_winter_map_update_running = false;
 is_summer_map_update_running = false;
+is_summerb_map_update_running = false;
 is_arc_update_running = false;
 var child;
 var child_winter_maps;
 var child_summer_maps;
+var chicd_summerb_maps;
 var child_arcs;
 
 function updateSummaryPlots() {
@@ -535,6 +554,37 @@ function updateSummerMapPlots() {
     }
 }
 
+function updateSummerbMapPlots() {
+    args = ['-B',
+            'update_summary.py',
+            'maps',
+            'summerb',
+            config.maps_data_dir,
+            config.coadds_data_dir,
+            config.coadds_figs_dir,
+            config.coadds_logs_dir,
+            config.calib_data_dir,
+            config.bolo_data_dir,
+            config.min_time_maps]
+
+    if(is_summerb_map_update_running == false) {
+        is_summerb_map_update_running = true;
+        // update data skims
+        child = execFile(config.python_location,
+                         args,
+                         {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished summer map coadds and plots.');
+                             is_summerb_map_update_running = false;
+                         });
+         console.log('Updating summer-b maps...');
+    }
+    else {
+        console.log('Summer-b map updater already running, so not spawning again!');
+    }
+}
+
 function updateArcPlots() {
     args = ['-B',
             'update_summary.py',
@@ -563,10 +613,11 @@ function updateArcPlots() {
     }
 }
 
-// update both types of plots in parallel every 10 minutes
+// update both types of plots in parallel every X milliseconds
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') { // only update map and arc plots at pole
-    setInterval(updateWinterMapPlots, 600000);
-    setInterval(updateSummerMapPlots, 600000);
-    setInterval(updateArcPlots,      3600000);
+    setInterval(updateWinterMapPlots,  21600000);
+    setInterval(updateSummerMapPlots,  21600000);
+    setInterval(updateSummerbMapPlots, 21600000);
+    setInterval(updateArcPlots,        21600000);
 }
