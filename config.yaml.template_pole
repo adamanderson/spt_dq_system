@@ -15,7 +15,7 @@ cert_file:
 plot_dir: /tmp/data_quality/
 static_plot_dir: /var/www/spt_dq_system/static_plot_cache/
 
-calib_data_dir: /poleanalysis/sptdaq/calresult/
+calib_data_dir: /poleanalysis/sptdaq/calresult/calibration/
 bolo_data_dir: /spt_data/bolodata/fullrate/
 
 no_data_update: false
