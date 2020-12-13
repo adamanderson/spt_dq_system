@@ -1,4 +1,4 @@
-from spt3g import core, mapmaker, util, pointing
+from spt3g import core, mapmaker, util, pointing, std_processing
 from functools import reduce
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -62,6 +62,7 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
 
 
 def group_by_time(arr, obs, delta_t = 86400):
+    
     if len(arr) < 1:
         return [[obs]]
     for subarr in arr:
@@ -69,6 +70,7 @@ def group_by_time(arr, obs, delta_t = 86400):
             subarr.append(obs)
             return arr
     arr.append([obs])
+    
     return arr
 
 
@@ -85,7 +87,6 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
     figbenche = plt.figure("BenchE", figsize=(8,6))
     figfwhm = plt.figure("FWHM", figsize=(8,6))
     figell = plt.figure("Ellipticity", figsize=(8,6))
-
 
     ylims = {"BenchF": {90: (22., 33.),
                         150: (22., 33.),
@@ -128,9 +129,22 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
     nominalbp = []
     nominalts = []
     for el1obsid in el1obsids:
-        obsfr = core.G3File(os.path.join(
-                    bolodatapath,  fieldobs,
-                    str(el1obsid), '0000.g3')).next()
+        g3file = os.path.join(bolodatapath, fieldobs, str(el1obsid), '0000.g3')
+        if not os.path.isfile(g3file):
+            continue
+        """
+        if bolodatapath.startswith("/sptgrid"):
+            origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
+            destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
+            os.system("gfal-copy {} file://{}".format(origin, destin))
+            g3file = destin
+        """
+        obsfr = core.G3File(g3file).next()
+        """
+        if bolodatapath.startswith("/sptgrid"):
+            os.system("rm {}".format(g3file))
+        """
+        ### We can just read the files directly if gfal-copy is cumbersome.
         bcp = obsfr['BenchCommandedPosition']
         bz = obsfr['BenchZeros']
         for k in bcp.keys():
@@ -171,6 +185,29 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
             benchf_min.append(bminf)
             bmine = - 0.5*ecoeffs[1]/ecoeffs[0]
             benche_min.append(bmine)
+            
+            for ydata, coeffs, minloc, xlabel, title \
+            in zip([fwhm, ellipticity], [fcoeffs, ecoeffs], [bminf, bmine], ["FWHM [arcmin]", "Ellipticity"], ["FWHM", "Ellipticity"]):
+                f = plt.figure(num="parabola", figsize=(8, 6))
+                p = f.add_subplot(111)
+                p.plot(bench, ydata, linestyle="none", marker=".", markersize=10,
+                       color={90: "C0", 150: "C1", 220: "C2"}[band])
+                xp = np.linspace(23, 32, num=200)
+                yp = coeffs[0]*xp**2 + coeffs[1]*xp + coeffs[2]
+                p.plot(xp, yp, color="black")
+                p.axvline(minloc, linestyle="dashed", color="black")
+                p.set_xlim(left=23, right=32)
+                p.set_xticks(np.arange(24, 32), minor=False)
+                p.set_xticks(np.linspace(23.5, 31.5, 17), minor=True)
+                p.grid(which="major", linestyle="dotted", linewidth=0.75)
+                p.grid(which="minor", linestyle="dotted", linewidth=0.45)
+                p.tick_params(labelsize=14)
+                p.set_xlabel("\nBench position [mm]", fontsize=14)
+                p.set_ylabel("{}\n".format(xlabel), fontsize=14)
+                p.set_title("{} GHz, Beam {} vs Bench position and the fitting results\nSchedule start time: {}\n".format(band, title, std_processing.obsid_to_g3time(int(group[0]))), fontsize=14)
+                f.savefig(os.path.join(outdir, "{}_{:09d}_{:03d}GHz.png".format(title, int(group[0]), band)), bbox_inches="tight")
+                plt.close(f)
+            
             if interpolate_minima:
                 fwhm_min.append(np.poly1d(fcoeffs)(bminf))
                 e_min.append(np.poly1d(ecoeffs)(bmine))
@@ -206,12 +243,19 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
         plt.savefig('{}/focus_ellip_vs_bench_{}.png'.format(outdir, band))
         plt.close()
 
-
         dts = np.array([datetime.datetime.utcfromtimestamp(ts) for ts in timestamps])
 
         for figname, figarr in zip(fignames, [benchf_min, benche_min, fwhm_min, e_min]):
             plt.figure(figname)
             plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'], alpha=0.65)
+            """
+            if "Bench" in figname:
+                print("=====", figname, "=====\n")
+                print("-", band, "GHz")
+                print([str(d) for d in dts])
+                print(figarr)
+                print("\n")
+            """
 
     for figname, figarr in zip(fignames[:2], [benchf_min, benche_min]):
         plt.figure(figname)
