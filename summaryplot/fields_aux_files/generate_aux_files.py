@@ -114,26 +114,28 @@ deg = core.G3Units.degrees
 if arguments.season == "winter":
     dec_centers = [-44.75 * deg, -52.25 * deg,
                    -59.75 * deg, -67.25 * deg]
-    ra_center   =    0.0 * deg
+    dec_height  = 7.5 * core.G3Units.deg
+    ra_center   = 0.0 * deg
     field_names = ["ra0hdec-44.75", "ra0hdec-52.25",
                    "ra0hdec-59.75", "ra0hdec-67.25"]
-    minimap_xylen_deg = 5.0
 elif arguments.season == "summer":
     dec_centers = [-24.50 * deg, -31.50 * deg,
                    -38.50 * deg, -45.50 * deg,
                    -52.50 * deg, -59.50 * deg]
-    ra_center   =   75.0 * deg
+    dec_height  =  7.0 * core.G3Units.deg
+    ra_center   = 75.0 * deg
     field_names = ["ra5hdec-24.5", "ra5hdec-31.5",
                    "ra5hdec-38.5", "ra5hdec-45.5",
                    "ra5hdec-52.5", "ra5hdec-59.5"]
-    minimap_xylen_deg = 5.0
 elif arguments.season == "summerb":
     dec_centers = [-29.75 * deg, -33.25 * deg,
                    -36.75 * deg, -40.25 * deg]
+    dec_height  =    3.5 * core.G3Units.deg
     ra_center   =   25.0 * deg
     field_names = ["ra1h40dec-29.75", "ra1h40dec-33.25",
                    "ra1h40dec-36.75", "ra1h40dec-40.25"]
-    minimap_xylen_deg = 2.0
+minimap_length_x = 12.0 * core.G3Units.deg
+minimap_length_y = 12.0 * core.G3Units.deg
 
 
 
@@ -218,12 +220,11 @@ if arguments.generate_mini_planck_maps:
     
     class MakeMiniPlanckMaps(object):
         
-        def __init__(self, ra_center, dec_center, xylen_deg):
+        def __init__(self, ra_center, dec_center):
             
             self.spt_map_frame = None
             self.ra_center     = ra_center
             self.dec_center    = dec_center
-            self.xylen_deg     = xylen_deg
         
         def __call__(self, frame):
             
@@ -242,7 +243,8 @@ if arguments.generate_mini_planck_maps:
                         planck_map_fits_file,
                         self.spt_map_frame,
                         self.ra_center, self.dec_center,
-                        t_only=True, xylen_deg=self.xylen_deg)
+                        minimap_length_x, minimap_length_y,
+                        t_only=True)
                 return [mini_planck_map_frame, frame]
     
     
@@ -278,8 +280,7 @@ if arguments.generate_mini_planck_maps:
                 
                 pipeline.Add(MakeMiniPlanckMaps,
                              ra_center=ra_center,
-                             dec_center=dec_centers[counter],
-                             xylen_deg=minimap_xylen_deg)
+                             dec_center=dec_centers[counter])
                 
                 pipeline.Add(core.G3Writer,
                              filename=output_file)
@@ -303,12 +304,11 @@ if arguments.generate_masks_for_power_spectrum_calculations:
     
     class MakeMiniMasksForPowerSpectraCalculations(object):
         
-        def __init__(self, ra_center, dec_center, xylen_deg):
+        def __init__(self, ra_center, dec_center):
             
             self.spt_map_frame = None
             self.ra_center     = ra_center
             self.dec_center    = dec_center
-            self.xylen_deg     = xylen_deg
         
         def __call__(self, frame):
             
@@ -326,13 +326,15 @@ if arguments.generate_masks_for_power_spectrum_calculations:
                     fields_coadding.create_new_map_frame_with_smaller_region(
                         self.spt_map_frame,
                         self.ra_center, self.dec_center,
-                        t_only=True, xylen_deg=self.xylen_deg)
+                        minimap_length_x, minimap_length_y,
+                        t_only=True)
                 print("%4s Combining a point source mask and "
                       "a window function ..." %(""))
                 mini_mask = \
                     fields_coadding.\
                     create_mask_for_powspec_calc_of_small_region(
-                        mini_map_frame, arguments.point_source_list_file)
+                        mini_map_frame, arguments.point_source_list_file,
+                        self.ra_center, self.dec_center, dec_height)
                 mask_frame = core.G3Frame(core.G3FrameType.Map)
                 mask_frame["Mask"] = mini_mask
                 return [mask_frame, frame]
@@ -358,8 +360,7 @@ if arguments.generate_masks_for_power_spectrum_calculations:
         
         pipeline.Add(MakeMiniMasksForPowerSpectraCalculations,
                      ra_center=ra_center,
-                     dec_center=dec_centers[counter],
-                     xylen_deg=minimap_xylen_deg)
+                     dec_center=dec_centers[counter])
         
         pipeline.Add(core.G3Writer,
                      filename=output_file)

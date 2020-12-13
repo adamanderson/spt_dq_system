@@ -450,30 +450,31 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             most_neg_d  = -74.75
             most_pos_d  = -37.25
             center_decs = [-67.25, -59.75, -52.25, -44.75]
-            one_fld_uni =   3.25
-            one_fld_zr  =   4.25
-            n_flds      =   4
+            one_fld_uni = 3.25
+            one_fld_zr  = 4.25
+            n_flds = 4
+            center_ra_str = "0h"
         elif season == "summer":
             norm_dec_l  = -62.10
             norm_dec_r  = -61.90
             most_neg_d  = -66.50
             most_pos_d  = -17.50
             center_decs = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
-            one_fld_uni =   3.00
-            one_fld_zr  =   4.00
-            n_flds      =   6
+            one_fld_uni = 3.00
+            one_fld_zr  = 4.00
+            n_flds = 6
+            center_ra_str = "5h"
         elif season == "summerb":
             norm_dec_l  = -41.10
             norm_dec_r  = -40.90
             most_neg_d  = -43.75
             most_pos_d  = -26.25
             center_decs = [-40.25, -36.75, -33.25, -29.75]
-            one_fld_uni =   1.50
-            one_fld_zr  =   2.50
-            n_flds      =   4
-        
-        center_ra     = weight_map.alpha_center / core.G3Units.deg
-        center_ra_str = '{:d}deg'.format(int(center_ra))
+            one_fld_uni = 1.00
+            one_fld_zr  = 2.50
+            n_flds = 4
+            center_ra_str = "1h40"
+        center_ra = weight_map.alpha_center / core.G3Units.deg
         
         vertical_cr_sec_values = \
             numpy.asarray(weight_map).transpose()[weight_map.shape[1]//2]
@@ -516,6 +517,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             idx_le = numpy.argmin(numpy.absolute(decs - l_edge))
             idx_re = numpy.argmin(numpy.absolute(decs - r_edge))
             idx_rz = numpy.argmin(numpy.absolute(decs - r_zero))
+            
             for i in range(idx_lz, idx_le+1):
                 one_sub_field_hits[i] = \
                     1.0 * (i - idx_lz) / (idx_le - idx_lz)
@@ -1167,7 +1169,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         cal_uni = core.G3Units.pW / core.G3Units.K        
         ylims_dict = { "90GHz": {"bottom": -0.16, "top": -0.00},
-                      "150GHz": {"bottom": -0.28, "top": -0.00},
+                      "150GHz": {"bottom": -0.27, "top": -0.00},
                       "220GHz": {"bottom": -0.06, "top": -0.00}}
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_wf)
@@ -1227,10 +1229,10 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         # - Make a figure showing variations among wafers
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
-        
-        ylims_dict = { "90GHz": {"bottom": -5, "top": 25},
-                      "150GHz": {"bottom": -5, "top": 25},
-                      "220GHz": {"bottom": -2, "top": 10}}
+                
+        ylims_dict = { "90GHz": {"bottom": -3, "top": 30},
+                      "150GHz": {"bottom": -3, "top": 30},
+                      "220GHz": {"bottom": -3, "top": 30}}
         
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_wf)
@@ -1249,7 +1251,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             self.indicate_out_of_range_values(
                 plot_obj, obs_ids, changes, ylims_dict[self.map_id], color)
-        
+                
         set_lims(plot_obj, xlims_dict["left"], xlims_dict["right"],
                  ylims_dict[self.map_id]["bottom"],
                  ylims_dict[self.map_id]["top"])
@@ -1280,9 +1282,9 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
-        ylims_dict = { "90GHz": {"bottom": -3, "top": 15},
-                      "150GHz": {"bottom": -3, "top": 15},
-                      "220GHz": {"bottom": -2, "top": 10}}
+        ylims_dict = { "90GHz": {"bottom": -2, "top": 20},
+                      "150GHz": {"bottom": -2, "top": 20},
+                      "220GHz": {"bottom": -2, "top": 20}}
         
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
@@ -1341,15 +1343,15 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         param_lists = \
             {key_prefix+"MeansOfTTWeights": \
                  {"ylims": \
-                      {"winter": { "90GHz": {"bottom": 30, "top": 150},
-                                  "150GHz": {"bottom": 30, "top": 250},
-                                  "220GHz": {"bottom":  1, "top":  20}},
-                       "summer": { "90GHz": {"bottom": 20, "top": 160},
-                                  "150GHz": {"bottom": 30, "top": 250},
-                                  "220GHz": {"bottom":  1, "top":  25}},
-                       "summerb": { "90GHz": {"bottom": 20, "top": 225},
-                                   "150GHz": {"bottom": 20, "top": 275},
-                                   "220GHz": {"bottom":  1, "top":  30}}},
+                      {"winter": { "90GHz": {"bottom": 30, "top": 220},
+                                  "150GHz": {"bottom": 30, "top": 220},
+                                  "220GHz": {"bottom":  0, "top":  20}},
+                       "summer": { "90GHz": {"bottom": 20, "top": 270},
+                                  "150GHz": {"bottom": 20, "top": 270},
+                                  "220GHz": {"bottom":  0, "top":  25}},
+                       "summerb": { "90GHz": {"bottom": 20, "top": 270},
+                                   "150GHz": {"bottom": 20, "top": 270},
+                                   "220GHz": {"bottom":  0, "top":  25}}},
                   "yunits": 1 / (core.G3Units.mK * core.G3Units.mK),
                   "lnstyl": self.ln_styl,
                   "ylabel": "Mean weight  " + \
@@ -1400,6 +1402,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             season = get_season_based_on_fields(fluc_data.keys())
             if "MeansOfTTWeights" in metric_key:
                 ylims = plist["ylims"][season]
+            elif "NumbersOfPixelsWithGoodTTWeights" in metric_key:
+                ylims = plist["ylims"]
             xlims = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
             
@@ -1645,9 +1649,9 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         figure_obj, plot_obj = get_figure_and_plot_objects()
         
-        ylims_dict = { "90GHz": {"bottom": 0.5, "top": 2.0},
-                      "150GHz": {"bottom": 0.4, "top": 1.6},
-                      "220GHz": {"bottom": 0.1, "top": 1.9}}
+        ylims_dict = { "90GHz": {"bottom": 0.0, "top": 2.0},
+                      "150GHz": {"bottom": 0.0, "top": 2.0},
+                      "220GHz": {"bottom": 0.0, "top": 2.0}}
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
         
@@ -1710,17 +1714,17 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         
         season = get_season_based_on_fields(frame[noise_key].keys())
         if season  == "winter":
-            ylims_dict = { "90GHz": {"bottom":  90, "top": 210},
-                          "150GHz": {"bottom":  70, "top": 170},
-                          "220GHz": {"bottom": 260, "top": 600}}
+            ylims_dict = { "90GHz": {"bottom":  75, "top": 220},
+                          "150GHz": {"bottom":  75, "top": 220},
+                          "220GHz": {"bottom": 240, "top": 660}}
         elif season == "summer":
-            ylims_dict = { "90GHz": {"bottom":  60, "top": 220},
-                          "150GHz": {"bottom":  60, "top": 220},
-                          "220GHz": {"bottom": 200, "top": 740}}
+            ylims_dict = { "90GHz": {"bottom":  50, "top": 210},
+                          "150GHz": {"bottom":  50, "top": 210},
+                          "220GHz": {"bottom": 170, "top": 660}}
         elif season == "summerb":
-            ylims_dict = { "90GHz": {"bottom":  40, "top": 220},
-                          "150GHz": {"bottom":  40, "top": 220},
-                          "220GHz": {"bottom": 190, "top": 610}}
+            ylims_dict = { "90GHz": {"bottom":  50, "top": 210},
+                          "150GHz": {"bottom":  50, "top": 210},
+                          "220GHz": {"bottom": 170, "top": 660}}
         xlims_dict = self.get_xlims_from_obs_id_range(
                          self.xlim_left, self.xlim_right, self.n_rmarg_el)
         
@@ -2592,8 +2596,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
             data_reorganized[sub_field] = \
                 numpy.asarray(map_double.values()) * 100
         
-        xlim_lefts  = {"90GHz": -3, "150GHz": -3, "220GHz": -2}
-        xlim_rights = {"90GHz": 15, "150GHz": 15, "220GHz": 10}
+        xlim_lefts  = {"90GHz": -2, "150GHz": -2, "220GHz": -2}
+        xlim_rights = {"90GHz": 20, "150GHz": 20, "220GHz": 20}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2632,14 +2636,14 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         season = get_season_based_on_fields(
                      original_mean_weights_data.keys())
         if season == "winter":
-            xlim_lefts  = {"90GHz":  25.0, "150GHz":  40.0, "220GHz":  1.0}
-            xlim_rights = {"90GHz": 180.0, "150GHz": 270.0, "220GHz": 24.0}
+            xlim_lefts  = {"90GHz":  30.0, "150GHz":  30.0, "220GHz":  0.0}
+            xlim_rights = {"90GHz": 220.0, "150GHz": 220.0, "220GHz": 20.0}
         elif season == "summer":
-            xlim_lefts  = {"90GHz":  20.0, "150GHz":  30.0, "220GHz":  1.0}
-            xlim_rights = {"90GHz": 160.0, "150GHz": 250.0, "220GHz": 25.0}
+            xlim_lefts  = {"90GHz":  20.0, "150GHz":  20.0, "220GHz":  0.0}
+            xlim_rights = {"90GHz": 270.0, "150GHz": 270.0, "220GHz": 25.0}
         elif season == "summerb":
-            xlim_lefts  = {"90GHz":  20.0, "150GHz":  20.0, "220GHz":  1.0}
-            xlim_rights = {"90GHz": 225.0, "150GHz": 275.0, "220GHz": 30.0}
+            xlim_lefts  = {"90GHz":  20.0, "150GHz":  20.0, "220GHz":  0.0}
+            xlim_rights = {"90GHz": 270.0, "150GHz": 270.0, "220GHz": 25.0}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2718,14 +2722,14 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         season = get_season_based_on_fields(data_reorganized.keys())
         if season  == "winter":
-            xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.5, "220GHz": 0.2}
-            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 5.0}
+            xlim_lefts  = {"90GHz": 0.0, "150GHz": 0.0, "220GHz": 0.0}
+            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 2.0}
         if season  == "summer":
-            xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.5, "220GHz": 0.2}
-            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 5.0}
+            xlim_lefts  = {"90GHz": 0.0, "150GHz": 0.0, "220GHz": 0.0}
+            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 2.0}
         if season  == "summerb":
-            xlim_lefts  = {"90GHz": 0.5, "150GHz": 0.5, "220GHz": 0.2}
-            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 5.0}
+            xlim_lefts  = {"90GHz": 0.0, "150GHz": 0.0, "220GHz": 0.0}
+            xlim_rights = {"90GHz": 2.0, "150GHz": 2.0, "220GHz": 2.0}
         
         self.draw_histograms(
             plot_obj, data_reorganized,
@@ -2762,14 +2766,14 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         
         season = get_season_based_on_fields(data_reorganized.keys())
         if season  == "winter":
-            xlim_lefts  = {"90GHz":  85, "150GHz":  70, "220GHz": 240}
-            xlim_rights = {"90GHz": 190, "150GHz": 160, "220GHz": 620}
+            xlim_lefts  = {"90GHz":  75, "150GHz":  75, "220GHz": 240}
+            xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 660}
         elif season == "summer":
-            xlim_lefts  = {"90GHz":  60, "150GHz":  60, "220GHz": 200}
-            xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 740}
+            xlim_lefts  = {"90GHz":  50, "150GHz":  50, "220GHz": 170}
+            xlim_rights = {"90GHz": 210, "150GHz": 210, "220GHz": 660}
         elif season == "summerb":
-            xlim_lefts  = {"90GHz":  40, "150GHz":  40, "220GHz": 190}
-            xlim_rights = {"90GHz": 220, "150GHz": 220, "220GHz": 610}
+            xlim_lefts  = {"90GHz":  50, "150GHz":  50, "220GHz": 170}
+            xlim_rights = {"90GHz": 210, "150GHz": 210, "220GHz": 640}
 
         self.draw_histograms(
             plot_obj, data_reorganized,

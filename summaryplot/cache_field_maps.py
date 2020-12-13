@@ -926,7 +926,8 @@ if __name__ == '__main__':
     
     parser.add_argument("-s", "--season",
                         type=str, action="store",
-                        choices=["winter", "summer"], default="winter",
+                        choices=["winter", "summer", "summerb", "summerc"],
+                        default="winter",
                         help="If we want to analyze the maps from "
                              "the 1500 square degrees field, "
                              "we should choose 'winter'. If we want to anayze "

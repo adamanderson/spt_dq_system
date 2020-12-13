@@ -255,7 +255,7 @@ def add_two_map_frames(
 
 
 def create_new_map_frame_with_smaller_region(
-        map_frame, center_ra, center_dec, xylen_deg=5.0, t_only=True):
+        map_frame, center_ra, center_dec, length_x, length_y, t_only=True):
     
     if map_frame is None:
         return None
@@ -264,8 +264,8 @@ def create_new_map_frame_with_smaller_region(
 
     if t_only:
         
-        map_parameters = {"x_len": int(xylen_deg*core.G3Units.deg/map_frame["T"].res),
-                          "y_len": int(xylen_deg*core.G3Units.deg/map_frame["T"].res),
+        map_parameters = {"x_len": int(length_x/map_frame["T"].res),
+                          "y_len": int(length_y/map_frame["T"].res),
                           "res"  : map_frame["T"].res,
                           "proj" : map_frame["T"].proj,
                           "alpha_center": center_ra,
@@ -552,7 +552,7 @@ def collect_medians_of_pW_per_K_factors(
 
 def maybe_get_gfal_copied_file(path, outdir=None):
     
-    if path.startswith("/sptgrid"):
+    if path.startswith("/sptgridnope"):
         origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
         if outdir is None:
             outdir = os.getcwd()
@@ -560,7 +560,8 @@ def maybe_get_gfal_copied_file(path, outdir=None):
         if not os.path.isdir(gfldir):
             os.system("mkdir {}".format(gfldir))
         destin = os.path.join(gfldir, os.path.basename(path))
-        os.system("gfal-copy {} file://{} -t 7200".format(origin, destin))
+        # destin = "/sptlocal/analysis/dqtemporary/gfal_stage"
+        os.system("gfal-copy {} file://{} -f -t 86400".format(origin, destin))
         path = destin
     
     return path
@@ -644,6 +645,7 @@ def calculate_change_in_cal_response_vs_elevation(
             pass
     
     el_center = -1 * dec_center / core.G3Units.deg
+    dec_height /= core.G3Units.deg
     margin = 1.0
     half_height_ub = (dec_height / 2.0) + margin
     half_height_lb = (dec_height / 2.0) - margin
@@ -831,51 +833,54 @@ def calculate_map_fluctuation_metrics(
         assert (not map_frame[fmk].weighted), fmk + " map is still weighted!"
     
     if t_only:
-        
         wu = 1 / (core.G3Units.mK * core.G3Units.mK)
         nominal_weights_dict = \
-            { "90": {"ra0hdec-44.75": 14.0 * wu,
-                     "ra0hdec-52.25": 16.0 * wu,
+            { "90": {"ra0hdec-44.75": 12.0 * wu,
+                     "ra0hdec-52.25": 14.0 * wu,
                      "ra0hdec-59.75": 18.0 * wu,
-                     "ra0hdec-67.25": 21.0 * wu,
-                     "ra5hdec-24.5": 16.0 * wu,
-                     "ra5hdec-31.5": 18.0 * wu,
-                     "ra5hdec-38.5": 20.0 * wu,
-                     "ra5hdec-45.5": 22.0 * wu,
-                     "ra5hdec-52.5": 25.0 * wu,
-                     "ra5hdec-59.5": 28.0 * wu,
-                     "ra1h40dec-29.75": 18.0 * wu,
-                     "ra1h40dec-33.25": 18.0 * wu,
-                     "ra1h40dec-36.75": 20.0 * wu,
-                     "ra1h40dec-40.25": 20.0 * wu},
-             "150": {"ra0hdec-44.75": 20.0 * wu,
-                     "ra0hdec-52.25": 24.0 * wu,
-                     "ra0hdec-59.75": 27.0 * wu,
-                     "ra0hdec-67.25": 36.0 * wu,
-                     "ra5hdec-24.5": 24.0 * wu,
-                     "ra5hdec-31.5": 27.0 * wu,
-                     "ra5hdec-38.5": 30.0 * wu,
-                     "ra5hdec-45.5": 33.0 * wu,
-                     "ra5hdec-52.5": 38.0 * wu,
-                     "ra5hdec-59.5": 42.0 * wu,
-                     "ra1h40dec-29.75": 27.0 * wu,
-                     "ra1h40dec-33.25": 27.0 * wu,
-                     "ra1h40dec-36.75": 30.0 * wu,
-                     "ra1h40dec-40.25": 30.0 * wu},
-             "220": {"ra0hdec-44.75": 1.4 * wu,
-                     "ra0hdec-52.25": 1.8 * wu,
+                     "ra0hdec-67.25": 24.0 * wu,
+                     "ra5hdec-24.5": 17.0 * wu,
+                     "ra5hdec-31.5": 19.0 * wu,
+                     "ra5hdec-38.5": 17.0 * wu,
+                     "ra5hdec-45.5": 17.0 * wu,
+                     "ra5hdec-52.5": 22.0 * wu,
+                     "ra5hdec-59.5": 24.0 * wu,
+                     "ra1h40dec-29.75": 33.0 * wu,
+                     "ra1h40dec-33.25": 33.0 * wu,
+                     "ra1h40dec-36.75": 33.0 * wu,
+                     "ra1h40dec-40.25": 33.0 * wu},
+             "150": {"ra0hdec-44.75": 16.0 * wu,
+                     "ra0hdec-52.25": 21.0 * wu,
+                     "ra0hdec-59.75": 25.0 * wu,
+                     "ra0hdec-67.25": 35.0 * wu,
+                     "ra5hdec-24.5": 13.0 * wu,
+                     "ra5hdec-31.5": 16.0 * wu,
+                     "ra5hdec-38.5": 16.0 * wu,
+                     "ra5hdec-45.5": 19.0 * wu,
+                     "ra5hdec-52.5": 23.0 * wu,
+                     "ra5hdec-59.5": 33.0 * wu,
+                     "ra1h40dec-29.75": 33.0 * wu,
+                     "ra1h40dec-33.25": 33.0 * wu,
+                     "ra1h40dec-36.75": 33.0 * wu,
+                     "ra1h40dec-40.25": 33.0 * wu},
+             "220": {"ra0hdec-44.75": 1.2 * wu,
+                     "ra0hdec-52.25": 1.6 * wu,
                      "ra0hdec-59.75": 2.1 * wu,
-                     "ra0hdec-67.25": 2.4 * wu,
-                     "ra5hdec-24.5": 1.6 * wu,
-                     "ra5hdec-31.5": 1.8 * wu,
-                     "ra5hdec-38.5": 2.0 * wu,
-                     "ra5hdec-45.5": 2.2 * wu,
-                     "ra5hdec-52.5": 2.5 * wu,
-                     "ra5hdec-59.5": 2.8 * wu,
-                     "ra1h40dec-29.75": 1.8 * wu,
-                     "ra1h40dec-33.25": 1.8 * wu,
+                     "ra0hdec-67.25": 2.8 * wu,
+                     "ra5hdec-24.5": 1.1 * wu,
+                     "ra5hdec-31.5": 1.3 * wu,
+                     "ra5hdec-38.5": 1.4 * wu,
+                     "ra5hdec-45.5": 1.5 * wu,
+                     "ra5hdec-52.5": 1.8 * wu,
+                     "ra5hdec-59.5": 2.6 * wu,
+                     "ra1h40dec-29.75": 2.0 * wu,
+                     "ra1h40dec-33.25": 2.0 * wu,
                      "ra1h40dec-36.75": 2.0 * wu,
                      "ra1h40dec-40.25": 2.0 * wu}}
+        # * Thresholds were decided in the following ways:
+        #       Winter subfields: around 0.2 x median weights from 2020 data
+        #       Summer subfields: around 0.2 x median weights from 2019 data
+        #       Summer-b subfields: around 0.2 x median weights from 2020 data (1st week)
         
         t_vals = numpy.asarray(map_frame["T"])
         
@@ -1003,8 +1008,10 @@ def calculate_pointing_discrepancies(
               "3rd": numpy.array([ 34.20079, -32.79458,  540])},
          "ra1h40dec-36.75": \
              {"1st": numpy.array([  6.56833, -35.21369, 1123]),
-              "2nd": numpy.array([ 23.49125, -36.49314,  440]),
-              "3rd": numpy.array([ 42.73092, -36.27647,  340])},
+              # "2nd": numpy.array([ 23.49125, -36.49314,  440]),
+              # * The measured offsets are too large for this source for some reason...
+              "2nd": numpy.array([ 42.73092, -36.27647,  340]),
+              "3rd": numpy.array([ 37.36842, -36.73242,  263])},
          "ra1h40dec-40.25": \
              {"1st": numpy.array([ 16.68796, -40.57208, 2146]),
               "2nd": numpy.array([  3.24954, -39.90733, 1609]),
@@ -1105,8 +1112,11 @@ def calculate_pointing_discrepancies(
 
 
 
-def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
+def create_mask_for_powspec_calc_of_small_region(
+        map_frame, point_source_file,
+        center_ra, center_dec, height, margin=0.25*core.G3Units.deg):
     
+    """
     ptsrc_mask = mapspectra.apodmask.make_apodized_ptsrc_mask(
                      map_frame, point_source_file)
     
@@ -1129,13 +1139,44 @@ def create_mask_for_powspec_calc_of_small_region(map_frame, point_source_file):
     full_mask = ptsrc_mask * edge_mask
     
     return full_mask
+    """
+    
+    center_ra /= core.G3Units.deg
+    center_dec /= core.G3Units.deg
+    height /= 2.0*core.G3Units.deg
+    
+    source_mask = mapspectra.apodmask.make_apodized_ptsrc_mask(
+                      map_frame, point_source_file)
+    
+    edge_mask = source_mask.clone(False)
+    ras, decs = maps.get_ra_dec_map(source_mask)
+    ras  = numpy.asarray(ras/core.G3Units.deg)
+    decs = numpy.asarray(decs/core.G3Units.deg)
+    numpy.asarray(edge_mask)[(decs>center_dec-height) &
+                             (decs<center_dec+height)] = 1.0    
+    del ras, decs
+    
+    margin_npix = int(margin/edge_mask.res)
+    numpy.asarray(edge_mask)[:margin_npix,:] = 0.0
+    numpy.asarray(edge_mask)[-margin_npix:,:] = 0.0
+    numpy.asarray(edge_mask)[:,:margin_npix] = 0.0
+    numpy.asarray(edge_mask)[:,-margin_npix:] = 0.0
+    
+    edge_mask = mapspectra.apodmask.make_border_apodization(
+                edge_mask, smooth_weights_arcmin=0.0,
+                apod_type="cosine", radius_arcmin=60)
+    
+    full_mask = source_mask * edge_mask
+    
+    return full_mask
 
 
 
 
 def create_mini_planck_map_frame(
-        fits_file, spt_map_frame, center_ra, center_dec,
-        xylen_deg=5.0, t_only=True):
+        fits_file, spt_map_frame,
+        center_ra, center_dec, length_x, length_y,
+        t_only=True):
     
     planck_healpix_maps = maps.fitsio.load_skymap_fits(fits_file)
     
@@ -1154,8 +1195,8 @@ def create_mini_planck_map_frame(
         new_map_frame["T"] = planck_flatsky_map
     
         map_frame_smaller = create_new_map_frame_with_smaller_region(
-                                new_map_frame, center_ra, center_dec,
-                                xylen_deg=xylen_deg)
+                                new_map_frame,
+                                center_ra, center_dec, length_x, length_y)
 
     return map_frame_smaller
 
@@ -1175,27 +1216,22 @@ def calculate_average_ratio_of_spt_planck_xspectra(
             halfmission1_planck_map_frame = map_frame
         if mission == "halfmission-2":
             halfmission2_planck_map_frame = map_frame
-    
-    sptmp   = spt_map_frame["T"] / core.G3Units.mK
-    plkmpf  = fullmission_planck_map_frame["T"] / core.G3Units.mK
-    plkmph1 = halfmission1_planck_map_frame["T"] / core.G3Units.mK
-    plkmph2 = halfmission2_planck_map_frame["T"] / core.G3Units.mK
-    
+        
     average_ratios = {}
     
-    ell_lo = 750
-    ell_hi = 1250
+    ell_lo = 790
+    ell_hi = 1410
     
     if t_only:
         planck_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                               halfmission1_planck_map_frame,
                               input2=halfmission2_planck_map_frame,
-                              delta_l=200, lmin=300, lmax=6000,
+                              delta_l=200, lmin=700, lmax=1500,
                               apod_mask=mask, realimag="real", flatten=False)
         
         spt_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                            spt_map_frame, input2=fullmission_planck_map_frame,
-                           delta_l=200, lmin=300, lmax=6000,
+                           delta_l=200, lmin=700, lmax=1500,
                            apod_mask=mask, realimag="real", flatten=False)
         
         cl_ratios   = spt_x_planck["TT"] / planck_x_planck["TT"]
@@ -1217,13 +1253,13 @@ def calculate_noise_levels(map_frame, mask, t_only=True):
     
     noises = {}
     
-    ell_lo = 3000
-    ell_hi = 5000
+    ell_lo = 2990
+    ell_hi = 5010
     
     if t_only:
         cls = mapspectra.map_analysis.calculate_powerspectra(
                   map_frame, input2=None,
-                  delta_l=200, lmin=300, lmax=6000,
+                  delta_l=200, lmin=2500, lmax=5500,
                   apod_mask=mask, realimag="real", flatten=False)
         
         bin_centers = cls["TT"].bin_centers
@@ -1817,15 +1853,12 @@ class AnalyzeAndCoaddMaps(object):
                     if season == "winter":
                         center_ra  = core.G3Units.deg *   0.0
                         center_dec = core.G3Units.deg * -56.0
-                        minimap_xylen_deg = 5.0
                     elif season == "summer":
                         center_ra  = core.G3Units.deg *  75.0
                         center_dec = core.G3Units.deg * -42.0
-                        minimap_xylen_deg = 5.0
                     elif season == "summerb":
                         center_ra  = core.G3Units.deg *  25.0
                         center_dec = core.G3Units.deg * -35.0
-                        minimap_xylen_deg = 2.0
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1877,18 +1910,17 @@ class AnalyzeAndCoaddMaps(object):
                     if season == "winter":
                         center_ra  = core.G3Units.deg *  0.0
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
-                        dec_height_deg = 7.5
-                        minimap_xylen_deg = 5.0
+                        dec_height = 7.5 * core.G3Units.deg
                     elif season == "summer":
                         center_ra  = core.G3Units.deg * 75.0
                         center_dec = core.G3Units.deg * float(sbfd[-5:])
-                        dec_height_deg = 7.0
-                        minimap_xylen_deg = 5.0
+                        dec_height = 7.0 * core.G3Units.deg
                     elif season == "summerb":
                         center_ra  = core.G3Units.deg * 25.0
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
-                        dec_height_deg = 3.5
-                        minimap_xylen_deg = 2.0
+                        dec_height = 3.5 * core.G3Units.deg
+                    minimap_length_x = 12.0 * core.G3Units.deg
+                    minimap_length_y = 12.0 * core.G3Units.deg
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -2193,7 +2225,7 @@ class AnalyzeAndCoaddMaps(object):
                         fracs_to_be_reorganized = \
                             calculate_change_in_cal_response_vs_elevation(
                                 oid,
-                                center_dec, dec_height_deg,
+                                center_dec, dec_height,
                                 self.cal_obs_ids,
                                 self.cal_ts_dir, self.cal_autoproc_dir,
                                 self.wafers_and_bolos,
@@ -2349,7 +2381,7 @@ class AnalyzeAndCoaddMaps(object):
                                 [create_new_map_frame_with_smaller_region(
                                      one_type_of_frame,
                                      center_ra, center_dec,
-                                     xylen_deg=minimap_xylen_deg,
+                                     minimap_length_x, minimap_length_y,
                                      t_only=self.t_only)
                                  for one_type_of_frame in
                                      (summ_map_frame_individ,
@@ -2383,7 +2415,7 @@ class AnalyzeAndCoaddMaps(object):
                             [create_new_map_frame_with_smaller_region(
                                  one_type_of_frame,
                                  center_ra, center_dec,
-                                 xylen_deg=minimap_xylen_deg,
+                                 minimap_length_x, minimap_length_y,
                                  t_only=self.t_only)
                              for one_type_of_frame in
                                  (summ_map_frame_individ,
@@ -2604,7 +2636,8 @@ class AnalyzeAndCoaddMaps(object):
                             self.masks_for_powspec_calculations[sbfd] = \
                                 create_mask_for_powspec_calc_of_small_region(
                                     summ_map_frame_individ_mini,
-                                    self.point_source_list_file)
+                                    self.point_source_list_file,
+                                    center_ra, center_dec, dec_height)
                         for mission in self.planck_missions:
                             if self.mini_planck_map_frames\
                                [mission][band][sbfd] is None:
@@ -2621,6 +2654,7 @@ class AnalyzeAndCoaddMaps(object):
                                     create_mini_planck_map_frame(
                                         fits_file, summ_map_frame_individ,
                                         center_ra, center_dec,
+                                        minimap_length_x, minimap_length_y,
                                         t_only=self.t_only)
                                 self.log("*  which will be used repeatedly.")
                         avg_xspec_ratios = \
@@ -2674,7 +2708,8 @@ class AnalyzeAndCoaddMaps(object):
                             self.masks_for_powspec_calculations[sbfd] = \
                                 create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_individ_mini,
-                                    self.point_source_list_file)
+                                    self.point_source_list_file,
+                                    center_ra, center_dec, dec_height)
                         noises = calculate_noise_levels(
                                      diff_map_frame_individ_mini,
                                      self.masks_for_powspec_calculations[sbfd],
@@ -2724,7 +2759,8 @@ class AnalyzeAndCoaddMaps(object):
                             self.masks_for_powspec_calculations[sbfd] = \
                                 create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_coadded_mini,
-                                    self.point_source_list_file)
+                                    self.point_source_list_file,
+                                    center_ra, center_dec, height)
                         noises = calculate_noise_levels(
                                      diff_map_frame_coadded_mini,
                                      self.masks_for_powspec_calculations[sbfd],
@@ -3017,48 +3053,52 @@ def drop_duplicate_analysis_results(frame):
 def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
     
     wu = 1 / (core.G3Units.mK * core.G3Units.mK)
-    thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 100.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 120.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 120.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 125.0*wu},
-                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 145.0*wu},
-                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 175.0*wu},
-                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 250.0*wu},
-                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 250.0*wu},
-                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 250.0*wu},
-                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 250.0*wu}},
-                  "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 180.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 210.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 220.0*wu},
-                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 250.0*wu},
-                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 185.0*wu},
+    thresholds = {"90" : {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  90.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 105.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 128.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 174.0*wu},
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 170.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 188.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 166.0*wu},
+                          "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 170.0*wu},
+                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 220.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 240.0*wu},
+                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 300.0*wu}},
+                  "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 123.0*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 160.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 185.0*wu},
+                          "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 260.0*wu},
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 130.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 160.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 160.0*wu},
                           "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 185.0*wu},
-                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 235.0*wu},
-                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 255.0*wu},
-                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 270.0*wu},
-                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 270.0*wu},
-                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 270.0*wu},
-                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 270.0*wu}},
-                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 12.0*wu},
-                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 15.0*wu},
-                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 18.0*wu},
+                          "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 232.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 310.0*wu},
+                          "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 350.0*wu}},
+                  "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  9.5*wu},
+                          "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 12.0*wu},
+                          "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 15.0*wu},
                           "ra0hdec-67.25": {"lo": 0.0*wu, "hi": 21.0*wu},
-                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 15.0*wu},
-                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 15.0*wu},
-                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 15.0*wu},
+                          "ra5hdec-24.5": {"lo": 0.0*wu, "hi": 12.0*wu},
+                          "ra5hdec-31.5": {"lo": 0.0*wu, "hi": 13.0*wu},
+                          "ra5hdec-38.5": {"lo": 0.0*wu, "hi": 14.0*wu},
                           "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 15.0*wu},
                           "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 18.0*wu},
-                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 22.0*wu},
+                          "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 26.0*wu},
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 30.0*wu}}}
+    # * Thresholds were decided in the following ways:
+    #       Winter subfields: around 1.5 x median weights from 2020 data
+    #       Summer subfields: around 2.0 x median weights from 2019 data
+    #       Summer-b subfields: around 2.0 x median weights from 2020 data (1st week)
     
     if (mean_wt < thresholds[band][sub_field]["lo"]) or \
        (mean_wt > thresholds[band][sub_field]["hi"]) or \
