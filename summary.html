@@ -73,10 +73,11 @@
 <div id="tabs">
   <ul>
     <li><a href="#tabs-summarystats">Calibration Observations</a></li>
-    <li><a href="#tabs-maps">Field Observations (Winter)</a></li>
-    <li><a href="#tabs-mapssummer">(Summer)</a></li>
-    <li><a href="#tabs-mapssummerb">(Summer-b)</a></li>
-    <li><a href="#tabs-weather">Weather Et Cetera</a></li>
+    <li><a href="#tabs-maps">Field Observations: Winter</a></li>
+    <li><a href="#tabs-mapssummer">Summer</a></li>
+    <li><a href="#tabs-mapssummerb">Summer-b</a></li>
+    <li><a href="#tabs-mapssummerc">Summer-c</a></li>
+    <li><a href="#tabs-weather">Weather Etc</a></li>
     <li><a href="#tabs-fridge">Fridge Cycles</a></li>
     <li><a href="#tabs-readme">Read Me</a></li>
   </ul>
@@ -1167,7 +1168,7 @@
           
           <tr class="maps_non_yearly">
             <td>
-              <h3>Cal vs El (by sub field)</h3>
+              <h3>Cal vs El (by sub-field)</h3>
             </td>
           </tr>
           <tr class="maps_non_yearly">
@@ -1881,7 +1882,7 @@
           
           <tr class="maps_summer_non_yearly">
             <td>
-              <h3>Cal vs El (by sub field)</h3>
+              <h3>Cal vs El (by sub-field)</h3>
             </td>
           </tr>
           <tr class="maps_summer_non_yearly">
@@ -2569,7 +2570,7 @@
           
           <tr class="maps_summerb_non_yearly">
             <td>
-              <h3>Cal vs El (by sub field)</h3>
+              <h3>Cal vs El (by sub-field)</h3>
             </td>
           </tr>
           <tr class="maps_summerb_non_yearly">
@@ -2697,6 +2698,11 @@
 
         </table>
       </div>
+    </div>
+  </div>
+
+  <div id="tabs-mapssummerc" style="padding:10px 10px 10px 10px;">
+    <div class="container-all-figs" style="height:86vh;">
     </div>
   </div>
 
@@ -2884,22 +2890,22 @@
         If you are new to this webpage and are confused by what it is, how it works, what to look at, etc.,
         please feel free to contact Wei,
         who is more than happy to give a presentation/tutorial on the contents of this webpage! </p>
-    <p style="text-align:right"> (Read Me author: Wei, Last updated: 2020/11/20) </p><br>
+    <p style="text-align:right"> (Read Me author: Wei, Last updated: 2020/12/12) </p><br>
     
     <h3> 1. Overview </h3>
     <p> This webpage is meant to be used to monitor how stable the results of various calibration observations and
         field observations have been over time, especially for the last several days. </p>
-    <p> Nearly every figure in the <i>Calibration Observations</i> tab and <i>Field Observations (Winter/Summer)</i> tab
+    <p> Nearly every figure in the <i>Calibration Observations</i> tab and <i>Field Observations</i> tabs
         shows the time variations of certain quantity during certain time interval.
         If the operation of the telescope and the camera was normal during that time interval,
         then the data points plotted there should show a more or less flat trend.
         The presence of any abnormal data point indicates that there was some issue with the operation,
         some unusual environmental condition, or perhaps some problem in the analysis pipeline that calculated that data point.
         Since bad weather conditions is a common cause of deteriorated data quality,
-        some weather-related plots are shown in the <i>Weather Et Cetera</i> tab,
+        some weather-related plots are shown in the <i>Weather Etc</i> tab,
         which may be useful when we want to know what the weather was like during certain period
         from which we see degraded data quality.
-        In addition, there are some cryogenics-related plots in the <i>Fridge Cycles</i> and <i>Weather Et Cetera</i> tabs
+        In addition, there are some cryogenics-related plots in the <i>Fridge Cycles</i> and <i>Weather Etc</i> tabs
         that may be useful in a situation where we suspect that there are some issues with the cryostats. </p>
     <p> There are not any strict definitions on what is considered as abnormal, but, for example,
         if all the results from the observations taken during the past day or two deviate from
@@ -2989,7 +2995,11 @@
         <a href="https://kicp-workshops.uchicago.edu/CMB-School/resources/depot/benson__2.pdf">
          a presentation of Brad's</a> (slides 3 through 8), and the actual code used is
         <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/elnod.py#L69">
-         here</a>. </p>
+         here</a>. Basically, from <code>ElnodSlope</code> we can estimate
+        how much power would be absorbed by a detector if it were pointed at the zenith.
+        Then, with some rough estimate of the ambient temperature and the detector's optical efficiency,
+        we can calculate the opacity of the atmosphere, or the zenith optical depth.
+        There is more explanation on the zenith optical depth in section 4 below. </p>
     <p> The figure in the thrid row shows the IQ phase angle, which is given by
         <code>arctan(ElnodEigenvalueDominantVectorQ/ElnodEigenvalueDominantVectorI)</code>.
         Both the numerator and denominator are computed by the autoprocessing. </p><br>
@@ -3082,7 +3092,8 @@
         <a href="https://pole.uchicago.edu/spt3g/img_auth.php/20190513_hackathon_dq.pdf">Adam's slides</a>.</p><br>
     
     <h3> 3. <i>Field Observations</i> tabs </h3>
-    <p> In these tabs (<i>Winter</i> and <i>Summer</i>), for each time interval listed on the left,
+    <p> In these tabs (<i>Winter</i>, <i>Summer</i>, <i>Summer-b</i>, and <i>Summer-c</i>),
+        for each time interval listed on the left,
         you can find figures showing co-added maps from that interval
         and figures showing time variations of several map-related quantities such as map noise level during the same interval.
         In the latter type of figures, one data point corresponds to one observation of a sub-field.
@@ -3091,19 +3102,24 @@
         hopefully there is someone in your institution whom you can ask questions to...
         Of course, Wei is happy to talk about the quantities plotted here as well! </p>
     <p> For the <i>Winter</i> tab, most of the figures have the notations
-        "el0", "el1", "el2", and "el3" in their legends and/or titles, 
+        el0, el1, el2, and el3 in their legends and/or titles, 
         and these are simply shorthands for the
-        ra0hdec-44.75, ra0hdec-52.25, ra0hdec-59.75, and ra0hdec-67.25 sub-fields, respectively.
-        As for the <i>Summer</i> tab, "el0", "el1", "el2", "el3", "el4", and "el5" correspond to
-        the ra5hdec-24.5, ra5hdec-31.5, ra5hdec-38.5, ra5hdec-45.5, ra5hdec-52.5, and ra5hdec-59.5, respectively.
-        The two figures below show the locations of these sub-fields.
-        Both the full winter field and the full summer field have an area of about 1500 square degrees. <br><br>
-        <img style="width:665px;height:490px;"
-             src="readmeimg/1500d_winter_full_field.png"><br>
-        <img style="width:665px;height:490px;"
-             src="readmeimg/1500d_summer_full_field.png"><br><br>
-        For more information on the sub-fields and the strategies we use to observe them, please see
-        <a href="https://pole.uchicago.edu/spt3g/index.php/ObservationCadence#Summer_2019-2020">this wiki page</a>. </p><br>
+        ra0hdec-44.75, ra0hdec-52.25, ra0hdec-59.75, and ra0hdec-67.25 sub-field, respectively.
+        As for the <i>Summer</i> tab, figures related to the observations taken during the 2019-2020 austral summer
+        have the notations el0, el1, el2, el3, el4, and el5, which correspond to
+        the ra5hdec-24.5, ra5hdec-31.5, ra5hdec-38.5, ra5hdec-45.5, ra5hdec-52.5, and ra5hdec-59.5 sub-field, respectively.
+        Within this same tab, figures related to the observations taken during the 2020-2021 austral summer
+        will have the notations el10, el11, el20, and el21, which correspond to
+        the ra5hdec-29.75, ra5hdec-33.25, ra5hdec-36.75, and ra5hdec-40.25 sub-field.
+        When combined together, the new el10 and el11 sub-field correspond to the old el1 sub-field,
+        and the new el20 and el21 sub-field correspond to the old el2 sub-field.
+        As for the notations used in the <i>Summer-b</i> tab and those that will be used in the <i>Summer-c</i> tab,
+        please see
+        <a href="https://pole.uchicago.edu/spt3g/index.php/Observing_Cadence_Summer_2020_2021">this wiki page</a>.
+        The figure below shows the locations of all these sub-fields.
+        Please note that the numbers used in the title (for the area of each field) are approxmations. <br><br>
+        <img style="width:800px;height:866px;"
+             src="readmeimg/all_fields.png"><br></p><br>
     
     <h4> 3.1. <i>Maps</i> section </h4>
     <p> The figures in the first row show co-added temperature maps from each of the three observing bands.
@@ -3113,10 +3129,10 @@
         a map, which has 0.25 arcminute resolution, is first smoothed with a 1.0 arcminute FWHM Gaussian,
         and then the 1st and 99th percentile values in the smoothed map are used as the
         lower and upper limits of the color bar, respectively. The smoothing is done because, if the original map,
-        which has 18000 by 12000 pixels, is shown in an image that has about 1500 by 1000 pixels,
-        the map in the resultant image seems to look too noisy to serve useful purposes such as
+        which has 18000 by 12000 pixels (for the 1500d winter field), is shown in an image that has about 1500 by 1000 pixels,
+        the map in the resultant image seems to look too noisy to serve any useful purposes such as
         revealing some strange features if they exist. </p>
-    <p> For the Yearly and Monthly time intervals, the map does not look noisy enough in the resultant image to require
+    <p> For the Yearly and Monthly time intervals, a co-add does not look noisy enough in the resultant image to require
         smoothing, so that processing is not done.
         As for the color bar limits, they are determined not directly from the actual values in a map but from expectations.
         The expectations are based on a model that the variance of the values in a map is equal to
@@ -3125,9 +3141,9 @@
         From a typical noise variance, an educated guess for the signal variance, the number of maps added together,
         and this model, an expected variance is calculated for a co-add,
         and the color bar limits are set to be +/- 2.5 times the corresponding standard deviation. </p>
-    <p> The figure below shows an example of how the expected variance is determined.
-        The blue data points show how the variance of a 2019 co-added signal (plus noise) map changed
-        everytime two new maps were added with the same sign,
+    <p> The figure below shows an example of how the expected variance of a co-add is determined.
+        The blue data points show how the variance in a 2019 co-added 95GHz map of the ra0hdec-44.75 sub-field map changed
+        everytime two new maps were added to the co-add,
         and the orange data points show how the variance of the corresponding co-added noise map changed
         everytime the same two new maps were added but with the opposite signs.
         The blue box, whisker, and caps in the lower left corner show a distribution of
@@ -3137,31 +3153,31 @@
           <img class="fig-with-border" style="width:500px;height:300px;"
                src="readmeimg/90GHz-T_map_variances_of_signals_and_noises_in_ra0hdec-44.75.png">
         </a><br><br>
-        The median of the blue distribution is used as the "typical noise variance" mentioned in the previous paragraph,
-        and the asymptote of the blue curve is used as the "educated guess for the signal variance".
+        The median of the blue distribution is used as the typical noise variance mentioned in the previous paragraph,
+        and the asymptote of the blue curve is used as the educated guess for the signal variance.
         These fittings are done for each observing band and each sub-field, and all of these results are
         taken into account when an expected variance of a full-field co-add is calculated. </p>
     <p> The figures in the second row show co-added TT weight maps. The lower and upper limits of a color bar
         in this type of figures simply correspond to the minimum and maximum of the values in a weight map, respectively.
-        The figures in the third row show cross sections of these weight maps, and the values are normalized to
+        The figures in the third row show cross sections of these weight maps along the vertical line
+        that passes the center RA of the map, and the values are typically normalized to
         the weight at around the most negative declination.
-        For the winter full field, the cross section is along the RA = 0 degree contour,
-        and, for the summer full field, the cross section is along the RA= 75 degrees contour.
-        In both cases, the cross section corresponds to the vertical line that bisects the map.
         Along with the actual data, expected cross sections are
         also shown, which are based on a simple model that the weight of a pixel is proportional to the amount of time
         the telescope spends on staring at the area of the sky corresponding to that pixel.
-        Since our scans have the same duration and cover the same RA range regardless of declination
+        Since our scans have the same duration and cover the same range of RA regardless of declination
         (or the telescope elevation), the time spent on a pixel is
         inversely proportional to cosine of the declination of that pixel. This time spent is also proportional to
         the number of observations that covered that pixel. As a result, the expected cross section shown in a figure is
-        basically equal to secant of declination multiplied by number of observations. </p><br>
+        basically equal to secant of declination multiplied by a discontinuous integer-valued function
+        representing the number of observations of each sub-field. </p><br>
     
     <h4> 3.2. <i>Fluctuations in Maps</i> section </h4>
     <p> For non-yearly time intervals, there are two rows of figures in this section. The first row shows noise levels,
-        and the second row shows averages of TT weights. The noise level of a temperature map is defined here as
-        the average of square root of C_l of the autospectrum in the ell range [3000, 5000].
-        In order to save time and reduce memory usage, only the data within a 5 degrees by 5 degrees patch
+        and the second row shows averages of TT weights of individual observations.
+        The noise level of a temperature map is defined here as
+        the average of square root of the autospectrum of the map in the ell range [3000, 5000].
+        In order to save time and reduce memory usage, only the pixels within a small patch of the sky
         located around the center of a sub-field are used for calculating the noise.
         These small patches do contain bright point sources, which are masked during the calculations. As for calculating
         an average value from a TT weight map, the peripheral regions of the map
@@ -3241,7 +3257,11 @@
         similar to making a co-add by alternately adding and subtracting maps, which is how the x-axis label got its name.
         The noise levels in the running year-to-date co-adds are expected to be inversely proportional to square root of
         the number of maps used, which is why log-log plots are used here, and also results from linear least squares
-        fitting to the logarithm of the data are shown. </p><br>
+        fitting to the logarithm of the data are shown. The title of each figure also indicates
+        how many maps were excluded from the co-adds. The excluded maps, if any, are typically those maps
+        that have anomalously large weights, which can affect the co-adds significantly if included.
+        For the thresholds used to determine whether a map has an unreasonably large weight,
+        please see <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/fields_coadding.py#L3056">this dictionary</a>. </p><br>
     
     <h4> 3.3. <i>Pointing</i> section </h4>
     <p> For non-yearly time intervals, time variations of discrepancies between measured positions and true possitions
@@ -3259,10 +3279,13 @@
         The dimmest one is in the ra0hdec-67.25 sub-field and has SNR of about 15. The other ten sources' SNRs are
         roughly in the range between 25 and 70 (SNR here is defined as the peak value of a source divided by
         the standard deviation of the sub-field map to which the source belongs, and point sources are masked
-        when the standard deviation is calculated). </p>
-    <p> For each sub-field, there is one figure for RA offsets and one for Dec offsets. In each figure,
+        when the standard deviation is calculated).
+        For the complete list of all the sources used for all the sub-fields,
+        please see <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/fields_coadding.py#L953">this dictionary</a>. </p>
+    <p> For non-yearly time intervals, for each sub-field,
+        there is one set of figures for RA offsets and one for Dec offsets. In each figure,
         along with the offsets from the three sources, the average offset of these three sources is also shown.
-        For yearly time intervals, there are figures showing distributions of the average offsets. </p><br>
+        For yearly time intervals, there are two figures showing distributions of the averages. </p><br>
     
     <h4> 3.4. <i>Completeness of Observations</i> section </h4>
     <p> This section exists for non-yearly time intervals only.
@@ -3279,10 +3302,11 @@
         Thus, the figures do not indicate that there are typically about one thousand
         bolometers from each band that were initially tuned successfully but later produced bad data during observing. </p>
     <p> The figures in the second row show fractions of pixels in TT weight maps that have nominal weights.
-        The nominal weight for each sub-field is roughly equal to
-        30% of the average weight of a typical weight map from that sub-field. </p>
+        The nominal weight for each sub-field is defined as roughly
+        30% of the average weight of a typical weight map from that sub-field.
+        For the exact values used, please see <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/fields_coadding.py#L837">this dictionary</a>.</p>
     <p> The figure in the third row shows the duration of each observation
-        as recorded in the observation frame found in the raw data g3 files.
+        as recorded in the observation frame found in the raw data (timestreams) files.
         This figure also happens to show our observing cadence in a colorful way. The printed observing efficiency is
         calculated by dividing the total observation duration from that time interval by
         the length of the entire interval. </p><br>
@@ -3294,7 +3318,8 @@
         the numerator is the cross spectrum between a T map of ours and the Planck's full mission map,
         and the denominator is the cross spectrum between one of Planck's half mission map and the other half mission map.
         If our temperature calibration is reasonably close to that of Planck's, this ratio should be close to 1.0.
-        Since this calculation is not sophisticated enough to apply corrections due to our beams, etc.,
+        Since this calculation is not sophisticated enough
+        to apply corrections due to the beams, filtering transfer functions etc.,
         how close the numbers are to 1.0 is perhaps not a very meaningful aspect to pay attention to.
         However, the figures should still be useful to catch those maps that have abnormal calibration.
         Like the noise calculations, in order to save time and memory usage,
@@ -3312,7 +3337,8 @@
         from all bolometers of each observing band, and the figures in the third row show the median from each wafer and
         each observing band. </p>
     <p> The figures in the fourth row show the conversion factors we use to calibrate bolometers' timestreams
-        from some units of power into K_CMB. The median value of pW/K from each wafer is shown. A pW/K conversion factor is
+        from some units of power into the temperature of CMB fluctuations.
+        The median value of pW/K from each wafer is shown. A pW/K conversion factor is
         equal to the product of <code>CalibratorResponse</code>, <code>FluxCalibration</code>, <code>IntegralFlux</code>,
         and <code>SkyTransmission</code> divided by some constant. If a figure here shows that
         certain observation had abnormal pW/K conversion factors, you may be able to find out which of the four factors
@@ -3321,15 +3347,22 @@
         the ratios of the cross spectra, and the second row shows the median percentage changes in bolometers' response to
         the calibrator. </p><br>
     
-    <h3> 4. <i>Weather Et Cetera</i> tab </h3>
+    <h3> 4. <i>Weather Etc</i> tab </h3>
     <p> When we see some anomalous data points in the figures shown in
         the <i>Calibration Observations</i> and <i>Field Observations</i> tabs,
         one question that may come to our mind is "How was the weather like during that time interval?".
-        The contents in this tab are meant to help us answer that question.
-        The <i>Tipper</i> section shows the atmospheric brightness and opacity measured by the submillimeter tipper
+        The contents in this tab are meant to help us answer that question. <p>
+    <p> The <i>Tipper</i> section shows the atmospheric brightness and opacity measured by the submillimeter tipper
         (please check <a href="https://arxiv.org/abs/1602.08795">this paper</a> to see how the instrument works).
-        It also has a copy of the figure from the <i>Callibration Observations</i> tab that shows our elnod-derived opacity.
-        The <i>Weather Station</i> section shows the various quantities measured by our own weather station.
+        As we can see from equation (4) in the paper, the atmospheric emission depends on the product of the two factors
+        <i>&tau;</i>, zenith optical depth, and <i>A</i>, airmass.
+        The reason the optical depth is given the units of inverse airmass in the middle plot is
+        to reflect the the fact that the optical depth and airmass should result in a unitless quantity
+        when multiplied together because the product is the exponent of the exponential function,
+        but hopefully the units are not causing unnecessary confusion...
+        This section also has a copy of the figure
+        from the <i>Callibration Observations</i> tab that shows our elnod-derived optical depth. <p>
+    <p> The <i>Weather Station</i> section shows the various quantities measured by our own weather station.
         Both the tipper and our weather station are installed near the telescope.
         In addition, there are figures showing the temperature measured by
         various thermometers installed in the receiver cabin and the cryostats.
@@ -3340,7 +3373,7 @@
         The plots you get from the "newest" radio button are identical to the plots you get from the button right below it.
         These plots will hopefully be useful in case we see some degraded performance of the fridge. </p><br>
     
-    <h3> 6. Repository </h3>
+    <h3> 6. Code and data products </h3>
     <p> All the relevant scripts that work together to make this webpage run are located in the
         <code>spt_dq_system</code> repository. <code>db_server.js</code> is the Java script that starts a server
         that serves this webpage. It calls the python script <code>update_summary.py</code> periodically to
@@ -3354,13 +3387,15 @@
         <code>/spt/data/rsync/spt_dq_data/</code>. Then, the figures are made from these pickles in the north. Therefore, if you'd like to plot the calibration-related quantities in a different way for certain debugging purpose, you could load the data from these pickles and make your own plots.
         As for the field observations, though, the g3 files are not transferred due to their sizes;
         it is only the figures that are transferred, which are located in
-        <code>/spt/data/rsync/spt_dq_maps_figures/</code>. However, there is
-        <a href="http://amundsen.grid.uchicago.edu:5000/summary.html"> a test version</a> of the webpage running on Amundsen.
+        <code>/spt/data/rsync/spt_dq_maps_figures/</code>. <p>
+    <p> However, there is a test version
+        (<a href="http://amundsen.grid.uchicago.edu:5000/summary.html">http://amundsen.grid.uchicago.edu:5000/summary.html</a>, 
+        same Username and Password) of the webpage running on Amundsen.
         Even though the updating for the "Field Observations" tabs is only done occasionally for this version,
         the g3 files are made on Amundsen and thus readily accessible to
         anyone in the north who is interested in using them. They are located in
         <code>/sptlocal/user/weiquan/map_quality/hi_res_maps/</code> (for winter sub-fields) and
-        <code>/sptlocal/user/weiquan/map_quality/hi_res_maps_summer/</code> (for summer sub-fields). As for the "Weather Et Cetera" and "Fridge Cycles" tabs, we are also only transferrig the figures, which are stored in <code>/spt/data/rsync/spt_dq_arcs_figs</code>. </p><br>
+        <code>/sptlocal/user/weiquan/map_quality/hi_res_maps_summer*/</code> (for summer sub-fields). As for the "Weather Etc" and "Fridge Cycles" tabs, we are also only transferrig the figures, which are stored in <code>/spt/data/rsync/spt_dq_arcs_figs</code>. </p><br>
     
     <h3> 7. Finally... </h3>
     <p> Thank you again for reading the documentation. If you have any questions on anything written here,
