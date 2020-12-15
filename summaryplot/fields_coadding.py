@@ -131,6 +131,8 @@ def get_season_based_on_fields(some_fields):
     summer_fields = ["ra5hdec-24.5" , "ra5hdec-31.5",
                      "ra5hdec-38.5" , "ra5hdec-45.5",
                      "ra5hdec-52.5" , "ra5hdec-59.5"]
+    summer_fields_p = ["ra5hdec-29.75", "ra5hdec-33.25",
+                       "ra5hdec-36.75", "ra5hdec-40.25"]
     summer_fields_b = ["ra1h40dec-29.75", "ra1h40dec-33.25",
                        "ra1h40dec-36.75", "ra1h40dec-40.25"]
     
@@ -138,8 +140,12 @@ def get_season_based_on_fields(some_fields):
         return "winter"
     elif set(some_fields) <= set(summer_fields):
         return "summer"
+    elif set(some_fields) <= set(summer_fields_p):
+        return "summerp"
     elif set(some_fields) <= set(summer_fields_b):
         return "summerb"
+    else:
+        raise Exception("Not clear what season to use!")
 
 
 
@@ -590,7 +596,6 @@ def maybe_del_gfal_copied_file(path):
 
 
 
-
 def calculate_change_in_cal_response_vs_elevation(
         field_obs_id, dec_center, dec_height,
         cal_obs_ids, cal_ts_dir, cal_autoproc_dir,
@@ -793,20 +798,28 @@ def identify_pixels_of_non_atypical_region(
         ra_max =  40.0
         ra_min = -40.0
         dccntr = float(field_name[-6:])
-        de_max = dccntr + 3.0
-        de_min = dccntr - 3.0
+        de_max = dccntr + 3.00
+        de_min = dccntr - 3.00
     elif season == "summer":
         ra_max = 95.0
         ra_min = 55.0
         dccntr = float(field_name[-5:])
         de_max = dccntr + 2.75
         de_min = dccntr - 2.75
+    elif season == "summerp":
+        ra_max = 95.0
+        ra_min = 55.0
+        dccntr = float(field_name[-6:])
+        de_max = dccntr + 1.00
+        de_min = dccntr - 1.00
     elif season == "summerb":
         ra_max = 45.0
         ra_min =  5.0
         dccntr = float(field_name[-6:])
         de_max = dccntr + 1.00
         de_min = dccntr - 1.00
+    else:
+        raise Exception("Not clear what season to use!")
 
     typical_pixels = numpy.where((ras  > ra_min) & (ras  < ra_max) &
                                  (decs > de_min) & (decs < de_max) &
@@ -858,6 +871,10 @@ def calculate_map_fluctuation_metrics(
                      "ra5hdec-45.5": 17.0 * wu,
                      "ra5hdec-52.5": 22.0 * wu,
                      "ra5hdec-59.5": 24.0 * wu,
+                     "ra5hdec-29.75": 33.0 * wu,
+                     "ra5hdec-33.25": 33.0 * wu,
+                     "ra5hdec-36.75": 33.0 * wu,
+                     "ra5hdec-40.25": 33.0 * wu,
                      "ra1h40dec-29.75": 33.0 * wu,
                      "ra1h40dec-33.25": 33.0 * wu,
                      "ra1h40dec-36.75": 33.0 * wu,
@@ -872,6 +889,10 @@ def calculate_map_fluctuation_metrics(
                      "ra5hdec-45.5": 19.0 * wu,
                      "ra5hdec-52.5": 23.0 * wu,
                      "ra5hdec-59.5": 33.0 * wu,
+                     "ra5hdec-29.75": 33.0 * wu,
+                     "ra5hdec-33.25": 33.0 * wu,
+                     "ra5hdec-36.75": 33.0 * wu,
+                     "ra5hdec-40.25": 33.0 * wu,
                      "ra1h40dec-29.75": 33.0 * wu,
                      "ra1h40dec-33.25": 33.0 * wu,
                      "ra1h40dec-36.75": 33.0 * wu,
@@ -886,6 +907,10 @@ def calculate_map_fluctuation_metrics(
                      "ra5hdec-45.5": 1.5 * wu,
                      "ra5hdec-52.5": 1.8 * wu,
                      "ra5hdec-59.5": 2.6 * wu,
+                     "ra5hdec-29.75": 2.0 * wu,
+                     "ra5hdec-33.25": 2.0 * wu,
+                     "ra5hdec-36.75": 2.0 * wu,
+                     "ra5hdec-40.25": 2.0 * wu,
                      "ra1h40dec-29.75": 2.0 * wu,
                      "ra1h40dec-33.25": 2.0 * wu,
                      "ra1h40dec-36.75": 2.0 * wu,
@@ -1011,6 +1036,22 @@ def calculate_pointing_discrepancies(
              {"1st": numpy.array([ 76.68342, -61.16150, 1655]),
               "2nd": numpy.array([ 87.53988, -57.54017, 1005]),
               "3rd": numpy.array([ 80.64333, -61.13250,  573])},
+         "ra5hdec-29.75": \
+             {"1st": numpy.array([ 84.97571, -28.66561,  677]),
+              "2nd": numpy.array([ 69.40233, -29.90108,  564]),
+              "3rd": numpy.array([ 95.12212, -28.46006,  503])},
+         "ra5hdec-33.25": \
+             {"1st": numpy.array([ 84.11850, -34.01967,  842]),
+              "2nd": numpy.array([ 61.89133, -33.06258,  563]),
+              "3rd": numpy.array([ 60.58879, -31.79044,  467])},
+         "ra5hdec-36.75": \
+             {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
+              "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
+              "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
+         "ra5hdec-40.25": \
+             {"1st": numpy.array([ 53.55675, -40.14036, 1274]),
+              "2nd": numpy.array([ 90.13046, -39.61711,  586]),
+              "3rd": numpy.array([ 72.42625, -39.18600,  401])},
          "ra1h40dec-29.75": \
              {"1st": numpy.array([  2.64967, -30.46339,  741]),
               "2nd": numpy.array([ 39.12962, -29.89864,  612]),
@@ -1863,6 +1904,9 @@ class AnalyzeAndCoaddMaps(object):
                 else:
                     season = get_season_based_on_fields(
                                  frame["CoaddedObservationIDs"].keys())
+                    center_ra = frame["T"].alpha_center
+                    center_dec = frame["T"].delta_center
+                    """
                     if season == "winter":
                         center_ra  = core.G3Units.deg *   0.0
                         center_dec = core.G3Units.deg * -56.0
@@ -1872,6 +1916,7 @@ class AnalyzeAndCoaddMaps(object):
                     elif season == "summerb":
                         center_ra  = core.G3Units.deg *  25.0
                         center_dec = core.G3Units.deg * -35.0
+                    """
                     center_y, center_x = \
                         numpy.unravel_index(
                             frame["T"].angle_to_pixel(center_ra, center_dec),
@@ -1921,17 +1966,18 @@ class AnalyzeAndCoaddMaps(object):
                     dura = {str(oid): (d_f - d_i) * core.G3Units.s}
                     season = get_season_based_on_fields([sbfd])
                     if season == "winter":
-                        center_ra  = core.G3Units.deg *  0.0
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
                         dec_height = 7.5 * core.G3Units.deg
                     elif season == "summer":
-                        center_ra  = core.G3Units.deg * 75.0
                         center_dec = core.G3Units.deg * float(sbfd[-5:])
                         dec_height = 7.0 * core.G3Units.deg
-                    elif season == "summerb":
-                        center_ra  = core.G3Units.deg * 25.0
+                    elif season == "summerp":
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
                         dec_height = 3.5 * core.G3Units.deg
+                    elif season == "summerb":
+                        center_dec = core.G3Units.deg * float(sbfd[-6:])
+                        dec_height = 3.5 * core.G3Units.deg
+                    center_ra = frame["T"].alpha_center
                     minimap_length_x = 12.0 * core.G3Units.deg
                     minimap_length_y = 12.0 * core.G3Units.deg
                     center_y, center_x = \
@@ -3076,6 +3122,10 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 170.0*wu},
                           "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 220.0*wu},
                           "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 240.0*wu},
+                          "ra5hdec-29.75": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra5hdec-33.25": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra5hdec-36.75": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra5hdec-40.25": {"lo": 0.0*wu, "hi": 300.0*wu},
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 300.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 300.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 300.0*wu},
@@ -3090,6 +3140,10 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 185.0*wu},
                           "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 232.0*wu},
                           "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 310.0*wu},
+                          "ra5hdec-29.75": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra5hdec-33.25": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra5hdec-36.75": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra5hdec-40.25": {"lo": 0.0*wu, "hi": 350.0*wu},
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 350.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 350.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 350.0*wu},
@@ -3104,6 +3158,10 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra5hdec-45.5": {"lo": 0.0*wu, "hi": 15.0*wu},
                           "ra5hdec-52.5": {"lo": 0.0*wu, "hi": 18.0*wu},
                           "ra5hdec-59.5": {"lo": 0.0*wu, "hi": 26.0*wu},
+                          "ra5hdec-29.75": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra5hdec-33.25": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra5hdec-36.75": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra5hdec-40.25": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 30.0*wu},

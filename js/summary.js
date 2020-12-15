@@ -196,6 +196,10 @@ function update_figs() {
     document["ra_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-45.5.png';
     document["ra_offsets_el4_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-52.5.png';
     document["ra_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-59.5.png';
+    document["ra_offsets_el10_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-29.75.png';
+    document["ra_offsets_el11_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-33.25.png';
+    document["ra_offsets_el20_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-36.75.png';
+    document["ra_offsets_el21_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-40.25.png';
     
     document["ra_offsets_el1b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-29.75.png';
     document["ra_offsets_el1b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-33.25.png';
@@ -223,6 +227,10 @@ function update_figs() {
         '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-52.5.png';
     document["dec_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+
         '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-59.5.png';
+    document["dec_offsets_el10_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-29.75.png';
+    document["dec_offsets_el11_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-33.25.png';
+    document["dec_offsets_el20_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-36.75.png';
+    document["dec_offsets_el21_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-40.25.png';
     
     document["dec_offsets_el1b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-29.75.png';
     document["dec_offsets_el1b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-33.25.png';

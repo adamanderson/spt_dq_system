@@ -127,6 +127,13 @@ elif arguments.season == "summer":
     field_names = ["ra5hdec-24.5", "ra5hdec-31.5",
                    "ra5hdec-38.5", "ra5hdec-45.5",
                    "ra5hdec-52.5", "ra5hdec-59.5"]
+elif arguments.season == "summerp":
+    dec_centers = [-29.75 * deg, -33.25 * deg,
+                   -36.75 * deg, -40.25 * deg]
+    dec_height  =    3.5 * core.G3Units.deg
+    ra_center   =   75.0 * deg
+    field_names = ["ra5hdec-29.75", "ra5hdec-33.25",
+                   "ra5hdec-36.75", "ra5hdec-40.25"]
 elif arguments.season == "summerb":
     dec_centers = [-29.75 * deg, -33.25 * deg,
                    -36.75 * deg, -40.25 * deg]
