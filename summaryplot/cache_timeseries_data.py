@@ -192,6 +192,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                          'W28A2-pixelraster': {'MedianW28A2FluxCalibration': median_htwo_fluxcal,
                                                'MedianW28A2IntegralFlux': median_htwo_intflux,
                                                'AliveBolosW28A2': alive_bolos_htwo_fluxcal},
+                         'IRAS17258':             {'IRAS17258SkyTransmission': htwo_sky_transmission},
+                         'IRAS17258-pixelraster': {'MedianIRAS17258FluxCalibration': median_htwo_fluxcal,
+                                                   'MedianIRAS17258IntegralFlux': median_htwo_intflux,
+                                                   'AliveBolosIRAS17258': alive_bolos_htwo_fluxcal},
+                         'RCW122A':             {'RCW122ASkyTransmission': htwo_sky_transmission},
+                         'RCW122A-pixelraster': {'MedianRCW122AFluxCalibration': median_htwo_fluxcal,
+                                                 'MedianRCW122AIntegralFlux': median_htwo_intflux,
+                                                 'AliveBolosRCW122A': alive_bolos_htwo_fluxcal},
                          'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
@@ -259,7 +267,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         updated = True
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
 
-                        """"""
+                        """
                         if caldatapath.startswith("/sptgrid"):
                             def get_gfal_copied_file(path):
                                 origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
@@ -269,7 +277,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             fname = get_gfal_copied_file(fname)
                             cal_fname = get_gfal_copied_file(cal_fname)
                             rawpath = get_gfal_copied_file(rawpath)
-                        """"""
+                        """
                         ### We can just read the files directly if gfal-copy is cumbersome.
                         ### Remember to also comment out the code that deletes files.
 
@@ -301,10 +309,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                     for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
 
-                        """"""
+                        """
                         if caldatapath.startswith("/sptgrid"):
                             os.system("rm {} {} {}".format(fname, cal_fname, rawpath))
-                        """"""
+                        """
 
             if updated:
                 with open(datafile, 'wb') as f:
@@ -408,7 +416,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                 # create the plots
                 if timeinterval == 'yearly':
-                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                    for src in ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']:
                         plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
                                                  xlims=[mindate, maxdate])
                         plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
@@ -419,7 +427,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                        plotsdir, bolodatapath,
                                                        xlims=[mindate, maxdate])
                 else:
-                    for src in ['RCW38', 'MAT5A', 'W28A2']:
+                    for src in ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']:
                         plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
                                                  xlims=[mindate, maxdate])
                         plot_median_htwo_intflux(src, data, wafer_list, plotsdir,

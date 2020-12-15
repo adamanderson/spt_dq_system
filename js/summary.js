@@ -54,6 +54,11 @@ function update_figs() {
     document["ts_median_w28a2_intflux"].src        = 'staticimg/'+weekdir+'/median_w28a2_intflux_'+wafer+'.png';
     document["ts_alive_bolos_w28a2"].src           = 'staticimg/'+weekdir+'/alive_bolos_w28a2_'+wafer+'.png';
 
+    document["ts_iras17258_sky_transmission"].src  = 'staticimg/'+weekdir+'/iras17258_sky_transmission_'+wafer+'.png';
+    document["ts_median_iras17258_fluxcal"].src    = 'staticimg/'+weekdir+'/median_iras17258_fluxcal_'+wafer+'.png';
+    document["ts_median_iras17258_intflux"].src    = 'staticimg/'+weekdir+'/median_iras17258_intflux_'+wafer+'.png';
+    document["ts_alive_bolos_iras17258"].src       = 'staticimg/'+weekdir+'/alive_bolos_iras17258_'+wafer+'.png';
+
     document["focus_fwhm_vs_bench_90"].src         = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png';
     document["focus_fwhm_vs_bench_150"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_150.png';
     document["focus_fwhm_vs_bench_220"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_220.png';
