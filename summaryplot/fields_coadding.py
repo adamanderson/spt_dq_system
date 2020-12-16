@@ -2819,7 +2819,7 @@ class AnalyzeAndCoaddMaps(object):
                                 create_mask_for_powspec_calc_of_small_region(
                                     diff_map_frame_coadded_mini,
                                     self.point_source_list_file,
-                                    center_ra, center_dec, height)
+                                    center_ra, center_dec, dec_height)
                         noises = calculate_noise_levels(
                                      diff_map_frame_coadded_mini,
                                      self.masks_for_powspec_calculations[sbfd],
