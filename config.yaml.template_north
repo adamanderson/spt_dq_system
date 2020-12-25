@@ -44,6 +44,6 @@ arc_pkls_dir: /var/www/spt_dq_system/static_plots/arcs/pkls/
 arc_figs_dir: /var/www/spt_dq_system/static_plots/arcs/figs/
 arc_logs_dir: /var/www/spt_dq_system/static_plots/arcs/logs/
 
-min_time_summary_plots: 20190107
+min_time_summary_plots: 20200106
 min_time_maps: 20200106
 min_time_arcs: 20200106
