@@ -3,7 +3,6 @@
 var express = require('express');
 var sqlite3 = require('sqlite3');
 var assert = require('assert');
-var bodyParser = require('body-parser');
 var squel = require("squel");
 var execFile = require('child_process').execFile;
 var exec = require('child_process').exec;
@@ -36,8 +35,8 @@ if(config.pythonpath != null) {
 
 // setup express
 var app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 // server side events for passing messages
 app.get('/sse', sse.init);
 // counter to separate messages by plot request
@@ -67,6 +66,7 @@ app.get('/', function (req, res) {
 // needed to load js and css files
 app.use('/js', express.static( path.join(__dirname, '/js') ));
 app.use('/css', express.static( path.join(__dirname, '/css') ));
+app.use('/templates', express.static( path.join(__dirname, '/templates') ));
 
 // file browser for log files
 if(config.site == 'pole') {
@@ -132,8 +132,8 @@ app.get('/lastmodified_calibration', function(req, res) {
 });
 
 // get time that winter fields related plots  were lastmodified
-app.get('/lastmodified_maps_winter', function(req, res) {
-	var stat_dir = path.join(config.coadds_figs_dir, '/last_n/last_07/');
+app.get('/lastmodified_maps', function(req, res) {
+	var stat_dir = path.join(config.coadds_figs_dirs[req.query.field], '/last_n/last_07/');
 
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
@@ -141,32 +141,6 @@ app.get('/lastmodified_maps_winter', function(req, res) {
     });
 });
 
-// get time that summer fields related plots  were lastmodified
-app.get('/lastmodified_maps_summer', function(req, res) {
-    if (config.coadds_figs_dir.endsWith('/'))
-        coadds_figs_summer_dir = (config.coadds_figs_dir + '_summer').replace("/_summer", "_summer");
-    else
-	    coadds_figs_summer_dir = config.coadds_figs_dir + '_summer';
-    var stat_dir = path.join(coadds_figs_summer_dir, '/last_n/last_07/');
-
-    fs.readdir(stat_dir, function(err, filelist) {
-        lastupdate_time = check_lastmodified(stat_dir, filelist);
-	    res.send({time:lastupdate_time});
-    });
-});
-
-app.get('/lastmodified_maps_summerb', function(req, res) {
-    if (config.coadds_figs_dir.endsWith('/'))
-        coadds_figs_summer_dir = (config.coadds_figs_dir + '_summerb').replace("/_summerb", "_summerb");
-    else
-	    coadds_figs_summer_dir = config.coadds_figs_dir + '_summerb';
-    var stat_dir = path.join(coadds_figs_summer_dir, '/last_n/last_07/');
-
-    fs.readdir(stat_dir, function(err, filelist) {
-        lastupdate_time = check_lastmodified(stat_dir, filelist);
-	    res.send({time:lastupdate_time});
-    });
-});
 
 // get time that weather plots were lastmodified
 app.get('/lastmodified_weather', function(req, res) {
