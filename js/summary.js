@@ -13,12 +13,11 @@ for (var cookie_name in default_cookies) {
 
 // get cookie values
 var wafer = Cookies.get('wafer');
-// var weekdir = Cookies.get('weekdir');
 var weekdir = {summary: Cookies.get('weekdir'),
                winter: Cookies.get('mapweekdir'),
                summer: Cookies.get('mapweekdirsummer'),
-               summerb: Cookies.get('mapweekdirsummerb')};
-var arcdir = Cookies.get('arcdir');
+               summerb: Cookies.get('mapweekdirsummerb'),
+               weather: Cookies.get('arcdir')};
 var cycledir = Cookies.get('cycledir');
 
 // function for getting the templates used to fill out the map tabs
@@ -40,19 +39,19 @@ Handlebars.getTemplate = function(name) {
 var map_tab_names = ['winter', 'summer', 'summerb'];
 for(var jtab = 0; jtab < map_tab_names.length; jtab++)
 {
-    var context = { 'map_tab_name' : map_tab_names[jtab],
-                    'map_week_dir': weekdir[map_tab_names[jtab]]};
     var compiled_map_template = Handlebars.getTemplate('maptab');
     var compiled_time_selector_template = Handlebars.getTemplate('time_selector');
     var compiled_map_pointing_template = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
+
+    var compiled_weather_template = Handlebars.getTemplate('weather_tab');
 }
+var compiled_weather_template = Handlebars.getTemplate('weather_tab');
 
 /**
  * Updates the source of all images defined on the summary page.
  */
 function update_figs() {
     // Compile the templates for the tabs
-    console.log(weekdir);
     for(var jtab = 0; jtab < map_tab_names.length; jtab++)
     {
         var context = { 'map_tab_name' : map_tab_names[jtab],
@@ -60,11 +59,15 @@ function update_figs() {
                         'yearly': weekdir[map_tab_names[jtab]].includes('yearly')};
 
         var html = compiled_map_template(context);
-        $("#figs_maps" + map_tab_names[jtab]).html(html)
+        $("#figs_maps" + map_tab_names[jtab]).html(html);
 
         var html = compiled_map_pointing_template(context);
-        $('#maps_' + map_tab_names[jtab] + '_pointing').html(html)
+        $('#maps_' + map_tab_names[jtab] + '_pointing').html(html);
     }
+
+    var context = { 'arc_dir': weekdir.weather};
+    var html = compiled_weather_template(context);
+    $("#figs_weather").html(html);
 
     document["ts_median_cal_sn_highel"].src        = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
     document["ts_median_cal_response_highel"].src  = 'staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
@@ -129,22 +132,6 @@ function update_figs() {
     document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
 
     document["ts_number_of_lines"].src             = 'staticimg/'+weekdir+'/number_of_lines_found_'+wafer+'.png';
-    
-
-
-    document["tipper_tau"].src   = 'staticimg/'+arcdir+'/tipper_tau.png';
-    document["tipper_tatm"].src  = 'staticimg/'+arcdir+'/tipper_tatm.png';
-    document["elnod_tau_cp"].src = 'staticimg/'+arcdir+'/median_elnod_opacity_all.png';
-
-    document["weather_tatm"].src = 'staticimg/'+arcdir+'/weather_tatm.png';
-    document["weather_humi"].src = 'staticimg/'+arcdir+'/weather_humi.png';
-    document["weather_pres"].src = 'staticimg/'+arcdir+'/weather_pres.png';
-    document["weather_wmag"].src = 'staticimg/'+arcdir+'/weather_wmag.png';
-    document["weather_wdir"].src = 'staticimg/'+arcdir+'/weather_wdir.png';
-
-    document["cabin_temps"].src  = 'staticimg/'+arcdir+'/cabin_temps.png';
-    document["4K_temps"].src     = 'staticimg/'+arcdir+'/fourk_temps.png';
-    document["50K_temps"].src    = 'staticimg/'+arcdir+'/fiftyk_temps.png';
 
     document["cycle_he10_full"].src = 'staticimg/'+cycledir+'/he10_full.png';
     document["cycle_he10_half"].src = 'staticimg/'+cycledir+'/he10_half.png';
@@ -172,7 +159,6 @@ function update_lastmodified() {
  */
 function set_variable(variable, newVal)
 {
-  //window[variable] = newVal;
   variable = newVal;
   Cookies.set(variable, newVal, { expires: 1 });
   update_figs();
@@ -189,7 +175,7 @@ function set_variable(variable, newVal)
  *  subdirectory : subdirectory that we should traverse to get dated data
  *  tab : tab in which to add buttons, 'summary' or 'maps'
  */
-function add_date_buttons(interval, subdirectory, tab, boundVar)
+function add_date_buttons(interval, subdirectory, tab)
 {
     // now rebuild the div
     $.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
@@ -211,7 +197,7 @@ function add_date_buttons(interval, subdirectory, tab, boundVar)
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'fridge')
                       datestring = data[jdir].split('/')[3];
-                      
+
                   $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
 
                   // can use jquery <select ...></select> with this line instead of radio buttons
@@ -234,18 +220,26 @@ $( document ).ready(function()
     for(var jtab = 0; jtab < map_tab_names.length; jtab++)
     {
         var context = { 'map_tab_name' : map_tab_names[jtab],
-                        'map_week_dir': weekdir[map_tab_names[jtab]]};
-        console.log(weekdir[map_tab_names[jtab]]);
+                    'map_week_dir': weekdir[map_tab_names[jtab]],
+                    'yearly': weekdir[map_tab_names[jtab]].includes('yearly')};
 
         var html = compiled_time_selector_template(context);
-        $("#time_selector_maps" + map_tab_names[jtab]).html(html)
+        $("#time_selector_maps" + map_tab_names[jtab]).html(html);
 
         var html = compiled_map_template(context);
-        $("#figs_maps" + map_tab_names[jtab]).html(html)
+        $("#figs_maps" + map_tab_names[jtab]).html(html);
 
         var html = compiled_map_pointing_template(context);
         $('#maps_' + map_tab_names[jtab] + '_pointing').append(html)
     }
+
+    var context = { 'map_tab_name': 'weather'};
+    var html = compiled_time_selector_template(context);
+    $("#time_selector_weather").html(html);
+
+    var context = { 'arc_dir': weekdir.weather};
+    var html = compiled_weather_template(context);
+    $("#figs_weather").html(html);
     
     // Initialize jQuery UI elements and make dynamic modifications to the DOM
     $("#tabs").tabs();
@@ -270,9 +264,9 @@ $( document ).ready(function()
     add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
     add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
 
-    add_date_buttons('last_n', 'arcs/figs', 'weather', 'arcdir');
-    add_date_buttons('monthly', 'arcs/figs', 'weather', 'arcdir');
-    add_date_buttons('weekly', 'arcs/figs', 'weather', 'arcdir');
+    add_date_buttons('last_n', 'arcs/figs', 'weather');
+    add_date_buttons('monthly', 'arcs/figs', 'weather');
+    add_date_buttons('weekly', 'arcs/figs', 'weather');
     
     add_date_buttons('cycles', 'arcs/figs', 'fridge', 'cycledir');
 
