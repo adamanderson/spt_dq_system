@@ -96,6 +96,7 @@
     </td>
     </tr>
     
+    {{#unless yearly}}
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td>
         <h3>Noise Levels of T Maps</h3>
@@ -153,7 +154,9 @@
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td><br></td>
     </tr>
+    {{/unless}}
     
+    {{#if yearly}}
     <tr class="maps_{{map_tab_name}}_yearly">
     <td>
         <h3>Noise Levels of Running Coadded T Maps</h3>
@@ -249,6 +252,7 @@
     <tr class="maps_{{map_tab_name}}_yearly">
     <td><br></td>
     </tr>
+    {{/if}}
     
     <tr>
     <td>
@@ -262,10 +266,13 @@
     </td>
     </tr>
 
+    {{#unless yearly}}
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td><br></td>
     </tr>
+    {{/unless}}
     
+    {{#if yearly}}
     <tr class="maps_{{map_tab_name}}_yearly">
     <td>
         <h3>Averages of Pointing Offsets</h3>
@@ -290,7 +297,9 @@
     <tr class="maps_{{map_tab_name}}_yearly">
     <td><br></td>
     <tr>
+    {{/if}}
     
+    {{#unless yearly}}
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td>
         <br><h2><u>Completeness of Observations</u></h2>
@@ -416,7 +425,9 @@
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td><br></td>
     </tr>
+    {{/unless}}
     
+    {{#if yearly}}
     <tr class="maps_{{map_tab_name}}_yearly">
     <td>
         <h3>Cross Spectra Ratios</h3>
@@ -448,7 +459,9 @@
     <tr class="maps_{{map_tab_name}}_yearly">
     <td><br></td>
     <tr>
+    {{/if}}
     
+    {{#unless yearly}}
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td>
         <h3>Cal vs El (by sub-field)</h3>
@@ -512,7 +525,9 @@
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td><br></td>
     </tr>
+    {{/unless}}
     
+    {{#if yearly}}
     <tr class="maps_{{map_tab_name}}_yearly">
     <td>
         <h3>Cal vs El</h3>
@@ -544,7 +559,9 @@
     <tr class="maps_{{map_tab_name}}_yearly">
     <td><br></td>
     <tr>
+    {{/if}}
     
+    {{#unless yearly}}
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td>
         <h3>pW/K Conversion Factors</h3>
@@ -576,5 +593,6 @@
     <tr class="maps_{{map_tab_name}}_non_yearly">
     <td><br></td>
     </tr>
+    {{/unless}}
 
 </table>

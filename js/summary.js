@@ -56,7 +56,8 @@ function update_figs() {
     for(var jtab = 0; jtab < map_tab_names.length; jtab++)
     {
         var context = { 'map_tab_name' : map_tab_names[jtab],
-                        'map_week_dir': weekdir[map_tab_names[jtab]]};
+                        'map_week_dir': weekdir[map_tab_names[jtab]],
+                        'yearly': weekdir[map_tab_names[jtab]].includes('yearly')};
 
         var html = compiled_map_template(context);
         $("#figs_maps" + map_tab_names[jtab]).html(html)
@@ -151,44 +152,6 @@ function update_figs() {
 }
 
 
-/**
- * Show/hide plots when switching between yearly and non-yearly view for maps
- */
-function update_visibility() {
-    if(!window["weekdir"].includes('yearly')) {
-        $(".cal_yearly").hide();
-        $(".cal_non_yearly").show();
-    }
-    else {
-        $(".cal_yearly").show();
-        $(".cal_non_yearly").hide();
-    }
-    if(!window["mapweekdir"].includes('yearly')) {
-        $(".maps_yearly").hide();
-        $(".maps_non_yearly").show();
-    }
-    else {
-        $(".maps_yearly").show();
-        $(".maps_non_yearly").hide();
-    }
-    if(!window["mapweekdirsummer"].includes('yearly')) {
-        $(".maps_summer_yearly").hide();
-        $(".maps_summer_non_yearly").show();
-    }
-    else {
-        $(".maps_summer_yearly").show();
-        $(".maps_summer_non_yearly").hide();
-    }
-    if(!window["mapweekdirsummerb"].includes('yearly')) {
-        $(".maps_summerb_yearly").hide();
-        $(".maps_summerb_non_yearly").show();
-    }
-    else {
-        $(".maps_summerb_yearly").show();
-        $(".maps_summerb_non_yearly").hide();
-    }
-}
-
 function update_lastmodified() {
     $.get('/lastmodified_calibration', function(data) {
         $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
@@ -213,7 +176,6 @@ function set_variable(variable, newVal)
   variable = newVal;
   Cookies.set(variable, newVal, { expires: 1 });
   update_figs();
-//   update_visibility();
 }
 
 /**
@@ -335,6 +297,5 @@ $( document ).ready(function()
     // wafer and weekdir might be pulled from a cookie, which probably differs
     // from the default values.
     update_figs();
-    // update_visibility();
     update_lastmodified();
 });
