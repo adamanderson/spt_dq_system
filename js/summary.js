@@ -13,7 +13,7 @@ for (var cookie_name in default_cookies) {
 
 // get cookie values
 var wafer = Cookies.get('wafer');
-var weekdir = {summary: Cookies.get('weekdir'),
+var weekdir = {calibration: Cookies.get('weekdir'),
                winter: Cookies.get('mapweekdir'),
                summer: Cookies.get('mapweekdirsummer'),
                summerb: Cookies.get('mapweekdirsummerb'),
@@ -43,8 +43,8 @@ for(var jtab = 0; jtab < map_tab_names.length; jtab++)
     var compiled_time_selector_template = Handlebars.getTemplate('time_selector');
     var compiled_map_pointing_template = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
 
-    var compiled_weather_template = Handlebars.getTemplate('weather_tab');
 }
+var compiled_calibration_template = Handlebars.getTemplate('calibration_tab');
 var compiled_weather_template = Handlebars.getTemplate('weather_tab');
 
 /**
@@ -56,7 +56,7 @@ function update_figs() {
     {
         var context = { 'map_tab_name' : map_tab_names[jtab],
                         'map_week_dir': weekdir[map_tab_names[jtab]],
-                        'yearly': weekdir[map_tab_names[jtab]].includes('yearly')};
+                        'yearly': weekdir[map_tab_names[jtab]].includes('yearly') };
 
         var html = compiled_map_template(context);
         $("#figs_maps" + map_tab_names[jtab]).html(html);
@@ -65,73 +65,15 @@ function update_figs() {
         $('#maps_' + map_tab_names[jtab] + '_pointing').html(html);
     }
 
+    var context = { 'week_dir': weekdir.calibration,
+                    'wafer': wafer,
+                    'yearly': weekdir.calibration.includes('yearly') };
+    var html = compiled_calibration_template(context);
+    $("#figs_calibration").html(html);
+
     var context = { 'arc_dir': weekdir.weather};
     var html = compiled_weather_template(context);
     $("#figs_weather").html(html);
-
-    document["ts_median_cal_sn_highel"].src        = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
-    document["ts_median_cal_response_highel"].src  = 'staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
-    document["ts_alive_bolos_cal_highel"].src      = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png';
-      
-    document["ts_median_cal_sn_lowel"].src         = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png';
-    document["ts_median_cal_response_lowel"].src   = 'staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
-    document["ts_alive_bolos_cal_lowel"].src       = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
-    
-    document["ts_median_elnod_slope"].src          = 'staticimg/'+weekdir+'/median_elnod_response_'+wafer+'.png';
-    document["ts_median_elnod_sn"].src             = 'staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
-    document["ts_median_elnod_opacity"].src        = 'staticimg/'+weekdir+'/median_elnod_opacity_'+wafer+'.png';
-    document["ts_median_elnod_iq"].src             = 'staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
-    document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
-    
-    document["ts_rcw38_sky_transmission"].src      = 'staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
-    document["ts_median_rcw38_fluxcal"].src        = 'staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
-    document["ts_median_rcw38_intflux"].src        = 'staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_rcw38"].src           = 'staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
-    
-    document["ts_mat5a_sky_transmission"].src      = 'staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
-    document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
-    document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
-
-    document["ts_w28a2_sky_transmission"].src      = 'staticimg/'+weekdir+'/w28a2_sky_transmission_'+wafer+'.png';
-    document["ts_median_w28a2_fluxcal"].src        = 'staticimg/'+weekdir+'/median_w28a2_fluxcal_'+wafer+'.png';
-    document["ts_median_w28a2_intflux"].src        = 'staticimg/'+weekdir+'/median_w28a2_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_w28a2"].src           = 'staticimg/'+weekdir+'/alive_bolos_w28a2_'+wafer+'.png';
-
-    document["ts_iras17258_sky_transmission"].src  = 'staticimg/'+weekdir+'/iras17258_sky_transmission_'+wafer+'.png';
-    document["ts_median_iras17258_fluxcal"].src    = 'staticimg/'+weekdir+'/median_iras17258_fluxcal_'+wafer+'.png';
-    document["ts_median_iras17258_intflux"].src    = 'staticimg/'+weekdir+'/median_iras17258_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_iras17258"].src       = 'staticimg/'+weekdir+'/alive_bolos_iras17258_'+wafer+'.png';
-
-    document["focus_fwhm_vs_bench_90"].src         = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png';
-    document["focus_fwhm_vs_bench_150"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_150.png';
-    document["focus_fwhm_vs_bench_220"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_220.png';
-
-    document["focus_ellip_vs_bench_90"].src        = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_90.png';
-    document["focus_ellip_vs_bench_150"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_150.png';
-    document["focus_ellip_vs_bench_220"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_220.png';
-
-    document["focus_min_fwhm"].src                 = 'staticimg/'+weekdir+'/focus_FWHM.png';
-    document["focus_min_fwhm_bench"].src           = 'staticimg/'+weekdir+'/focus_BenchF.png';
-    document["focus_min_ellip"].src                = 'staticimg/'+weekdir+'/focus_Ellipticity.png';
-    document["focus_min_ellip_bench"].src          = 'staticimg/'+weekdir+'/focus_BenchE.png';
-
-    document["ts_median_net_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_net_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_net_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_net_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png';
-    
-    document["ts_median_nep_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_nep_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_nep_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_nep_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png';
-    
-    document["ts_median_nei_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_nei_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_nei_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
-
-    document["ts_number_of_lines"].src             = 'staticimg/'+weekdir+'/number_of_lines_found_'+wafer+'.png';
 
     document["cycle_he10_full"].src = 'staticimg/'+cycledir+'/he10_full.png';
     document["cycle_he10_half"].src = 'staticimg/'+cycledir+'/he10_half.png';
@@ -185,7 +127,7 @@ function add_date_buttons(interval, subdirectory, tab)
               data.reverse();
               for (jdir=0; jdir<data.length; jdir++)
               {
-                  if (tab == 'summary')
+                  if (tab == 'calibration')
                       datestring = data[jdir].split('/')[2];
                   else if (tab == 'winter')
                       datestring = data[jdir].split('/')[3];
@@ -233,21 +175,29 @@ $( document ).ready(function()
         $('#maps_' + map_tab_names[jtab] + '_pointing').append(html)
     }
 
-    var context = { 'map_tab_name': 'weather'};
+    var context = { 'map_tab_name': 'calibration',
+                    'week_dir': weekdir.calibration,
+                    'wafer': wafer,
+                    'yearly': weekdir.calibration.includes('yearly') };
+    var html = compiled_time_selector_template(context);
+    $("#time_selector_calibration").html(html);
+    var html = compiled_calibration_template(context);
+    $("#figs_calibration").html(html);
+
+    var context = { 'map_tab_name': 'weather',
+                    'arc_dir': weekdir.weather};
     var html = compiled_time_selector_template(context);
     $("#time_selector_weather").html(html);
-
-    var context = { 'arc_dir': weekdir.weather};
     var html = compiled_weather_template(context);
     $("#figs_weather").html(html);
     
     // Initialize jQuery UI elements and make dynamic modifications to the DOM
     $("#tabs").tabs();
     $("#waferlist").controlgroup();
-    add_date_buttons('last_n', 'plots', 'summary', 'weekdir');
-    add_date_buttons('yearly', 'plots', 'summary', 'weekdir');
-    add_date_buttons('monthly', 'plots', 'summary', 'weekdir');
-    add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
+    add_date_buttons('last_n', 'plots', 'calibration');
+    add_date_buttons('yearly', 'plots', 'calibration');
+    add_date_buttons('monthly', 'plots', 'calibration');
+    add_date_buttons('weekly', 'plots', 'calibration');
 
     add_date_buttons('last_n', 'maps/figures', 'winter');
     add_date_buttons('yearly', 'maps/figures', 'winter');
@@ -272,7 +222,8 @@ $( document ).ready(function()
 
     // Bind the click event to the wafer buttons
     $("[id^=wafers-]").click(function(event) {
-        set_variable("wafer", event.target.value);
+        wafer = event.target.value;
+        update_figs();
     });
 
     // Bind the click event to the tabs so that we can keep track of the active tab

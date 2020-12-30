@@ -1,0 +1,515 @@
+<table style="table-layout:fixed;" cellpadding="5">
+<tr>
+    {{#unless yearly}}
+    <td colspan="1" class="cal_non_yearly">
+        <h2><u>Calibrator</u></h2>
+    </td>
+    {{/unless}}
+    {{#if yearly}}
+    <td colspan="1" class="cal_yearly">
+        <h2><u>HII Regions</u></h2>
+    </td>
+    {{/if}}
+    <td colspan="2" align="right" valign="top">
+    <div id="lastmodified_calibration">
+    </div>
+    </td>
+</tr>
+
+{{#unless yearly}}
+<tr class="cal_non_yearly">
+    <td>
+    <h3>Low Elevation</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_cal_response_4Hz_lowel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_cal_response_lowel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_cal_response_4Hz_lowel_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_cal_sn_4Hz_lowel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_cal_sn_lowel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_cal_sn_4Hz_lowel_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_cal_4Hz_lowel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_cal_lowel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_cal_4Hz_lowel_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+    <h3>High Elevation</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_cal_response_4Hz_highel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_cal_response_highel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_cal_response_4Hz_highel_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_cal_sn_4Hz_highel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_cal_sn_highel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_cal_sn_4Hz_highel_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_cal_4Hz_highel_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_cal_highel' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_cal_4Hz_highel_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+
+<tr class="cal_non_yearly">
+    <td>
+        <h2><u>Elnod</u></h2>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>Response to Airmass</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_elnod_response_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_elnod_slope' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_elnod_response_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_elnod_sn_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_elnod_sn' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_elnod_sn_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_elnod_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_elnod' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_elnod_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>Sky Opacity</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_elnod_opacity_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_elnod_opacity' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_elnod_opacity_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>IQ Rotation</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_elnod_iq_phase_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_elnod_iq' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_elnod_iq_phase_{{wafer}}.png'>
+        </a>
+    </td>            
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+
+<tr class="cal_non_yearly">
+    <td>
+        <h2><u>HII Regions</u></h2>
+    </td>
+</tr>
+{{/unless}}
+
+<tr>
+    <td>
+        <h3>RCW38 Fast Point</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_rcw38_fluxcal_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_rcw38_fluxcal' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_rcw38_fluxcal_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_rcw38_intflux_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_rcw38_intflux' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_rcw38_intflux_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_rcw38_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_rcw38' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_rcw38_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+{{#unless yearly}}
+<tr class="cal_non_yearly">
+    <td>
+        <h3>RCW38 Very Fast Point</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/rcw38_sky_transmission_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_rcw38_sky_transmission' class="fig-with-border"
+                src='staticimg/{{week_dir}}/rcw38_sky_transmission_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr>
+    <td>
+        <h3>MAT5A Fast Point</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_mat5a_fluxcal_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_mat5a_fluxcal' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_mat5a_fluxcal_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_mat5a_intflux_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_mat5a_intflux' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_mat5a_intflux_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_mat5a_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_mat5a' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_mat5a_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>MAT5A Very Fast Point</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/mat5a_sky_transmission_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_mat5a_sky_transmission' class="fig-with-border"
+                src='staticimg/{{week_dir}}/mat5a_sky_transmission_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr>
+    <td>
+        <h3>W28A2 Fast Point</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_w28a2_fluxcal_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_w28a2_fluxcal' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_w28a2_fluxcal_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_w28a2_intflux_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_w28a2_intflux' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_w28a2_intflux_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_mat5a_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_w28a2' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_w28a2_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>W28A2 Very Fast Point</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/w28a2_sky_transmission_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_w28a2_sky_transmission' class="fig-with-border"
+                src='staticimg/{{week_dir}}/w28a2_sky_transmission_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr>
+    <td>
+        <h3>IRAS17258 Fast Point</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_iras17258_fluxcal_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_iras17258_fluxcal' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_iras17258_fluxcal_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_iras17258_intflux_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_iras17258_intflux' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_iras17258_intflux_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/alive_bolos_iras17258_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_alive_bolos_iras17258' class="fig-with-border"
+                src='staticimg/{{week_dir}}/alive_bolos_iras17258_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+<tr class="cal_non_yearly">
+    <td>
+        <h3>IRAS17258 Very Fast Point</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/iras17258_sky_transmission_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_iras17258_sky_transmission' class="fig-with-border"
+                src='staticimg/{{week_dir}}/iras17258_sky_transmission_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+{{/unless}}
+<tr><td><br></td></tr>
+
+<tr>
+    <td>
+        <h2><u>Focus Quasar</u></h2>
+    </td>
+</tr>
+
+{{#unless yearly}}
+<tr class="cal_non_yearly">
+    <td>
+        <h3>Beam Properties and Bench Positions</h3>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_fwhm_vs_bench_90.png'">
+            <img style="display:block;" width="100%" name='focus_fwhm_vs_bench_90' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_fwhm_vs_bench_90.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_fwhm_vs_bench_150.png'">
+            <img style="display:block;" width="100%" name='focus_fwhm_vs_bench_150' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_fwhm_vs_bench_150.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_fwhm_vs_bench_220.png'">
+            <img style="display:block;" width="100%" name='focus_fwhm_vs_bench_220' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_fwhm_vs_bench_220.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_ellip_vs_bench_90.png'">
+            <img style="display:block;" width="100%" name='focus_ellip_vs_bench_90' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_ellip_vs_bench_90.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_ellip_vs_bench_150.png'">
+            <img style="display:block;" width="100%" name='focus_ellip_vs_bench_150' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_ellip_vs_bench_150.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_ellip_vs_bench_220.png'">
+            <img style="display:block;" width="100%" name='focus_ellip_vs_bench_220' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_ellip_vs_bench_220.png'>
+        </a>
+    </td>
+</tr>
+<tr class="cal_non_yearly"><td><br></td></tr>
+<tr>
+    <td>
+        <h3>Parabola Fitting Results</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_FWHM.png'">
+            <img style="display:block;" width="100%" name='focus_min_fwhm' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_min_FWHM.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_BenchF.png'">
+            <img style="display:block;" width="100%" name='focus_min_fwhm_bench' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_min_BenchF.png'>
+        </a>
+    </td>
+</tr>          
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_Ellipticity.png'">
+            <img style="display:block;" width="100%" name='focus_min_ellip' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_min_Ellipticity.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/focus_BenchE.png'">
+            <img style="display:block;" width="100%" name='focus_min_ellip_bench' class="fig-with-border"
+                src='staticimg/{{week_dir}}/focus_min_BenchE.png'>
+        </a>
+    </td>
+</tr>
+{{/unless}}
+<tr><td><br></td></tr>
+
+</table>
+
+{{#unless yearly}}
+<table style="table-layout:fixed;" cellpadding="5" class="cal_non_yearly">
+<tr>
+    <td>
+        <h2><u>Noise</u></h2>
+    </td>
+</tr>
+
+<tr>
+    <td>
+        <h3>NET</h3>
+    </td>
+</tr>
+<tr>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NET_0.1Hz_to_0.5Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_net_01Hz_to_05Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NET_0.1Hz_to_0.5Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NET_1.0Hz_to_2.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_net_1Hz_to_2Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NET_1.0Hz_to_2.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NET_3.0Hz_to_5.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_net_3Hz_to_5Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NET_3.0Hz_to_5.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NET_10.0Hz_to_15.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_net_10Hz_to_15Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NET_10.0Hz_to_15.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+<tr>
+    <td>
+    <h3>NEP</h3>
+    </td>
+</tr>
+<tr>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEP_0.1Hz_to_0.5Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nep_01Hz_to_05Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEP_0.1Hz_to_0.5Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEP_1.0Hz_to_2.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nep_1Hz_to_2Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEP_1.0Hz_to_2.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEP_3.0Hz_to_5.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nep_3Hz_to_5Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEP_3.0Hz_to_5.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEP_10.0Hz_to_15.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nep_10Hz_to_15Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEP_10.0Hz_to_15.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+<tr>
+    <td>
+        <h3>NEI</h3>
+    </td>
+</tr>
+<tr>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEI_0.1Hz_to_0.5Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nei_01Hz_to_05Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEI_0.1Hz_to_0.5Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEI_1.0Hz_to_2.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nei_1Hz_to_2Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEI_1.0Hz_to_2.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEI_3.0Hz_to_5.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nei_3Hz_to_5Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEI_3.0Hz_to_5.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+    <td width="25%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/median_NEI_10.0Hz_to_15.0Hz_{{wafer}}.png'">
+            <img style="display:block;" width="100%" name='ts_median_nei_10Hz_to_15Hz' class="fig-with-border"
+                src='staticimg/{{week_dir}}/median_NEI_10.0Hz_to_15.0Hz_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+</table>
+<table style="table-layout:fixed;" cellpadding="5" class="cal_non_yearly">
+<tr>
+    <td>
+        <h3>Lines</h3>
+    </td>
+</tr>
+<tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/number_of_lines_found_{{wafer}}.png'">
+            <img style="display:block;" width="33%" name='ts_number_of_lines' class="fig-with-border"
+                src='staticimg/{{week_dir}}/number_of_lines_found_{{wafer}}.png'>
+        </a>
+    </td>
+</tr>
+<tr><td><br></td></tr>
+</table>
+{{/unless}}
