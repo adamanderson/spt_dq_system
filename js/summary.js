@@ -17,8 +17,8 @@ var weekdir = {calibration: Cookies.get('weekdir'),
                winter: Cookies.get('mapweekdir'),
                summer: Cookies.get('mapweekdirsummer'),
                summerb: Cookies.get('mapweekdirsummerb'),
-               weather: Cookies.get('arcdir')};
-var cycledir = Cookies.get('cycledir');
+               weather: Cookies.get('arcdir'),
+               fridgecycle: Cookies.get('cycledir')};
 
 // function for getting the templates used to fill out the map tabs
 Handlebars.getTemplate = function(name) {
@@ -46,6 +46,7 @@ for(var jtab = 0; jtab < map_tab_names.length; jtab++)
 }
 var compiled_calibration_template = Handlebars.getTemplate('calibration_tab');
 var compiled_weather_template = Handlebars.getTemplate('weather_tab');
+var compiled_fridgecycle_template = Handlebars.getTemplate('fridgecycle_tab');
 
 /**
  * Updates the source of all images defined on the summary page.
@@ -75,9 +76,9 @@ function update_figs() {
     var html = compiled_weather_template(context);
     $("#figs_weather").html(html);
 
-    document["cycle_he10_full"].src = 'staticimg/'+cycledir+'/he10_full.png';
-    document["cycle_he10_half"].src = 'staticimg/'+cycledir+'/he10_half.png';
-    document["cycle_low_temps"].src = 'staticimg/'+cycledir+'/low_temps.png';
+    var context = { 'cycle_dir': weekdir.fridgecycle};
+    var html = compiled_fridgecycle_template(context);
+    $("#figs_fridgecycle").html(html);
 }
 
 
@@ -137,13 +138,10 @@ function add_date_buttons(interval, subdirectory, tab)
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'weather')
                       datestring = data[jdir].split('/')[3];
-                  else if (tab == 'fridge')
+                  else if (tab == 'fridgecycle')
                       datestring = data[jdir].split('/')[3];
 
                   $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
-
-                  // can use jquery <select ...></select> with this line instead of radio buttons
-                  // $(div_id).append("<option value='"+data[jdir]+"'>"+datestring+"</option>");
               }
               $(div_id).controlgroup();
               $("[id^=dates-"+tab+"-]").click(function(event) {
@@ -186,7 +184,8 @@ $( document ).ready(function()
                     'recent_selector': true, 
                     'yearly_selector': true, 
                     'monthly_selector': true, 
-                    'weekly_selector': true};
+                    'weekly_selector': true,
+                    'cycles_selector': false};
     var html = compiled_time_selector_template(context);
     $("#time_selector_calibration").html(html);
     var html = compiled_calibration_template(context);
@@ -197,11 +196,24 @@ $( document ).ready(function()
                     'recent_selector': true, 
                     'yearly_selector': false, 
                     'monthly_selector': true, 
-                    'weekly_selector': true};
+                    'weekly_selector': true,
+                    'cycles_selector': false};
     var html = compiled_time_selector_template(context);
     $("#time_selector_weather").html(html);
     var html = compiled_weather_template(context);
     $("#figs_weather").html(html);
+
+    var context = { 'map_tab_name': 'fridgecycle',
+                    'cycle_dir': weekdir.fridgecycle, 
+                    'recent_selector': false, 
+                    'yearly_selector': false, 
+                    'monthly_selector': false, 
+                    'weekly_selector': false,
+                    'cycles_selector': true};
+    var html = compiled_time_selector_template(context);
+    $("#time_selector_fridgecycle").html(html);
+    var html = compiled_fridgecycle_template(context);
+    $("#figs_fridgecycle").html(html);
     
     // Initialize jQuery UI elements and make dynamic modifications to the DOM
     $("#tabs").tabs();
@@ -230,7 +242,7 @@ $( document ).ready(function()
     add_date_buttons('monthly', 'arcs/figs', 'weather');
     add_date_buttons('weekly', 'arcs/figs', 'weather');
     
-    add_date_buttons('cycles', 'arcs/figs', 'fridge', 'cycledir');
+    add_date_buttons('cycles', 'arcs/figs', 'fridgecycle');
 
     // Bind the click event to the wafer buttons
     $("[id^=wafers-]").click(function(event) {
