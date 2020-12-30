@@ -1,25 +1,33 @@
 <form>
+    {{#if recent_selector}}
     <fieldset class="field-with-border">
     <legend>Recent</legend>
     <div id="datalist_{{map_tab_name}}_last_n">
     </div>
     </fieldset>
     <br>
+    {{/if}}
+    {{#if yearly_selector}}
     <fieldset class="field-with-border">
     <legend>Yearly</legend>
     <div id="datalist_{{map_tab_name}}_yearly">
     </div>
     </fieldset>
     <br>
+    {{/if}}
+    {{#if monthly_selector}}
     <fieldset class="field-with-border">
     <legend>Monthly</legend>
     <div id="datalist_{{map_tab_name}}_monthly">
     </div>
     </fieldset>
     <br>
+    {{/if}}
+    {{#if weekly_selector}}
     <fieldset class="field-with-border">
     <legend>Weekly</legend>
     <div id="datalist_{{map_tab_name}}_weekly">
     </div>
     </fieldset>
+    {{/if}}
 </form>

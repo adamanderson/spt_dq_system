@@ -163,7 +163,11 @@ $( document ).ready(function()
     {
         var context = { 'map_tab_name' : map_tab_names[jtab],
                     'map_week_dir': weekdir[map_tab_names[jtab]],
-                    'yearly': weekdir[map_tab_names[jtab]].includes('yearly')};
+                    'yearly': weekdir[map_tab_names[jtab]].includes('yearly'), 
+                    'recent_selector': true, 
+                    'yearly_selector': true, 
+                    'monthly_selector': true, 
+                    'weekly_selector': true};
 
         var html = compiled_time_selector_template(context);
         $("#time_selector_maps" + map_tab_names[jtab]).html(html);
@@ -178,14 +182,22 @@ $( document ).ready(function()
     var context = { 'map_tab_name': 'calibration',
                     'week_dir': weekdir.calibration,
                     'wafer': wafer,
-                    'yearly': weekdir.calibration.includes('yearly') };
+                    'yearly': weekdir.calibration.includes('yearly'), 
+                    'recent_selector': true, 
+                    'yearly_selector': true, 
+                    'monthly_selector': true, 
+                    'weekly_selector': true};
     var html = compiled_time_selector_template(context);
     $("#time_selector_calibration").html(html);
     var html = compiled_calibration_template(context);
     $("#figs_calibration").html(html);
 
     var context = { 'map_tab_name': 'weather',
-                    'arc_dir': weekdir.weather};
+                    'arc_dir': weekdir.weather, 
+                    'recent_selector': true, 
+                    'yearly_selector': false, 
+                    'monthly_selector': true, 
+                    'weekly_selector': true};
     var html = compiled_time_selector_template(context);
     $("#time_selector_weather").html(html);
     var html = compiled_weather_template(context);
