@@ -22,6 +22,7 @@ wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.1.5/js/tabulator.min.js
 wget https://cdnjs.cloudflare.com/ajax/libs/tabulator/4.1.5/js/jquery_wrapper.min.js
 wget https://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.2/TweenMax.min.js
 wget https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js
+wget https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js
 cd ..
 
 if [ "$2" != "nobuild" ];
