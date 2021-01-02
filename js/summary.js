@@ -1,9 +1,9 @@
 // check if cookies are defined, otherwise set them to defaults
 var default_cookies = {'wafer': 'all',
-                       'weekdir': 'plots/last_n/last_07/',
-                       'mapweekdir': 'maps/figures_winter/last_n/last_07/',
-                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_07/',
-                       'mapweekdirsummerb': 'maps/figures_summerb/last_n/last_07/',
+                       'timedir_calibration': 'plots/last_n/last_07/',
+                       'timedir_winter': 'maps/figures_winter/last_n/last_07/',
+                       'timedir_summer': 'maps/figures_summer/last_n/last_07/',
+                       'timedir_summerb': 'maps/figures_summerb/last_n/last_07/',
                        'arcdir': 'arcs/figs/last_n/last_07/',
                        'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {
@@ -13,14 +13,19 @@ for (var cookie_name in default_cookies) {
 
 // get cookie values
 var wafer = Cookies.get('wafer');
-var weekdir = {calibration: Cookies.get('weekdir'),
-               winter: Cookies.get('mapweekdir'),
-               summer: Cookies.get('mapweekdirsummer'),
-               summerb: Cookies.get('mapweekdirsummerb'),
+var timedir = {calibration: Cookies.get('timedir_calibration'),
+               winter: Cookies.get('timedir_winter'),
+               summer: Cookies.get('timedir_summer'),
+               summerb: Cookies.get('timedir_summerb'),
                weather: Cookies.get('arcdir'),
                fridgecycle: Cookies.get('cycledir')};
 
-// function for getting the templates used to fill out the map tabs
+/** 
+ * Retrieves a precompiled template, or if it does not exist,
+ * looks for a template in the `templates` directory and compiles it.
+ * @param {string} name Name of template to search for
+ * @return {Handlebars.templates} 
+ */
 Handlebars.getTemplate = function(name) {
     $.ajax({
         url : 'templates/' + name + '.handlebars',
@@ -35,10 +40,13 @@ Handlebars.getTemplate = function(name) {
     return Handlebars.templates[name];
 };
 
-// tab names
+// Compile the templates, at least one per tab
 var map_tab_names = ['winter', 'summer', 'summerb'];
 for(var jtab = 0; jtab < map_tab_names.length; jtab++)
 {
+    // Loop over map tabs. Each tab has a template for figures common to all
+    // map tabs, pointing figures that differ between tabs, and the time 
+    // selector.
     var compiled_map_template = Handlebars.getTemplate('maptab');
     var compiled_time_selector_template = Handlebars.getTemplate('time_selector');
     var compiled_map_pointing_template = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
@@ -49,62 +57,126 @@ var compiled_weather_template = Handlebars.getTemplate('weather_tab');
 var compiled_fridgecycle_template = Handlebars.getTemplate('fridgecycle_tab');
 
 /**
- * Updates the source of all images defined on the summary page.
+ * Updates the content in a tab by refilling HTML templates that comprise the
+ * tab.
+ * @param {string} name Name of tab to update
+ * @param {bool} init Do initialization steps that should occur only on the
+ * first time the lab is loaded
  */
-function update_figs() {
-    // Compile the templates for the tabs
-    for(var jtab = 0; jtab < map_tab_names.length; jtab++)
+function update_tab(name, init) {
+    // prototype context
+    var context = { wafer: wafer,
+                    map_tab_name: name,
+                    week_dir: timedir[name],
+                    yearly: timedir[name].includes('yearly'), 
+                    recent_selector: true, 
+                    yearly_selector: true, 
+                    monthly_selector: true, 
+                    weekly_selector: true,
+                    cycles_selector: true};
+
+    // customizations for each tab
+    if(name == 'calibration')
     {
-        var context = { 'map_tab_name' : map_tab_names[jtab],
-                        'map_week_dir': weekdir[map_tab_names[jtab]],
-                        'yearly': weekdir[map_tab_names[jtab]].includes('yearly') };
+        context.weekly_selector = false;
+        context.cycles_selector = false;
+
+        var html = compiled_calibration_template(context);
+        $("#figs_calibration").html(html);
+    }
+    else if(name == 'winter' || name == 'summer' || name == 'summerb')
+    {
+        context.weekly_selector = false;
+        context.cycles_selector = false;
 
         var html = compiled_map_template(context);
-        $("#figs_maps" + map_tab_names[jtab]).html(html);
-
+        $("#figs_maps" + name).html(html);
         var html = compiled_map_pointing_template(context);
-        $('#maps_' + map_tab_names[jtab] + '_pointing').html(html);
+        $('#maps_' + name + '_pointing').append(html)
+    }
+    else if(name == 'weather')
+    {
+        context.yearly_selector = false;
+        context.cycles_selector = false;
+
+        var html = compiled_weather_template(context);
+        $("#figs_weather").html(html);
+    }
+    else if(name == 'fridgecycle')
+    {
+        context.recent_selector = false;
+        context.yearly_selector = false;
+        context.monthly_selector = false;
+        context.weekly_selector = false;
+        var html = compiled_fridgecycle_template(context);
+        $("#figs_fridgecycle").html(html);
+        
     }
 
-    var context = { 'week_dir': weekdir.calibration,
-                    'wafer': wafer,
-                    'yearly': weekdir.calibration.includes('yearly') };
-    var html = compiled_calibration_template(context);
-    $("#figs_calibration").html(html);
+    if(init)
+    {
+        var html = compiled_time_selector_template(context);
+        $("#time_selector_" + name).html(html);
 
-    var context = { 'arc_dir': weekdir.weather};
-    var html = compiled_weather_template(context);
-    $("#figs_weather").html(html);
-
-    var context = { 'cycle_dir': weekdir.fridgecycle};
-    var html = compiled_fridgecycle_template(context);
-    $("#figs_fridgecycle").html(html);
+        // Initialize jQuery UI elements and make dynamic modifications to the DOM
+        if(name == 'calibration')
+        {
+            add_date_buttons('last_n', 'plots', 'calibration');
+            add_date_buttons('yearly', 'plots', 'calibration');
+            add_date_buttons('monthly', 'plots', 'calibration');
+            add_date_buttons('weekly', 'plots', 'calibration');
+        }
+        else if(name == 'winter')
+        {
+            add_date_buttons('last_n', 'maps/figures', 'winter');
+            add_date_buttons('yearly', 'maps/figures', 'winter');
+            add_date_buttons('monthly', 'maps/figures', 'winter');
+            add_date_buttons('weekly', 'maps/figures', 'winter');
+        }
+        else if(name == 'summer')
+        {
+            add_date_buttons('last_n', 'maps/figures_summer', 'summer');
+            add_date_buttons('yearly', 'maps/figures_summer', 'summer');
+            add_date_buttons('monthly', 'maps/figures_summer', 'summer');
+            add_date_buttons('weekly', 'maps/figures_summer', 'summer');
+        }
+        else if(name == 'summerb')
+        {
+            add_date_buttons('last_n', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('yearly', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
+        }
+        else if(name == 'weather')
+        {
+            add_date_buttons('last_n', 'arcs/figs', 'weather');
+            add_date_buttons('monthly', 'arcs/figs', 'weather');
+            add_date_buttons('weekly', 'arcs/figs', 'weather');
+        }
+        else if(name == 'fridgecycle')
+        {
+            add_date_buttons('cycles', 'arcs/figs', 'fridgecycle');
+        }
+    }
 }
 
-
+/**
+ * Updates the "last modified" field at the top of each tab. This could
+ * probably be combined directly with update_tab.
+ */
 function update_lastmodified() {
     $.get('/lastmodified_calibration', function(data) {
         $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
     });
-    for(var jtab = 0; jtab < map_tab_names.length; jtab++)
+    $.each(map_tab_names, function(jtab, tab_name)
     {
-        $.get('/lastmodified_maps', {field: map_tab_names[jtab]}, function(data) {
-            $("#lastmodified_maps").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+        $.get('/lastmodified_maps', {field: tab_name}, function(data) {
+            $("#lastmodified_maps_" + tab_name).replaceWith('Plots last modified: ' + data.time + ' (UTC)');
         });
-    }
+    });
     $.get('/lastmodified_weather', function(data) {
         $("#lastmodified_weather").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
     });
-}
-
-/**
- * Sets a global variable to records its value as a cookie for retrieval later.
- */
-function set_variable(variable, newVal)
-{
-  variable = newVal;
-  Cookies.set(variable, newVal, { expires: 1 });
-  update_figs();
 }
 
 /**
@@ -112,11 +184,9 @@ function set_variable(variable, newVal)
  * of data to display. These are constructed by appending the DOM directly.
  * Note also that this function also initializes the jQuery UI "controlgroup"
  * and binds the click event to it after appending all the buttons.
- * 
- * Arguments:
- *  interval : time interval to traverse, 'weekly' or 'monthly'
- *  subdirectory : subdirectory that we should traverse to get dated data
- *  tab : tab in which to add buttons, 'summary' or 'maps'
+ * @param {string} interval Time interval to traverse, 'weekly' or 'monthly'
+ * @param {string} interval Subdirectory that we should traverse to get dated data
+ * @param {string} interval Tab in which to add buttons, 'summary' or 'maps'
  */
 function add_date_buttons(interval, subdirectory, tab)
 {
@@ -145,126 +215,41 @@ function add_date_buttons(interval, subdirectory, tab)
               }
               $(div_id).controlgroup();
               $("[id^=dates-"+tab+"-]").click(function(event) {
-                weekdir[tab] = event.target.value;
-                // Cookies.set(variable, newVal, { expires: 1 });
-                update_figs();
-                  //set_variable(boundVar, event.target.value);
+                timedir[tab] = event.target.value;
+                update_tab(tab, false);
               });
           });
 }
 
+
 // Page initialization
 $( document ).ready(function()
 {
-    // Compile the templates for the tabs
-    for(var jtab = 0; jtab < map_tab_names.length; jtab++)
-    {
-        var context = { 'map_tab_name' : map_tab_names[jtab],
-                    'map_week_dir': weekdir[map_tab_names[jtab]],
-                    'yearly': weekdir[map_tab_names[jtab]].includes('yearly'), 
-                    'recent_selector': true, 
-                    'yearly_selector': true, 
-                    'monthly_selector': true, 
-                    'weekly_selector': true};
+    // initialize the tabs in jquery-ui with a function that updates the tab
+    // when clicked
+    $("#tabs").tabs({
+        activate: function( event, ui )
+        {
+            var tab_name = $("#tabs .ui-state-active a").attr('href');
+            tab_name = tab_name.replace('#tabs-','');
+            update_tab(tab_name, false);
+            update_lastmodified();
 
-        var html = compiled_time_selector_template(context);
-        $("#time_selector_maps" + map_tab_names[jtab]).html(html);
-
-        var html = compiled_map_template(context);
-        $("#figs_maps" + map_tab_names[jtab]).html(html);
-
-        var html = compiled_map_pointing_template(context);
-        $('#maps_' + map_tab_names[jtab] + '_pointing').append(html)
-    }
-
-    var context = { 'map_tab_name': 'calibration',
-                    'week_dir': weekdir.calibration,
-                    'wafer': wafer,
-                    'yearly': weekdir.calibration.includes('yearly'), 
-                    'recent_selector': true, 
-                    'yearly_selector': true, 
-                    'monthly_selector': true, 
-                    'weekly_selector': true,
-                    'cycles_selector': false};
-    var html = compiled_time_selector_template(context);
-    $("#time_selector_calibration").html(html);
-    var html = compiled_calibration_template(context);
-    $("#figs_calibration").html(html);
-
-    var context = { 'map_tab_name': 'weather',
-                    'arc_dir': weekdir.weather, 
-                    'recent_selector': true, 
-                    'yearly_selector': false, 
-                    'monthly_selector': true, 
-                    'weekly_selector': true,
-                    'cycles_selector': false};
-    var html = compiled_time_selector_template(context);
-    $("#time_selector_weather").html(html);
-    var html = compiled_weather_template(context);
-    $("#figs_weather").html(html);
-
-    var context = { 'map_tab_name': 'fridgecycle',
-                    'cycle_dir': weekdir.fridgecycle, 
-                    'recent_selector': false, 
-                    'yearly_selector': false, 
-                    'monthly_selector': false, 
-                    'weekly_selector': false,
-                    'cycles_selector': true};
-    var html = compiled_time_selector_template(context);
-    $("#time_selector_fridgecycle").html(html);
-    var html = compiled_fridgecycle_template(context);
-    $("#figs_fridgecycle").html(html);
-    
-    // Initialize jQuery UI elements and make dynamic modifications to the DOM
-    $("#tabs").tabs();
-    $("#waferlist").controlgroup();
-    add_date_buttons('last_n', 'plots', 'calibration');
-    add_date_buttons('yearly', 'plots', 'calibration');
-    add_date_buttons('monthly', 'plots', 'calibration');
-    add_date_buttons('weekly', 'plots', 'calibration');
-
-    add_date_buttons('last_n', 'maps/figures', 'winter');
-    add_date_buttons('yearly', 'maps/figures', 'winter');
-    add_date_buttons('monthly', 'maps/figures', 'winter');
-    add_date_buttons('weekly', 'maps/figures', 'winter');
-
-    add_date_buttons('last_n', 'maps/figures_summer', 'summer');
-    add_date_buttons('yearly', 'maps/figures_summer', 'summer');
-    add_date_buttons('monthly', 'maps/figures_summer', 'summer');
-    add_date_buttons('weekly', 'maps/figures_summer', 'summer');
-
-    add_date_buttons('last_n', 'maps/figures_summerb', 'summerb');
-    add_date_buttons('yearly', 'maps/figures_summerb', 'summerb');
-    add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
-    add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
-
-    add_date_buttons('last_n', 'arcs/figs', 'weather');
-    add_date_buttons('monthly', 'arcs/figs', 'weather');
-    add_date_buttons('weekly', 'arcs/figs', 'weather');
-    
-    add_date_buttons('cycles', 'arcs/figs', 'fridgecycle');
+            Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+        }
+    });
 
     // Bind the click event to the wafer buttons
+    $("#waferlist").controlgroup();
     $("[id^=wafers-]").click(function(event) {
         wafer = event.target.value;
-        update_figs();
+        update_tab('calibration', false);
     });
 
-    // Bind the click event to the tabs so that we can keep track of the active tab
-    $("#tabs").click(function(event) {
-        Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+    // load all the tab data
+    $.each(timedir, function(tab_name, val) 
+    {
+        update_tab(tab_name, true);
+        update_lastmodified();
     });
-
-    if(Cookies.get('activeTab') !== undefined)
-        $("#tabs").tabs("option", "active", Cookies.get('activeTab'))
-    else {
-        Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
-    }
-
-
-    // Update all the figures. Need to call this on load because the values of
-    // wafer and weekdir might be pulled from a cookie, which probably differs
-    // from the default values.
-    update_figs();
-    update_lastmodified();
 });
