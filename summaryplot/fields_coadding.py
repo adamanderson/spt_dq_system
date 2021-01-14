@@ -3224,9 +3224,11 @@ class FlagBadMaps(object):
             {sub_field: None for sub_field in \
              ["ra0hdec-44.75", "ra0hdec-52.25",
               "ra0hdec-59.75", "ra0hdec-67.25",
-              "ra5hdec-24.5" , "ra5hdec-31.5" ,
-              "ra5hdec-38.5" , "ra5hdec-45.5" ,
-              "ra5hdec-52.5" , "ra5hdec-59.5" ,
+              "ra5hdec-24.5", "ra5hdec-31.5",
+              "ra5hdec-38.5", "ra5hdec-45.5",
+              "ra5hdec-52.5", "ra5hdec-59.5",
+              "ra5hdec-29.75", "ra5hdec-33.25",
+              "ra5hdec-36.75", "ra5hdec-40.25",
               "ra1h40dec-29.75", "ra1h40dec-33.25",
               "ra1h40dec-36.75", "ra1h40dec-40.25"]}
         
