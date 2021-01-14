@@ -101,7 +101,10 @@ def get_season_based_on_fields(some_fields):
     summer_fields = ["ra5hdec-24.5" , "ra5hdec-31.5",
                      "ra5hdec-38.5" , "ra5hdec-45.5",
                      "ra5hdec-52.5" , "ra5hdec-59.5"]
-    summer_fields_p = ["ra5hdec-29.75", "ra5hdec-33.25",
+    summer_fields_p = ["ra5hdec-24.5" , "ra5hdec-31.5",
+                       "ra5hdec-38.5" , "ra5hdec-45.5",
+                       "ra5hdec-52.5" , "ra5hdec-59.5",
+                       "ra5hdec-29.75", "ra5hdec-33.25",
                        "ra5hdec-36.75", "ra5hdec-40.25"]
     summer_fields_b = ["ra1h40dec-29.75", "ra1h40dec-33.25",
                        "ra1h40dec-36.75", "ra1h40dec-40.25"]
@@ -458,6 +461,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             most_neg_d  = -74.75
             most_pos_d  = -37.25
             center_decs = [-67.25, -59.75, -52.25, -44.75]
+            dec_ticks   = [-67.25, -59.75, -52.25, -44.75]
             one_fld_uni = 3.25
             one_fld_zr  = 4.25
             n_flds = 4
@@ -468,6 +472,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             most_neg_d  = -66.50
             most_pos_d  = -17.50
             center_decs = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
+            dec_ticks   = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
             one_fld_uni = 3.00
             one_fld_zr  = 4.00
             n_flds = 6
@@ -477,7 +482,8 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             norm_dec_r  = -40.90
             most_neg_d  = -66.50
             most_pos_d  = -17.50
-            center_decs = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
+            center_decs = [-40.25, -36.75, -33.25, -29.75]
+            dec_ticks   = [-59.5, -52.5, -45.5, -38.5, -31.5, -24.5]
             one_fld_uni = 1.00
             one_fld_zr  = 2.50
             n_flds = 6
@@ -488,6 +494,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
             most_neg_d  = -43.75
             most_pos_d  = -26.25
             center_decs = [-40.25, -36.75, -33.25, -29.75]
+            dec_ticks   = [-40.25, -36.75, -33.25, -29.75]
             one_fld_uni = 1.00
             one_fld_zr  = 2.50
             n_flds = 4
@@ -599,7 +606,7 @@ class MakeFiguresForFieldMapsAndWeightMaps(object):
                 ytop = larger_max * 1.23
         
         set_lims(plot_obj, xlim_left, xlim_right, -0.02, ytop)
-        set_ticks(plot_obj, mjridcs, mnridcs, [str(dec) for dec in center_decs],
+        set_ticks(plot_obj, mjridcs, mnridcs, [str(dec) for dec in dec_ticks],
                   None, None, None, self.ttl_fs, data_linewidth)
         
         fig_title = fig_title.replace('RACENTER', center_ra_str)
@@ -1053,6 +1060,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         for sub_field in sorted(obs_dur_data.keys()):
             oids, lens = self.get_data_points_to_plot(
                              obs_dur_data, [sub_field], core.G3Units.min)
+            if len(oids) == 0:
+                continue
             for one_obs_len in lens:
                 total_obs_time += one_obs_len * 60 * 0.965
             label = self.el_dict[sub_field]
@@ -1202,6 +1211,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             cal_data = frame[key_prefix + wafer + "PicowattsPerKelvin"]
             obs_ids, cals = self.get_data_points_to_plot(
                               cal_data, self.all_fields, cal_uni)
+            if len(obs_ids) == 0:
+                continue
             
             plot_obj.plot(
                 obs_ids, cals, label=wafer,
@@ -1320,6 +1331,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                 continue
             obs_ids, changes = self.get_data_points_to_plot(
                                  frac_chgs, [sub_field], 0.01)
+            if len(obs_ids) == 0:
+                continue
             
             color = self.cl_dict[sub_field]
             plot_obj.plot(
@@ -1442,6 +1455,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             for sub_field in sorted(fluc_data.keys()):
                 xvals, yvals = self.get_data_points_to_plot(
                                    fluc_data, [sub_field], plist["yunits"])
+                if len(xvals) == 0:
+                    continue
                 if "NumbersOfPixelsWithGoodTTWeights" in metric_key:
                     yvals = [yval/plist["n_pix"][sub_field] for yval in yvals]
                     n_st_0p9 = len([yval for yval in yvals if yval < 0.9])
@@ -1478,7 +1493,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             
             lbl_fs, tck_fs, lgd_fs = determine_various_font_sizes(self.ttl_fs)
             if "NumbersOfPixelsWithGoodTTWeights" in metric_key:
-                for counter, sub_field in enumerate(sorted(fluc_data.keys())):
+                for counter, sub_field in enumerate(sorted(records_for_later.keys())):
                     good_pc = records_for_later[sub_field]
                     plot_obj.text(0.98, 0.50-counter*0.06,
                                   "{:2d}% maps".format(good_pc),
@@ -1487,7 +1502,7 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
                                   alpha=2.0*self.typical_alpha,
                                   fontsize=0.9*lgd_fs,
                                   horizontalalignment="right")
-                plot_obj.text(0.98, 0.50-len(fluc_data.keys())*0.06, "< 0.9",
+                plot_obj.text(0.98, 0.50-len(records_for_later.keys())*0.06, "< 0.9",
                               transform=plot_obj.transAxes,
                               color="black", alpha=2.0*self.typical_alpha,
                               fontsize=0.9*lgd_fs, horizontalalignment="right")
@@ -1690,6 +1705,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
         for sub_field in data.keys():
             obs_ids, ratios = self.get_data_points_to_plot(
                                  data, [sub_field], 1.0)
+            if len(obs_ids) == 0:
+                continue
             
             color = self.cl_dict[sub_field]
             plot_obj.plot(
@@ -1769,6 +1786,8 @@ class MakeFiguresForTimeVariationsOfMapRelatedQuantities(object):
             nuni = core.G3Units.uK * core.G3Units.arcmin
             obs_ids, noises = self.get_data_points_to_plot(
                                   data, [sub_field], nuni)
+            if len(obs_ids) == 0:
+                continue
             records_for_later[sub_field] = numpy.nanmedian(noises)**2
             
             color = self.cl_dict[sub_field]
@@ -2589,6 +2608,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         max_occurs = []
         
         for sub_field, data in map_vector.items():
+            if len(data) == 0:
+                continue
             n, bins, patches = \
                 plot_obj.hist(data, bins=50, range=(xlim_left, xlim_right),
                               label=sub_field,
@@ -2623,6 +2644,8 @@ class MakeFiguresForDistributionsOfMapRelatedQuantities(object):
         counter  = 0
         n_fld    = len(map_vector.keys())
         for sub_field, data in map_vector.items():
+            if len(data) == 0:
+                continue
             counter += 1
             med = numpy.nanmedian(data)
             mad = numpy.nanmedian(numpy.absolute(data-med))
