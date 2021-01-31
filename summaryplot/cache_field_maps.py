@@ -289,9 +289,17 @@ def update(season, mode, action,
             full_path = os.path.join(root_directory, time_interval, sub_dir)
             desired_dir_names.append(full_path)
     
-    for dir_name in desired_dir_names:
-        if not os.path.isdir(dir_name):
-            os.mkdir(dir_name)
+    for i in range(len(desired_time_ranges)):
+        coadds_dir_one_interval = desired_dir_names[i]
+        figs_dir_one_interval   = desired_dir_names[i+len(desired_time_ranges)]
+        if mode == "coadding":
+            if not os.path.isdir(coadds_dir_one_interval):
+                os.mkdir(coadds_dir_one_interval)
+        if mode == "plotting":
+            if (not os.path.isdir(figs_dir_one_interval)) and \
+               (os.path.isdir(coadds_dir_one_interval))   and \
+               (len(os.listdir(coadds_dir_one_interval)) > 0):
+                os.mkdir(figs_dir_one_interval)
     
     log("")
     
@@ -861,10 +869,6 @@ def update(season, mode, action,
                     logger, log_file, just_see_commands)
                 
                 log('\n\n')
-            
-            if len(os.listdir(fig_dir)) == 0:
-                os.rmdir(fig_dir)
-            
         log('\n\n\n')
     
     
