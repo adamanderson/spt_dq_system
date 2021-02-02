@@ -1,9 +1,9 @@
 // check if cookies are defined, otherwise set them to defaults
 var default_cookies = {'wafer': 'all',
-                       'weekdir': 'plots/last_n/last_07/',
-                       'mapweekdir': 'maps/figures/last_n/last_07/',
-                       'mapweekdirsummer': 'maps/figures_summer/last_n/last_07/',
-                       'mapweekdirsummerb': 'maps/figures_summerb/last_n/last_07/',
+                       'timedir_calibration': 'plots/last_n/last_07/',
+                       'timedir_winter': 'maps/figures_winter/last_n/last_07/',
+                       'timedir_summer': 'maps/figures_summer/last_n/last_07/',
+                       'timedir_summerb': 'maps/figures_summerb/last_n/last_07/',
                        'arcdir': 'arcs/figs/last_n/last_07/',
                        'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {
@@ -13,439 +13,166 @@ for (var cookie_name in default_cookies) {
 
 // get cookie values
 var wafer = Cookies.get('wafer');
-var weekdir = Cookies.get('weekdir');
-var mapweekdir = Cookies.get('mapweekdir');
-var mapweekdirsummer = Cookies.get('mapweekdirsummer');
-var mapweekdirsummerb = Cookies.get('mapweekdirsummerb');
-var arcdir = Cookies.get('arcdir');
-var cycledir = Cookies.get('cycledir');
+var timedir = {calibration: Cookies.get('timedir_calibration'),
+               winter: Cookies.get('timedir_winter'),
+               summer: Cookies.get('timedir_summer'),
+               summerb: Cookies.get('timedir_summerb'),
+               weather: Cookies.get('arcdir'),
+               fridgecycle: Cookies.get('cycledir')};
 
-
-/**
- * Updates the source of all images defined on the summary page.
+/** 
+ * Retrieves a precompiled template, or if it does not exist,
+ * looks for a template in the `templates` directory and compiles it.
+ * @param {string} name Name of template to search for
+ * @return {Handlebars.templates} 
  */
-function update_figs() {
-    document["ts_median_cal_sn_highel"].src        = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_highel_'+wafer+'.png';
-    document["ts_median_cal_response_highel"].src  = 'staticimg/'+weekdir+'/median_cal_response_4Hz_highel_'+wafer+'.png';
-    document["ts_alive_bolos_cal_highel"].src      = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_highel_'+wafer+'.png';
-      
-    document["ts_median_cal_sn_lowel"].src         = 'staticimg/'+weekdir+'/median_cal_sn_4Hz_lowel_'+wafer+'.png';
-    document["ts_median_cal_response_lowel"].src   = 'staticimg/'+weekdir+'/median_cal_response_4Hz_lowel_'+wafer+'.png';
-    document["ts_alive_bolos_cal_lowel"].src       = 'staticimg/'+weekdir+'/alive_bolos_cal_4Hz_lowel_'+wafer+'.png';
-    
-    document["ts_median_elnod_slope"].src          = 'staticimg/'+weekdir+'/median_elnod_response_'+wafer+'.png';
-    document["ts_median_elnod_sn"].src             = 'staticimg/'+weekdir+'/median_elnod_sn_'+wafer+'.png';
-    document["ts_median_elnod_opacity"].src        = 'staticimg/'+weekdir+'/median_elnod_opacity_'+wafer+'.png';
-    document["ts_median_elnod_iq"].src             = 'staticimg/'+weekdir+'/median_elnod_iq_phase_'+wafer+'.png';
-    document["ts_alive_bolos_elnod"].src           = 'staticimg/'+weekdir+'/alive_bolos_elnod_'+wafer+'.png';
-    
-    document["ts_rcw38_sky_transmission"].src      = 'staticimg/'+weekdir+'/rcw38_sky_transmission_'+wafer+'.png';
-    document["ts_median_rcw38_fluxcal"].src        = 'staticimg/'+weekdir+'/median_rcw38_fluxcal_'+wafer+'.png';
-    document["ts_median_rcw38_intflux"].src        = 'staticimg/'+weekdir+'/median_rcw38_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_rcw38"].src           = 'staticimg/'+weekdir+'/alive_bolos_rcw38_'+wafer+'.png';
-    
-    document["ts_mat5a_sky_transmission"].src      = 'staticimg/'+weekdir+'/mat5a_sky_transmission_'+wafer+'.png';
-    document["ts_median_mat5a_fluxcal"].src        = 'staticimg/'+weekdir+'/median_mat5a_fluxcal_'+wafer+'.png';
-    document["ts_median_mat5a_intflux"].src        = 'staticimg/'+weekdir+'/median_mat5a_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_mat5a"].src           = 'staticimg/'+weekdir+'/alive_bolos_mat5a_'+wafer+'.png';
+Handlebars.getTemplate = function(name) {
+    $.ajax({
+        url : 'templates/' + name + '.handlebars',
+        success : function(data) {
+            if (Handlebars.templates === undefined) {
+                Handlebars.templates = {};
+            }
+            Handlebars.templates[name] = Handlebars.compile(data);
+        },
+        async : false
+    });
+    return Handlebars.templates[name];
+};
 
-    document["ts_w28a2_sky_transmission"].src      = 'staticimg/'+weekdir+'/w28a2_sky_transmission_'+wafer+'.png';
-    document["ts_median_w28a2_fluxcal"].src        = 'staticimg/'+weekdir+'/median_w28a2_fluxcal_'+wafer+'.png';
-    document["ts_median_w28a2_intflux"].src        = 'staticimg/'+weekdir+'/median_w28a2_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_w28a2"].src           = 'staticimg/'+weekdir+'/alive_bolos_w28a2_'+wafer+'.png';
+// Compile the templates, at least one per tab
+var map_tab_names = ['winter', 'summer', 'summerb'];
+for(var jtab = 0; jtab < map_tab_names.length; jtab++)
+{
+    // Loop over map tabs. Each tab has a template for figures common to all
+    // map tabs, pointing figures that differ between tabs, and the time 
+    // selector.
+    var compiled_map_template = Handlebars.getTemplate('maptab');
+    var compiled_time_selector_template = Handlebars.getTemplate('time_selector');
+    var compiled_map_pointing_template = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
 
-    document["ts_iras17258_sky_transmission"].src  = 'staticimg/'+weekdir+'/iras17258_sky_transmission_'+wafer+'.png';
-    document["ts_median_iras17258_fluxcal"].src    = 'staticimg/'+weekdir+'/median_iras17258_fluxcal_'+wafer+'.png';
-    document["ts_median_iras17258_intflux"].src    = 'staticimg/'+weekdir+'/median_iras17258_intflux_'+wafer+'.png';
-    document["ts_alive_bolos_iras17258"].src       = 'staticimg/'+weekdir+'/alive_bolos_iras17258_'+wafer+'.png';
-
-    document["focus_fwhm_vs_bench_90"].src         = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_90.png';
-    document["focus_fwhm_vs_bench_150"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_150.png';
-    document["focus_fwhm_vs_bench_220"].src        = 'staticimg/'+weekdir+'/focus_fwhm_vs_bench_220.png';
-
-    document["focus_ellip_vs_bench_90"].src        = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_90.png';
-    document["focus_ellip_vs_bench_150"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_150.png';
-    document["focus_ellip_vs_bench_220"].src       = 'staticimg/'+weekdir+'/focus_ellip_vs_bench_220.png';
-
-    document["focus_min_fwhm"].src                 = 'staticimg/'+weekdir+'/focus_FWHM.png';
-    document["focus_min_fwhm_bench"].src           = 'staticimg/'+weekdir+'/focus_BenchF.png';
-    document["focus_min_ellip"].src                = 'staticimg/'+weekdir+'/focus_Ellipticity.png';
-    document["focus_min_ellip_bench"].src          = 'staticimg/'+weekdir+'/focus_BenchE.png';
-
-    document["ts_median_net_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NET_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_net_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NET_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_net_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NET_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_net_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NET_10.0Hz_to_15.0Hz_'+wafer+'.png';
-    
-    document["ts_median_nep_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_nep_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_nep_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEP_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_nep_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEP_10.0Hz_to_15.0Hz_'+wafer+'.png';
-    
-    document["ts_median_nei_01Hz_to_05Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_0.1Hz_to_0.5Hz_'+wafer+'.png';
-    document["ts_median_nei_1Hz_to_2Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_1.0Hz_to_2.0Hz_'+wafer+'.png';
-    document["ts_median_nei_3Hz_to_5Hz"].src       = 'staticimg/'+weekdir+'/median_NEI_3.0Hz_to_5.0Hz_'+wafer+'.png';
-    document["ts_median_nei_10Hz_to_15Hz"].src     = 'staticimg/'+weekdir+'/median_NEI_10.0Hz_to_15.0Hz_'+wafer+'.png';
-
-    document["ts_number_of_lines"].src             = 'staticimg/'+weekdir+'/number_of_lines_found_'+wafer+'.png';
-    
-    document["map_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map.png';
-    document["map_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map.png';
-    document["map_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map.png';
-    
-    document["map_t_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map.png';
-    document["map_t_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map.png';
-    document["map_t_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map.png';
-
-    document["map_t_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map.png';
-    document["map_t_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map.png';
-    document["map_t_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map.png';
-
-    document["map_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map.png';
-    document["map_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map.png';
-    document["map_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map.png';
-    
-    document["map_tt_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-TT_weight_map.png';
-    document["map_tt_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-TT_weight_map.png';
-    document["map_tt_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-TT_weight_map.png';
-
-    document["map_tt_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-TT_weight_map.png';
-    document["map_tt_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-TT_weight_map.png';
-    document["map_tt_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-TT_weight_map.png';
-
-    document["xsec_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-TT_weight_map_cross_sectional_view.png';
-
-    document["xsec_tt_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-TT_weight_map_cross_sectional_view.png';
-    
-    document["xsec_tt_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-TT_weight_map_cross_sectional_view.png';
-    document["xsec_tt_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-TT_weight_map_cross_sectional_view.png';
-
-    document["individ_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_individual_maps.png';
-    
-    document["individ_noise_t_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_noise_levels_from_individual_maps.png';
-
-    document["individ_noise_t_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_noise_levels_from_individual_maps.png';
-    document["individ_noise_t_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_noise_levels_from_individual_maps.png';
-
-    document["mean_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_mean_of_tt_weight_map_values.png';
-
-    document["mean_tt_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_mean_of_tt_weight_map_values.png';
-    
-    document["mean_tt_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_mean_of_tt_weight_map_values.png';
-    document["mean_tt_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_mean_of_tt_weight_map_values.png';
-
-    document["running_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_noise_levels_from_running_coadds.png';
-
-    document["running_noise_t_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_noise_levels_from_running_coadds.png';
-    
-    document["running_noise_t_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_noise_levels_from_running_coadds.png';
-    document["running_noise_t_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_noise_levels_from_running_coadds.png';
-
-    document["distro_noise_t_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_distributions_of_individual_noise_levels.png';
-
-    document["distro_noise_t_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_distributions_of_individual_noise_levels.png';
-    
-    document["distro_noise_t_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_distributions_of_individual_noise_levels.png';
-    document["distro_noise_t_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_distributions_of_individual_noise_levels.png';
-
-    document["distro_mean_tt_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-
-    document["distro_mean_tt_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    
-    document["distro_mean_tt_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-    document["distro_mean_tt_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_distributions_of_individual_mean_tt_weights.png';
-
-    document["ra_offsets_el0"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-44.75.png';
-    document["ra_offsets_el1"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-52.25.png';
-    document["ra_offsets_el2"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-59.75.png';
-    document["ra_offsets_el3"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_delta_Ras_from_point_sources_in_ra0hdec-67.25.png';
-
-    document["ra_offsets_el0_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-24.5.png';
-    document["ra_offsets_el1_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-31.5.png';
-    document["ra_offsets_el2_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-38.5.png';
-    document["ra_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-45.5.png';
-    document["ra_offsets_el4_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-52.5.png';
-    document["ra_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-59.5.png';
-    document["ra_offsets_el10_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-29.75.png';
-    document["ra_offsets_el11_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-33.25.png';
-    document["ra_offsets_el20_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-36.75.png';
-    document["ra_offsets_el21_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra5hdec-40.25.png';
-    
-    document["ra_offsets_el1b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-29.75.png';
-    document["ra_offsets_el1b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-33.25.png';
-    document["ra_offsets_el2b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-36.75.png';
-    document["ra_offsets_el2b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Ras_from_point_sources_in_ra1h40dec-40.25.png';
-    
-    document["dec_offsets_el0"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-44.75.png';
-    document["dec_offsets_el1"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-52.25.png';
-    document["dec_offsets_el2"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-59.75.png';
-    document["dec_offsets_el3"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_delta_Decs_from_point_sources_in_ra0hdec-67.25.png';
-
-    document["dec_offsets_el0_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-24.5.png';
-    document["dec_offsets_el1_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-31.5.png';
-    document["dec_offsets_el2_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-38.5.png';
-    document["dec_offsets_el3_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-45.5.png';
-    document["dec_offsets_el4_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-52.5.png';
-    document["dec_offsets_el5_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-59.5.png';
-    document["dec_offsets_el10_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-29.75.png';
-    document["dec_offsets_el11_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-33.25.png';
-    document["dec_offsets_el20_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-36.75.png';
-    document["dec_offsets_el21_summer"].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra5hdec-40.25.png';
-    
-    document["dec_offsets_el1b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-29.75.png';
-    document["dec_offsets_el1b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-33.25.png';
-    document["dec_offsets_el2b0_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-36.75.png';
-    document["dec_offsets_el2b1_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_delta_Decs_from_point_sources_in_ra1h40dec-40.25.png';
-
-    document['distro_ra_offsets'].src  = 'staticimg/'+mapweekdir+'/150GHz-T_map_distribution_of_average_Ra_offsets.png';
-    document['distro_dec_offsets'].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distribution_of_average_Dec_offsets.png';
-
-    document['distro_ra_offsets_summer'].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distribution_of_average_Ra_offsets.png';
-    document['distro_dec_offsets_summer'].src = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distribution_of_average_Dec_offsets.png';
-    
-    document['distro_ra_offsets_summerb'].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distribution_of_average_Ra_offsets.png';
-    document['distro_dec_offsets_summerb'].src = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distribution_of_average_Dec_offsets.png';
-
-    document["flagging_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_average_numbers_of_flagged_detectors.png';
-
-    document["flagging_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_average_numbers_of_flagged_detectors.png';
-    
-    document["flagging_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_average_numbers_of_flagged_detectors.png';
-    document["flagging_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_average_numbers_of_flagged_detectors.png';
-
-    document["fractional_coverage_90"].src  = 'staticimg/'+mapweekdir+
-        '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_150"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_220"].src = 'staticimg/'+mapweekdir+
-        '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-
-    document["fractional_coverage_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    
-    document["fractional_coverage_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-    document["fractional_coverage_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png';
-
-    document["xspec_ratio_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_averages_of_power_spectra_ratios.png';
-
-    document["xspec_ratio_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_averages_of_power_spectra_ratios.png';
-    
-    document["xspec_ratio_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_averages_of_power_spectra_ratios.png';
-    document["xspec_ratio_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_averages_of_power_spectra_ratios.png';
-
-    document["distro_avg_xsp_ratio_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_distributions_of_crass_spectra_ratios.png';
-
-    document["distro_avg_xsp_ratio_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    
-    document["distro_avg_xsp_ratio_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_distributions_of_crass_spectra_ratios.png';
-    document["distro_avg_xsp_ratio_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_distributions_of_crass_spectra_ratios.png';
-
-    document["observation_durations"].src = 'staticimg/'+mapweekdir+'/observation_durations.png';
-    document["observation_durations_summer"].src = 'staticimg/'+mapweekdirsummer+'/observation_durations.png';
-    document["observation_durations_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/observation_durations.png';
-    
-    document["cal_vs_el_by_field_90"].src  = 'staticimg/'+mapweekdir+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_150"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_220"].src = 'staticimg/'+mapweekdir+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-
-    document["cal_vs_el_by_field_90_summer"].src  = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_150_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_220_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    
-    document["cal_vs_el_by_field_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-    document["cal_vs_el_by_field_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png';
-
-    document["cal_vs_el_by_wafer_90"].src  = 'staticimg/'+mapweekdir+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_150"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_220"].src = 'staticimg/'+mapweekdir+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-
-    document["cal_vs_el_by_wafer_90_summer"].src  = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_150_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_220_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    
-    document["cal_vs_el_by_wafer_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+
-        '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-    document["cal_vs_el_by_wafer_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png';
-
-    document["distro_cal_vs_el_90"].src  = 'staticimg/'+mapweekdir+'/90GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_150"].src = 'staticimg/'+mapweekdir+'/150GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_220"].src = 'staticimg/'+mapweekdir+'/220GHz-T_map_distributions_of_cal_response_changes.png';
-
-    document["distro_cal_vs_el_90_summer"].src  = 'staticimg/'+mapweekdirsummer+'/90GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_150_summer"].src = 'staticimg/'+mapweekdirsummer+'/150GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_220_summer"].src = 'staticimg/'+mapweekdirsummer+'/220GHz-T_map_distributions_of_cal_response_changes.png';
-    
-    document["distro_cal_vs_el_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+'/90GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/150GHz-T_map_distributions_of_cal_response_changes.png';
-    document["distro_cal_vs_el_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+'/220GHz-T_map_distributions_of_cal_response_changes.png';
-
-    document["pw_per_k_by_wafer_90"].src  = 'staticimg/'+mapweekdir+
-        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_150"].src = 'staticimg/'+mapweekdir+
-        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_220"].src = 'staticimg/'+mapweekdir+
-        '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-
-    document["pw_per_k_by_wafer_90_summer"].src  = 'staticimg/'+mapweekdirsummer+
-        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_150_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_220_summer"].src = 'staticimg/'+mapweekdirsummer+
-        '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-
-    document["pw_per_k_by_wafer_90_summerb"].src  = 'staticimg/'+mapweekdirsummerb+
-        '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_150_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-    document["pw_per_k_by_wafer_220_summerb"].src = 'staticimg/'+mapweekdirsummerb+
-        '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png';
-
-    document["tipper_tau"].src   = 'staticimg/'+arcdir+'/tipper_tau.png';
-    document["tipper_tatm"].src  = 'staticimg/'+arcdir+'/tipper_tatm.png';
-    document["elnod_tau_cp"].src = 'staticimg/'+arcdir+'/median_elnod_opacity_all.png';
-
-    document["weather_tatm"].src = 'staticimg/'+arcdir+'/weather_tatm.png';
-    document["weather_humi"].src = 'staticimg/'+arcdir+'/weather_humi.png';
-    document["weather_pres"].src = 'staticimg/'+arcdir+'/weather_pres.png';
-    document["weather_wmag"].src = 'staticimg/'+arcdir+'/weather_wmag.png';
-    document["weather_wdir"].src = 'staticimg/'+arcdir+'/weather_wdir.png';
-
-    document["cabin_temps"].src  = 'staticimg/'+arcdir+'/cabin_temps.png';
-    document["4K_temps"].src     = 'staticimg/'+arcdir+'/fourk_temps.png';
-    document["50K_temps"].src    = 'staticimg/'+arcdir+'/fiftyk_temps.png';
-
-    document["cycle_he10_full"].src = 'staticimg/'+cycledir+'/he10_full.png';
-    document["cycle_he10_half"].src = 'staticimg/'+cycledir+'/he10_half.png';
-    document["cycle_low_temps"].src = 'staticimg/'+cycledir+'/low_temps.png';
 }
-
+var compiled_calibration_template = Handlebars.getTemplate('calibration_tab');
+var compiled_weather_template = Handlebars.getTemplate('weather_tab');
+var compiled_fridgecycle_template = Handlebars.getTemplate('fridgecycle_tab');
 
 /**
- * Show/hide plots when switching between yearly and non-yearly view for maps
+ * Updates the content in a tab by refilling HTML templates that comprise the
+ * tab.
+ * @param {string} name Name of tab to update
+ * @param {bool} init Do initialization steps that should occur only on the
+ * first time the lab is loaded
  */
-function update_visibility() {
-    if(!window["weekdir"].includes('yearly')) {
-        $(".cal_yearly").hide();
-        $(".cal_non_yearly").show();
+function update_tab(name, init) {
+    // prototype context
+    var context = { wafer: wafer,
+                    map_tab_name: name,
+                    week_dir: timedir[name],
+                    yearly: timedir[name].includes('yearly'), 
+                    recent_selector: true, 
+                    yearly_selector: true, 
+                    monthly_selector: true, 
+                    weekly_selector: true,
+                    cycles_selector: true};
+
+    // customizations for each tab
+    if(name == 'calibration')
+    {
+        context.weekly_selector = false;
+        context.cycles_selector = false;
+
+        var html = compiled_calibration_template(context);
+        $("#figs_calibration").html(html);
     }
-    else {
-        $(".cal_yearly").show();
-        $(".cal_non_yearly").hide();
+    else if(name == 'winter' || name == 'summer' || name == 'summerb')
+    {
+        context.weekly_selector = false;
+        context.cycles_selector = false;
+
+        var html = compiled_map_template(context);
+        $("#figs_maps" + name).html(html);
+        var html = compiled_map_pointing_template(context);
+        $('#maps_' + name + '_pointing').append(html)
     }
-    if(!window["mapweekdir"].includes('yearly')) {
-        $(".maps_yearly").hide();
-        $(".maps_non_yearly").show();
+    else if(name == 'weather')
+    {
+        context.yearly_selector = false;
+        context.cycles_selector = false;
+
+        var html = compiled_weather_template(context);
+        $("#figs_weather").html(html);
     }
-    else {
-        $(".maps_yearly").show();
-        $(".maps_non_yearly").hide();
+    else if(name == 'fridgecycle')
+    {
+        context.recent_selector = false;
+        context.yearly_selector = false;
+        context.monthly_selector = false;
+        context.weekly_selector = false;
+        var html = compiled_fridgecycle_template(context);
+        $("#figs_fridgecycle").html(html);
+        
     }
-    if(!window["mapweekdirsummer"].includes('yearly')) {
-        $(".maps_summer_yearly").hide();
-        $(".maps_summer_non_yearly").show();
-    }
-    else {
-        $(".maps_summer_yearly").show();
-        $(".maps_summer_non_yearly").hide();
-    }
-    if(!window["mapweekdirsummerb"].includes('yearly')) {
-        $(".maps_summerb_yearly").hide();
-        $(".maps_summerb_non_yearly").show();
-    }
-    else {
-        $(".maps_summerb_yearly").show();
-        $(".maps_summerb_non_yearly").hide();
+
+    if(init)
+    {
+        var html = compiled_time_selector_template(context);
+        $("#time_selector_" + name).html(html);
+
+        // Initialize jQuery UI elements and make dynamic modifications to the DOM
+        if(name == 'calibration')
+        {
+            add_date_buttons('last_n', 'plots', 'calibration');
+            add_date_buttons('yearly', 'plots', 'calibration');
+            add_date_buttons('monthly', 'plots', 'calibration');
+            add_date_buttons('weekly', 'plots', 'calibration');
+        }
+        else if(name == 'winter')
+        {
+            add_date_buttons('last_n', 'maps/figures', 'winter');
+            add_date_buttons('yearly', 'maps/figures', 'winter');
+            add_date_buttons('monthly', 'maps/figures', 'winter');
+            add_date_buttons('weekly', 'maps/figures', 'winter');
+        }
+        else if(name == 'summer')
+        {
+            add_date_buttons('last_n', 'maps/figures_summer', 'summer');
+            add_date_buttons('yearly', 'maps/figures_summer', 'summer');
+            add_date_buttons('monthly', 'maps/figures_summer', 'summer');
+            add_date_buttons('weekly', 'maps/figures_summer', 'summer');
+        }
+        else if(name == 'summerb')
+        {
+            add_date_buttons('last_n', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('yearly', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
+            add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
+        }
+        else if(name == 'weather')
+        {
+            add_date_buttons('last_n', 'arcs/figs', 'weather');
+            add_date_buttons('monthly', 'arcs/figs', 'weather');
+            add_date_buttons('weekly', 'arcs/figs', 'weather');
+        }
+        else if(name == 'fridgecycle')
+        {
+            add_date_buttons('cycles', 'arcs/figs', 'fridgecycle');
+        }
     }
 }
 
+/**
+ * Updates the "last modified" field at the top of each tab. This could
+ * probably be combined directly with update_tab.
+ */
 function update_lastmodified() {
     $.get('/lastmodified_calibration', function(data) {
         $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
     });
-    $.get('/lastmodified_maps_winter', function(data) {
-        $("#lastmodified_maps_winter").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
-    });
-    $.get('/lastmodified_maps_summer', function(data) {
-        $("#lastmodified_maps_summer").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
-    });
-    $.get('/lastmodified_maps_summerb', function(data) {
-        $("#lastmodified_maps_summerb").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+    $.each(map_tab_names, function(jtab, tab_name)
+    {
+        $.get('/lastmodified_maps', {field: tab_name}, function(data) {
+            $("#lastmodified_maps_" + tab_name).replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+        });
     });
     $.get('/lastmodified_weather', function(data) {
         $("#lastmodified_weather").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
@@ -453,115 +180,76 @@ function update_lastmodified() {
 }
 
 /**
- * Sets a global variable to records its value as a cookie for retrieval later.
- */
-function set_variable(variable, newVal)
-{
-  window[variable] = newVal;
-  Cookies.set(variable, newVal, { expires: 1 });
-  update_figs();
-  update_visibility();
-}
-
-/**
  * Builds the buttons on the summary page that select different time intervals
  * of data to display. These are constructed by appending the DOM directly.
  * Note also that this function also initializes the jQuery UI "controlgroup"
  * and binds the click event to it after appending all the buttons.
- * 
- * Arguments:
- *  interval : time interval to traverse, 'weekly' or 'monthly'
- *  subdirectory : subdirectory that we should traverse to get dated data
- *  tab : tab in which to add buttons, 'summary' or 'maps'
+ * @param {string} interval Time interval to traverse, 'weekly' or 'monthly'
+ * @param {string} interval Subdirectory that we should traverse to get dated data
+ * @param {string} interval Tab in which to add buttons, 'summary' or 'maps'
  */
-function add_date_buttons(interval, subdirectory, tab, boundVar)
+function add_date_buttons(interval, subdirectory, tab)
 {
     // now rebuild the div
     $.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
           function(data, status) {
               div_id = '#datalist_'+tab+'_'+interval;
-
+             
               data.reverse();
               for (jdir=0; jdir<data.length; jdir++)
               {
-                  if (tab == 'summary')
+                  if (tab == 'calibration')
                       datestring = data[jdir].split('/')[2];
-                  else if (tab == 'maps')
+                  else if (tab == 'winter')
                       datestring = data[jdir].split('/')[3];
-                  else if (tab == 'mapssummer')
+                  else if (tab == 'summer')
                       datestring = data[jdir].split('/')[3];
-                  else if (tab == 'mapssummerb')
+                  else if (tab == 'summerb')
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'weather')
                       datestring = data[jdir].split('/')[3];
-                  else if (tab == 'fridge')
+                  else if (tab == 'fridgecycle')
                       datestring = data[jdir].split('/')[3];
 
                   $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
-
-                  // can use jquery <select ...></select> with this line instead of radio buttons
-                  // $(div_id).append("<option value='"+data[jdir]+"'>"+datestring+"</option>");
               }
               $(div_id).controlgroup();
               $("[id^=dates-"+tab+"-]").click(function(event) {
-                  set_variable(boundVar, event.target.value);
+                timedir[tab] = event.target.value;
+                update_tab(tab, false);
               });
           });
 }
 
+
 // Page initialization
 $( document ).ready(function()
 {
-    // Initialize jQuery UI elements and make dynamic modifications to the DOM
-    $("#tabs").tabs();
-    $("#waferlist").controlgroup();
-    add_date_buttons('last_n', 'plots', 'summary', 'weekdir');
-    add_date_buttons('yearly', 'plots', 'summary', 'weekdir');
-    add_date_buttons('monthly', 'plots', 'summary', 'weekdir');
-    add_date_buttons('weekly', 'plots', 'summary', 'weekdir');
+    // initialize the tabs in jquery-ui with a function that updates the tab
+    // when clicked
+    $("#tabs").tabs({
+        activate: function( event, ui )
+        {
+            var tab_name = $("#tabs .ui-state-active a").attr('href');
+            tab_name = tab_name.replace('#tabs-','');
+            update_tab(tab_name, false);
+            update_lastmodified();
 
-    add_date_buttons('last_n', 'maps/figures', 'maps', 'mapweekdir');
-    add_date_buttons('yearly', 'maps/figures', 'maps', 'mapweekdir');
-    add_date_buttons('monthly', 'maps/figures', 'maps', 'mapweekdir');
-    add_date_buttons('weekly', 'maps/figures', 'maps', 'mapweekdir');
-
-    add_date_buttons('last_n', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
-    add_date_buttons('yearly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
-    add_date_buttons('monthly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
-    add_date_buttons('weekly', 'maps/figures_summer', 'mapssummer', 'mapweekdirsummer');
-
-    add_date_buttons('last_n', 'maps/figures_summerb', 'mapssummerb', 'mapweekdirsummerb');
-    add_date_buttons('yearly', 'maps/figures_summerb', 'mapssummerb', 'mapweekdirsummerb');
-    add_date_buttons('monthly', 'maps/figures_summerb', 'mapssummerb', 'mapweekdirsummerb');
-    add_date_buttons('weekly', 'maps/figures_summerb', 'mapssummerb', 'mapweekdirsummerb');
-
-    add_date_buttons('last_n', 'arcs/figs', 'weather', 'arcdir');
-    add_date_buttons('monthly', 'arcs/figs', 'weather', 'arcdir');
-    add_date_buttons('weekly', 'arcs/figs', 'weather', 'arcdir');
-    
-    add_date_buttons('cycles', 'arcs/figs', 'fridge', 'cycledir');
+            Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+        }
+    });
 
     // Bind the click event to the wafer buttons
+    $("#waferlist").controlgroup();
     $("[id^=wafers-]").click(function(event) {
-        set_variable("wafer", event.target.value);
+        wafer = event.target.value;
+        update_tab('calibration', false);
     });
 
-    // Bind the click event to the tabs so that we can keep track of the active tab
-    $("#tabs").click(function(event) {
-        Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
+    // load all the tab data
+    $.each(timedir, function(tab_name, val) 
+    {
+        update_tab(tab_name, true);
+        update_lastmodified();
     });
-
-    if(Cookies.get('activeTab') !== undefined)
-        $("#tabs").tabs("option", "active", Cookies.get('activeTab'))
-    else {
-        Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
-    }
-
-
-    // Update all the figures. Need to call this on load because the values of
-    // wafer and weekdir might be pulled from a cookie, which probably differs
-    // from the default values.
-    update_figs();
-    update_visibility();
-    update_lastmodified();
 });

@@ -1,0 +1,599 @@
+<table style="table-layout:fixed;" cellpadding="5">
+    <tr>
+    <td colspan="1">
+        <h2><u>Maps</u></h2>
+    </td>
+    <td colspan="2" align="right" valign="top">
+        <div id="lastmodified_maps_{{map_tab_name}}">
+            {{last_modified}}
+        </div>
+    </td>
+    </tr>
+    
+    <tr>
+    <td>
+        <h3>T Maps</h3>
+    </td>
+    </tr>  
+    <tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/90GHz-T_map.png'">
+        <img style="display:block;" width="100%" name='map_t_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/150GHz-T_map.png'">
+        <img style="display:block;" width="100%" name='map_t_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/220GHz-T_map.png'">
+        <img style="display:block;" width="100%" name='map_t_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map.png'>
+        </a>
+    </td>
+    </tr>
+    <tr><td><br></td></tr>
+
+    <tr>
+    <td>
+        <h3>TT Weight Maps</h3>
+    </td>
+    </tr>  
+    <tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/90GHz-TT_weight_map.png'">
+        <img style="display:block;" width="100%" name='map_tt_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-TT_weight_map.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/150GHz-TT_weight_map.png'">
+        <img style="display:block;" width="100%" name='map_tt_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-TT_weight_map.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/220GHz-TT_weight_map.png'">
+        <img style="display:block;" width="100%" name='map_tt_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-TT_weight_map.png'>
+        </a>
+    </td>
+    </tr>
+    <tr><td><br></td></tr>
+    
+    <tr>
+    <td>
+        <h3>TT Weight Map Cross Sections</h3>
+    </td>
+    </tr>
+    <tr>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/90GHz-TT_weight_map_cross_sectional_view.png'">
+        <img style="display:block;" width="100%" name='xsec_tt_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-TT_weight_map_cross_sectional_view.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/150GHz-TT_weight_map_cross_sectional_view.png'">
+        <img style="display:block;" width="100%" name='xsec_tt_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/map/figures_{{map_tab_name}}/last_n/last_07/150GHz-TT_weight_map_cross_sectional_view.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/220GHz-TT_weight_map_cross_sectional_view.png'">
+        <img style="display:block;" width="100%" name='xsec_tt_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-TT_weight_map_cross_sectional_view.png'>
+        </a>
+    </td>
+    </tr>
+    <tr><td><br></td></tr>
+    
+    <tr>
+    <td>
+        <br><h2><u>Fluctuations in Maps</u></h2>
+    </td>
+    </tr>
+    
+    {{#unless yearly}}
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Noise Levels of T Maps</h3>
+    </td>  
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/90GHz-T_map_noise_levels_from_individual_maps.png'">
+        <img style="display:block;" width="100%" name='individ_noise_t_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_noise_levels_from_individual_maps.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/150GHz-T_map_noise_levels_from_individual_maps.png'">
+        <img style="display:block;" width="100%" name='individ_noise_t_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_noise_levels_from_individual_maps.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/220GHz-T_map_noise_levels_from_individual_maps.png'">
+        <img style="display:block;" width="100%" name='individ_noise_t_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_noise_levels_from_individual_maps.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Means of TT Weight Maps</h3>
+    </td>  
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/90GHz-T_map_mean_of_tt_weight_map_values.png'">
+        <img style="display:block;" width="100%" name='mean_tt_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_mean_of_tt_weight_map_values.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/150GHz-T_map_mean_of_tt_weight_map_values.png'">
+        <img style="display:block;" width="100%" name='mean_tt_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_mean_of_tt_weight_map_values.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/{{week_dir}}/220GHz-T_map_mean_of_tt_weight_map_values.png'">
+        <img style="display:block;" width="100%" name='mean_tt_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_mean_of_tt_weight_map_values.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    {{/unless}}
+    
+    {{#if yearly}}
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Noise Levels of Running Coadded T Maps</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_noise_levels_from_running_coadds.png'">
+        <img style="display:block;" width="100%" name='running_noise_t_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_noise_levels_from_running_coadds.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_noise_levels_from_running_coadds.png'">
+        <img style="display:block;" width="100%" name='running_noise_t_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_noise_levels_from_running_coadds.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_noise_levels_from_running_coadds.png'">
+        <img style="display:block;" width="100%" name='running_noise_t_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_noise_levels_from_running_coadds.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Noise Levels of Individual T Maps</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_distributions_of_individual_noise_levels.png'">
+        <img style="display:block;" width="100%" name='distro_noise_t_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distributions_of_individual_noise_levels.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distributions_of_individual_noise_levels.png'">
+        <img style="display:block;" width="100%" name='distro_noise_t_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_distributions_of_individual_noise_levels.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_distributions_of_individual_noise_levels.png'">
+        <img style="display:block;" width="100%" name='distro_noise_t_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_distributions_of_individual_noise_levels.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Means of TT Weights</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+        <img style="display:block;" width="100%" name='distro_mean_tt_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+        <img style="display:block;" width="100%" name='distro_mean_tt_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'">
+        <img style="display:block;" width="100%" name='distro_mean_tt_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_distributions_of_individual_mean_tt_weights.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    </tr>
+    {{/if}}
+    
+    <tr>
+    <td>
+        <br><h2><u>Pointing</u></h2>
+    </td>
+    </tr>
+
+    <tr>
+    <td colspan="3">
+        <div id="maps_{{map_tab_name}}_pointing"></div>
+    </td>
+    </tr>
+
+    {{#unless yearly}}
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    {{/unless}}
+    
+    {{#if yearly}}
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Averages of Pointing Offsets</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distribution_of_average_Ra_offsets.png'">
+        <img style="display:block;" width="100%" name='distro_ra_offsets_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distribution_of_average_Ra_offsets.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distribution_of_average_Dec_offsets.png'">
+        <img style="display:block;" width="100%" name='distro_dec_offsets_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distribution_of_average_Dec_offsets.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    <tr>
+    {{/if}}
+    
+    {{#unless yearly}}
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <br><h2><u>Completeness of Observations</u></h2>
+        </td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Numbers of Bolometers Not Flagged</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_average_numbers_of_flagged_detectors.png'">
+        <img style="display:block;" width="100%" name='flagging_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_average_numbers_of_flagged_detectors.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_average_numbers_of_flagged_detectors.png'">
+        <img style="display:block;" width="100%" name='flagging_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_average_numbers_of_flagged_detectors.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_average_numbers_of_flagged_detectors.png'">
+        <img style="display:block;" width="100%" name='flagging_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_average_numbers_of_flagged_detectors.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Fractions of Pixels Having Nominal Weights</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+        <img style="display:block;" width="100%" name='fractional_coverage_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+        <img style="display:block;" width="100%" name='fractional_coverage_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'">
+        <img style="display:block;" width="100%" name='fractional_coverage_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_fractional_coverage_in_tt_weight_maps.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Observation Durations</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/observation_durations.png'">
+        <img style="display:block;" width="100%" name='observation_durations_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/observation_durations.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr>
+    <td>
+        <br><h2><u>Temperature Calibration</u></h2>
+    </td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>SPT x Planck / Planck x Planck</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_averages_of_power_spectra_ratios.png'">
+        <img style="display:block;" width="100%" name='xspec_ratio_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_averages_of_power_spectra_ratios.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_averages_of_power_spectra_ratios.png'">
+        <img style="display:block;" width="100%" name='xspec_ratio_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_averages_of_power_spectra_ratios.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_averages_of_power_spectra_ratios.png'">
+        <img style="display:block;" width="100%" name='xspec_ratio_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_averages_of_power_spectra_ratios.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    {{/unless}}
+    
+    {{#if yearly}}
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Cross Spectra Ratios</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+            <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+            <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_distributions_of_crass_spectra_ratios.png'">
+            <img style="display:block;" width="100%" name='distro_avg_xsp_ratio_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_distributions_of_crass_spectra_ratios.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    <tr>
+    {{/if}}
+    
+    {{#unless yearly}}
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Cal vs El (by sub-field)</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_field_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_field_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_field_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_median_cal_resp_percentage_changes_by_field.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>Cal vs El (by wafer)</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'">
+        <img style="display:block;" width="100%" name='cal_vs_el_by_wafer_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_median_cal_resp_percentage_changes_by_wafer.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    {{/unless}}
+    
+    {{#if yearly}}
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td>
+        <h3>Cal vs El</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_distributions_of_cal_response_changes.png'">
+        <img style="display:block;" width="100%" name='distro_cal_vs_el_90_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/90GHz-T_map_distributions_of_cal_response_changes.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_distributions_of_cal_response_changes.png'">
+        <img style="display:block;" width="100%" name='distro_cal_vs_el_150_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/150GHz-T_map_distributions_of_cal_response_changes.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_distributions_of_cal_response_changes.png'">
+        <img style="display:block;" width="100%" name='distro_cal_vs_el_220_{{map_tab_name}}' class="fig-with-border"
+                src='staticimg/{{week_dir}}/220GHz-T_map_distributions_of_cal_response_changes.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_yearly">
+    <td><br></td>
+    <tr>
+    {{/if}}
+    
+    {{#unless yearly}}
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td>
+        <h3>pW/K Conversion Factors</h3>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+        <img style="display:block;" width="100%" name='pw_per_k_by_wafer_90_{{map_tab_name}}' class="fig-with-border"
+            src='staticimg/{{week_dir}}/90GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+        <img style="display:block;" width="100%" name='pw_per_k_by_wafer_150_{{map_tab_name}}' class="fig-with-border"
+            src='staticimg/{{week_dir}}/150GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+        </a>
+    </td>
+    <td width="33%">
+        <a href="javascript:location.href='staticimg/'+{{week_dir}}{{map_tab_name}}+
+                '/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'">
+        <img style="display:block;" width="100%" name='pw_per_k_by_wafer_220_{{map_tab_name}}' class="fig-with-border"
+            src='staticimg/{{week_dir}}/220GHz-T_map_median_temperature_calibration_factors_by_wafer.png'>
+        </a>
+    </td>
+    </tr>
+    <tr class="maps_{{map_tab_name}}_non_yearly">
+    <td><br></td>
+    </tr>
+    {{/unless}}
+
+</table>

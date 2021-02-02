@@ -218,17 +218,6 @@ if args.mode == 'maps':
     
     # update coadded maps and relevant figures
     
-    if 'summer' in args.season:
-        def get_summer_path(p):
-            if p[-1] == '/':
-                p = p[0:-1]
-            sp = os.path.join(os.path.dirname(p),
-                              os.path.basename(p)+'_'+args.season)
-            return sp
-        args.coaddsdatadir = get_summer_path(args.coaddsdatadir)
-        args.coaddsfigsdir = get_summer_path(args.coaddsfigsdir)
-        args.coaddslogsdir = get_summer_path(args.coaddslogsdir)
-    
     for d in [args.coaddsdatadir, args.coaddsfigsdir, args.coaddslogsdir]:
         if not os.path.isdir(d):
             os.mkdir(d)
