@@ -78,7 +78,6 @@ function update_tab(name, init) {
     // customizations for each tab
     if(name == 'calibration')
     {
-        context.weekly_selector = false;
         context.cycles_selector = false;
 
         var html = compiled_calibration_template(context);
@@ -86,7 +85,6 @@ function update_tab(name, init) {
     }
     else if(name == 'winter' || name == 'summer' || name == 'summerb')
     {
-        context.weekly_selector = false;
         context.cycles_selector = false;
 
         var html = compiled_map_template(context);
