@@ -42,6 +42,7 @@ Handlebars.getTemplate = function(name) {
 
 // Compile the templates, at least one per tab
 var map_tab_names = ['winter', 'summer', 'summerb'];
+var compiled_map_pointing_template = {};
 for(var jtab = 0; jtab < map_tab_names.length; jtab++)
 {
     // Loop over map tabs. Each tab has a template for figures common to all
@@ -49,7 +50,7 @@ for(var jtab = 0; jtab < map_tab_names.length; jtab++)
     // selector.
     var compiled_map_template = Handlebars.getTemplate('maptab');
     var compiled_time_selector_template = Handlebars.getTemplate('time_selector');
-    var compiled_map_pointing_template = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
+    compiled_map_pointing_template[map_tab_names[jtab]] = Handlebars.getTemplate('map_pointing_' + map_tab_names[jtab]);
 
 }
 var compiled_calibration_template = Handlebars.getTemplate('calibration_tab');
@@ -89,7 +90,7 @@ function update_tab(name, init) {
 
         var html = compiled_map_template(context);
         $("#figs_maps" + name).html(html);
-        var html = compiled_map_pointing_template(context);
+        var html = compiled_map_pointing_template[name](context);
         $('#maps_' + name + '_pointing').append(html)
     }
     else if(name == 'weather')
