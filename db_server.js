@@ -133,8 +133,8 @@ app.get('/lastmodified_calibration', function(req, res) {
 
 // get time that winter fields related plots  were lastmodified
 app.get('/lastmodified_maps', function(req, res) {
-	var stat_dir = path.join(config.coadds_figs_dirs[req.query.field], '/last_n/last_07/');
-
+    var stat_dir = path.join(config.coadds_figs_dirs[req.query.field], '/last_n/last_07/');
+    
     fs.readdir(stat_dir, function(err, filelist) {
         lastupdate_time = check_lastmodified(stat_dir, filelist);
 	    res.send({time:lastupdate_time});

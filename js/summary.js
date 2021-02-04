@@ -83,15 +83,22 @@ function update_tab(name, init) {
 
         var html = compiled_calibration_template(context);
         $("#figs_calibration").html(html);
+
+        $.get('/lastmodified_calibration', function(data) {
+            $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+        });
     }
     else if(name == 'winter' || name == 'summer' || name == 'summerb')
     {
         context.cycles_selector = false;
-
         var html = compiled_map_template(context);
         $("#figs_maps" + name).html(html);
         var html = compiled_map_pointing_template[name](context);
         $('#maps_' + name + '_pointing').append(html)
+
+        $.get('/lastmodified_maps', {field: name}, function(data) {
+            $("#lastmodified_maps_" + name).replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+        });
     }
     else if(name == 'weather')
     {
@@ -100,6 +107,10 @@ function update_tab(name, init) {
 
         var html = compiled_weather_template(context);
         $("#figs_weather").html(html);
+
+        $.get('/lastmodified_weather', function(data) {
+            $("#lastmodified_weather").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
+        });
     }
     else if(name == 'fridgecycle')
     {
@@ -159,24 +170,6 @@ function update_tab(name, init) {
     }
 }
 
-/**
- * Updates the "last modified" field at the top of each tab. This could
- * probably be combined directly with update_tab.
- */
-function update_lastmodified() {
-    $.get('/lastmodified_calibration', function(data) {
-        $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
-    });
-    $.each(map_tab_names, function(jtab, tab_name)
-    {
-        $.get('/lastmodified_maps', {field: tab_name}, function(data) {
-            $("#lastmodified_maps_" + tab_name).replaceWith('Plots last modified: ' + data.time + ' (UTC)');
-        });
-    });
-    $.get('/lastmodified_weather', function(data) {
-        $("#lastmodified_weather").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
-    });
-}
 
 /**
  * Builds the buttons on the summary page that select different time intervals
@@ -232,7 +225,6 @@ $( document ).ready(function()
             var tab_name = $("#tabs .ui-state-active a").attr('href');
             tab_name = tab_name.replace('#tabs-','');
             update_tab(tab_name, false);
-            update_lastmodified();
 
             Cookies.set('activeTab', $("#tabs").tabs("option", "active"), {expires: 1});
         }
@@ -249,6 +241,5 @@ $( document ).ready(function()
     $.each(timedir, function(tab_name, val) 
     {
         update_tab(tab_name, true);
-        update_lastmodified();
     });
 });
