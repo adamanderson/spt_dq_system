@@ -138,10 +138,10 @@ function update_tab(name, init) {
         }
         else if(name == 'winter')
         {
-            add_date_buttons('last_n', 'maps/figures', 'winter');
-            add_date_buttons('yearly', 'maps/figures', 'winter');
-            add_date_buttons('monthly', 'maps/figures', 'winter');
-            add_date_buttons('weekly', 'maps/figures', 'winter');
+            add_date_buttons('last_n', 'maps/figures_winter', 'winter');
+            add_date_buttons('yearly', 'maps/figures_winter', 'winter');
+            add_date_buttons('monthly', 'maps/figures_winter', 'winter');
+            add_date_buttons('weekly', 'maps/figures_winter', 'winter');
         }
         else if(name == 'summer')
         {
