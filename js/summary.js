@@ -4,7 +4,7 @@ var default_cookies = {'wafer': 'all',
                        'timedir_winter': 'maps/figures_winter/last_n/last_07/',
                        'timedir_summer': 'maps/figures_summer/last_n/last_07/',
                        'timedir_summerb': 'maps/figures_summerb/last_n/last_07/',
-                       'timedir_summerc': 'maps/figures_summerc/lastl_n/last_07/',
+                       'timedir_summerc': 'maps/figures_summerc/last_n/last_07/',
                        'arcdir': 'arcs/figs/last_n/last_07/',
                        'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {
