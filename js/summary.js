@@ -129,44 +129,11 @@ function update_tab(name, init) {
         $("#time_selector_" + name).html(html);
 
         // Initialize jQuery UI elements and make dynamic modifications to the DOM
-        if(name == 'calibration')
-        {
-            add_date_buttons('last_n', 'plots', 'calibration');
-            add_date_buttons('yearly', 'plots', 'calibration');
-            add_date_buttons('monthly', 'plots', 'calibration');
-            add_date_buttons('weekly', 'plots', 'calibration');
-        }
-        else if(name == 'winter')
-        {
-            add_date_buttons('last_n', 'maps/figures_winter', 'winter');
-            add_date_buttons('yearly', 'maps/figures_winter', 'winter');
-            add_date_buttons('monthly', 'maps/figures_winter', 'winter');
-            add_date_buttons('weekly', 'maps/figures_winter', 'winter');
-        }
-        else if(name == 'summer')
-        {
-            add_date_buttons('last_n', 'maps/figures_summer', 'summer');
-            add_date_buttons('yearly', 'maps/figures_summer', 'summer');
-            add_date_buttons('monthly', 'maps/figures_summer', 'summer');
-            add_date_buttons('weekly', 'maps/figures_summer', 'summer');
-        }
-        else if(name == 'summerb')
-        {
-            add_date_buttons('last_n', 'maps/figures_summerb', 'summerb');
-            add_date_buttons('yearly', 'maps/figures_summerb', 'summerb');
-            add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
-            add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
-        }
-        else if(name == 'weather')
-        {
-            add_date_buttons('last_n', 'arcs/figs', 'weather');
-            add_date_buttons('monthly', 'arcs/figs', 'weather');
-            add_date_buttons('weekly', 'arcs/figs', 'weather');
-        }
-        else if(name == 'fridgecycle')
-        {
-            add_date_buttons('cycles', 'arcs/figs', 'fridgecycle');
-        }
+        add_date_buttons('last_n', name);
+        add_date_buttons('yearly', name);
+        add_date_buttons('monthly', name);
+        add_date_buttons('weekly', name);
+        add_date_buttons('cycles', name);
     }
 }
 
@@ -177,40 +144,28 @@ function update_tab(name, init) {
  * Note also that this function also initializes the jQuery UI "controlgroup"
  * and binds the click event to it after appending all the buttons.
  * @param {string} interval Time interval to traverse, 'weekly' or 'monthly'
- * @param {string} interval Subdirectory that we should traverse to get dated data
  * @param {string} interval Tab in which to add buttons, 'summary' or 'maps'
  */
-function add_date_buttons(interval, subdirectory, tab)
+function add_date_buttons(interval, tab)
 {
     // now rebuild the div
-    $.get('/staticdirs', {subdirectory:subdirectory, interval:interval},
-          function(data, status) {
-              div_id = '#datalist_'+tab+'_'+interval;
-             
-              data.reverse();
-              for (jdir=0; jdir<data.length; jdir++)
-              {
-                  if (tab == 'calibration')
-                      datestring = data[jdir].split('/')[2];
-                  else if (tab == 'winter')
-                      datestring = data[jdir].split('/')[3];
-                  else if (tab == 'summer')
-                      datestring = data[jdir].split('/')[3];
-                  else if (tab == 'summerb')
-                      datestring = data[jdir].split('/')[3];
-                  else if (tab == 'weather')
-                      datestring = data[jdir].split('/')[3];
-                  else if (tab == 'fridgecycle')
-                      datestring = data[jdir].split('/')[3];
-
-                  $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
-              }
-              $(div_id).controlgroup();
-              $("[id^=dates-"+tab+"-]").click(function(event) {
-                timedir[tab] = event.target.value;
-                update_tab(tab, false);
-              });
-          });
+    $.get('/staticdirs', {tab:tab, interval:interval},
+        function(data, status) {
+            div_id = '#datalist_'+tab+'_'+interval;
+            
+            for (jdir=0; jdir<data.length; jdir++)
+            {
+                path_split = data[jdir].split('/');
+                datestring = path_split[path_split.length - 1];
+                
+                $(div_id).append("<input type='radio' id='dates-"+tab+"-"+datestring+"' name='dates' value='"+data[jdir]+"'>\n"+  "<label for='dates-"+tab+"-"+datestring+"'>"+datestring+"</label>");
+            }
+            $(div_id).controlgroup();
+            $("[id^=dates-"+tab+"-]").click(function(event) {
+            timedir[tab] = event.target.value;
+            update_tab(tab, false);
+            });
+        });
 }
 
 

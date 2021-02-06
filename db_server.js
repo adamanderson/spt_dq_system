@@ -95,11 +95,14 @@ app.use('/readmeimg', express.static(path.join(__dirname, 'READMEfigs')));
 
 // get subdirectory information for previous plots
 app.get('/staticdirs', function(req, res) {
-	// just do an ls on the plots directory to figure out the other
-	// subdirectories of plots
-    var interval_path = path.join(config.static_plot_dir,
-                                  req.query.subdirectory,
-                                  req.query.interval);
+    if(req.query.tab == 'calibration')
+        var parent_dir = config.calib_figs_dir;
+    else if(req.query.tab == 'weather' || req.query.tab == 'fridgecycle')
+        var parent_dir = config.arc_figs_dir;
+    else
+        var parent_dir = config.coadds_figs_dirs[req.query.tab];
+    
+    var interval_path = path.join(parent_dir, req.query.interval);
 
     fs.readdir(interval_path, function(err, filelist) {
         // treat file not found like an empty file
@@ -111,11 +114,13 @@ app.get('/staticdirs', function(req, res) {
         var dirlist = [];
         // get the list of directories that contain plots
 	    for (jfile=0; jfile<filelist.length; jfile++) {
-            var test_path = path.join(interval_path,
+            var full_path = path.join(interval_path,
                                      filelist[jfile]);
-
-		    if(fs.readdirSync(test_path).length)
-			    dirlist.push( path.join(req.query.subdirectory,  req.query.interval, filelist[jfile]) );
+            if(fs.readdirSync(full_path).length > 0)
+            {
+                relative_path = full_path.replace(config.static_plot_dir, ''); // make path relative to what is served
+                dirlist.push(relative_path);
+            }
 	    }
 	    res.send(dirlist);
     });
