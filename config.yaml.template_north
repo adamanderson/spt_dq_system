@@ -30,14 +30,17 @@ coadds_data_dirs:
     winter: /var/www/spt_dq_system/static_plots/maps/data/
     summer: /var/www/spt_dq_system/static_plots/maps/data_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/data_summerb/
+    summerc: /var/www/spt_dq_system/static_plots/maps/data_summerc/
 coadds_figs_dirs:
     winter: /var/www/spt_dq_system/static_plots/maps/figures/
     summer: /var/www/spt_dq_system/static_plots/maps/figures_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/figures_summerb/
+    summerc: /var/www/spt_dq_system/static_plots/maps/figures_summerc/
 coadds_logs_dirs:
     winter: /var/www/spt_dq_system/static_plots/maps/logs/
     summer: /var/www/spt_dq_system/static_plots/maps/logs_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/logs_summerb/
+    summerc: /var/www/spt_dq_system/static_plots/maps/logs_summerc/
 
 arc_data_dir: /sptgrid/data/arc/
 arc_pkls_dir: /var/www/spt_dq_system/static_plots/arcs/pkls/

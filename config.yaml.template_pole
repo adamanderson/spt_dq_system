@@ -21,9 +21,21 @@ bolo_data_dir: /spt_data/bolodata/fullrate/
 no_data_update: false
 
 maps_data_dir: /poleanalysis/sptdaq/calresult/onlinemaps/
-coadds_data_dir: /var/www/spt_dq_system/static_plot_cache/maps/data/
-coadds_figs_dir: /var/www/spt_dq_system/static_plot_cache/maps/figures/
-coadds_logs_dir: /var/www/spt_dq_system/static_plot_cache/maps/logs/
+coadds_data_dirs:
+    winter: /var/www/spt_dq_system/static_plot_cache/maps/data/
+    summer: /var/www/spt_dq_system/static_plot_cache/maps/data_summer/
+    summerb: /var/www/spt_dq_system/static_plot_cache/maps/data_summerb/
+    summerc: /var/www/spt_dq_system/static_plot_cache/maps/data_summerc/
+coadds_figs_dirs:
+    winter: /var/www/spt_dq_system/static_plot_cache/maps/figures/
+    summer: /var/www/spt_dq_system/static_plot_cache/maps/figures_summer/
+    summerb: /var/www/spt_dq_system/static_plot_cache/maps/figures_summerb/
+    summerc: /var/www/spt_dq_system/static_plot_cache/maps/figures_summerb/
+coadds_logs_dirs:
+    winter: /var/www/spt_dq_system/static_plot_cache/maps/logs/
+    summer: /var/www/spt_dq_system/static_plot_cache/maps/logs_summer/
+    summerb: /var/www/spt_dq_system/static_plot_cache/maps/logs_summerb/
+    summerc: /var/www/spt_dq_system/static_plot_cache/maps/logs_summerc/
 
 arc_data_dir: /spt_data/arc/
 arc_pkls_dir: /var/www/spt_dq_system/static_plot_cache/arc/pkls/
