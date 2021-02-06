@@ -135,6 +135,8 @@ def get_season_based_on_fields(some_fields):
                        "ra5hdec-36.75", "ra5hdec-40.25"]
     summer_fields_b = ["ra1h40dec-29.75", "ra1h40dec-33.25",
                        "ra1h40dec-36.75", "ra1h40dec-40.25"]
+    summer_fields_c = ["ra12h30dec-29.75", "ra12h30dec-33.25",
+                       "ra12h30dec-36.75", "ra12h30dec-40.25"]
     
     if set(some_fields) <= set(winter_fields):
         return "winter"
@@ -144,6 +146,8 @@ def get_season_based_on_fields(some_fields):
         return "summerp"
     elif set(some_fields) <= set(summer_fields_b):
         return "summerb"
+    elif set(some_fields) <= set(summer_fields_c):
+        return "summerc"
     else:
         raise Exception("Not clear what season to use!")
 
@@ -818,6 +822,12 @@ def identify_pixels_of_non_atypical_region(
         dccntr = float(field_name[-6:])
         de_max = dccntr + 1.00
         de_min = dccntr - 1.00
+    elif season == "summerc":
+        ra_max = 220.0
+        ra_min = 155.0
+        dccntr = float(field_name[-6:])
+        de_max = dccntr + 1.00
+        de_min = dccntr - 1.00
     else:
         raise Exception("Not clear what season to use!")
 
@@ -878,7 +888,11 @@ def calculate_map_fluctuation_metrics(
                      "ra1h40dec-29.75": 33.0 * wu,
                      "ra1h40dec-33.25": 33.0 * wu,
                      "ra1h40dec-36.75": 33.0 * wu,
-                     "ra1h40dec-40.25": 33.0 * wu},
+                     "ra1h40dec-40.25": 33.0 * wu,
+                     "ra12h30dec-29.75": 22.0 * wu,
+                     "ra12h30dec-33.25": 22.0 * wu,
+                     "ra12h30dec-36.75": 22.0 * wu,
+                     "ra12h30dec-40.25": 22.0 * wu},
              "150": {"ra0hdec-44.75": 16.0 * wu,
                      "ra0hdec-52.25": 21.0 * wu,
                      "ra0hdec-59.75": 25.0 * wu,
@@ -896,7 +910,11 @@ def calculate_map_fluctuation_metrics(
                      "ra1h40dec-29.75": 33.0 * wu,
                      "ra1h40dec-33.25": 33.0 * wu,
                      "ra1h40dec-36.75": 33.0 * wu,
-                     "ra1h40dec-40.25": 33.0 * wu},
+                     "ra1h40dec-40.25": 33.0 * wu,
+                     "ra12h30dec-29.75": 22.0 * wu,
+                     "ra12h30dec-33.25": 22.0 * wu,
+                     "ra12h30dec-36.75": 22.0 * wu,
+                     "ra12h30dec-40.25": 22.0 * wu},
              "220": {"ra0hdec-44.75": 1.2 * wu,
                      "ra0hdec-52.25": 1.6 * wu,
                      "ra0hdec-59.75": 2.1 * wu,
@@ -914,11 +932,22 @@ def calculate_map_fluctuation_metrics(
                      "ra1h40dec-29.75": 2.0 * wu,
                      "ra1h40dec-33.25": 2.0 * wu,
                      "ra1h40dec-36.75": 2.0 * wu,
-                     "ra1h40dec-40.25": 2.0 * wu}}
+                     "ra1h40dec-40.25": 2.0 * wu,
+                     "ra12h30dec-29.75": 1.3 * wu,
+                     "ra12h30dec-33.25": 1.3 * wu,
+                     "ra12h30dec-36.75": 1.3 * wu,
+                     "ra12h30dec-40.25": 1.3 * wu}}
         # * Thresholds were decided in the following ways:
         #       Winter subfields: around 0.2 x median weights from 2020 data
         #       Summer subfields: around 0.2 x median weights from 2019 data
         #       Summer-b subfields: around 0.2 x median weights from 2020 data (1st week)
+        #       Summer-p subfields: same as the numbers from Summer-b subfields
+        #         (Summer-p refers to the subdivided Summer el1 & el2 subfield)
+        #       Summer-c subfields: 2/3 of the numbers from Summer-b subfields
+        #         (Each Summer-c subfield is larger than
+        #          the corresponding Summer-b subfield by 50%,
+        #          but both an observation of the former and an observation of the latter
+        #          last for the same amount of time.)
         
         t_vals = numpy.asarray(map_frame["T"])
         
@@ -1069,7 +1098,27 @@ def calculate_pointing_discrepancies(
          "ra1h40dec-40.25": \
              {"1st": numpy.array([ 16.68796, -40.57208, 2146]),
               "2nd": numpy.array([  3.24954, -39.90733, 1609]),
-              "3rd": numpy.array([ 23.63392, -38.72603,  685])}}
+              "3rd": numpy.array([ 23.63392, -38.72603,  685])},
+         "ra12h30dec-29.75": \
+             {"1st": numpy.array([159.31675, -29.56744, 2681]),
+              "2nd": numpy.array([205.57287, -29.01333,  454]),
+              "3rd": numpy.array([176.60854, -28.98883,  425])},
+         "ra12h30dec-33.25": \
+             {"1st": numpy.array([199.03371, -33.64967, 1497]),
+              "2nd": numpy.array([194.49667, -31.92089, 1460]),
+              "3rd": numpy.array([216.92212, -33.09219,  795])},
+         "ra12h30dec-36.75": \
+             {"1st": numpy.array([176.75608, -38.20297, 1376]),
+              "2nd": numpy.array([159.22262, -37.73753,  812]),
+              "3rd": numpy.array([196.30371, -36.92919,  239])},
+         "ra12h30dec-40.25": \
+             {# "1st": numpy.array([197.45250, -39.80878,  416]),
+              # * The measured offsets are too large for this source...
+              #   Actually, for a few sources, the RA offsets are
+              #   on the order of 1e5 arcseconds...
+              "1st": numpy.array([162.15954, -41.23331,  369]),
+              "2nd": numpy.array([166.29617, -39.47856,  285]),
+              "3rd": numpy.array([160.68488, -41.72386,  233])}}
     
     discrep_dict = {"1st": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
                     "2nd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
@@ -1277,12 +1326,16 @@ def calculate_average_ratio_of_spt_planck_xspectra(
     ell_hi = 1410
     
     if t_only:
+        if not numpy.all(numpy.isfinite(numpy.asarray(halfmission1_planck_map_frame["T"]))):
+            halfmission1_planck_map_frame = fullmission_planck_map_frame
+            # * The 217/220 GHz mini Planck maps for the Summer-c field
+            #   has NaN values for some reason...
+        
         planck_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                               halfmission1_planck_map_frame,
                               input2=halfmission2_planck_map_frame,
                               delta_l=200, lmin=700, lmax=1500,
                               apod_mask=mask, realimag="real", flatten=False)
-        
         spt_x_planck = mapspectra.map_analysis.calculate_powerspectra(
                            spt_map_frame, input2=fullmission_planck_map_frame,
                            delta_l=200, lmin=700, lmax=1500,
@@ -1977,6 +2030,11 @@ class AnalyzeAndCoaddMaps(object):
                     elif season == "summerb":
                         center_dec = core.G3Units.deg * float(sbfd[-6:])
                         dec_height = 3.5 * core.G3Units.deg
+                    elif season == "summerc":
+                        center_dec = core.G3Units.deg * float(sbfd[-6:])
+                        dec_height = 3.5 * core.G3Units.deg
+                    else:
+                        raise Exception("Not clear what season to use!")
                     center_ra = frame["T"].alpha_center
                     minimap_length_x = 12.0 * core.G3Units.deg
                     minimap_length_y = 12.0 * core.G3Units.deg
@@ -3129,7 +3187,11 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 300.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 300.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 300.0*wu},
-                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 300.0*wu}},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 300.0*wu},
+                          "ra12h30dec-29.75": {"lo": 0.0*wu, "hi": 200.0*wu},
+                          "ra12h30dec-33.25": {"lo": 0.0*wu, "hi": 200.0*wu},
+                          "ra12h30dec-36.75": {"lo": 0.0*wu, "hi": 200.0*wu},
+                          "ra12h30dec-40.25": {"lo": 0.0*wu, "hi": 200.0*wu}},
                   "150": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi": 123.0*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 160.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 185.0*wu},
@@ -3147,7 +3209,11 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 350.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 350.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 350.0*wu},
-                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 350.0*wu}},
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 350.0*wu},
+                          "ra12h30dec-29.75": {"lo": 0.0*wu, "hi": 235.0*wu},
+                          "ra12h30dec-33.25": {"lo": 0.0*wu, "hi": 235.0*wu},
+                          "ra12h30dec-36.75": {"lo": 0.0*wu, "hi": 235.0*wu},
+                          "ra12h30dec-40.25": {"lo": 0.0*wu, "hi": 235.0*wu}},
                   "220": {"ra0hdec-44.75": {"lo": 0.0*wu, "hi":  9.5*wu},
                           "ra0hdec-52.25": {"lo": 0.0*wu, "hi": 12.0*wu},
                           "ra0hdec-59.75": {"lo": 0.0*wu, "hi": 15.0*wu},
@@ -3165,11 +3231,22 @@ def do_weights_look_bad(mean_wt, max_wt, band, sub_field):
                           "ra1h40dec-29.75": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-33.25": {"lo": 0.0*wu, "hi": 30.0*wu},
                           "ra1h40dec-36.75": {"lo": 0.0*wu, "hi": 30.0*wu},
-                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 30.0*wu}}}
+                          "ra1h40dec-40.25": {"lo": 0.0*wu, "hi": 30.0*wu},
+                          "ra12h30dec-29.75": {"lo": 0.0*wu, "hi": 20.0*wu},
+                          "ra12h30dec-33.25": {"lo": 0.0*wu, "hi": 20.0*wu},
+                          "ra12h30dec-36.75": {"lo": 0.0*wu, "hi": 20.0*wu},
+                          "ra12h30dec-40.25": {"lo": 0.0*wu, "hi": 20.0*wu}}}
     # * Thresholds were decided in the following ways:
     #       Winter subfields: around 1.5 x median weights from 2020 data
     #       Summer subfields: around 2.0 x median weights from 2019 data
     #       Summer-b subfields: around 2.0 x median weights from 2020 data (1st week)
+    #       Summer-p subfields: same as the numbers from Summer-b subfields
+    #         (Summer-p refers to the subdivided Summer el1 & el2 subfield)
+    #       Summer-c subfields: 2/3 of the numbers from Summer-b subfields
+    #         (Each Summer-c subfield is larger than
+    #          the corresponding Summer-b subfield by 50%,
+    #          but an observation of the former and an observation of the latter
+    #          last for the same amount of time.)
     
     if (mean_wt < thresholds[band][sub_field]["lo"]) or \
        (mean_wt > thresholds[band][sub_field]["hi"]) or \
@@ -3206,55 +3283,33 @@ class FlagBadMaps(object):
                  auxiliary_files_directory=None,
                  logging_function=print):
         
-        self.t_only = t_only
-        
-        self.sb_fld    = None
-        self.center_dc = None
-        
+        self.t_only  = t_only        
+        self.sb_fld  = None
         self.obs_id  = None
         self.map_ids = map_ids
         self.p_list  = point_source_list_file
         self.x_list  = bad_map_list_file
-        self.ax_dir  = auxiliary_files_directory
+        self.aux_dir = auxiliary_files_directory
         self.logfun  = logging_function
-        
-        assert self.x_list is not None, "File to record bad maps not supplied!"
-        
-        self.pixels_to_use_for_flc_calc = \
-            {sub_field: None for sub_field in \
-             ["ra0hdec-44.75", "ra0hdec-52.25",
-              "ra0hdec-59.75", "ra0hdec-67.25",
-              "ra5hdec-24.5", "ra5hdec-31.5",
-              "ra5hdec-38.5", "ra5hdec-45.5",
-              "ra5hdec-52.5", "ra5hdec-59.5",
-              "ra5hdec-29.75", "ra5hdec-33.25",
-              "ra5hdec-36.75", "ra5hdec-40.25",
-              "ra1h40dec-29.75", "ra1h40dec-33.25",
-              "ra1h40dec-36.75", "ra1h40dec-40.25"]}
-        
-        for sub_field in self.pixels_to_use_for_flc_calc.keys():
-            pf = "pixel_numbers_for_calculating_"+\
-                 "fluctuation_metrics_of_{}_sub_field.pickle".\
-                 format(sub_field)
-            pf = os.path.join(self.ax_dir, pf)
-            if os.path.isfile(pf):
-                with open(pf, "rb") as f_obj:
-                    indices = pickle.load(f_obj)
-                    self.pixels_to_use_for_flc_calc[sub_field] = indices
-    
+        self.pixels_to_use_for_flc_calc = {}
+        assert self.x_list is not None, "File to record bad maps not supplied!"    
     
     def __call__(self, frame):
         
         if frame.type == core.G3FrameType.Observation:
             self.sb_fld = frame["SourceName"]
             self.obs_id = frame["ObservationID"]
-            season = get_season_based_on_fields([self.sb_fld])
-            if season == "winter":
-                self.center_dec = \
-                    core.G3Units.deg * float(self.sb_fld.replace("ra0hdec", ""))
-            elif season == "summer":
-                self.center_dec = \
-                    core.G3Units.deg * float(self.sb_fld.replace("ra5hdec", ""))
+            if self.sb_fld not in self.pixels_to_use_for_flc_calc.keys():
+                pkl_path = "pixel_numbers_for_calculating_"+\
+                           "fluctuation_metrics_of_{}_sub_field.pickle".\
+                           format(self.sb_fld)
+                pkl_path = os.path.join(self.aux_dir, pkl_path)
+                if os.path.isfile(pkl_path):
+                    with open(pkl_path, "rb") as f_obj:
+                        indices = pickle.load(f_obj)
+                    self.pixels_to_use_for_flc_calc[self.sb_fld] = indices
+                else:
+                    self.pixels_to_use_for_flc_calc[self.sb_fld] = None
         
         if frame.type == core.G3FrameType.Map:
             if frame["Id"] not in self.map_ids:
@@ -3279,6 +3334,8 @@ class FlagBadMaps(object):
             #    mean TT weight of a map
             
             if self.pixels_to_use_for_flc_calc[self.sb_fld] is None:
+                self.logfun("### Figuring out what pixels to use")
+                self.logfun("### to calculate mean weight etc...")
                 self.pixels_to_use_for_flc_calc[self.sb_fld] = \
                     identify_pixels_of_non_atypical_region(
                         self.sb_fld, frame, self.p_list)
@@ -3516,7 +3573,7 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
             obs_id = int(meaningful_part_of_path.split('_')[0])
         except ValueError:
             # * Probably a g3 file that contains coadded maps is encountered
-            # * if the name cannot be converted to an integer.
+            #   if the name cannot be converted to an integer.
             return True
     
         if (obs_id >= min_obs_id) and \
@@ -3534,12 +3591,21 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
            (os.path.getsize(g3_file) >= min_file_size*2**30):
             all_good_g3_files.append(g3_file)
     
-    if (len(all_good_g3_files) <= 1):
+    if len(all_good_g3_files) == 0:
         log("")
-        log("No applicable input files (or there is only one input file), ")
-        log("so there is nothing to do!")
+        log("No applicable input files, so there is nothing to do!")
         log("")
         return 0
+    if len(all_good_g3_files) == 1:
+        output_file_another_name = output_file.replace(".g4", ".g3")
+        # * A situation very specific to how cache_field_maps.py
+        #   handle the input and output files.
+        if output_file_another_name == all_good_g3_files[0]:
+            log("")
+            log("The output file will just be the same as the input, ")
+            log("so there is nothing to do!")
+            log("")
+            return 0
     
     
     # - Show settings related to I/O
