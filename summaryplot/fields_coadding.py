@@ -1108,9 +1108,12 @@ def calculate_pointing_discrepancies(
               "2nd": numpy.array([194.49667, -31.92089, 1460]),
               "3rd": numpy.array([216.92212, -33.09219,  795])},
          "ra12h30dec-36.75": \
-             {"1st": numpy.array([176.75608, -38.20297, 1376]),
-              "2nd": numpy.array([159.22262, -37.73753,  812]),
-              "3rd": numpy.array([196.30371, -36.92919,  239])},
+             {# "1st": numpy.array([223.61446, -37.79250, 1886]),
+              "1st": numpy.array([176.75608, -38.20297, 1376]),
+              "2nd": numpy.array([178.59079, -35.09142,  889]),
+              "3rd": numpy.array([159.22262, -37.73753,  812])},
+              # "3rd": numpy.array([196.30371, -36.92919,  239])},
+              # * Too large of offsets (RA)...
          "ra12h30dec-40.25": \
              {# "1st": numpy.array([197.45250, -39.80878,  416]),
               # * The measured offsets are too large for this source...
