@@ -1101,7 +1101,8 @@ def calculate_pointing_discrepancies(
               "3rd": numpy.array([ 23.63392, -38.72603,  685])},
          "ra12h30dec-29.75": \
              {"1st": numpy.array([159.31675, -29.56744, 2681]),
-              "2nd": numpy.array([205.57287, -29.01333,  454]),
+              # "2nd": numpy.array([205.57287, -29.01333,  454]),
+              "2nd": numpy.array([154.61983, -31.39811,  562]),
               "3rd": numpy.array([176.60854, -28.98883,  425])},
          "ra12h30dec-33.25": \
              {"1st": numpy.array([199.03371, -33.64967, 1497]),
