@@ -27,20 +27,24 @@ port: 8080
 
 maps_data_dir: /sptgrid/data/onlinemaps
 coadds_data_dirs: 
-    winter: /var/www/spt_dq_system/static_plots/maps/data/
+    winter: /var/www/spt_dq_system/static_plots/maps/data_winter/
     summer: /var/www/spt_dq_system/static_plots/maps/data_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/data_summerb/
     summerc: /var/www/spt_dq_system/static_plots/maps/data_summerc/
 coadds_figs_dirs:
-    winter: /var/www/spt_dq_system/static_plots/maps/figures/
+    winter: /var/www/spt_dq_system/static_plots/maps/figures_winter/
     summer: /var/www/spt_dq_system/static_plots/maps/figures_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/figures_summerb/
     summerc: /var/www/spt_dq_system/static_plots/maps/figures_summerc/
 coadds_logs_dirs:
-    winter: /var/www/spt_dq_system/static_plots/maps/logs/
+    winter: /var/www/spt_dq_system/static_plots/maps/logs_winter/
     summer: /var/www/spt_dq_system/static_plots/maps/logs_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/logs_summerb/
     summerc: /var/www/spt_dq_system/static_plots/maps/logs_summerc/
+#coadds_data_dir: /var/www/spt_dq_system/static_plots/maps/data/
+#coadds_figs_dir: /var/www/spt_dq_system/static_plots/maps/figures/
+#coadds_figs_summer_dir: /var/www/spt_dq_system/static_plots/maps/figures_summer/
+#coadds_logs_dir: /var/www/spt_dq_system/static_plots/maps/logs/
 
 arc_data_dir: /sptgrid/data/arc/
 arc_pkls_dir: /var/www/spt_dq_system/static_plots/arcs/pkls/
