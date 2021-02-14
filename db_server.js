@@ -429,11 +429,13 @@ is_update_running = false;
 is_winter_map_update_running = false;
 is_summer_map_update_running = false;
 is_summerb_map_update_running = false;
+is_summerc_map_update_running = false;
 is_arc_update_running = false;
 var child;
 var child_winter_maps;
 var child_summer_maps;
 var chicd_summerb_maps;
+var chicd_summerc_maps;
 var child_arcs;
 
 function updateSummaryPlots() {
@@ -559,6 +561,37 @@ function updateSummerbMapPlots() {
     }
 }
 
+function updateSummercMapPlots() {
+    args = ['-B',
+            'update_summary.py',
+            'maps',
+            'summerc',
+            config.maps_data_dir,
+            config.coadds_data_dirs.summerc,
+            config.coadds_figs_dirs.summerc,
+            config.coadds_logs_dirs.summerc,
+            config.calib_data_dir,
+            config.bolo_data_dir,
+            config.min_time_maps]
+
+    if(is_summerc_map_update_running == false) {
+        is_summerc_map_update_running = true;
+        // update data skims
+        child = execFile(config.python_location,
+                         args,
+                         {maxBuffer: 1024*1024*8},
+                         function(err) {
+                             console.log(err);
+                             console.log('Finished summer map coadds and plots.');
+                             is_summerc_map_update_running = false;
+                         });
+         console.log('Updating summer-c maps...');
+    }
+    else {
+        console.log('Summer-c map updater already running, so not spawning again!');
+    }
+}
+
 function updateArcPlots() {
     args = ['-B',
             'update_summary.py',
@@ -593,5 +626,6 @@ if(config.site == 'pole') { // only update map and arc plots at pole
     setInterval(updateWinterMapPlots,  21600000);
     setInterval(updateSummerMapPlots,  21600000);
     setInterval(updateSummerbMapPlots, 21600000);
+    setInterval(updateSummercMapPlots, 21600000);
     setInterval(updateArcPlots,        21600000);
 }

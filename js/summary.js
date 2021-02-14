@@ -4,6 +4,7 @@ var default_cookies = {'wafer': 'all',
                        'timedir_winter': 'maps/figures_winter/last_n/last_07/',
                        'timedir_summer': 'maps/figures_summer/last_n/last_07/',
                        'timedir_summerb': 'maps/figures_summerb/last_n/last_07/',
+                       'timedir_summerc': 'maps/figures_summerc/last_n/last_07/',
                        'arcdir': 'arcs/figs/last_n/last_07/',
                        'cycledir': 'arcs/figs/cycles/newest'};
 for (var cookie_name in default_cookies) {
@@ -17,6 +18,7 @@ var timedir = {calibration: Cookies.get('timedir_calibration'),
                winter: Cookies.get('timedir_winter'),
                summer: Cookies.get('timedir_summer'),
                summerb: Cookies.get('timedir_summerb'),
+               summerc: Cookies.get('timedir_summerc'),
                weather: Cookies.get('arcdir'),
                fridgecycle: Cookies.get('cycledir')};
 
@@ -41,7 +43,7 @@ Handlebars.getTemplate = function(name) {
 };
 
 // Compile the templates, at least one per tab
-var map_tab_names = ['winter', 'summer', 'summerb'];
+var map_tab_names = ['winter', 'summer', 'summerb', 'summerc'];
 var compiled_map_pointing_template = {};
 for(var jtab = 0; jtab < map_tab_names.length; jtab++)
 {
@@ -88,7 +90,7 @@ function update_tab(name, init) {
             $("#lastmodified_calibration").replaceWith('Plots last modified: ' + data.time + ' (UTC)');
         });
     }
-    else if(name == 'winter' || name == 'summer' || name == 'summerb')
+    else if(name == 'winter' || name == 'summer' || name == 'summerb' || name == 'summerc')
     {
         context.cycles_selector = false;
         var html = compiled_map_template(context);
@@ -138,10 +140,10 @@ function update_tab(name, init) {
         }
         else if(name == 'winter')
         {
-            add_date_buttons('last_n', 'maps/figures', 'winter');
-            add_date_buttons('yearly', 'maps/figures', 'winter');
-            add_date_buttons('monthly', 'maps/figures', 'winter');
-            add_date_buttons('weekly', 'maps/figures', 'winter');
+            add_date_buttons('last_n', 'maps/figures_winter', 'winter');
+            add_date_buttons('yearly', 'maps/figures_winter', 'winter');
+            add_date_buttons('monthly', 'maps/figures_winter', 'winter');
+            add_date_buttons('weekly', 'maps/figures_winter', 'winter');
         }
         else if(name == 'summer')
         {
@@ -156,6 +158,13 @@ function update_tab(name, init) {
             add_date_buttons('yearly', 'maps/figures_summerb', 'summerb');
             add_date_buttons('monthly', 'maps/figures_summerb', 'summerb');
             add_date_buttons('weekly', 'maps/figures_summerb', 'summerb');
+        }
+        else if(name == 'summerc')
+        {
+            add_date_buttons('last_n', 'maps/figures_summerc', 'summerc');
+            add_date_buttons('yearly', 'maps/figures_summerc', 'summerc');
+            add_date_buttons('monthly', 'maps/figures_summerc', 'summerc');
+            add_date_buttons('weekly', 'maps/figures_summerc', 'summerc');
         }
         else if(name == 'weather')
         {
@@ -197,6 +206,8 @@ function add_date_buttons(interval, subdirectory, tab)
                   else if (tab == 'summer')
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'summerb')
+                      datestring = data[jdir].split('/')[3];
+                  else if (tab == 'summerc')
                       datestring = data[jdir].split('/')[3];
                   else if (tab == 'weather')
                       datestring = data[jdir].split('/')[3];

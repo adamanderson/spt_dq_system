@@ -105,15 +105,17 @@ def update(season, mode, action,
     
     # -- Variables that depend on the season
 
-    all_sub_fields = {"winter": ["ra0hdec-44.75", "ra0hdec-52.25",
-                                 "ra0hdec-59.75", "ra0hdec-67.25"],
-                      "summer": ["ra5hdec-24.5", "ra5hdec-31.5",
-                                 "ra5hdec-38.5", "ra5hdec-45.5",
-                                 "ra5hdec-52.5", "ra5hdec-59.5",
-                                 "ra5hdec-29.75", "ra5hdec-33.25",
-                                 "ra5hdec-36.75", "ra5hdec-40.25"],
-                      "summerb": ["ra1h40dec-29.75", "ra1h40dec-33.25",
-                                  "ra1h40dec-36.75", "ra1h40dec-40.25"]}
+    all_sub_fields = {'winter': ['ra0hdec-44.75', 'ra0hdec-52.25',
+                                 'ra0hdec-59.75', 'ra0hdec-67.25'],
+                      'summer': ['ra5hdec-24.5', 'ra5hdec-31.5',
+                                 'ra5hdec-38.5', 'ra5hdec-45.5',
+                                 'ra5hdec-52.5', 'ra5hdec-59.5',
+                                 'ra5hdec-29.75', 'ra5hdec-33.25',
+                                 'ra5hdec-36.75', 'ra5hdec-40.25'],
+                      'summerb': ['ra1h40dec-29.75', 'ra1h40dec-33.25',
+                                  'ra1h40dec-36.75', 'ra1h40dec-40.25'],
+                      'summerc': ['ra12h30dec-29.75', 'ra12h30dec-33.25',
+                                  'ra12h30dec-36.75', 'ra12h30dec-40.25']}
     if len(sub_fields) == 0:
         sub_fields = all_sub_fields[season]
     
@@ -124,7 +126,6 @@ def update(season, mode, action,
                 'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_C_G3Units.fits')
         point_source_list_file = \
             'spt3g_software/sources/1500d_ptsrc_and_decrement_list.txt'
-    
     elif season == 'summer':
         planck_map_fits_file = \
             os.path.join(
@@ -132,16 +133,20 @@ def update(season, mode, action,
                 'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summer_C_G3Units.fits')
         point_source_list_file = \
             'spt3g_software/sources/1500d_ptsrc_list_summer_at20g.txt'
-    
     elif season == 'summerb':
-        all_sub_fields = ["ra1h40dec-29.75", "ra1h40dec-33.25",
-                          "ra1h40dec-36.75", "ra1h40dec-40.25"]
         planck_map_fits_file = \
             os.path.join(
                 aux_files_directory,
                 'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summerb_C_G3Units.fits')
         point_source_list_file = \
             'spt3g_software/sources/600d_ptsrc_list_summer_b_at20g.txt'
+    elif season == 'summerc':
+        planck_map_fits_file = \
+            os.path.join(
+                aux_files_directory,
+                'HFI_SkyMap_BAND_2048_R3.01_MISSION_cut_summerc_C_G3Units.fits')
+        point_source_list_file = \
+            'spt3g_software/sources/900d_ptsrc_list_summer_c_at20g.txt'
 
     
     # - Figure out what appropriate time intervals are and

@@ -114,7 +114,7 @@ deg = core.G3Units.degrees
 if arguments.season == "winter":
     dec_centers = [-44.75 * deg, -52.25 * deg,
                    -59.75 * deg, -67.25 * deg]
-    dec_height  = 7.5 * core.G3Units.deg
+    dec_height  = 7.5 * deg
     ra_center   = 0.0 * deg
     field_names = ["ra0hdec-44.75", "ra0hdec-52.25",
                    "ra0hdec-59.75", "ra0hdec-67.25"]
@@ -122,7 +122,7 @@ elif arguments.season == "summer":
     dec_centers = [-24.50 * deg, -31.50 * deg,
                    -38.50 * deg, -45.50 * deg,
                    -52.50 * deg, -59.50 * deg]
-    dec_height  =  7.0 * core.G3Units.deg
+    dec_height  =  7.0 * deg
     ra_center   = 75.0 * deg
     field_names = ["ra5hdec-24.5", "ra5hdec-31.5",
                    "ra5hdec-38.5", "ra5hdec-45.5",
@@ -130,17 +130,24 @@ elif arguments.season == "summer":
 elif arguments.season == "summerp":
     dec_centers = [-29.75 * deg, -33.25 * deg,
                    -36.75 * deg, -40.25 * deg]
-    dec_height  =    3.5 * core.G3Units.deg
+    dec_height  =    3.5 * deg
     ra_center   =   75.0 * deg
     field_names = ["ra5hdec-29.75", "ra5hdec-33.25",
                    "ra5hdec-36.75", "ra5hdec-40.25"]
 elif arguments.season == "summerb":
     dec_centers = [-29.75 * deg, -33.25 * deg,
                    -36.75 * deg, -40.25 * deg]
-    dec_height  =    3.5 * core.G3Units.deg
+    dec_height  =    3.5 * deg
     ra_center   =   25.0 * deg
     field_names = ["ra1h40dec-29.75", "ra1h40dec-33.25",
                    "ra1h40dec-36.75", "ra1h40dec-40.25"]
+elif arguments.season == "summerc":
+    dec_centers = [-29.75 * deg, -33.25 * deg,
+                   -36.75 * deg, -40.25 * deg]
+    dec_height  =    3.5 * deg
+    ra_center   =  187.5 * deg
+    field_names = ["ra12h30dec-29.75", "ra12h30dec-33.25",
+                   "ra12h30dec-36.75", "ra12h30dec-40.25"]
 minimap_length_x = 12.0 * core.G3Units.deg
 minimap_length_y = 12.0 * core.G3Units.deg
 

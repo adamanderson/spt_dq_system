@@ -13,8 +13,10 @@ def mask_1500d(nside, coord=None):
         # lonrange=(-68, 68),
         # latrange=[-66, -18],
         # lonrange=[45, 105],
+        # latrange=(-45, -25),
+        # lonrange=(-5, 55),
         latrange=(-45, -25),
-        lonrange=(-5, 55),
+        lonrange=(145, 230),
         coord=coord
     )
 
@@ -35,18 +37,21 @@ map_path = '/sptlocal/user/agambrel/planck_maps'
 mname = 'HFI_SkyMap_{}_2048_R3.01_{}.fits'
 
 for freq in [100, 143, 217]:
-    for mission in ["halfmission-1", "halfmission-2", "fullmission"]:
+    for mission in ['fullmission', 'halfmission-1', 'halfmission-2']:
         if high_pass is not None:
             mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_C_G3Units_hpl{}.fits'.format(freq, hm, high_pass)
         else:
             # mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_C_G3Units.fits'.format(freq, mission)
             # mname_out = 'HFI_SkyMap_{}_2048_R3.01_{}_cut_summer_C_G3Units.fits'.format(freq, mission)
-            mname_out = 'HFI_SkyMap_{}GHz_2048_R3.01_{}_cut_summerb_C_G3Units.fits'.format(freq, mission)
+            # mname_out = 'HFI_SkyMap_{}GHz_2048_R3.01_{}_cut_summerb_C_G3Units.fits'.format(freq, mission)
+            mname_out = 'HFI_SkyMap_{}GHz_2048_R3.01_{}_cut_summerc_C_G3Units.fits'.format(freq, mission)
 
         if os.path.exists(os.path.join(map_path, mname_out)):
             continue
 
         print('{} GHz {}'.format(freq, mission))
+        if mission == 'fullmission':
+            mission = 'full'
         m = hpt.read_map(os.path.join(map_path, mname.format(freq, mission)),
                          field=None)
         if high_pass is not None:
