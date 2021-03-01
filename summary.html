@@ -195,7 +195,7 @@
         If you are new to this webpage and are confused by what it is, how it works, what to look at, etc.,
         please feel free to contact Wei,
         who is more than happy to give a presentation/tutorial on the contents of this webpage! </p>
-    <p style="text-align:right"> (Read Me author: Wei, Last updated: 2020/12/12) </p><br>
+    <p style="text-align:right"> (Read Me author: Wei, Last updated: 2021/03/01) </p><br>
     
     <h3> 1. Overview </h3>
     <p> This webpage is meant to be used to monitor how stable the results of various calibration observations and
@@ -342,14 +342,15 @@
         this number at least needs to be negative for it to be considered as reasonable). </p><br>
     
     <h4> 2.4. <i>Focus Quasar</i> section </h4>
-    <p> The figures in this section show quantities related to observations of the focus quasar (PMNJ0210-5101).
+    <p> The figures in this section show quantities related to observations of two focus quasars
+        (PMNJ0210-5101 during winter and PMNJ0522-3628 during summer).
         From March 2020, we started a new schedule of focus quasar observations in which
         the source is observed with the optical bench situated at five different positions along the optical axis.
         The main purpose of this schedule is to track how the bench position that minimizes the beam width
         varies throughout a year. </p>
     <p> The autoprocessing makes a map of the source for each band from each observation,
         and the data quality monitoring system analyzes each of these maps to calculate the beam FWHM and ellipticity
-        through fitting the map to a 2D Gaussian. Furthermore, for each set of five observations,
+        through fitting each map to a 2D Gaussian. Furthermore, for each set of five observations,
         it estimates the bench position that minimizes the FWHM and ellipticity by fitting parabolas to the data points.
         The actual code that does these things is
         <a href="https://github.com/SouthPoleTelescope/spt_dq_system/blob/master/summaryplot/pmnj0210_5101.py">
@@ -357,9 +358,10 @@
     <p> The figures in the first two rows (not available in the "Yearly" intervals)
         show the beam properties versus the bench position for each schedule within that time interval,
         and the figures in the next two rows show the optimal bench position versus time.
-        As a reference, the horizontal dashed black lines shown in the plots on the right column indicate
-        the nominal bench position along the optical axis (the position we use to observe the ra0hdec-52.25 field),
-        and this should change only twice a year, i.e., when we switch between the warm and cold focus positions. </p><br>
+        As a reference, a horizontal dashed black line shown in a plot on the right column indicates
+        the nominal bench position along the optical axis, which is here defined as
+        the position we use to observe a sub-field whose elevation is close to the quasar.
+        The ra0hdec-52.25 sub-field is used during winter and ra*dec-33.25 sub-fields in summer. </p><br>
     
     <h4> 2.5. <i>Noise</i> section </h4>
     <p> The figures in the first three rows of this section show bolometers' noise levels in three different units

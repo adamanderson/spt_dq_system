@@ -118,40 +118,44 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
     minobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[0].strftime('%Y%m%d'))))
     maxobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[1].strftime('%Y%m%d'))))
     
-    fieldobs = 'ra0hdec-52.25'
-    fieldobsids = os.listdir(os.path.join(bolodatapath, fieldobs))
-    fieldobsids = sorted([int(o) for o in fieldobsids])
-    fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
-    if ((len(fieldobsids) == 0) or (maxobsid-fieldobsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
-        bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
-        fieldobsids = os.listdir(os.path.join(bolodatapath, fieldobs))
-        fieldobsids = sorted([int(o) for o in fieldobsids])
-        fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
     nominalbp = []
     nominalts = []
-    for fieldobsid in fieldobsids:
-        g3file = os.path.join(bolodatapath, fieldobs, str(fieldobsid), '0000.g3')
-        if not os.path.isfile(g3file):
-            continue
-        """"""
-        if bolodatapath.startswith("/sptgrid"):
-            origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
-            destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
-            os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
-            g3file = destin
-        """"""
-        obsfr = core.G3File(g3file).next()
-        """"""
-        if bolodatapath.startswith("/sptgrid"):
-            os.system("rm {}".format(g3file))
-        """"""
-        bcp = obsfr['BenchCommandedPosition']
-        bz = obsfr['BenchZeros']
-        for k in bcp.keys():
-            bcp[k] -= bz[k]
-        posoptax = pointing.focus.bench2optical(bcp['x4'], bcp['y1'], bcp['z6'])
-        nominalbp.append(posoptax[2].item())
-        nominalts.append(obsid_to_g3time(fieldobsid).time / core.G3Units.s)
+    for field in ['ra0hdec-52.25', 'ra1h40dec-33.25', 'ra5hdec-33.25', 'ra12h30dec-33.25']:
+        fieldobsids = os.listdir(os.path.join(bolodatapath, field))
+        fieldobsids = sorted([int(o) for o in fieldobsids])
+        fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
+        if ((len(fieldobsids) == 0) or (maxobsid-fieldobsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
+            # for northern testing purposes
+            bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+            fieldobsids = os.listdir(os.path.join(bolodatapath, field))
+            fieldobsids = sorted([int(o) for o in fieldobsids])
+            fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
+        for fieldobsid in fieldobsids:
+            g3file = os.path.join(bolodatapath, field, str(fieldobsid), '0000.g3')
+            if not os.path.isfile(g3file):
+                continue
+            """"""
+            if bolodatapath.startswith("/sptgrid"):
+                origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
+                destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
+                os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
+                g3file = destin
+            """"""
+            obsfr = core.G3File(g3file).next()
+            """"""
+            if bolodatapath.startswith("/sptgrid"):
+                os.system("rm {}".format(g3file))
+            """"""
+            bcp = obsfr['BenchCommandedPosition']
+            bz = obsfr['BenchZeros']
+            for k in bcp.keys():
+                bcp[k] -= bz[k]
+            posoptax = pointing.focus.bench2optical(bcp['x4'], bcp['y1'], bcp['z6'])
+            nominalbp.append(posoptax[2].item())
+            nominalts.append(obsid_to_g3time(fieldobsid).time / core.G3Units.s)
+    idxordered = np.argsort(nominalts)
+    nominalts = nominalts[idxordered]
+    nominalbp = nominalbp[idxordered]
     nominaldates = np.array([datetime.datetime.utcfromtimestamp(nts) for nts in nominalts])
 
     for band in [90, 150, 220]:
@@ -252,6 +256,7 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
             plt.figure(figname)
             plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'], alpha=0.65)
             """
+            # for northern testing purposes
             if "Bench" in figname:
                 print("=====", figname, "=====\n")
                 print("-", band, "GHz")
