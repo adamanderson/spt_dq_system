@@ -76,7 +76,7 @@ def run_weather(input_files=None,
         if f.startswith("/sptgrid"):
             origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + f
             destin = os.path.join(os.getcwd(), pickles_dir, os.path.basename(f))
-            os.system("gfal-copy {} file://{}".format(origin, destin))
+            os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
         else:
             destin = f
         """
@@ -193,7 +193,7 @@ def run_fridge_cycles(input_files=None,
         for f in input_files:
             origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + f
             destin = os.path.join(os.getcwd(), pickles_dir, os.path.basename(f))
-            os.system("gfal-copy {} file://{}".format(origin, destin))
+            os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
             destins.append(destin)        
     else:
         destins = input_files
