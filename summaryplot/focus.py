@@ -74,13 +74,13 @@ def group_by_time(arr, obs, delta_t = 86400):
     return arr
 
 
-def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
+def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
 
-    pdata = data['PMNJ0210-5101']
+    pdata = {**data['PMNJ0210-5101'], **data['PMNJ0522-3628']}
     obsids = sorted([obsid for obsid in pdata])
 
     grouped_obsids = reduce(group_by_time, obsids, [])
-    grouped_obsids = [group for group in grouped_obsids if len(group) >= 5]
+    grouped_obsids = [group for group in grouped_obsids if len(group) == 5]
 
     fignames = ["BenchF", "BenchE", "FWHM", "Ellipticity"]
     figbenchf = plt.figure("BenchF", figsize=(8,6))
@@ -88,13 +88,13 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
     figfwhm = plt.figure("FWHM", figsize=(8,6))
     figell = plt.figure("Ellipticity", figsize=(8,6))
 
-    ylims = {"BenchF": {90: (22., 33.),
-                        150: (22., 33.),
-                        220: (22., 33.),
+    ylims = {"BenchF": {90: (20., 33.),
+                        150: (20., 33.),
+                        220: (20., 33.),
                         'all': (22., 33.)},
-             "BenchE": {90: (22., 33.),
-                        150: (22., 33.),
-                        220: (22., 33.),
+             "BenchE": {90: (20., 33.),
+                        150: (20., 33.),
+                        220: (20., 33.),
                         'all': (22., 33.)},
              "FWHM": {90: (1.3, 1.9),
                       150: (0.9, 1.5),
@@ -115,47 +115,46 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
     colors  = {90:'C0', 150:'C1', 220:'C2'}
     markers = {0: 'o', 1: 's', 2: '+', 3: 'x', 4: '<', 5: '>'} 
 
-    fieldobs = 'ra0hdec-52.25'
     minobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[0].strftime('%Y%m%d'))))
     maxobsid = time_to_obsid(core.G3Time('{}_000000'.format(xlims[1].strftime('%Y%m%d'))))
-    el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
-    el1obsids = sorted([int(o) for o in el1obsids])
-    el1obsids = [o for o in el1obsids if minobsid <= o <= maxobsid]
-    if ((len(el1obsids) == 0) or (maxobsid-el1obsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
+    
+    fieldobs = 'ra0hdec-52.25'
+    fieldobsids = os.listdir(os.path.join(bolodatapath, fieldobs))
+    fieldobsids = sorted([int(o) for o in fieldobsids])
+    fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
+    if ((len(fieldobsids) == 0) or (maxobsid-fieldobsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
         bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
-        el1obsids = os.listdir(os.path.join(bolodatapath, fieldobs))
-        el1obsids = sorted([int(o) for o in el1obsids])
-        el1obsids = [o for o in el1obsids if minobsid <= o <= maxobsid]
+        fieldobsids = os.listdir(os.path.join(bolodatapath, fieldobs))
+        fieldobsids = sorted([int(o) for o in fieldobsids])
+        fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
     nominalbp = []
     nominalts = []
-    for el1obsid in el1obsids:
-        g3file = os.path.join(bolodatapath, fieldobs, str(el1obsid), '0000.g3')
+    for fieldobsid in fieldobsids:
+        g3file = os.path.join(bolodatapath, fieldobs, str(fieldobsid), '0000.g3')
         if not os.path.isfile(g3file):
             continue
-        """
+        """"""
         if bolodatapath.startswith("/sptgrid"):
             origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
             destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
-            os.system("gfal-copy {} file://{}".format(origin, destin))
+            os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
             g3file = destin
-        """
+        """"""
         obsfr = core.G3File(g3file).next()
-        """
+        """"""
         if bolodatapath.startswith("/sptgrid"):
             os.system("rm {}".format(g3file))
-        """
-        ### We can just read the files directly if gfal-copy is cumbersome.
+        """"""
         bcp = obsfr['BenchCommandedPosition']
         bz = obsfr['BenchZeros']
         for k in bcp.keys():
             bcp[k] -= bz[k]
         posoptax = pointing.focus.bench2optical(bcp['x4'], bcp['y1'], bcp['z6'])
         nominalbp.append(posoptax[2].item())
-        nominalts.append(obsid_to_g3time(el1obsid).time / core.G3Units.s)
+        nominalts.append(obsid_to_g3time(fieldobsid).time / core.G3Units.s)
     nominaldates = np.array([datetime.datetime.utcfromtimestamp(nts) for nts in nominalts])
 
     for band in [90, 150, 220]:
-
         timestamps = []
         benchf_min = []
         benche_min = []
@@ -166,7 +165,6 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
         fig_elli_vs_pos = plt.figure("PosVsEllip", figsize=(8,6))
         
         for counter_g, group in enumerate(grouped_obsids):
-
             timestamps.append(obsid_to_g3time(int(group[0])).time / core.G3Units.seconds)
 
             bench = np.array([pdata[obs]['BenchPosAndFittingResults']['bench position'] for obs in group])
@@ -187,7 +185,8 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
             benche_min.append(bmine)
             
             for ydata, coeffs, minloc, xlabel, title \
-            in zip([fwhm, ellipticity], [fcoeffs, ecoeffs], [bminf, bmine], ["FWHM [arcmin]", "Ellipticity"], ["FWHM", "Ellipticity"]):
+            in zip([fwhm, ellipticity], [fcoeffs, ecoeffs], [bminf, bmine],
+                   ["FWHM [arcmin]", "Ellipticity"], ["FWHM", "Ellipticity"]):
                 f = plt.figure(num="parabola", figsize=(8, 6))
                 p = f.add_subplot(111)
                 p.plot(bench, ydata, linestyle="none", marker=".", markersize=10,
@@ -196,16 +195,18 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
                 yp = coeffs[0]*xp**2 + coeffs[1]*xp + coeffs[2]
                 p.plot(xp, yp, color="black")
                 p.axvline(minloc, linestyle="dashed", color="black")
-                p.set_xlim(left=23, right=32)
-                p.set_xticks(np.arange(24, 32), minor=False)
-                p.set_xticks(np.linspace(23.5, 31.5, 17), minor=True)
+                p.set_xlim(left=20, right=33)
+                p.set_xticks(np.arange(21, 32), minor=False)
+                p.set_xticks(np.linspace(21.5, 31.5, 21), minor=True)
                 p.grid(which="major", linestyle="dotted", linewidth=0.75)
                 p.grid(which="minor", linestyle="dotted", linewidth=0.45)
                 p.tick_params(labelsize=14)
                 p.set_xlabel("\nBench position [mm]", fontsize=14)
                 p.set_ylabel("{}\n".format(xlabel), fontsize=14)
-                p.set_title("{} GHz, Beam {} vs Bench position and the fitting results\nSchedule start time: {}\n".format(band, title, std_processing.obsid_to_g3time(int(group[0]))), fontsize=14)
-                f.savefig(os.path.join(outdir, "{}_{:09d}_{:03d}GHz.png".format(title, int(group[0]), band)), bbox_inches="tight")
+                p.set_title("{} GHz, Beam {} vs Bench position and the fitting results\nSchedule start time: {}\n".format(
+                                band, title, std_processing.obsid_to_g3time(int(group[0]))), fontsize=14)
+                f.savefig(os.path.join(outdir, "{}_{:09d}_{:03d}GHz.png".format(title, int(group[0]), band)),
+                          bbox_inches="tight")
                 plt.close(f)
             
             if interpolate_minima:
@@ -216,9 +217,11 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
                 e_min.append(ellipticity.min())
 
             plt.figure("PosVsWidth")
-            plt.plot(bench, fwhm, label="Schedule "+str(group[0]), marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
+            plt.plot(bench, fwhm, label="Schedule "+str(group[0]),
+                     marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
             plt.figure("PosVsEllip")
-            plt.plot(bench, ellipticity, label="Schedule "+str(group[0]), marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
+            plt.plot(bench, ellipticity, label="Schedule "+str(group[0]),
+                     marker=markers[counter_g%len(markers)], color=colors[band], alpha=0.65)
 
         plt.figure("PosVsWidth")
         plt.xlim(left=ylims["BenchF"][band][0], right=ylims["BenchF"][band][1])
@@ -274,4 +277,3 @@ def plot_pmnj0210_5101_fitting_results(data, outdir, bolodatapath, xlims = None,
         plt.tight_layout()
         plt.savefig('{}/focus_{}.png'.format(outdir, figname))
         plt.close()
-

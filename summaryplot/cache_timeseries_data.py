@@ -14,7 +14,7 @@ from summaryplot.calibrator import *
 from summaryplot.elnod import *
 from summaryplot.noise import *
 from summaryplot.htwo import *
-from summaryplot.pmnj0210_5101 import *
+from summaryplot.focus import *
 import hashlib
 
 
@@ -201,6 +201,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                  'MedianRCW122AIntegralFlux': median_htwo_intflux,
                                                  'AliveBolosRCW122A': alive_bolos_htwo_fluxcal},
                          'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
+                         'PMNJ0522-3628':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
                                                'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
@@ -219,7 +220,6 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-
         function_dict_raw = {'calibrator':    {'el': mean_cal_elevation},
                              'elnod'     :    {'ppa': median_pelec_per_airmass},
                              'noise'     :    {'nl': number_of_lines_in_median_psds}}
@@ -267,7 +267,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         updated = True
                         data[source][obsid] = {'timestamp': os.path.getctime(fname)}
 
-                        """
+                        """"""
                         if caldatapath.startswith("/sptgrid"):
                             def get_gfal_copied_file(path):
                                 origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
@@ -277,9 +277,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             fname = get_gfal_copied_file(fname)
                             cal_fname = get_gfal_copied_file(cal_fname)
                             rawpath = get_gfal_copied_file(rawpath)
-                        """
-                        ### We can just read the files directly if gfal-copy is cumbersome.
-                        ### Remember to also comment out the code that deletes files.
+                        """"""
+                        ### We can just read the files directly if gfal-copy is cumbersome or too slow.
+                        ### Remember to also take care of the two lines below that delete files.
 
                         d = [fr for fr in core.G3File(fname)]
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
@@ -309,10 +309,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                     for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
 
-                        """
+                        """"""
                         if caldatapath.startswith("/sptgrid"):
                             os.system("rm {} {} {}".format(fname, cal_fname, rawpath))
-                        """
+                        """"""
 
             if updated:
                 with open(datafile, 'wb') as f:
@@ -423,9 +423,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                  xlims=[mindate, maxdate])
                         plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
                                               xlims=[mindate, maxdate])
-                    plot_pmnj0210_5101_fitting_results(data,
-                                                       plotsdir, bolodatapath,
-                                                       xlims=[mindate, maxdate])
+                    plot_focus_quasar_fitting_results(data,
+                                                      plotsdir, bolodatapath,
+                                                      xlims=[mindate, maxdate])
                 else:
                     for src in ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']:
                         plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
@@ -436,6 +436,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                               xlims=[mindate, maxdate])
                         plot_htwo_skytrans(src, data, wafer_list, plotsdir,
                                            xlims=[mindate, maxdate])
+                    plot_focus_quasar_fitting_results(data,
+                                                      plotsdir, bolodatapath,
+                                                      xlims=[mindate, maxdate])
                     plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
                                            xlims=[mindate, maxdate])
                     plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
@@ -458,9 +461,6 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                            xlims=[mindate, maxdate])
                     plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
                                                xlims=[mindate, maxdate])
-                    plot_pmnj0210_5101_fitting_results(data,
-                                                       plotsdir, bolodatapath,
-                                                       xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
                                       xlims=[mindate, maxdate])
                     plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
