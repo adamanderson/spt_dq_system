@@ -286,9 +286,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         if len(d) == 0:
                             data[source].pop(obsid)
                             continue
-                        if source not in ['PMNJ0210-5101']:
-                            d = d[0]
-                        elif source == 'PMNJ0210-5101':
+                        if 'PMNJ' in source:
                             iterator = core.G3File(rawpath)
                             while True:
                                 frame = iterator.next()
@@ -296,6 +294,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                     obf = frame
                                     break
                             d = [obf] + d
+                        else:
+                            d = d[0]
 
                         for quantity_name in function_dict[source]:
                             func_result = function_dict[source][quantity_name](d, boloprops, selector_dict)

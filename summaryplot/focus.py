@@ -75,7 +75,8 @@ def group_by_time(arr, obs, delta_t = 86400):
 
 
 def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
-
+    if 'PMNJ0210-5101' not in data.keys() or 'PMNJ0522-3628' not in data.keys():
+        return
     pdata = {**data['PMNJ0210-5101'], **data['PMNJ0522-3628']}
     obsids = sorted([obsid for obsid in pdata])
 
@@ -154,8 +155,8 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
             nominalbp.append(posoptax[2].item())
             nominalts.append(obsid_to_g3time(fieldobsid).time / core.G3Units.s)
     idxordered = np.argsort(nominalts)
-    nominalts = nominalts[idxordered]
-    nominalbp = nominalbp[idxordered]
+    nominalts = np.asarray(nominalts)[idxordered]
+    nominalbp = np.asarray(nominalbp)[idxordered]
     nominaldates = np.array([datetime.datetime.utcfromtimestamp(nts) for nts in nominalts])
 
     for band in [90, 150, 220]:
