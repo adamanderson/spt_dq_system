@@ -121,32 +121,31 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
     
     nominalbp = []
     nominalts = []
+    if bolodatapath.startswith('/sptgrid'):
+        bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+        # most fullrate data of field observations are unavailable in the north
     for field in ['ra0hdec-52.25', 'ra1h40dec-33.25', 'ra5hdec-33.25', 'ra12h30dec-33.25']:
         fieldobsids = os.listdir(os.path.join(bolodatapath, field))
         fieldobsids = sorted([int(o) for o in fieldobsids])
         fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
-        if ((len(fieldobsids) == 0) or (maxobsid-fieldobsids[-1] > 2e6)) and ('fullrate' in bolodatapath):
-            # for northern testing purposes
-            bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
-            fieldobsids = os.listdir(os.path.join(bolodatapath, field))
-            fieldobsids = sorted([int(o) for o in fieldobsids])
-            fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
         for fieldobsid in fieldobsids:
             g3file = os.path.join(bolodatapath, field, str(fieldobsid), '0000.g3')
             if not os.path.isfile(g3file):
                 continue
-            """"""
+            """
+            # perhaps reading an observation frame directly is better than
+            # copying a 1 GB TOD file...
             if bolodatapath.startswith("/sptgrid"):
                 origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
                 destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
                 os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
                 g3file = destin
-            """"""
+            """
             obsfr = core.G3File(g3file).next()
-            """"""
+            """
             if bolodatapath.startswith("/sptgrid"):
                 os.system("rm {}".format(g3file))
-            """"""
+            """
             bcp = obsfr['BenchCommandedPosition']
             bz = obsfr['BenchZeros']
             for k in bcp.keys():
@@ -257,7 +256,7 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
             plt.figure(figname)
             plot_timeseries(dts, np.array(figarr), band, xlims=xlims, ylims=ylims[figname]['all'], alpha=0.65)
             """
-            # for northern testing purposes
+            # useful if we want the bench positions to be printed
             if "Bench" in figname:
                 print("=====", figname, "=====\n")
                 print("-", band, "GHz")
