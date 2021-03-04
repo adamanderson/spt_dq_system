@@ -9,12 +9,8 @@ from summaryplot.plot_util import plot_timeseries
 from spt3g.std_processing import obsid_to_g3time
 from spt3g.std_processing import time_to_obsid
 
-def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
 
-    out = {}
-    out['FWHM'] = {}
-    out['ellipticity'] = {}
-    out['bench position'] = np.nan
+def extract_benchpos(frames, boloprops=None, selector_dict=None):
 
     for frame in frames:
         if frame.type == core.G3FrameType.Observation:
@@ -23,10 +19,21 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
             for k in bp.keys():
                 bp[k] -= bp_zeros[k]
             optical_axis_pos = pointing.focus.bench2optical(bp['x4'], bp['y1'], bp['z6']).A1[2]
-            out['bench position'] = optical_axis_pos
+            break
 
+    return optical_axis_pos
+
+
+
+def benchpos_min_fwhm_ellip(frames, boloprops=None, selector_dict=None):
+
+    out = {}
+    out['FWHM'] = {}
+    out['ellipticity'] = {}
+    out['bench position'] = extract_benchpos(frames)
+
+    for frame in frames:
         if frame.type == core.G3FrameType.Map:
-
             if not ('Id' in frame and 'GHz' in frame['Id']):
                 continue
 
@@ -61,6 +68,7 @@ def benchpos_min_fwhm_ellip(frames, boloprops, selector_dict):
     return out
 
 
+
 def group_by_time(arr, obs, delta_t = 86400):
     
     if len(arr) < 1:
@@ -74,9 +82,17 @@ def group_by_time(arr, obs, delta_t = 86400):
     return arr
 
 
+
 def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
-    if 'PMNJ0210-5101' not in data.keys() or 'PMNJ0522-3628' not in data.keys():
+
+    missingdata = False
+    for source in ['PMNJ0210-5101', 'PMNJ0522-3628',
+                   'ra0hdec-52.25', 'ra1h40dec-33.25', 'ra5hdec-33.25', 'ra12h30dec-33.25']:
+        if source not in data.keys():
+            missingdata = True
+    if missingdata:
         return
+
     pdata = {**data['PMNJ0210-5101'], **data['PMNJ0522-3628']}
     obsids = sorted([obsid for obsid in pdata])
 
@@ -121,38 +137,11 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
     
     nominalbp = []
     nominalts = []
-    if bolodatapath.startswith('/sptgrid'):
-        bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
-        # most fullrate data of field observations are unavailable in the north
-    for field in ['ra0hdec-52.25', 'ra1h40dec-33.25', 'ra5hdec-33.25', 'ra12h30dec-33.25']:
-        fieldobsids = os.listdir(os.path.join(bolodatapath, field))
-        fieldobsids = sorted([int(o) for o in fieldobsids])
-        fieldobsids = [o for o in fieldobsids if minobsid <= o <= maxobsid]
-        for fieldobsid in fieldobsids:
-            g3file = os.path.join(bolodatapath, field, str(fieldobsid), '0000.g3')
-            if not os.path.isfile(g3file):
-                continue
-            """
-            # perhaps reading an observation frame directly is better than
-            # copying a 1 GB TOD file...
-            if bolodatapath.startswith("/sptgrid"):
-                origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + g3file
-                destin = os.path.join(os.getcwd(), outdir, os.path.basename(g3file))
-                os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
-                g3file = destin
-            """
-            obsfr = core.G3File(g3file).next()
-            """
-            if bolodatapath.startswith("/sptgrid"):
-                os.system("rm {}".format(g3file))
-            """
-            bcp = obsfr['BenchCommandedPosition']
-            bz = obsfr['BenchZeros']
-            for k in bcp.keys():
-                bcp[k] -= bz[k]
-            posoptax = pointing.focus.bench2optical(bcp['x4'], bcp['y1'], bcp['z6'])
-            nominalbp.append(posoptax[2].item())
-            nominalts.append(obsid_to_g3time(fieldobsid).time / core.G3Units.s)
+    ndata = {**data['ra0hdec-52.25'],
+             **data['ra1h40dec-33.25'], **data['ra5hdec-33.25'], **data['ra12h30dec-33.25']}
+    for obsid in ndata.keys():
+        nominalts.append(obsid_to_g3time(obsid).time / core.G3Units.s)
+        nominalbp.append(ndata[obsid]['NominalBenchPosition'])
     idxordered = np.argsort(nominalts)
     nominalts = np.asarray(nominalts)[idxordered]
     nominalbp = np.asarray(nominalbp)[idxordered]

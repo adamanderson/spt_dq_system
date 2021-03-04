@@ -202,6 +202,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                  'AliveBolosRCW122A': alive_bolos_htwo_fluxcal},
                          'PMNJ0210-5101':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
                          'PMNJ0522-3628':     {'BenchPosAndFittingResults': benchpos_min_fwhm_ellip},
+                         'ra0hdec-52.25':     {'NominalBenchPosition': extract_benchpos},
+                         'ra1h40dec-33.25':   {'NominalBenchPosition': extract_benchpos},
+                         'ra5hdec-33.25':     {'NominalBenchPosition': extract_benchpos},
+                         'ra12h30dec-33.25':  {'NominalBenchPosition': extract_benchpos},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
                                                'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
@@ -245,7 +249,13 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
             # update the data skim
             for source, quantities in function_dict.items():
-                calfiles = glob(os.path.join(caldatapath, source, '*g3'))
+                isfieldobs = 'dec-' in source
+                if isfieldobs:
+                    bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+                    calfiles = glob(os.path.join(bolodatapath, source, '*'))
+                else:
+                    bolodatapath = bolodatapath.replace('downsampled', 'fullrate')
+                    calfiles = glob(os.path.join(caldatapath, source, '*g3'))
                 files_to_parse = [fname for fname in calfiles
                                   if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
                                      int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
@@ -274,28 +284,31 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                 destin = os.path.join(os.getcwd(), datadir, os.path.basename(path))
                                 os.system("gfal-copy {} file://{} -t 86400".format(origin, destin))
                                 return destin
-                            fname = get_gfal_copied_file(fname)
+                            if not isfieldobs:
+                                fname = get_gfal_copied_file(fname)
                             cal_fname = get_gfal_copied_file(cal_fname)
-                            rawpath = get_gfal_copied_file(rawpath)
+                            if isfieldobs or (source in function_dict_raw):
+                                rawpath = get_gfal_copied_file(rawpath)
                         """"""
                         ### We can just read the files directly if gfal-copy is cumbersome or too slow.
                         ### Remember to also take care of the two lines below that delete files.
 
-                        d = [fr for fr in core.G3File(fname)]
-                        boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
-                        if len(d) == 0:
-                            data[source].pop(obsid)
-                            continue
-                        if 'PMNJ' in source:
+                        if isfieldobs or ('PMNJ' in source):
                             iterator = core.G3File(rawpath)
                             while True:
                                 frame = iterator.next()
                                 if frame.type == core.G3FrameType.Observation:
                                     obf = frame
                                     break
-                            d = [obf] + d
+                            d = [obf]
+                            if 'PMNJ' in source:
+                                d += [fr for fr in core.G3File(fname)]
                         else:
-                            d = d[0]
+                            d = [fr for fr in core.G3File(fname)][0]
+                        boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
+                        if len(d) == 0:
+                            data[source].pop(obsid)
+                            continue
 
                         for quantity_name in function_dict[source]:
                             func_result = function_dict[source][quantity_name](d, boloprops, selector_dict)
@@ -304,14 +317,17 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                         if source in function_dict_raw:
                             for quantity_name in function_dict_raw[source]:
-                                func_result = function_dict_raw[source][quantity_name](rawpath, cal_fname, fname, boloprops, selector_dict)
+                                func_result = function_dict_raw[source][quantity_name](
+                                    rawpath, cal_fname, fname, boloprops, selector_dict)
                                 if func_result:
                                     for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
 
                         """"""
                         if caldatapath.startswith("/sptgrid"):
-                            os.system("rm {} {} {}".format(fname, cal_fname, rawpath))
+                            for f in [fname, cal_fname, rawpath]:
+                                if not f.startswith("/sptgrid"):
+                                    os.system("rm {}".format(f))
                         """"""
 
             if updated:
