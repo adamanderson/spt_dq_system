@@ -1199,12 +1199,17 @@ def calculate_pointing_discrepancies(
         discrep_dict[point_source_rank]["DeltaRa"]  = effective_delta_ra
         discrep_dict[point_source_rank]["DeltaDec"] = delta_dec
         
+        """
         nearest_x = int(numpy.round(measured_x))
         nearest_y = int(numpy.round(measured_y))
         source_centered_mini_map = \
             numpy.asarray(map_frame["T"])\
                 [nearest_y-half_y_length:nearest_y+half_y_length+1,
                  nearest_x-half_x_length:nearest_x+half_x_length+1]
+        """
+        source_centered_mini_map = mini_map
+        # * If the measured positions are crazy,
+        #   the source-centered mini map can be empty...
         source_flux = numpy.sum(source_centered_mini_map) * \
                       map_frame["T"].x_res * map_frame["T"].y_res
         flux_dict[point_source_rank] = source_flux
