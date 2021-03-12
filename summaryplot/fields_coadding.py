@@ -575,7 +575,7 @@ def collect_medians_of_pW_per_K_factors(
 
 def maybe_get_gfal_copied_file(path, outdir=None):
     
-    if path.startswith("/sptgridnope"):
+    if path.startswith("/sptgrid"):
         origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
         if outdir is None:
             outdir = os.getcwd()
