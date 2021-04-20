@@ -12,6 +12,9 @@ import datetime
 import argparse
 import logging
 
+from matplotlib import use
+use('agg')
+
 from summaryplot import cache_timeseries_data
 from summaryplot import cache_field_maps
 from summaryplot import cache_archive_data
