@@ -467,7 +467,7 @@ def run_fridge_cycles(input_file=None, output_dir=None, logger=None):
     figure.tight_layout()
     figure.savefig('{}/he10_half.png'.format(output_dir),
                    bbox_inches='tight')
-
+    pyplot.close(figure)
 
     logger.info('Making the third plot...')
 
@@ -503,7 +503,7 @@ def run_fridge_cycles(input_file=None, output_dir=None, logger=None):
     figure.tight_layout()
     figure.savefig('{}/low_temps.png'.format(output_dir),
                    bbox_inches='tight')
-    pyplot.show(plot)
+    pyplot.close(figure)
 
     logger.info('Done.')
     logger.info('')
