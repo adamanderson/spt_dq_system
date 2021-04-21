@@ -208,7 +208,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                          'ra12h30dec-33.25':  {'NominalBenchPosition': extract_benchpos},
                          'calibrator':        {'MedianCalSN_4Hz': median_cal_sn_4Hz,
                                                'MedianCalResponse_4Hz': median_cal_response_4Hz,
-                                               'AliveBolosCal_4Hz': alive_bolos_cal_4Hz},
+                                               'AliveBolosCal_4Hz': alive_bolos_cal_4Hz,
+                                               'elevation': mean_cal_elevation},
                          'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                                'MedianElnodSNSlopes': median_elnod_sn_slope,
                                                'AliveBolosElnod': alive_bolos_elnod},
@@ -224,11 +225,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-        function_dict_raw = {'calibrator':    {'el': mean_cal_elevation},
-                             'elnod'     :    {'ppa': median_pelec_per_airmass},
+        function_dict_raw = {'elnod'     :    {'ppa': median_pelec_per_airmass},
                              'noise'     :    {'nl': number_of_lines_in_median_psds}}
-        key_dict_raw = {'el' : ['elevation'],
-                        'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity'],
+        key_dict_raw = {'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity'],
                         'nl' : ['NumberOfLinesInMedianPSDs']}
 
 

@@ -33,27 +33,10 @@ def alive_bolos_cal_4Hz(frame, boloprops, selector_dict):
         return None
     return compute_nalive(frame, 'CalibratorResponseSN', boloprops, selector_dict, 20, operator.gt)
 
-def mean_cal_elevation(rawpath, cal_fname, fname, boloprops, selector_dict):
-    # Only the variable rawpath is used here,
-    # but the others were added for the sake of generality and consistency
-    # because the other function in
-    # the dictionary function_dict_raw (cache_timeseries_data.py),
-    # i.e., median_pw_per_airmass, needs those variables.
-    class ElExtractor(object):
-        def __init__(self):
-            self.mean_el = np.nan
-        def __call__(self, frame):
-            if frame.type == core.G3FrameType.Scan and \
-               "OnlineBoresightEl" in frame.keys():
-                self.mean_el = np.mean(frame["OnlineBoresightEl"]) / core.G3Units.degree
-
-    el_extractor = ElExtractor()
-    pipe = core.G3Pipeline()
-    pipe.Add(core.G3Reader, filename=rawpath)
-    pipe.Add(el_extractor)
-    pipe.Run()
-
-    return [el_extractor.mean_el]
+def mean_cal_elevation(frame, boloprops, selector_dict):
+    if 'CalibratorResponseEl' not in frame.keys():
+        return None
+    return frame['CalibratorResponseEl'] / core.G3Units.degree
 
 
 def plot_median_cal_sn_4Hz(data, wafers, outdir, el, xlims=None, ylims=[0, 400]):
