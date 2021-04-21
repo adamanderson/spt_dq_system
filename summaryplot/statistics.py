@@ -1,20 +1,39 @@
 import numpy as np
 from functools import reduce
 import operator
+from spt3g import core
+
+
+def convert_selector_dict(key_list, boloprops, selector_dict):
+    selections = {}
+
+    wafers = np.array([boloprops[bolo].wafer_id for bolo in key_list])
+    bands = np.array([boloprops[bolo].band / core.G3Units.GHz for bolo in key_list])
+
+    for wafer, band in selector_dict.keys():
+        selection = np.ones_like(key_list, dtype=bool)
+        selection &= bands == band
+        if wafer != 'all':
+            selection &= wafers == wafer
+
+        selections[(wafer, band)] = selection
+
+    return selections
 
 
 # functions that define quantities to be saved
 def compute_median(frame, datakey, boloprops, selector_dict):
-    data_list = np.array([frame[datakey][bolo] 
-                          for bolo in frame[datakey].keys()])
-    data_on_selection = {}
-
     if len(frame[datakey]) == 0:
         return np.array([])
 
-    for select_values, f_select_list in selector_dict.items():
-        selection = np.array([True for bolo in frame[datakey].keys()])
-        
+    key_list = np.array(frame[datakey].keys())
+    data_list = np.array(frame[datakey].values())
+    data_on_selection = {}
+
+    selections = convert_selector_dict(key_list, boloprops, selector_dict)
+
+    for select_values, selection in selections.items():
+
         # prep the dictionary for output
         for keylist in [select_values[:j] for j in np.arange(len(select_values))+1]:
             try:
@@ -22,11 +41,6 @@ def compute_median(frame, datakey, boloprops, selector_dict):
             except:
                 reduce(operator.getitem, keylist[:-1], data_on_selection)[keylist[-1]] = {}
 
-        # compute the data selection
-        for select_val, f_select in zip(select_values, f_select_list):
-            selection = np.array([f_select(boloprops, bolo, select_val)
-                                  for bolo in frame[datakey].keys()]) & selection
-        
         # get data that satisfies the selection and compute median
         reduce(operator.getitem, select_values[:-1], data_on_selection)[select_values[-1]] = \
             np.median(data_list[selection][np.isfinite(data_list[selection])])
@@ -35,16 +49,17 @@ def compute_median(frame, datakey, boloprops, selector_dict):
 
 
 def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold, operation):
-    data_list = np.array([frame[datakey][bolo] 
-                          for bolo in frame[datakey].keys()])
-    nalive_on_selection = {}
-
     if len(frame[datakey]) == 0:
         return np.array([])
 
-    for select_values, f_select_list in selector_dict.items():
-        selection = np.array([True for bolo in frame[datakey].keys()])
-        
+    key_list = np.array(frame[datakey].keys())
+    data_list = np.array(frame[datakey].values())
+    nalive_on_selection = {}
+
+    selections = convert_selector_dict(key_list, boloprops, selector_dict)
+
+    for select_values, selection in selections.items():
+
         # prep the dictionary for output
         for keylist in [select_values[:j] for j in np.arange(len(select_values))+1]:
             try:
@@ -52,11 +67,6 @@ def compute_nalive(frame, datakey, boloprops, selector_dict, sn_threshold, opera
             except:
                 reduce(operator.getitem, keylist[:-1], nalive_on_selection)[keylist[-1]] = {}
 
-        # compute the data selection
-        for select_val, f_select in zip(select_values, f_select_list):
-            selection = np.array([f_select(boloprops, bolo, select_val)
-                                  for bolo in frame[datakey].keys()]) & selection
-        
         # get data that satisfies the selection and compute # alive bolos
         data_on_selection = data_list[selection][np.isfinite(data_list[selection])]
         reduce(operator.getitem, select_values[:-1], nalive_on_selection)[select_values[-1]] = \
