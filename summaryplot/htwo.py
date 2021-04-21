@@ -12,7 +12,7 @@ from summaryplot.plot_util import plot_timeseries
 
 def alive_bolos_htwo_fluxcal(frame, boloprops, selector_dict):
     for k in frame.keys():
-        if 'FluxCalibration' in k:
+        if k.endswith('FluxCalibration'):
             cal_key = k
             break
     return compute_nalive(frame, cal_key, boloprops, selector_dict, 0, operator.lt)
@@ -20,7 +20,7 @@ def alive_bolos_htwo_fluxcal(frame, boloprops, selector_dict):
 
 def median_htwo_fluxcal(frame, boloprops, selector_dict):
     for k in frame.keys():
-        if 'FluxCalibration' in k:
+        if k.endswith('FluxCalibration'):
             cal_key = k
             break
     return compute_median(frame, cal_key, boloprops, selector_dict)
@@ -28,7 +28,7 @@ def median_htwo_fluxcal(frame, boloprops, selector_dict):
 
 def median_htwo_intflux(frame, boloprops, selector_dict):
     for k in frame.keys():
-        if 'IntegralFlux' in k:
+        if k.endswith('IntegralFlux'):
             cal_key = k
             break
     return compute_median(frame, cal_key, boloprops, selector_dict)
@@ -36,7 +36,7 @@ def median_htwo_intflux(frame, boloprops, selector_dict):
 
 def htwo_sky_transmission(frame, boloprops, selector_dict):
     for k in frame.keys():
-        if 'Transmission' in k:
+        if k.endswith('SkyTransmission'):
             cal_key = k
             break
 

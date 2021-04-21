@@ -497,24 +497,12 @@ def collect_medians_of_pW_per_K_factors(
           for group in bolo_dict.keys()}
     
     for key in calframe.keys():
-        if "FluxCalibration" in key:
+        if key.endswith("FluxCalibration"):
             flux_calibration_key = key
             source = key.replace("FluxCalibration", "")
-            """
-            if "RCW38" in flux_calibration_key:
-                source = "RCW38"
-            elif "MAT5A" in flux_calibration_key:
-                source = "MAT5A"
-            elif "W28A2" in flux_calibration_key:
-                source = "W28A2"
-            elif "IRAS17258" in flux_calibration_key:
-                source = "IRAS17258"
-            elif "RCW122A" in flux_calibration_key:
-                source = "RCW122A"
-            """
-        if "IntegralFlux" in key:
+        if key.endswith("IntegralFlux"):
             integral_flux_key = key
-        if "SkyTransmission" in key:
+        if key.endswith("SkyTransmission"):
             sky_transmission_key = key
     
     available_bolos = set(calframe["BolometerProperties"].keys()) & \
