@@ -94,7 +94,7 @@ def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, 
         return
 
     pdata = {**data['PMNJ0210-5101'], **data['PMNJ0522-3628']}
-    obsids = sorted([obsid for obsid in pdata])
+    obsids = np.unique(sorted([int(obsid) for obsid in pdata]))
 
     grouped_obsids = reduce(group_by_time, obsids, [])
     grouped_obsids = [group for group in grouped_obsids if len(group) == 5]

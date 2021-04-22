@@ -10,12 +10,17 @@ from glob import glob
 import datetime
 import os.path
 import shutil
+import re
 from summaryplot.calibrator import *
 from summaryplot.elnod import *
 from summaryplot.noise import *
 from summaryplot.htwo import *
 from summaryplot.focus import *
 import hashlib
+
+from spt3g.autoprocessing.status_db import AutoprocDatabase, field_regex
+
+db = None
 
 
 def file_hash(filelist):
@@ -232,6 +237,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
         key_dict_raw = {}
 
 
+        global db
+        if db is None:
+            db = AutoprocDatabase(read_only=True)
+
         # loop over weeks
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             # convert min/max times to observation IDs that we can compare with filenames
@@ -241,43 +250,74 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
             datafile = os.path.join(datadir, '{}_data_cache.pkl'.format(mindate.strftime('%Y%m%d')))
             updated = False
             if os.path.exists(datafile):
-                with open(datafile, 'rb') as f:
-                    data = pickle.load(f)
+                try:
+                    with open(datafile, 'rb') as f:
+                        data = pickle.load(f)
+                except Exception as e:
+                    raise e.__class__('Error loading {}: {}'.format(datafile, e))
             else:
                 data = {}
                 updated = True
 
             # update the data skim
             for source, quantities in function_dict.items():
-                isfieldobs = 'dec-' in source
-                if isfieldobs:
-                    bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
-                    calfiles = glob(os.path.join(bolodatapath, source, '*'))
-                else:
-                    bolodatapath = bolodatapath.replace('downsampled', 'fullrate')
-                    calfiles = glob(os.path.join(caldatapath, source, '*g3'))
-                files_to_parse = [fname for fname in calfiles
-                                  if int(os.path.splitext(os.path.basename(fname))[0]) >= min_obsid and \
-                                     int(os.path.splitext(os.path.basename(fname))[0]) <= max_obsid]
+                # incremental update after every source
+                if updated:
+                    with open(datafile, 'wb') as f:
+                        pickle.dump(data, f)
+                    updated = False
 
                 print('Analyzing source: {}'.format(source))
-
                 if source not in data.keys():
                     data[source] = {}
                     updated = True
-                for fname in files_to_parse:
-                    obsid = os.path.splitext(os.path.basename(fname))[0]
-                    cal_fname = os.path.join(bolodatapath, source, obsid, 'nominal_online_cal.g3')
-                    rawpath = os.path.join(bolodatapath, source, obsid, '0000.g3')
+
+                isfieldobs = re.match(field_regex, source) is not None
+                if isfieldobs:
+                    bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+                else:
+                    bolodatapath = bolodatapath.replace('downsampled', 'fullrate')
+
+                entries = db.match(
+                    '{}/calframe'.format(source) if isfieldobs else source,
+                    '{}:{}'.format(min_obsid, max_obsid + 1),
+                    status='complete',
+                    return_df=True,
+                )
+
+                for _, entry in entries.iterrows():
+                    obsid = int(entry['observation'])
+
+                    if isfieldobs:
+                        fname = os.path.join(bolodatapath, source, str(obsid))
+                    else:
+                        fname = os.path.join(caldatapath, source, "{}.g3".format(obsid))
+                    cal_fname = os.path.join(bolodatapath, source, str(obsid), 'nominal_online_cal.g3')
+                    rawpath = os.path.join(bolodatapath, source, str(obsid), '0000.g3')
                     print('observation: {}'.format(obsid))
 
-                    if (obsid not in data[source].keys() or \
-                        data[source][obsid]['timestamp'] != os.path.getctime(fname)) and \
-                       os.path.exists(fname) and os.path.exists(cal_fname):
-                        updated = True
-                        data[source][obsid] = {'timestamp': os.path.getctime(fname)}
+                    # make sure all obsidss are ints
+                    for k in list(data[source]):
+                        if isinstance(k, str):
+                            data[source][int(k)] = data[source].pop(k)
 
-                        """"""
+                    if obsid in data[source]:
+                        # replace ctime with database modified time
+                        tstamp = data[source][obsid]['timestamp']
+                        if isinstance(tstamp, float):
+                            ctime = os.path.getctime(fname)
+                            if ctime == tstamp:
+                                data[source][obsid]['timestamp'] = entry['modified']
+                                updated = True
+                            else:
+                                del data[source][obsid]
+
+                    if (obsid not in data[source] or \
+                        data[source][obsid]['timestamp'] != entry['modified']):
+                        updated = True
+                        data[source][obsid] = {'timestamp': entry['modified']}
+
+                        """
                         if caldatapath.startswith("/sptgrid"):
                             def get_gfal_copied_file(path):
                                 origin = "gsiftp://osg-gridftp.grid.uchicago.edu:2811" + path
@@ -289,7 +329,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             cal_fname = get_gfal_copied_file(cal_fname)
                             if isfieldobs or (source in function_dict_raw):
                                 rawpath = get_gfal_copied_file(rawpath)
-                        """"""
+                        """
                         ### We can just read the files directly if gfal-copy is cumbersome or too slow.
                         ### Remember to also take care of the two lines below that delete files.
 
@@ -305,6 +345,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                 d += [fr for fr in core.G3File(fname)]
                         else:
                             d = [fr for fr in core.G3File(fname)][0]
+                            if 'ObservationID' not in d:
+                                d['ObservationID'] = obsid
                         boloprops = [fr for fr in core.G3File(cal_fname)][0]["NominalBolometerProperties"]
                         if len(d) == 0:
                             data[source].pop(obsid)
@@ -323,12 +365,12 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                     for actual_name, result in zip(key_dict_raw[quantity_name], func_result):
                                         data[source][obsid][actual_name] = result
 
-                        """"""
+                        """
                         if caldatapath.startswith("/sptgrid"):
                             for f in [fname, cal_fname, rawpath]:
                                 if not f.startswith("/sptgrid"):
                                     os.system("rm {}".format(f))
-                        """"""
+                        """
 
             if updated:
                 with open(datafile, 'wb') as f:
