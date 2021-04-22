@@ -212,7 +212,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'elevation': mean_cal_elevation},
                          'elnod':             {'MedianElnodIQPhaseAngle': median_elnod_iq_phase_angle,
                                                'MedianElnodSNSlopes': median_elnod_sn_slope,
-                                               'AliveBolosElnod': alive_bolos_elnod},
+                                               'AliveBolosElnod': alive_bolos_elnod,
+                                               'MedianPelecPerAirmass': median_pelec_per_airmass,
+                                               'MedianElnodOpacity': median_elnod_opacity},
                          'noise':             {'NEI_0.1Hz_to_0.5Hz': median_nei_01Hz_to_05Hz,
                                                'NEI_1.0Hz_to_2.0Hz': median_nei_1Hz_to_2Hz,
                                                'NEI_3.0Hz_to_5.0Hz': median_nei_3Hz_to_5Hz,
@@ -225,10 +227,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
                                                'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-        function_dict_raw = {'elnod'     :    {'ppa': median_pelec_per_airmass},
-                             'noise'     :    {'nl': number_of_lines_in_median_psds}}
-        key_dict_raw = {'ppa': ['MedianPelecPerAirmass', 'MedianElnodOpacity'],
-                        'nl' : ['NumberOfLinesInMedianPSDs']}
+        function_dict_raw = {'noise'     :    {'nl': number_of_lines_in_median_psds}}
+        key_dict_raw = {'nl' : ['NumberOfLinesInMedianPSDs']}
 
 
         # loop over weeks

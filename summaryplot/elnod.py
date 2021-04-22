@@ -9,77 +9,48 @@ from summaryplot.plot_util import plot_timeseries
 import operator
 import pickle
 
-def median_pelec_per_airmass(rawpath, cal_fname, fname, boloprops, selector_dict):
-    pipeline = core.G3Pipeline()
-    pipeline.Add(core.G3Reader,
-                 filename=[fname, cal_fname, rawpath],
-                 n_frames_to_read=6)
-    pipeline.Add(dfmux.ConvertTimestreamUnits,
-                 Input='RawTimestreams_I',
-                 Output='Timestreams_I_inPower',
-                 Units=core.G3TimestreamUnits.Power)
+opt_eff_dict = None
 
-    class ExtractPelecPerAirmass(object):
-        def __init__(self):
-            self.counts_per_airmass = None
-            self.pelec_per_counts   = None
-            self.pelec_per_airmass  = None
-        def __call__(self, frame):
-            if 'ElnodSlopes' in frame.keys():
-                self.counts_per_airmass = frame['ElnodSlopes']
-                return
-            if 'Timestreams_I_inPower' in frame.keys() and \
-               self.pelec_per_counts is None:
-                self.pelec_per_counts = core.G3MapDouble()
-                for b, tsp in frame['Timestreams_I_inPower'].items():
-                    tsc = frame['RawTimestreams_I'][b]
-                    r   = tsp[0] / tsc[0]
-                    if r != 0.0:
-                        self.pelec_per_counts[b] = r
-                return
-            if frame.type == core.G3FrameType.EndProcessing:
-                self.pelec_per_airmass = core.G3MapDouble()
-                common = set(self.counts_per_airmass.keys()) & \
-                         set(self.pelec_per_counts.keys())
-                for b in common:
-                    self.pelec_per_airmass[b] = self.counts_per_airmass[b] * \
-                                                self.pelec_per_counts[b]
-                return
 
-    ppa_extractor = ExtractPelecPerAirmass()
-    pipeline.Add(ppa_extractor)
-    pipeline.Run()
-    
-    def derive_opacity_from_pw_per_airmass(pelec_per_airmass_dict, opt_eff_dict, boloprops):
-        opacities = core.G3MapDouble()
-        obsid = int(fname.split('/')[-1].split('.')[0])
-        month = str(obsid_to_g3time(obsid)).split('-')[1].lower()
-        tsky_dict = {'jan':247, 'feb':235, 'mar':221, 'apr':217,
-                     'may':217, 'jun':217, 'jul':215, 'aug':215,
-                     'sep':215, 'oct':223, 'nov':236, 'dec':247}
-        deltanu_dict = {90.0: 28.2e9, 150.0: 42.6e9, 220.0: 52.1e9}
-        kb = 1.38064852e-23
-        tsky = tsky_dict[month]
-        for bolo, ppa in pelec_per_airmass_dict.items():
-            band = boloprops[bolo].band / core.G3Units.GHz
-            if band in [90.0, 150.0, 220.0]:
-                deltanu = deltanu_dict[band]
-                try:
-                    eta = opt_eff_dict[bolo]
-                    tau = (-1.0*ppa/core.G3Units.W) / (eta*deltanu*kb*tsky)
-                    opacities[bolo] = tau
-                except KeyError:
-                    pass
-        return opacities
-    
-    ppa_frame = core.G3Frame()
-    ppa_frame['PelecPerAirmass'] = ppa_extractor.pelec_per_airmass
+def median_pelec_per_airmass(frame, boloprops, selector_dict):
+    if 'ElnodSlopesPower' not in frame:
+        return None
+    return compute_median(frame, 'ElnodSlopesPower', boloprops, selector_dict)
 
-    with open('summaryplot/optical_efficiency.pickle', 'rb') as fobj:
-        opt_eff_dict = pickle.load(fobj)
-    ppa_frame['ElnodOpacity'] = derive_opacity_from_pw_per_airmass(ppa_extractor.pelec_per_airmass, opt_eff_dict, boloprops)
-    
-    return [compute_median(ppa_frame, 'PelecPerAirmass', boloprops, selector_dict), compute_median(ppa_frame, 'ElnodOpacity', boloprops, selector_dict)]
+
+def median_elnod_opacity(frame, boloprops, selector_dict):
+    if 'ElnodSlopesPower' not in frame:
+        return None
+
+    pelec_per_airmass_dict = frame['ElnodSlopesPower']
+
+    global opt_eff_dict
+    if opt_eff_dict is None:
+        with open('summaryplot/optical_efficiency.pickle', 'rb') as fobj:
+            opt_eff_dict = pickle.load(fobj)
+
+    opacities = core.G3MapDouble()
+    obsid = frame['ObservationID']
+    month = str(obsid_to_g3time(obsid)).split('-')[1].lower()
+    tsky_dict = {'jan':247, 'feb':235, 'mar':221, 'apr':217,
+                 'may':217, 'jun':217, 'jul':215, 'aug':215,
+                 'sep':215, 'oct':223, 'nov':236, 'dec':247}
+    deltanu_dict = {90.0: 28.2e9, 150.0: 42.6e9, 220.0: 52.1e9}
+    kb = 1.38064852e-23
+    tsky = tsky_dict[month]
+    for bolo, ppa in pelec_per_airmass_dict.items():
+        band = boloprops[bolo].band / core.G3Units.GHz
+        if band in [90.0, 150.0, 220.0]:
+            deltanu = deltanu_dict[band]
+            try:
+                eta = opt_eff_dict[bolo]
+                tau = (-1.0*ppa/core.G3Units.W) / (eta*deltanu*kb*tsky)
+                opacities[bolo] = tau
+            except KeyError:
+                pass
+
+    frame['ElnodOpacity'] = opacities
+    return compute_median(frame, 'ElnodOpacity', boloprops, selector_dict)
 
 
 def median_elnod_sn_slope(frame, boloprops, selector_dict):
