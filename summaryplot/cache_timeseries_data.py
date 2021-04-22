@@ -226,9 +226,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                                'NET_0.1Hz_to_0.5Hz': median_net_01Hz_to_05Hz,
                                                'NET_1.0Hz_to_2.0Hz': median_net_1Hz_to_2Hz,
                                                'NET_3.0Hz_to_5.0Hz': median_net_3Hz_to_5Hz,
-                                               'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz}}
-        function_dict_raw = {'noise'     :    {'nl': number_of_lines_in_median_psds}}
-        key_dict_raw = {'nl' : ['NumberOfLinesInMedianPSDs']}
+                                               'NET_10.0Hz_to_15.0Hz': median_net_10Hz_to_15Hz,
+                                               'NumberOfLinesInMedianPSDs': number_of_lines_in_median_psds}}
+        function_dict_raw = {}
+        key_dict_raw = {}
 
 
         # loop over weeks

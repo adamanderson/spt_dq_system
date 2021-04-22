@@ -69,76 +69,16 @@ def median_net_1Hz_to_2Hz(frame, boloprops, selector_dict):
     return compute_median(frame, 'NET_1.0Hz_to_2.0Hz', boloprops, selector_dict)
 
 
-
-def number_of_lines_in_median_psds(rawpath, cal_fname, fname, boloprops, selector_dict):
-
-    pipeline = core.G3Pipeline()
-    pipeline.Add(core.G3Reader,
-                 filename=[fname, cal_fname, rawpath])
-    pipeline.Add(core.Delete,
-                 keys=['RawTimestreams_Q'])
-    pipeline.Add(dfmux.ConvertTimestreamUnits,
-                 Input='RawTimestreams_I',
-                 Output='Timestreams_I_inPower',
-                 Units=core.G3TimestreamUnits.Power)
-    pipeline.Add(core.Delete,
-                 keys=['RawTimestreams_I'])
-    class ExtractVariousMaps(object):
-        def __init__(self):
-            self.tm  = None
-            self.bpm = None
-            self.wm  = None
-        def __call__(self, frame):
-            if 'Timestreams_I_inPower' in frame.keys():
-                tm = frame['Timestreams_I_inPower']
-                self.tm = core.G3TimestreamMap()
-                for k, ts in tm.items():
-                    self.tm[k] = ts - np.mean(ts)
-                return
-            if 'NominalBolometerProperties' in frame.keys():
-                self.bpm = frame['NominalBolometerProperties']
-                return
-            if 'WiringMap' in frame.keys():
-                self.wm = frame['WiringMap']
-                return
-    mapsxtractor = ExtractVariousMaps()
-    pipeline.Add(mapsxtractor)
-    pipeline.Run()
-
-    lines = todfilter.notchfilter.find_lines_from_PSDs(
-                mapsxtractor.tm, [mapsxtractor.tm.n_samples], mapsxtractor.bpm, mapsxtractor.wm,
-                from_by_group_median_PSD_only=True, by_band=True, by_wafer=True,
-                factor_for_thresholds=2.00,
-                factor_for_baseline=1.20,
-                power_law_fit_starting_frequency=0.06,
-                power_law_fit_ending_frequency=0.60,
-                white_noise_estimate_starting_frequency=4.5,
-                white_noise_estimate_ending_frequency=7.5,
-                low_frequency_cut=0.99,
-                maximum_number_of_lines=50)
-    del mapsxtractor
-    gc.collect()
-
-    returndict = {}
-    for groupdest in selector_dict.keys():
-        for groupsource in lines['LineLocations'].keys():
-            band  = float(groupsource.split('_')[0])
-            wafer = groupsource.split('_')[1]
-            if (groupdest[0] == wafer) and (float(groupdest[1]) == band):
-                if wafer not in returndict.keys():
-                    returndict[wafer] = {}
-                returndict[wafer][int(band)] = len(lines['LineLocations'][groupsource])
-    for groupdest in selector_dict.keys():
-        wafer = groupdest[0]
-        if wafer not in returndict.keys():
-            returndict[wafer] = {}
-            returndict[wafer] = {90: 0, 150: 0, 220: 0}
-    totlines = {}
-    for oneband in [90, 150, 220]:
-        totlines[oneband] = np.sum([lines3bands[oneband] for wafer, lines3bands in returndict.items()])
-    returndict['all'] = totlines
-    return [returndict]
-
+def number_of_lines_in_median_psds(frame, boloprops, selector_dict):
+    lines = {'all': {90: 0, 150: 0, 220: 0}}
+    for wafer, band in selector_dict.keys():
+        if wafer not in lines:
+            lines[wafer] = {90: 0, 150: 0, 220: 0}
+        line_key = '{:.1f}_{:s}'.format(band, wafer)
+        num_lines = len(frame['LineLocations'].get(line_key, []))
+        lines[wafer][int(band)] = num_lines
+        lines['all'][int(band)] += num_lines
+    return lines
 
 
 def median_net_3Hz_to_5Hz(frame, boloprops, selector_dict):
