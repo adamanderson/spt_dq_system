@@ -93,6 +93,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
     date_boundaries = []
     next_day = dt_mintime
 
+    if mode == 'plot':
+        if timeinterval == 'weekly':
+            next_day = next_day - datetime.timedelta(days=next_day.weekday())
+        elif timeinterval == 'monthly':
+            next_day = datetime.datetime(year=next_day.year, month=next_day.month, day=1)
+        elif timeinterval == 'yearly':
+            next_day = datetime.datetime(year=next_day.year, month=1, day=1)
+
     if mode == 'skim' or (timeinterval in ['weekly', 'monthly', 'yearly']):
         while next_day < dt_maxtime:
             date_boundaries.append(next_day)
@@ -243,11 +251,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
         # loop over weeks
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
+            smindate = mindate.strftime('%Y%m%d')
+            smaxdate = maxdate.strftime('%Y%m%d')
+            print('Updating cache files between {} and {}'.format(smindate, smaxdate))
             # convert min/max times to observation IDs that we can compare with filenames
-            min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
-            max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
+            min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(smindate)))
+            max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(smaxdate)))
 
-            datafile = os.path.join(datadir, '{}_data_cache.pkl'.format(mindate.strftime('%Y%m%d')))
+            datafile = os.path.join(datadir, '{}_data_cache.pkl'.format(smindate))
             updated = False
             if os.path.exists(datafile):
                 try:
@@ -397,20 +408,20 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
         weekly_filenames = weekly_filenames[ind_sort]
         weekly_datetimes = weekly_datetimes[ind_sort]
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
+            smindate = mindate.strftime('%Y%m%d')
+            smaxdate = maxdate.strftime('%Y%m%d')
+            print('Updating {} plots between {} and {}'.format(timeinterval, smindate, smaxdate))
             # convert min/max time for this interval to obsids that we can compare
             # to data obsids
-            min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(mindate.strftime('%Y%m%d'))))
-            max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(maxdate.strftime('%Y%m%d'))))
+            min_obsid = time_to_obsid(core.G3Time('{}_000000'.format(smindate)))
+            max_obsid = time_to_obsid(core.G3Time('{}_000000'.format(smaxdate)))
 
             if timeinterval == 'weekly':
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                        mindate.strftime('%Y%m%d'))
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
             elif timeinterval == 'monthly':
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                        mindate.strftime('%Y%m'))
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
             elif timeinterval == 'yearly':
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
-                                        mindate.strftime('%Y'))
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
             else:
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
                                         'last_{:02d}'.format(int(timeinterval)))
