@@ -120,7 +120,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                 next_day = datetime.datetime(year=next_day.year+1,
                                              month=1,
                                              day=1)
-        date_boundaries.append(dt_maxtime)
+        date_boundaries.append(next_day)
     else:
         date_boundaries = [dt_maxtime - datetime.timedelta(days=int(timeinterval)), dt_maxtime]
 
@@ -419,9 +419,9 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
             if timeinterval == 'weekly':
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
             elif timeinterval == 'monthly':
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate[:6])
             elif timeinterval == 'yearly':
-                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate)
+                plotsdir = os.path.join(outdir, 'plots', timeinterval_stub, smindate[:4])
             else:
                 plotsdir = os.path.join(outdir, 'plots', timeinterval_stub,
                                         'last_{:02d}'.format(int(timeinterval)))
