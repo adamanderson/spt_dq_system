@@ -70,14 +70,20 @@ def median_net_1Hz_to_2Hz(frame, boloprops, selector_dict):
 
 
 def number_of_lines_in_median_psds(frame, boloprops, selector_dict):
-    lines = {'all': {90: 0, 150: 0, 220: 0}}
+    lines = {'all': {}}
     for wafer, band in selector_dict.keys():
         if wafer not in lines:
-            lines[wafer] = {90: 0, 150: 0, 220: 0}
-        line_key = '{:.1f}_{:s}'.format(band, wafer)
-        num_lines = len(frame['LineLocations'].get(line_key, []))
-        lines[wafer][int(band)] = num_lines
-        lines['all'][int(band)] += num_lines
+            lines[wafer] = {}
+        if band not in lines[wafer]:
+            lines[wafer][band] = 0
+        if band not in lines['all']:
+            lines['all'][band] = 0
+    for k, v in frame['LineLocations'].items():
+        band, wafer = k.split('_')
+        band = int(float(band))
+        num_lines = len(v)
+        lines[wafer][band] += num_lines
+        lines['all'][band] += num_lines
     return lines
 
 
