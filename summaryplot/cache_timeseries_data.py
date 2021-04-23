@@ -270,6 +270,8 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                 data = {}
                 updated = True
 
+            data['updated_sources'] = set()
+
             # update the data skim
             for source, quantities in function_dict.items():
                 # incremental update after every source
@@ -282,6 +284,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                 if source not in data.keys():
                     data[source] = {}
                     updated = True
+                    data['updated_sources'].add(source)
 
                 isfieldobs = re.match(field_regex, source) is not None
                 if isfieldobs:
@@ -320,6 +323,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                             if ctime == tstamp:
                                 data[source][obsid]['timestamp'] = entry['modified']
                                 updated = True
+                                data['updated_sources'].add(source)
                             else:
                                 del data[source][obsid]
 
@@ -327,6 +331,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         data[source][obsid]['timestamp'] != entry['modified']):
                         updated = True
                         data[source][obsid] = {'timestamp': entry['modified']}
+                        data['updated_sources'].add(source)
 
                         """
                         if caldatapath.startswith("/sptgrid"):
@@ -456,22 +461,41 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
             hash_filename = os.path.join(plotsdir, 'data_hash.dat')
             if os.path.exists(hash_filename):
                 with open(hash_filename, 'r') as f:
-                    old_pkl_hash = f.readline()
+                    old_pkl_hash = f.readline().strip()
             else:
                 # if hash file doesn't exist, set to empty string to force rebuild
                 old_pkl_hash = ''
+
+            # compute hashes for each file individually
+            new_pkl_hash_dict = {os.path.basename(f): file_hash([f]) for f in filelist}
+            hash_dict_filename = os.path.join(plotsdir, 'data_hash_dict.dat')
+            old_pkl_hash_dict = {os.path.basename(k): '' for k in filelist}
+            if os.path.exists(hash_dict_filename):
+                with open(hash_dict_filename, 'r') as f:
+                    for line in f:
+                        k, v = line.strip().split()
+                        old_pkl_hash_dict[os.path.basename(k)] = v
 
             # rebuild the data if the new and old hashes differ or if a rebuild
             # is requested
             if new_pkl_hash != old_pkl_hash or action == 'rebuild':
                 # load all the data
                 data = {}
+                updated_sources = set()
                 for fname in filelist:
+                    fname1 = os.path.basename(fname)
                     with open(fname, 'rb') as f:
                         nextdata = pickle.load(f)
+                    next_updated_sources = nextdata.pop('updated_sources', set())
+                    if action == 'rebuild' or bolodatapath.startswith('/sptgrid'):
+                        # rebuild all plots in chicago because the rsync'ed cache files
+                        # are not updated at the same rate as at pole
+                        updated_sources |= set(nextdata.keys())
+                    elif new_pkl_hash_dict[fname1] != old_pkl_hash_dict[fname1]:
+                        updated_sources |= next_updated_sources
                     for source in nextdata:
                         if source in data:
-                            data[source] = {**data[source], **nextdata[source]}
+                            data[source].update(nextdata[source])
                         else:
                             data[source] = nextdata[source]
 
@@ -483,84 +507,62 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         if int(obsid) <= min_obsid or int(obsid) >= max_obsid:
                             data[source].pop(obsid)
 
+                opts = dict(xlims=[mindate, maxdate])
+
+                print('Found updated sources: {}'.format(list(updated_sources)))
+
                 # create the plots
                 if timeinterval == 'yearly':
-                    for src in ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']:
-                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
-                                                 xlims=[mindate, maxdate])
-                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
-                                                 xlims=[mindate, maxdate])
-                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_focus_quasar_fitting_results(data,
-                                                      plotsdir, bolodatapath,
-                                                      xlims=[mindate, maxdate])
+                    for src in set(htwo_sources) & updated_sources:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir, **opts)
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir, **opts)
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir, **opts)
+
+                    if len(set(focus_sources) & updated_sources) > 0:
+                        plot_focus_quasar_fitting_results(data, plotsdir, **opts)
                 else:
-                    for src in ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']:
-                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir,
-                                                 xlims=[mindate, maxdate])
-                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir,
-                                                 xlims=[mindate, maxdate])
-                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                        plot_htwo_skytrans(src, data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
-                    plot_focus_quasar_fitting_results(data,
-                                                      plotsdir, bolodatapath,
-                                                      xlims=[mindate, maxdate])
-                    plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low',
-                                           xlims=[mindate, maxdate])
-                    plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low',
-                                                 xlims=[mindate, maxdate])
-                    plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'low',
-                                             xlims=[mindate, maxdate])
-                    plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'high',
-                                           xlims=[mindate, maxdate])
-                    plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'high',
-                                                 xlims=[mindate, maxdate])
-                    plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'high',
-                                             xlims=[mindate, maxdate])
-                    plot_median_elnod_response(data, wafer_list, plotsdir,
-                                               xlims=[mindate, maxdate])
-                    plot_median_elnod_sn(data, wafer_list, plotsdir,
-                                         xlims=[mindate, maxdate])
-                    plot_median_elnod_opacity(data, wafer_list, plotsdir,
-                                              xlims=[mindate, maxdate])
-                    plot_alive_bolos_elnod(data, wafer_list, plotsdir,
-                                           xlims=[mindate, maxdate])
-                    plot_median_elnod_iq_phase(data, wafer_list, plotsdir,
-                                               xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEI_0.1Hz_to_0.5Hz', wafer_list, plotsdir, 
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEI_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEI_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEI_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEP_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEP_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEP_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NEP_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NET_0.1Hz_to_0.5Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NET_1.0Hz_to_2.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NET_3.0Hz_to_5.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_median_noise(data, 'NET_10.0Hz_to_15.0Hz', wafer_list, plotsdir,
-                                      xlims=[mindate, maxdate])
-                    plot_number_of_lines(data, wafer_list, plotsdir,
-                                         xlims=[mindate, maxdate])
+                    for src in set(htwo_sources) & updated_sources:
+                        plot_median_htwo_fluxcal(src, data, wafer_list, plotsdir, **opts)
+                        plot_median_htwo_intflux(src, data, wafer_list, plotsdir, **opts)
+                        plot_alive_bolos_htwo(src, data, wafer_list, plotsdir, **opts)
+                        plot_htwo_skytrans(src, data, wafer_list, plotsdir, **opts)
+
+                    if len(set(focus_sources) & updated_sources) > 0:
+                        plot_focus_quasar_fitting_results(data, plotsdir, **opts)
+
+                    if 'calibrator' in updated_sources:
+                        plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'low', **opts)
+                        plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'low', **opts)
+                        plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'low', **opts)
+                        plot_median_cal_sn_4Hz(data, wafer_list, plotsdir, 'high', **opts)
+                        plot_median_cal_response_4Hz(data, wafer_list, plotsdir, 'high', **opts)
+                        plot_alive_bolos_cal_4Hz(data, wafer_list, plotsdir, 'high', **opts)
+
+                    if 'elnod' in updated_sources:
+                        plot_median_elnod_response(data, wafer_list, plotsdir, **opts)
+                        plot_median_elnod_sn(data, wafer_list, plotsdir, **opts)
+                        plot_median_elnod_opacity(data, wafer_list, plotsdir, **opts)
+                        plot_alive_bolos_elnod(data, wafer_list, plotsdir, **opts)
+                        plot_median_elnod_iq_phase(data, wafer_list, plotsdir, **opts)
+
+                    if 'noise' in updated_sources:
+                        for quant in ['NEI', 'NEP', 'NET']:
+                            for rng in [
+                                '0.1Hz_to_0.5Hz',
+                                '1.0Hz_to_2.0Hz',
+                                '3.0Hz_to_5.0Hz',
+                                '10.0Hz_to_15.0Hz',
+                            ]:
+                                key = '{}_{}'.format(quant, rng)
+                                plot_median_noise(data, key, wafer_list, plotsdir, **opts)
+                        plot_number_of_lines(data, wafer_list, plotsdir, **opts)
 
                 # update the hash
-                with open(os.path.join(plotsdir, 'data_hash.dat'), 'w') as f:
-                    f.write(new_pkl_hash)
-
+                with open(hash_filename, 'w') as f:
+                    f.write('{}\n'.format(new_pkl_hash))
+                with open(hash_dict_filename, 'w') as f:
+                    for k, v in sorted(new_pkl_hash_dict.items()):
+                        f.write('{} {}\n'.format(os.path.basename(k), v))
 
 if __name__ == '__main__':
 

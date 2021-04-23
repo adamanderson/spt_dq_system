@@ -10,6 +10,9 @@ import matplotlib.dates as mdates
 from summaryplot.plot_util import plot_timeseries
 
 
+htwo_sources = ['RCW38', 'MAT5A', 'W28A2', 'IRAS17258', 'RCW122A']
+
+
 def alive_bolos_htwo_fluxcal(frame, boloprops, selector_dict):
     for k in frame.keys():
         if k.endswith('FluxCalibration'):

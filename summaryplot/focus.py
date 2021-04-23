@@ -10,6 +10,16 @@ from spt3g.std_processing import obsid_to_g3time
 from spt3g.std_processing import time_to_obsid
 
 
+focus_sources = [
+    'PMNJ0210-5101',
+    'PMNJ0522-3628',
+    'ra0hdec-52.25',
+    'ra1h40dec-33.25',
+    'ra5hdec-33.25',
+    'ra12h30dec-33.25',
+]
+
+
 def extract_benchpos(frames, boloprops=None, selector_dict=None):
 
     for frame in frames:
@@ -83,11 +93,10 @@ def group_by_time(arr, obs, delta_t = 86400):
 
 
 
-def plot_focus_quasar_fitting_results(data, outdir, bolodatapath, xlims = None, interpolate_minima = True):
+def plot_focus_quasar_fitting_results(data, outdir, xlims=None, interpolate_minima=True):
 
     missingdata = False
-    for source in ['PMNJ0210-5101', 'PMNJ0522-3628',
-                   'ra0hdec-52.25', 'ra1h40dec-33.25', 'ra5hdec-33.25', 'ra12h30dec-33.25']:
+    for source in focus_sources:
         if source not in data.keys():
             missingdata = True
     if missingdata:
