@@ -18,9 +18,10 @@ from summaryplot.htwo import *
 from summaryplot.focus import *
 import hashlib
 
-from spt3g.autoprocessing.status_db import AutoprocDatabase, field_regex
+from spt3g.autoprocessing.status_db import AutoprocDatabase, ScanifyDatabase, field_regex
 
 db = None
+sdb = None
 
 
 def file_hash(filelist):
@@ -249,6 +250,10 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
         if db is None:
             db = AutoprocDatabase(read_only=True)
 
+        global sdb
+        if sdb is None:
+            sdb = ScanifyDatabase(read_only=True)
+
         # loop over weeks
         for mindate, maxdate in zip(date_boundaries[:-1], date_boundaries[1:]):
             smindate = mindate.strftime('%Y%m%d')
@@ -287,10 +292,12 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                     data['updated_sources'].add(source)
 
                 isfieldobs = re.match(field_regex, source) is not None
-                if isfieldobs:
+                if isfieldobs and bolodatapath.startswith('/sptgrid'):
                     bolodatapath = bolodatapath.replace('fullrate', 'downsampled')
+                    data_rate = 'downsampled'
                 else:
                     bolodatapath = bolodatapath.replace('downsampled', 'fullrate')
+                    data_rate = 'fullrate'
 
                 entries = db.match(
                     '{}/calframe'.format(source) if isfieldobs else source,
@@ -301,6 +308,11 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
 
                 for _, entry in entries.iterrows():
                     obsid = int(entry['observation'])
+
+                    if source in focus_sources:
+                        if not sdb.check_ready(source, obsid, rate=data_rate):
+                            # need data on disk to grab observation frame
+                            continue
 
                     if isfieldobs:
                         fname = os.path.join(bolodatapath, source, str(obsid))
@@ -349,7 +361,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                         ### We can just read the files directly if gfal-copy is cumbersome or too slow.
                         ### Remember to also take care of the two lines below that delete files.
 
-                        if isfieldobs or ('PMNJ' in source):
+                        if source in focus_sources:
                             iterator = core.G3File(rawpath)
                             while True:
                                 frame = iterator.next()
@@ -357,7 +369,7 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                                     obf = frame
                                     break
                             d = [obf]
-                            if 'PMNJ' in source:
+                            if not isfieldobs:
                                 d += [fr for fr in core.G3File(fname)]
                         else:
                             d = [fr for fr in core.G3File(fname)][0]
