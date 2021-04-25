@@ -115,6 +115,7 @@ from spt3g import util
 from spt3g import maps
 from spt3g import std_processing
 from spt3g import mapspectra
+from spt3g import pointing
 from scipy import signal
 
 
@@ -998,217 +999,264 @@ def calculate_map_fluctuation_metrics(
 
 
 def calculate_pointing_discrepancies(
-        map_frame, sub_field, map_stddev=None):
+        map_frame, sub_field, map_stddev=None,
+        thumbnails_file=None, thumbnails_band=None):
     
-    assert (not map_frame["T"].weighted), \
-           "The temperature map is still weighted!"
-    
-    usys = core.G3Units
-    
-    # * The dictionary below contains ra, dec, and flux of
-    #   three brightest point sources recorded in
-    #   spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt as of July, 2019.
-    #   The ra and dec of each source are from the ATCA20GHz catalog,
-    #   but the flux is from 2018 SPT3G maps (actually, flux is not used
-    #   in any calculation)."
-    
-    some_brightest_sources = \
-        {"ra0hdec-44.75": \
-             {"1st": numpy.array([352.32358, -47.50531, 1408]),
-              "2nd": numpy.array([314.06833, -47.24664, 1375]),
-              "3rd": numpy.array([ 41.50037, -46.85467,  715])},
-         "ra0hdec-52.25": \
-             {"1st": numpy.array([ 32.69288, -51.01703, 3820]),
-              "2nd": numpy.array([ 23.27404, -52.00094, 1027]),
-              "3rd": numpy.array([359.47312, -53.18686,  864])},
-         "ra0hdec-59.75": \
-             {"1st": numpy.array([ 47.48363, -60.97761,  870]),
-              "2nd": numpy.array([ 45.96104, -62.19042,  833]),
-              "3rd": numpy.array([ 14.69433, -56.98650,  786])},
-         "ra0hdec-67.25": \
-             {"1st": numpy.array([329.27542, -69.68981, 1115]),
-              "2nd": numpy.array([337.25092, -69.17492,  445]),
-              "3rd": numpy.array([325.44375, -64.18742,  388])},
-         "ra5hdec-24.5": \
-             {"1st": numpy.array([ 74.26346, -23.41439, 3841]),
-              "2nd": numpy.array([ 52.47542, -23.95239, 1458]),
-              "3rd": numpy.array([ 92.24900, -22.33922, 1003])},
-         "ra5hdec-31.5": \
-             {"1st": numpy.array([ 69.40233, -29.90108,  564]),
-              "2nd": numpy.array([ 61.89133, -33.06258,  563]),
-              "3rd": numpy.array([ 60.58879, -31.79044,  467])},
-         "ra5hdec-38.5": \
-             {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
-              "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
-              "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
-         "ra5hdec-45.5": \
-             {"1st": numpy.array([ 79.95708, -45.77881, 6320]),
-              "2nd": numpy.array([ 84.70979, -44.08572, 5294]),
-              "3rd": numpy.array([ 73.96163, -46.26628, 4157])},
-         "ra5hdec-52.5": \
-             {"1st": numpy.array([ 85.19104, -54.30606, 1127]),
-              "2nd": numpy.array([ 57.86771, -51.71525,  401]),
-              "3rd": numpy.array([ 92.20471, -54.94525,  386])},
-         "ra5hdec-59.5": \
-             {"1st": numpy.array([ 76.68342, -61.16150, 1655]),
-              "2nd": numpy.array([ 87.53988, -57.54017, 1005]),
-              "3rd": numpy.array([ 80.64333, -61.13250,  573])},
-         "ra5hdec-29.75": \
-             {"1st": numpy.array([ 84.97571, -28.66561,  677]),
-              "2nd": numpy.array([ 69.40233, -29.90108,  564]),
-              "3rd": numpy.array([ 95.12212, -28.46006,  503])},
-         "ra5hdec-33.25": \
-             {"1st": numpy.array([ 84.11850, -34.01967,  842]),
-              "2nd": numpy.array([ 61.89133, -33.06258,  563]),
-              "3rd": numpy.array([ 60.58879, -31.79044,  467])},
-         "ra5hdec-36.75": \
-             {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
-              "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
-              "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
-         "ra5hdec-40.25": \
-             {"1st": numpy.array([ 53.55675, -40.14036, 1274]),
-              "2nd": numpy.array([ 90.13046, -39.61711,  586]),
-              "3rd": numpy.array([ 72.42625, -39.18600,  401])},
-         "ra1h40dec-29.75": \
-             {"1st": numpy.array([  2.64967, -30.46339,  741]),
-              "2nd": numpy.array([ 39.12962, -29.89864,  612]),
-              "3rd": numpy.array([ 18.94342, -30.82197,  472])},
-         "ra1h40dec-33.25": \
-             {"1st": numpy.array([ 35.73500, -34.69103, 1019]),
-              "2nd": numpy.array([ 28.29246, -33.17408,  542]),
-              "3rd": numpy.array([ 34.20079, -32.79458,  540])},
-         "ra1h40dec-36.75": \
-             {"1st": numpy.array([  6.56833, -35.21369, 1123]),
-              # "2nd": numpy.array([ 23.49125, -36.49314,  440]),
-              # * The measured offsets are too large for this source for some reason...
-              "2nd": numpy.array([ 42.73092, -36.27647,  340]),
-              "3rd": numpy.array([ 37.36842, -36.73242,  263])},
-         "ra1h40dec-40.25": \
-             {"1st": numpy.array([ 16.68796, -40.57208, 2146]),
-              "2nd": numpy.array([  3.24954, -39.90733, 1609]),
-              "3rd": numpy.array([ 23.63392, -38.72603,  685])},
-         "ra12h30dec-29.75": \
-             {"1st": numpy.array([159.31675, -29.56744, 2681]),
-              # "2nd": numpy.array([205.57287, -29.01333,  454]),
-              "2nd": numpy.array([154.61983, -31.39811,  562]),
-              "3rd": numpy.array([176.60854, -28.98883,  425])},
-         "ra12h30dec-33.25": \
-             {# "1st": numpy.array([199.03371, -33.64967, 1497]),
-              # "2nd": numpy.array([194.49667, -31.92089, 1460]),
-              # "3rd": numpy.array([216.92212, -33.09219,  795])},
-              "1st": numpy.array([151.88067, -33.55183,  652]),
-              "2nd": numpy.array([156.00204, -32.57092,  491]),
-              "3rd": numpy.array([162.77021, -31.63742,  439])},
-         "ra12h30dec-36.75": \
-             {# "1st": numpy.array([223.61446, -37.79250, 1886]),
-              "1st": numpy.array([176.75608, -38.20297, 1376]),
-              "2nd": numpy.array([178.59079, -35.09142,  889]),
-              "3rd": numpy.array([159.22262, -37.73753,  812])},
-              # "3rd": numpy.array([196.30371, -36.92919,  239])},
-              # * Too large of offsets (RA)...
-         "ra12h30dec-40.25": \
-             {# "1st": numpy.array([197.45250, -39.80878,  416]),
-              # * The measured offsets are too large for this source...
-              #   Actually, for a few sources, the RA offsets are
-              #   on the order of 1e5 arcseconds...
-              "1st": numpy.array([162.15954, -41.23331,  369]),
-              "2nd": numpy.array([166.29617, -39.47856,  285]),
-              "3rd": numpy.array([160.68488, -41.72386,  233])}}
+    # * For northern testing purpose only
+    #   thumbnails_file = thumbnails_file.replace("bright_sources", "thumbnails")
     
     discrep_dict = {"1st": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
                     "2nd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan},
                     "3rd": {"DeltaRa": numpy.nan, "DeltaDec": numpy.nan}}
     flux_dict = {"1st": numpy.nan, "2nd": numpy.nan, "3rd": numpy.nan}
     snr_dict  = {"1st": numpy.nan, "2nd": numpy.nan, "3rd": numpy.nan}
+
     
+    # * If there are thumbnail maps of the sources
+    #   made by autoprocessing, then those maps will be used.
+    #   (the sources were probably interpolated over
+    #    when the field map was made)
     
-    relevant_point_sources = some_brightest_sources[sub_field]
+    if (thumbnails_file is not None) and \
+       (thumbnails_band is not None) and \
+       (os.path.isfile(thumbnails_file)):
+        
+        # * The dictionary below contains the map IDs that should be looked for
+        #   when thumbnail maps are extracted from the file
+        #   The IDs are the ones returned by calling
+        #   sources.source_utils.get_brightest_sources(
+        #       "1500d_ptsrc_150GHz_50mJy_2021.txt", field, 3)
+        
+        some_brightest_sources = \
+            {"ra0hdec-44.75": {"1st":  "95", "2nd": "161", "3rd":  "67"},
+             # * For northern testing purpose only
+             #   "ra0hdec-44.75": {"1st": "829", "2nd": "401", "3rd": "135"},
+             "ra0hdec-52.25": {"1st":  "53", "2nd":  "72", "3rd": "179"},
+             "ra0hdec-59.75": {"1st":  "78", "2nd":  "23", "3rd":  "18"},
+             "ra0hdec-67.25": {"1st": "118", "2nd":  "46", "3rd": "130"}}
+
+        relevant_point_sources = some_brightest_sources[sub_field]
+        
+        for point_source_rank, point_source_id in relevant_point_sources.items():
+            thumbnail_id = "{}-{}".format(point_source_id, thumbnails_band)
+            iterator = core.G3File(thumbnails_file)
+            while True:
+                new_frame = iterator.next()
+                if ("Id" in new_frame.keys()) and (new_frame["Id"] == thumbnail_id):
+                    thumbnail_frame = new_frame
+                    break
+            deltas = pointing.astrometry.check_astrometry_at20g_templated(
+                         [thumbnail_frame],
+                         dist_thresh=1e9*core.G3Units.arcsec, nsigma=0.0)
+            discrep_dict[point_source_rank]["DeltaRa"] = deltas["dxdec"][0]
+            discrep_dict[point_source_rank]["DeltaDec"] = deltas["ddec"][0]
+            snr_dict[point_source_rank] = deltas["sn"][0]
+            flux_dict[point_source_rank] = numpy.nan
     
-    for point_source_rank, info in relevant_point_sources.items():
-        
-        true_right_ascension = info[0]
-        if true_right_ascension > 180:
-            true_right_ascension -= 360
-        true_right_ascension *= usys.deg
-        true_declination  = info[1]
-        true_declination *= usys.deg
-        true_right_ascension = float(true_right_ascension)
-        true_declination = float(true_declination)
-        
-        true_x, true_y = \
-            map_frame["T"].angle_to_xy(true_right_ascension,
-                                       true_declination)
-        nominal_pixel_number = \
-            map_frame["T"].angle_to_pixel(true_right_ascension,
-                                          true_declination)
-        nominal_y_index, nominal_x_index = \
-            numpy.unravel_index(
-                nominal_pixel_number, map_frame["T"].shape)
-        
-        nominal_x_index = int(nominal_x_index)
-        nominal_y_index = int(nominal_y_index)
-        
-        mini_map_width    = 4 * usys.arcmin
-        mini_map_height   = 4 * usys.arcmin
-        mini_map_x_length = int(mini_map_width  / map_frame["T"].x_res)
-        mini_map_y_length = int(mini_map_height / map_frame["T"].y_res)
-        half_x_length     = mini_map_x_length // 2
-        half_y_length     = mini_map_y_length // 2
-        mini_map_x_left   = nominal_x_index - half_x_length
-        mini_map_x_right  = nominal_x_index + half_x_length
-        mini_map_y_bottom = nominal_y_index - half_y_length
-        mini_map_y_top    = nominal_y_index + half_y_length
-        mini_map = numpy.asarray(map_frame["T"])\
-                       [mini_map_y_bottom:mini_map_y_top+1,
-                        mini_map_x_left:mini_map_x_right+1]
-        
-        try:
-            fit_parameters = util.fitting.fit_gaussian2d(mini_map)
-        except ValueError:
-            discrep_dict[point_source_rank]["DeltaRa"]  = numpy.nan
-            discrep_dict[point_source_rank]["DeltaDec"] = numpy.nan
-            continue
-        
-        gaussian_center_x = fit_parameters[1]
-        gaussian_center_y = fit_parameters[2]
-        
-        measured_x = gaussian_center_x + mini_map_x_left
-        measured_y = gaussian_center_y + mini_map_y_bottom
-        measured_x = float(measured_x)
-        measured_y = float(measured_y)
-        
-        measured_right_ascension, measured_declination = \
-            map_frame["T"].xy_to_angle(measured_x, measured_y)
-        
-        delta_ra  = measured_right_ascension - true_right_ascension
-        delta_dec = measured_declination     - true_declination
-        effective_delta_ra = delta_ra * numpy.cos(true_declination/usys.rad)
-        
-        discrep_dict[point_source_rank]["DeltaRa"]  = effective_delta_ra
-        discrep_dict[point_source_rank]["DeltaDec"] = delta_dec
-        
-        """
-        nearest_x = int(numpy.round(measured_x))
-        nearest_y = int(numpy.round(measured_y))
-        source_centered_mini_map = \
-            numpy.asarray(map_frame["T"])\
-                [nearest_y-half_y_length:nearest_y+half_y_length+1,
-                 nearest_x-half_x_length:nearest_x+half_x_length+1]
-        """
-        source_centered_mini_map = mini_map
-        # * If the measured positions are crazy,
-        #   the source-centered mini map can be empty...
-        source_flux = numpy.sum(source_centered_mini_map) * \
-                      map_frame["T"].x_res * map_frame["T"].y_res
-        flux_dict[point_source_rank] = source_flux
-        
-        if map_stddev is None:
-            source_snr = numpy.nan
-        else:
-            source_snr = numpy.max(source_centered_mini_map) / map_stddev
-        snr_dict[point_source_rank] = source_snr
+    else:
+        assert (not map_frame["T"].weighted), \
+               "The temperature map is still weighted!"
     
-    maps.CompactMaps(map_frame, zero_nans=True)
+        usys = core.G3Units
+    
+        # * The dictionary below contains ra, dec, and flux of
+        #   three brightest point sources recorded in
+        #   spt3g_software/sources/1500d_ptsrc_3band_50mJy.txt as of July, 2019.
+        #   The ra and dec of each source are from the ATCA20GHz catalog,
+        #   but the flux is from 2018 SPT3G maps (actually, flux is not used
+        #   in any calculation)."
+    
+        some_brightest_sources = \
+            {"ra0hdec-44.75": \
+                 {"1st": numpy.array([352.32358, -47.50531, 1408]),
+                  "2nd": numpy.array([314.06833, -47.24664, 1375]),
+                  "3rd": numpy.array([ 41.50037, -46.85467,  715])},
+             "ra0hdec-52.25": \
+                 {"1st": numpy.array([ 32.69288, -51.01703, 3820]),
+                  "2nd": numpy.array([ 23.27404, -52.00094, 1027]),
+                  "3rd": numpy.array([359.47312, -53.18686,  864])},
+             "ra0hdec-59.75": \
+                 {"1st": numpy.array([ 47.48363, -60.97761,  870]),
+                  "2nd": numpy.array([ 45.96104, -62.19042,  833]),
+                  "3rd": numpy.array([ 14.69433, -56.98650,  786])},
+             "ra0hdec-67.25": \
+                 {"1st": numpy.array([329.27542, -69.68981, 1115]),
+                  "2nd": numpy.array([337.25092, -69.17492,  445]),
+                  "3rd": numpy.array([325.44375, -64.18742,  388])},
+             "ra5hdec-24.5": \
+                 {"1st": numpy.array([ 74.26346, -23.41439, 3841]),
+                  "2nd": numpy.array([ 52.47542, -23.95239, 1458]),
+                  "3rd": numpy.array([ 92.24900, -22.33922, 1003])},
+             "ra5hdec-31.5": \
+                 {"1st": numpy.array([ 69.40233, -29.90108,  564]),
+                  "2nd": numpy.array([ 61.89133, -33.06258,  563]),
+                  "3rd": numpy.array([ 60.58879, -31.79044,  467])},
+             "ra5hdec-38.5": \
+                 {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
+                  "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
+                  "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
+             "ra5hdec-45.5": \
+                 {"1st": numpy.array([ 79.95708, -45.77881, 6320]),
+                  "2nd": numpy.array([ 84.70979, -44.08572, 5294]),
+                  "3rd": numpy.array([ 73.96163, -46.26628, 4157])},
+             "ra5hdec-52.5": \
+                 {"1st": numpy.array([ 85.19104, -54.30606, 1127]),
+                  "2nd": numpy.array([ 57.86771, -51.71525,  401]),
+                  "3rd": numpy.array([ 92.20471, -54.94525,  386])},
+             "ra5hdec-59.5": \
+                 {"1st": numpy.array([ 76.68342, -61.16150, 1655]),
+                  "2nd": numpy.array([ 87.53988, -57.54017, 1005]),
+                  "3rd": numpy.array([ 80.64333, -61.13250,  573])},
+             "ra5hdec-29.75": \
+                 {"1st": numpy.array([ 84.97571, -28.66561,  677]),
+                  "2nd": numpy.array([ 69.40233, -29.90108,  564]),
+                  "3rd": numpy.array([ 95.12212, -28.46006,  503])},
+             "ra5hdec-33.25": \
+                 {"1st": numpy.array([ 84.11850, -34.01967,  842]),
+                  "2nd": numpy.array([ 61.89133, -33.06258,  563]),
+                  "3rd": numpy.array([ 60.58879, -31.79044,  467])},
+             "ra5hdec-36.75": \
+                 {"1st": numpy.array([ 60.97404, -36.08358, 4013]),
+                  "2nd": numpy.array([ 80.74142, -36.45844, 3909]),
+                  "3rd": numpy.array([ 67.16821, -37.93867, 1850])},
+             "ra5hdec-40.25": \
+                 {"1st": numpy.array([ 53.55675, -40.14036, 1274]),
+                  "2nd": numpy.array([ 90.13046, -39.61711,  586]),
+                  "3rd": numpy.array([ 72.42625, -39.18600,  401])},
+             "ra1h40dec-29.75": \
+                 {"1st": numpy.array([  2.64967, -30.46339,  741]),
+                  "2nd": numpy.array([ 39.12962, -29.89864,  612]),
+                  "3rd": numpy.array([ 18.94342, -30.82197,  472])},
+             "ra1h40dec-33.25": \
+                 {"1st": numpy.array([ 35.73500, -34.69103, 1019]),
+                  "2nd": numpy.array([ 28.29246, -33.17408,  542]),
+                  "3rd": numpy.array([ 34.20079, -32.79458,  540])},
+             "ra1h40dec-36.75": \
+                 {"1st": numpy.array([  6.56833, -35.21369, 1123]),
+                  # "2nd": numpy.array([ 23.49125, -36.49314,  440]),
+                  # * The measured offsets are too large for this source for some reason...
+                  "2nd": numpy.array([ 42.73092, -36.27647,  340]),
+                  "3rd": numpy.array([ 37.36842, -36.73242,  263])},
+             "ra1h40dec-40.25": \
+                 {"1st": numpy.array([ 16.68796, -40.57208, 2146]),
+                  "2nd": numpy.array([  3.24954, -39.90733, 1609]),
+                  "3rd": numpy.array([ 23.63392, -38.72603,  685])},
+             "ra12h30dec-29.75": \
+                 {"1st": numpy.array([159.31675, -29.56744, 2681]),
+                  # "2nd": numpy.array([205.57287, -29.01333,  454]),
+                  "2nd": numpy.array([154.61983, -31.39811,  562]),
+                  "3rd": numpy.array([176.60854, -28.98883,  425])},
+             "ra12h30dec-33.25": \
+                 {# "1st": numpy.array([199.03371, -33.64967, 1497]),
+                  # "2nd": numpy.array([194.49667, -31.92089, 1460]),
+                  # "3rd": numpy.array([216.92212, -33.09219,  795])},
+                  "1st": numpy.array([151.88067, -33.55183,  652]),
+                  "2nd": numpy.array([156.00204, -32.57092,  491]),
+                  "3rd": numpy.array([162.77021, -31.63742,  439])},
+             "ra12h30dec-36.75": \
+                 {# "1st": numpy.array([223.61446, -37.79250, 1886]),
+                  "1st": numpy.array([176.75608, -38.20297, 1376]),
+                  "2nd": numpy.array([178.59079, -35.09142,  889]),
+                  "3rd": numpy.array([159.22262, -37.73753,  812])},
+                  # "3rd": numpy.array([196.30371, -36.92919,  239])},
+                  # * Too large of offsets (RA)...
+             "ra12h30dec-40.25": \
+                 {# "1st": numpy.array([197.45250, -39.80878,  416]),
+                  # * The measured offsets are too large for this source...
+                  #   Actually, for a few sources, the RA offsets are
+                  #   on the order of 1e5 arcseconds...
+                  "1st": numpy.array([162.15954, -41.23331,  369]),
+                  "2nd": numpy.array([166.29617, -39.47856,  285]),
+                  "3rd": numpy.array([160.68488, -41.72386,  233])}}
+            
+        
+        relevant_point_sources = some_brightest_sources[sub_field]
+        
+        for point_source_rank, info in relevant_point_sources.items():
+            
+            true_right_ascension = info[0]
+            if true_right_ascension > 180:
+                true_right_ascension -= 360
+            true_right_ascension *= usys.deg
+            true_declination  = info[1]
+            true_declination *= usys.deg
+            true_right_ascension = float(true_right_ascension)
+            true_declination = float(true_declination)
+            
+            true_x, true_y = \
+                map_frame["T"].angle_to_xy(true_right_ascension,
+                                           true_declination)
+            nominal_pixel_number = \
+                map_frame["T"].angle_to_pixel(true_right_ascension,
+                                              true_declination)
+            nominal_y_index, nominal_x_index = \
+                numpy.unravel_index(
+                    nominal_pixel_number, map_frame["T"].shape)
+            
+            nominal_x_index = int(nominal_x_index)
+            nominal_y_index = int(nominal_y_index)
+            
+            mini_map_width    = 4 * usys.arcmin
+            mini_map_height   = 4 * usys.arcmin
+            mini_map_x_length = int(mini_map_width  / map_frame["T"].x_res)
+            mini_map_y_length = int(mini_map_height / map_frame["T"].y_res)
+            half_x_length     = mini_map_x_length // 2
+            half_y_length     = mini_map_y_length // 2
+            mini_map_x_left   = nominal_x_index - half_x_length
+            mini_map_x_right  = nominal_x_index + half_x_length
+            mini_map_y_bottom = nominal_y_index - half_y_length
+            mini_map_y_top    = nominal_y_index + half_y_length
+            mini_map = numpy.asarray(map_frame["T"])\
+                           [mini_map_y_bottom:mini_map_y_top+1,
+                            mini_map_x_left:mini_map_x_right+1]
+            
+            try:
+                fit_parameters = util.fitting.fit_gaussian2d(mini_map)
+            except ValueError:
+                discrep_dict[point_source_rank]["DeltaRa"]  = numpy.nan
+                discrep_dict[point_source_rank]["DeltaDec"] = numpy.nan
+                continue
+            
+            gaussian_center_x = fit_parameters[1]
+            gaussian_center_y = fit_parameters[2]
+            
+            measured_x = gaussian_center_x + mini_map_x_left
+            measured_y = gaussian_center_y + mini_map_y_bottom
+            measured_x = float(measured_x)
+            measured_y = float(measured_y)
+            
+            measured_right_ascension, measured_declination = \
+                map_frame["T"].xy_to_angle(measured_x, measured_y)
+            
+            delta_ra  = measured_right_ascension - true_right_ascension
+            delta_dec = measured_declination     - true_declination
+            effective_delta_ra = delta_ra * numpy.cos(true_declination/usys.rad)
+            
+            discrep_dict[point_source_rank]["DeltaRa"]  = effective_delta_ra
+            discrep_dict[point_source_rank]["DeltaDec"] = delta_dec
+            
+            """
+            nearest_x = int(numpy.round(measured_x))
+            nearest_y = int(numpy.round(measured_y))
+            source_centered_mini_map = \
+                numpy.asarray(map_frame["T"])\
+                    [nearest_y-half_y_length:nearest_y+half_y_length+1,
+                     nearest_x-half_x_length:nearest_x+half_x_length+1]
+            """
+            source_centered_mini_map = mini_map
+            # * If the measured positions are crazy,
+            #   the source-centered mini map can be empty...
+            source_flux = numpy.sum(source_centered_mini_map) * \
+                          map_frame["T"].x_res * map_frame["T"].y_res
+            flux_dict[point_source_rank] = source_flux
+            
+            if map_stddev is None:
+                source_snr = numpy.nan
+            else:
+                source_snr = numpy.max(source_centered_mini_map) / map_stddev
+            snr_dict[point_source_rank] = source_snr
+        
+            maps.CompactMaps(map_frame, zero_nans=True)
     
     return discrep_dict, flux_dict, snr_dict
 
@@ -1645,6 +1693,8 @@ class AnalyzeAndCoaddMaps(object):
                 {rank: {map_id: core.G3MapMapDouble()  \
                         for map_id in self.map_ids}    \
                  for rank in self.ptsrc_ranks}
+            
+            self.field_autoproc_dir = os.path.join(calibration_data_dir, "FIELD")
         
         
         # - Initialize variables related to calculations of cross spectra
@@ -2680,10 +2730,16 @@ class AnalyzeAndCoaddMaps(object):
                                              [id_for_coadds][sbfd][str(oid)]
                         else:
                             map_stddev = None
+                        thumbnails_file = os.path.join(
+                            self.field_autoproc_dir.replace("FIELD", sbfd), 
+                            "bright_sources", str(oid)+".g3")
+                        thumbnails_band = frame["Id"]
                         offsets, fluxes, snrs = \
                             calculate_pointing_discrepancies(
                                 summ_map_frame_individ, sbfd,
-                                map_stddev=map_stddev)
+                                map_stddev=map_stddev,
+                                thumbnails_file=thumbnails_file,
+                                thumbnails_band=thumbnails_band)
                         for rank, diffs in offsets.items():
                             u = core.G3Units
                             for coord, diff in diffs.items():
