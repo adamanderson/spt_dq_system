@@ -1028,12 +1028,12 @@ def calculate_pointing_discrepancies(
         #       "1500d_ptsrc_150GHz_50mJy_2021.txt", field, 3)
         
         some_brightest_sources = \
-            {"ra0hdec-44.75": {"1st":  "95", "2nd": "161", "3rd":  "67"},
+            {"ra0hdec-44.75": {"1st": "2056-47", "2nd": "2329-47", "3rd": "0246-46"},
              # * For northern testing purpose only
              #   "ra0hdec-44.75": {"1st": "829", "2nd": "401", "3rd": "135"},
-             "ra0hdec-52.25": {"1st":  "53", "2nd":  "72", "3rd": "179"},
-             "ra0hdec-59.75": {"1st":  "78", "2nd":  "23", "3rd":  "18"},
-             "ra0hdec-67.25": {"1st": "118", "2nd":  "46", "3rd": "130"}}
+             "ra0hdec-52.25": {"1st": "0210-51", "2nd": "0253-54", "3rd": "2357-53"},
+             "ra0hdec-59.75": {"1st": "0309-60", "2nd": "0058-56", "3rd": "0049-57"},
+             "ra0hdec-67.25": {"1st": "2157-69", "2nd": "0154-66", "3rd": "2228-69"}}
 
         relevant_point_sources = some_brightest_sources[sub_field]
         
