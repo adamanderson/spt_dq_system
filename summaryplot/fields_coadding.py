@@ -1028,26 +1028,34 @@ def calculate_pointing_discrepancies(
         #       "1500d_ptsrc_150GHz_50mJy_2021.txt", field, 3)
         
         some_brightest_sources = \
-            {"ra0hdec-44.75": {"1st": "2056-47", "2nd": "2329-47", "3rd": "0246-46"},
+            {"ra0hdec-44.75": \
+                {"1st": "2056-47", "2nd": "2329-47", "3rd": "0246-46"},
              # * For northern testing purpose only
              #   "ra0hdec-44.75": {"1st": "829", "2nd": "401", "3rd": "135"},
-             "ra0hdec-52.25": {"1st": "0210-51", "2nd": "0253-54", "3rd": "2357-53"},
-             "ra0hdec-59.75": {"1st": "0309-60", "2nd": "0058-56", "3rd": "0049-57"},
-             "ra0hdec-67.25": {"1st": "2157-69", "2nd": "0154-66", "3rd": "2228-69"}}
+             "ra0hdec-52.25": \
+                {"1st": "0210-51", "2nd": "0253-54", "3rd": "2357-53"},
+             "ra0hdec-59.75": \
+                 {"1st": "0309-60", "2nd": "0058-56", "3rd": "0049-57"},
+             "ra0hdec-67.25": \
+                 {"1st": "2157-69", "2nd": "0154-66", "3rd": "2228-69"}}
 
         relevant_point_sources = some_brightest_sources[sub_field]
         
-        for point_source_rank, point_source_id in relevant_point_sources.items():
+        for point_source_rank, point_source_id \
+        in relevant_point_sources.items():
             thumbnail_id = "{}-{}".format(point_source_id, thumbnails_band)
             iterator = core.G3File(thumbnails_file)
             while True:
                 new_frame = iterator.next()
-                if ("Id" in new_frame.keys()) and (new_frame["Id"] == thumbnail_id):
+                if ("Id" in new_frame.keys()) and \
+                   (new_frame["Id"] == thumbnail_id):
                     thumbnail_frame = new_frame
                     break
             deltas = pointing.astrometry.check_astrometry_at20g_templated(
                          [thumbnail_frame],
-                         dist_thresh=1e9*core.G3Units.arcsec, nsigma=0.0)
+                         dist_thresh=numpy.inf,
+                         nsigma=-numpy.inf)
+            del thumbnail_frame
             discrep_dict[point_source_rank]["DeltaRa"] = deltas["dxdec"][0]
             discrep_dict[point_source_rank]["DeltaDec"] = deltas["ddec"][0]
             snr_dict[point_source_rank] = deltas["sn"][0]
