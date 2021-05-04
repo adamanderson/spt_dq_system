@@ -3655,6 +3655,27 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
            (os.path.getsize(g3_file) >= min_file_size*2**30):
             all_good_g3_files.append(g3_file)
     
+    
+    if calculate_pointing_discrepancies:
+        if calibration_data_dir.startswith("/poleanalysis"):
+
+            def thumbnails_exist(g3_file):
+                try:
+                    obs_id = int(os.path.basename(g3_file).split('_')[0])
+                    sub_field = f.split('/')[-2]
+                    thumbnails_file = os.path.join(
+                        calibration_data_dir, "calibration", "bright_sources",
+                        sub_field, str(obs_id)+".g3")
+                    if os.path.isfile(thumbnails_file):
+                        return True
+                    else:
+                        return False
+                except ValueError:
+                    return True
+        
+        all_good_g3_files = [f for f in all_good_g3_files if thumbnails_exist(f)]
+    
+    
     if len(all_good_g3_files) == 0:
         log("")
         log("No applicable input files, so there is nothing to do!")
