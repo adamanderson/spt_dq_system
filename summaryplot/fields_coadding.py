@@ -3662,10 +3662,10 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
             def thumbnails_exist(g3_file):
                 try:
                     obs_id = int(os.path.basename(g3_file).split('_')[0])
-                    sub_field = f.split('/')[-2]
+                    sub_field = g3_file.split('/')[-2]
                     thumbnails_file = os.path.join(
-                        calibration_data_dir, "calibration", "bright_sources",
-                        sub_field, str(obs_id)+".g3")
+                        calibration_data_dir,
+                        sub_field, "bright_sources", str(obs_id)+".g3")
                     if os.path.isfile(thumbnails_file):
                         return True
                     else:
