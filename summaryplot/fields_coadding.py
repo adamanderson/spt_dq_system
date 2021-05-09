@@ -3658,22 +3658,24 @@ def run(input_files=[], min_file_size=0.01, output_file='coadded_maps.g3',
     
     if calculate_pointing_discrepancies:
         if calibration_data_dir.startswith("/poleanalysis"):
-
+            
             def thumbnails_exist(g3_file):
                 try:
                     obs_id = int(os.path.basename(g3_file).split('_')[0])
-                    sub_field = g3_file.split('/')[-2]
-                    thumbnails_file = os.path.join(
-                        calibration_data_dir,
-                        sub_field, "bright_sources", str(obs_id)+".g3")
-                    if os.path.isfile(thumbnails_file):
-                        return True
-                    else:
-                        return False
                 except ValueError:
                     return True
-        
-        all_good_g3_files = [f for f in all_good_g3_files if thumbnails_exist(f)]
+                
+                sub_field = g3_file.split('/')[-2]
+                thumbnails_file = os.path.join(
+                    calibration_data_dir,
+                    sub_field, "bright_sources", str(obs_id)+".g3")
+                if os.path.isfile(thumbnails_file):
+                    return True
+                else:
+                    return False
+                
+            all_good_g3_files = [f for f in all_good_g3_files
+                                 if thumbnails_exist(f)]
     
     
     if len(all_good_g3_files) == 0:
