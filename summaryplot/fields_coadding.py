@@ -1702,7 +1702,11 @@ class AnalyzeAndCoaddMaps(object):
                         for map_id in self.map_ids}    \
                  for rank in self.ptsrc_ranks}
             
-            self.field_autoproc_dir = os.path.join(calibration_data_dir, "FIELD")
+            if calibration_data_dir.startswith("/sptgrid"):
+                self.field_autoproc_dir = "/sptgrid/data/onlinemaps/calibration/"
+            else:
+                self.field_autoproc_dir = calibration_data_dir
+            self.field_autoproc_dir = os.path.join(self.field_autoproc_dir, "FIELD")
         
         
         # - Initialize variables related to calculations of cross spectra
