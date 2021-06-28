@@ -8,7 +8,7 @@ from spt3g import core, mapmaker, util, pointing
 
 def BeamFWHMandEllipticity(request):
     try:
-        data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
+        data = [fr for fr in core.G3File('{}/{}/{}.g3' \
                                           .format(request['caldatapath'],
                                                   request['source'],
                                                   request['observation']))]

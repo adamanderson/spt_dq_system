@@ -5,7 +5,7 @@ from spt3g import core, calibration
 # makes a plot of the offline offset given the date                                                                                 
 def NET3to5HzHistogram(request):
     try:
-        data = [fr for fr in core.G3File('{}/calibration/{}/{}.g3' \
+        data = [fr for fr in core.G3File('{}/{}/{}.g3' \
                                              .format(request['caldatapath'],
                                                      request['source'],
                                                      request['observation']))]
