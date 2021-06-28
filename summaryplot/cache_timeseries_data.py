@@ -516,7 +516,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                 for source in sourcelist:
                     obsidlist = list(data[source].keys())
                     for obsid in obsidlist:
-                        if int(obsid) <= min_obsid or int(obsid) >= max_obsid:
+                        # convert obsids to ints
+                        if type(obsid) is str:
+                            data[source][int(obsid)] = data[source][obsid]
+                            data[source].pop(obsid)
+
+                    obsidlist = list(data[source].keys())
+                    for obsid in obsidlist:
+                        if obsid <= min_obsid or obsid >= max_obsid:
                             data[source].pop(obsid)
 
                 opts = dict(xlims=[mindate, maxdate])
