@@ -1,7 +1,6 @@
 site: north
 
 ld_library_path: /cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib:/cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib64:/cvmfs/spt.opensciencegrid.org/py3-v3/../distrib/OpenCL_RHEL_7_x86_64/lib/RHEL_7_x86_64
-pythonpath: /var/www/spt_dq_system/spt3g_software/build/:/cvmfs/spt.opensciencegrid.org/py3-v3/RHEL_7_x86_64/lib/python3.7/site-packages
 
 scanify_db_path: /sptlocal/transfer/rsync/transfer_database/scanify.db
 auxtransfer_db_path: /sptlocal/transfer/rsync/transfer_database/aux_transfer.db
@@ -18,7 +17,7 @@ cert_file:
 plot_dir: /tmp/data_quality_dev/
 static_plot_dir: /var/www/spt_dq_system/static_plots/
 
-calib_data_dir: /sptgrid/analysis/calarchive/v1/
+calib_data_dir: /sptgrid/analysis/calarchive/v2/
 bolo_data_dir: /sptgrid/data/bolodata/fullrate/
 
 no_data_update: true
@@ -41,16 +40,12 @@ coadds_logs_dirs:
     summer: /var/www/spt_dq_system/static_plots/maps/logs_summer/
     summerb: /var/www/spt_dq_system/static_plots/maps/logs_summerb/
     summerc: /var/www/spt_dq_system/static_plots/maps/logs_summerc/
-#coadds_data_dir: /var/www/spt_dq_system/static_plots/maps/data/
-#coadds_figs_dir: /var/www/spt_dq_system/static_plots/maps/figures/
-#coadds_figs_summer_dir: /var/www/spt_dq_system/static_plots/maps/figures_summer/
-#coadds_logs_dir: /var/www/spt_dq_system/static_plots/maps/logs/
 
 arc_data_dir: /sptgrid/data/arc/
 arc_pkls_dir: /var/www/spt_dq_system/static_plots/arcs/pkls/
 arc_figs_dir: /var/www/spt_dq_system/static_plots/arcs/figs/
 arc_logs_dir: /var/www/spt_dq_system/static_plots/arcs/logs/
 
-min_time_summary_plots: 20200106
-min_time_maps: 20200106
-min_time_arcs: 20200106
+min_time_summary_plots: 20210104
+min_time_maps: 20210104
+min_time_arcs: 20210104
