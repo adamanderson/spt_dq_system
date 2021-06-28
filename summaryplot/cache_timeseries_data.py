@@ -498,6 +498,14 @@ def update(mode, action, outdir, caldatapath=None, bolodatapath=None,
                     fname1 = os.path.basename(fname)
                     with open(fname, 'rb') as f:
                         nextdata = pickle.load(f)
+                        # make sure all obsidss are ints
+                        for source, dd in nextdata.items():
+                            if source == 'updated_sources':
+                                continue
+                            for k in list(dd):
+                                if isinstance(k, str):
+                                    dd[int(k)] = dd.pop(k)
+
                     next_updated_sources = nextdata.pop('updated_sources', set())
                     if action == 'rebuild' or bolodatapath.startswith('/sptgrid'):
                         # rebuild all plots in chicago because the rsync'ed cache files

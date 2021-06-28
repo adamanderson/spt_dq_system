@@ -623,9 +623,9 @@ function updateArcPlots() {
 // update both types of plots in parallel every X milliseconds
 setInterval(updateSummaryPlots, 600000);
 if(config.site == 'pole') { // only update map and arc plots at pole
-    setInterval(updateWinterMapPlots,  21600000);
-    setInterval(updateSummerMapPlots,  21600000);
-    setInterval(updateSummerbMapPlots, 21600000);
-    setInterval(updateSummercMapPlots, 21600000);
-    setInterval(updateArcPlots,        21600000);
+    setInterval(updateWinterMapPlots,   1800000);
+    setInterval(updateSummerMapPlots,   1800000);
+    setInterval(updateSummerbMapPlots,  1800000);
+    setInterval(updateSummercMapPlots,  1800000);
+    setInterval(updateArcPlots,        10800000);
 }
