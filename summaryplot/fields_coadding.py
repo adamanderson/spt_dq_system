@@ -1051,11 +1051,8 @@ def calculate_pointing_discrepancies(
                    (new_frame["Id"] == thumbnail_id):
                     thumbnail_frame = new_frame
                     break
-            if numpy.all(thumbnail_frame["Wpol"].TT==0.0):
-                discrep_dict[point_source_rank]["DeltaRa"] = numpy.nan
-                discrep_dict[point_source_rank]["DeltaDec"] = numpy.nan
-                snr_dict[point_source_rank] = numpy.nan
-                flux_dict[point_source_rank] = numpy.nan
+            if numpy.all(numpy.asarray(thumbnail_frame["Wpol"].TT)==0.0):
+                pass
             else:
                 deltas = pointing.astrometry.check_astrometry_at20g_templated(
                              [thumbnail_frame],
@@ -1064,7 +1061,6 @@ def calculate_pointing_discrepancies(
                 discrep_dict[point_source_rank]["DeltaRa"] = deltas["dxdec"][0]
                 discrep_dict[point_source_rank]["DeltaDec"] = deltas["ddec"][0]
                 snr_dict[point_source_rank] = deltas["sn"][0]
-                flux_dict[point_source_rank] = numpy.nan
             del thumbnail_frame
     
     else:
